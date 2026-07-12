@@ -13,6 +13,8 @@ return new class () implements InstallerScriptInterface
 {
     private const SCHEMA_VERSION = '0.1.0';
 
+    private const CATEGORY_MENU_LINK = 'index.php?option=com_categories&view=categories&extension=com_audioarchive';
+
     /** @var string[] */
     private const REQUIRED_TABLES = [
         'audioarchive_clips',
@@ -29,7 +31,7 @@ return new class () implements InstallerScriptInterface
      */
     public function install(InstallerAdapter $adapter): bool
     {
-        return $this->repairDatabaseSchema();
+        return $this->repairDatabaseSchema() && $this->repairAdministratorMenu();
     }
 
     /**
@@ -40,7 +42,7 @@ return new class () implements InstallerScriptInterface
      */
     public function update(InstallerAdapter $adapter): bool
     {
-        return $this->repairDatabaseSchema();
+        return $this->repairDatabaseSchema() && $this->repairAdministratorMenu();
     }
 
     /**
@@ -75,7 +77,49 @@ return new class () implements InstallerScriptInterface
      */
     public function postflight(string $type, InstallerAdapter $adapter): bool
     {
-        return true;
+        if (!in_array($type, ['install', 'update', 'discover_install'], true))
+        {
+            return true;
+        }
+
+        return $this->repairAdministratorMenu();
+    }
+
+    /**
+     * @brief Repair the administrator Categories menu URL used for active-path matching.
+     *
+     * Joomla marks the administrator menu tree active by matching the current URL
+     * against menu-item URLs. The category list redirect includes the explicit
+     * categories view before the extension argument, so our stored menu link must
+     * use the same canonical form and argument order.
+     *
+     * @return bool True when the menu item is valid or does not exist yet.
+     */
+    private function repairAdministratorMenu(): bool
+    {
+        try
+        {
+            $database = Factory::getContainer()->get(DatabaseInterface::class);
+            $query = $database->getQuery(true)
+                ->update($database->quoteName('#__menu'))
+                ->set($database->quoteName('link') . ' = ' . $database->quote(self::CATEGORY_MENU_LINK))
+                ->where($database->quoteName('client_id') . ' = 1')
+                ->where($database->quoteName('menutype') . ' = ' . $database->quote('main'))
+                ->where($database->quoteName('title') . ' = ' . $database->quote('COM_AUDIOARCHIVE_SUBMENU_CATEGORIES'));
+
+            $database->setQuery($query)->execute();
+
+            return true;
+        }
+        catch (Throwable $exception)
+        {
+            Factory::getApplication()->enqueueMessage(
+                Text::sprintf('COM_AUDIOARCHIVE_INSTALL_MENU_FAILED', $exception->getMessage()),
+                'warning'
+            );
+
+            return false;
+        }
     }
 
     /**

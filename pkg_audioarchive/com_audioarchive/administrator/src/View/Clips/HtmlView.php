@@ -17,8 +17,8 @@ class HtmlView extends BaseHtmlView
     protected $items;
     protected $pagination;
     protected $state;
-    protected $filterForm;
-    protected $activeFilters;
+    public $filterForm;
+    public $activeFilters;
 
     /**
      * @brief Display the clip list.
