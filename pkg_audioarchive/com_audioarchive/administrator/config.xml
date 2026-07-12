@@ -115,6 +115,34 @@
         <field name="maximum_attempts" type="number" label="COM_AUDIOARCHIVE_CONFIG_MAXIMUM_ATTEMPTS_LABEL" default="3" min="1" max="20" />
     </fieldset>
 
+    <fieldset name="uninstall" label="COM_AUDIOARCHIVE_CONFIG_UNINSTALL_LABEL">
+        <field
+            name="uninstall_notice"
+            type="note"
+            label="COM_AUDIOARCHIVE_CONFIG_UNINSTALL_NOTICE_LABEL"
+            description="COM_AUDIOARCHIVE_CONFIG_UNINSTALL_NOTICE_DESC"
+            class="alert alert-warning"
+        />
+        <field
+            name="remove_media_on_uninstall"
+            type="radio"
+            layout="joomla.form.field.radio.switcher"
+            label="COM_AUDIOARCHIVE_CONFIG_REMOVE_MEDIA_ON_UNINSTALL_LABEL"
+            description="COM_AUDIOARCHIVE_CONFIG_REMOVE_MEDIA_ON_UNINSTALL_DESC"
+            default="0"
+            filter="integer"
+        >
+            <option value="0">JNO</option>
+            <option value="1">JYES</option>
+        </field>
+        <field
+            name="_uncategorised_seeded"
+            type="hidden"
+            default="0"
+            filter="integer"
+        />
+    </fieldset>
+
     <fieldset name="permissions" label="JCONFIG_PERMISSIONS_LABEL">
         <field name="rules" type="rules" label="JCONFIG_PERMISSIONS_LABEL" filter="rules" validate="rules" component="com_audioarchive" section="component" />
     </fieldset>
