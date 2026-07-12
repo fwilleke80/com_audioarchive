@@ -115,6 +115,25 @@ class ClipTable extends Table implements TaggableTableInterface, CurrentUserInte
             return false;
         }
 
+        foreach ([
+            'recorded_at',
+            'publish_up',
+            'publish_down',
+            'modified',
+            'checked_out_time',
+        ] as $field)
+        {
+            if ($this->$field === '')
+            {
+                $this->$field = null;
+            }
+        }
+
+        if ($this->publish_up !== null && $this->publish_down !== null && $this->publish_down < $this->publish_up)
+        {
+            [$this->publish_up, $this->publish_down] = [$this->publish_down, $this->publish_up];
+        }
+
         $existing = new self($this->getDatabase(), $this->getDispatcher());
 
         if ($existing->load(['alias' => $this->alias, 'catid' => (int) $this->catid]) && (int) $existing->id !== (int) $this->id)
@@ -124,6 +143,18 @@ class ClipTable extends Table implements TaggableTableInterface, CurrentUserInte
         }
 
         return true;
+    }
+
+    /**
+     * @brief Store the clip while allowing nullable columns to be cleared.
+     *
+     * @param bool $updateNulls Whether null-valued columns should be updated.
+     *
+     * @return bool
+     */
+    public function store($updateNulls = true)
+    {
+        return parent::store($updateNulls);
     }
 
     /**

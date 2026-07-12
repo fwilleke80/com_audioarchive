@@ -9,6 +9,7 @@ use Joomla\CMS\MVC\Model\AdminModel;
 use Joomla\CMS\Helper\TagsHelper;
 use Joomla\CMS\Table\Table;
 use Joomla\Registry\Registry;
+use Joomla\Database\ParameterType;
 
 \defined('_JEXEC') or die;
 
@@ -80,7 +81,11 @@ class ClipModel extends AdminModel
             if ((int) $this->getState('clip.id') === 0)
             {
                 $params = ComponentHelper::getParams('com_audioarchive');
-                $data->catid = $app->getInput()->getInt('catid', (int) $params->get('default_category', 0));
+                $requestedCategoryId = $app->getInput()->getInt(
+                    'catid',
+                    (int) $params->get('default_category', 0)
+                );
+                $data->catid = $this->getValidCategoryId($requestedCategoryId);
                 $data->access = (int) $params->get('default_access', 1);
                 $data->state = (int) $params->get('default_state', 0);
             }
@@ -225,6 +230,33 @@ class ClipModel extends AdminModel
         }
 
         return parent::canEditState($record);
+    }
+
+    /**
+     * @brief Validate that a category belongs to the Audio Archive component.
+     *
+     * @param int $categoryId Proposed Joomla category identifier.
+     *
+     * @return int Valid category identifier, or zero when invalid.
+     */
+    private function getValidCategoryId(int $categoryId): int
+    {
+        if ($categoryId <= 0)
+        {
+            return 0;
+        }
+
+        $database = $this->getDatabase();
+        $query = $database->getQuery(true)
+            ->select($database->quoteName('id'))
+            ->from($database->quoteName('#__categories'))
+            ->where($database->quoteName('id') . ' = :categoryId')
+            ->where($database->quoteName('extension') . ' = :extension')
+            ->whereIn($database->quoteName('published'), [0, 1])
+            ->bind(':categoryId', $categoryId, ParameterType::INTEGER)
+            ->bind(':extension', 'com_audioarchive');
+
+        return (int) $database->setQuery($query)->loadResult();
     }
 
     /**

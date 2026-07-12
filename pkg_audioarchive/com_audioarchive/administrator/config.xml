@@ -5,10 +5,13 @@
             name="default_category"
             type="category"
             extension="com_audioarchive"
+            published="0,1"
             label="COM_AUDIOARCHIVE_CONFIG_DEFAULT_CATEGORY_LABEL"
             description="COM_AUDIOARCHIVE_CONFIG_DEFAULT_CATEGORY_DESC"
             default="0"
-        />
+        >
+            <option value="0">JOPTION_SELECT_CATEGORY</option>
+        </field>
         <field
             name="default_access"
             type="accesslevel"

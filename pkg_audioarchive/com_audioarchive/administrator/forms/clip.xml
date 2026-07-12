@@ -7,7 +7,17 @@
         <field name="checked_out_time" type="hidden" filter="unset" />
         <field name="title" type="text" label="JGLOBAL_TITLE" required="true" maxlength="255" />
         <field name="alias" type="text" label="JFIELD_ALIAS_LABEL" maxlength="400" hint="JFIELD_ALIAS_PLACEHOLDER" />
-        <field name="catid" type="categoryedit" extension="com_audioarchive" label="JCATEGORY" addfieldprefix="Joomla\Component\Categories\Administrator\Field" required="true" default="0" />
+        <field
+            name="catid"
+            type="category"
+            extension="com_audioarchive"
+            published="0,1"
+            label="JCATEGORY"
+            required="true"
+            default=""
+        >
+            <option value="">JOPTION_SELECT_CATEGORY</option>
+        </field>
         <field name="tags" type="tag" label="JTAG" multiple="true" mode="ajax" custom="allow" />
         <field name="description" type="editor" label="JGLOBAL_DESCRIPTION" buttons="true" filter="\Joomla\CMS\Component\ComponentHelper::filterText" />
         <field name="recorded_at" type="calendar" label="COM_AUDIOARCHIVE_FIELD_RECORDING_DATE" translateformat="true" showtime="true" filter="user_utc" />
