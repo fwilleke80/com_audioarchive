@@ -7,6 +7,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
 use Joomla\Registry\Registry;
+use Willeke\Component\Audioarchive\Site\Helper\RouteHelper;
 use Willeke\Component\Audioarchive\Site\Model\ArchiveModel;
 
 \defined('_JEXEC') or die;
@@ -37,6 +38,9 @@ class HtmlView extends BaseHtmlView
 	/** @var string[] */
 	public array $filterErrors = [];
 
+	/** @var int[] */
+	public array $pageSizeOptions = [];
+
 	/** @var string */
 	public string $pageHeading = '';
 	/** @var object|null */
@@ -65,12 +69,23 @@ class HtmlView extends BaseHtmlView
 		$this->categoryOptions = $model->getCategoryOptions();
 		$this->tagOptions = $model->getTagOptions();
 		$this->filterErrors = $model->getFilterErrors();
+		$this->pageSizeOptions = $model->getPageSizeOptions();
 
 		$app = Factory::getApplication();
+		$itemId = $app->getInput()->getInt('Itemid', 0);
+
+		foreach ($this->items as $clip)
+		{
+			$clip->detail_url = Route::_(RouteHelper::getClipRoute((int) $clip->id, $itemId));
+			$clip->stream_url = Route::_(RouteHelper::getPlaybackRoute((int) $clip->id, $itemId));
+		}
+
 		$item = $app->getMenu()->getActive();
 		$this->pageHeading = (string) $this->params->get('page_heading', $item?->title ?? Text::_('COM_AUDIOARCHIVE_ARCHIVE_TITLE'));
 		$this->getDocument()->setTitle($this->pageHeading);
-		$this->getDocument()->getWebAssetManager()->useStyle('com_audioarchive.site');
+		$this->getDocument()->getWebAssetManager()
+			->useStyle('com_audioarchive.site')
+			->useScript('com_audioarchive.player');
 
 		parent::display($tpl);
 	}

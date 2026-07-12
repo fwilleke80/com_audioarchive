@@ -26,6 +26,9 @@ class ArchiveModel extends ListModel
 	/** @var Registry|null */
 	private ?Registry $resolvedParams = null;
 
+	/** @var bool */
+	private bool $ignoreVisitorCategoryFilter = false;
+
 	/**
 	 * @brief Construct the public list model.
 	 *
@@ -68,7 +71,14 @@ class ArchiveModel extends ListModel
 				$db->quoteName('a.access'),
 				$db->quoteName('a.play_count'),
 				$db->quoteName('a.download_count'),
+				$db->quoteName('f.file_extension'),
+				$db->quoteName('f.mime_type'),
+				$db->quoteName('f.audio_codec'),
+				$db->quoteName('f.container_format'),
+				$db->quoteName('f.file_size'),
 				$db->quoteName('c.title', 'category_title'),
+				$db->quoteName('c.lft', 'category_lft'),
+				$db->quoteName('c.rgt', 'category_rgt'),
 			])
 			->from($db->quoteName('#__audioarchive_clips', 'a'))
 			->innerJoin(
@@ -115,9 +125,10 @@ class ArchiveModel extends ListModel
 			->bind(':publishNow', $now, ParameterType::STRING)
 			->bind(':unpublishNow', $now, ParameterType::STRING);
 
-		$levels = array_values(array_unique(array_map('intval', $this->getCurrentUser()->getAuthorisedViewLevels())));
+		$levels = $this->getAuthorisedViewLevels();
 		$query->whereIn($db->quoteName('a.access'), $levels, ParameterType::INTEGER);
 		$query->whereIn($db->quoteName('c.access'), $levels, ParameterType::INTEGER);
+		$this->addAncestorCategoryRestrictions($query, 'c', $levels);
 
 		$search = trim((string) $this->getState('filter.search'));
 		if ($search !== '')
@@ -141,7 +152,7 @@ class ArchiveModel extends ListModel
 			$query->where($db->quoteName('a.catid') . ' = :menuCategory')
 				->bind(':menuCategory', $menuCategoryId, ParameterType::INTEGER);
 		}
-		elseif ($categoryId > 0)
+		elseif (!$this->ignoreVisitorCategoryFilter && $categoryId > 0)
 		{
 			$query->where($db->quoteName('a.catid') . ' = :filterCategory')
 				->bind(':filterCategory', $categoryId, ParameterType::INTEGER);
@@ -241,22 +252,72 @@ class ArchiveModel extends ListModel
 		$db = $this->getDatabase();
 		$extension = 'com_audioarchive';
 		$published = 1;
-		$levels = array_values(array_unique(array_map('intval', $this->getCurrentUser()->getAuthorisedViewLevels())));
+		$levels = $this->getAuthorisedViewLevels();
+		$showEmpty = (int) $this->getResolvedParams()->get('archive_show_empty_categories', 0) === 1;
+		$visibleCategoryIds = [];
+
+		if (!$showEmpty)
+		{
+			$this->ignoreVisitorCategoryFilter = true;
+
+			try
+			{
+				$visibleQuery = $this->getListQuery();
+			}
+			finally
+			{
+				$this->ignoreVisitorCategoryFilter = false;
+			}
+
+			$visibleQuery->clear('select')->clear('order')->select('DISTINCT ' . $db->quoteName('a.catid'));
+			$visibleCategoryIds = array_values(array_unique(array_map('intval', $db->setQuery($visibleQuery)->loadColumn())));
+
+			if ($visibleCategoryIds === [])
+			{
+				return [];
+			}
+		}
+
 		$query = $db->getQuery(true)
 			->select([
-				$db->quoteName('id'),
-				$db->quoteName('title'),
-				$db->quoteName('level'),
+				$db->quoteName('c.id'),
+				$db->quoteName('c.title'),
+				$db->quoteName('c.level'),
 			])
-			->from($db->quoteName('#__categories'))
-			->where($db->quoteName('extension') . ' = :extension')
-			->where($db->quoteName('published') . ' = :published')
-			->whereIn($db->quoteName('access'), $levels, ParameterType::INTEGER)
-			->order($db->quoteName('lft') . ' ASC')
-			->bind(':extension', $extension, ParameterType::STRING)
-			->bind(':published', $published, ParameterType::INTEGER);
+			->from($db->quoteName('#__categories', 'c'))
+			->where($db->quoteName('c.extension') . ' = :optionExtension')
+			->where($db->quoteName('c.published') . ' = :optionPublished')
+			->whereIn($db->quoteName('c.access'), $levels, ParameterType::INTEGER)
+			->order($db->quoteName('c.lft') . ' ASC')
+			->bind(':optionExtension', $extension, ParameterType::STRING)
+			->bind(':optionPublished', $published, ParameterType::INTEGER);
+		$this->addAncestorCategoryRestrictions($query, 'c', $levels, 'option');
+
+		if (!$showEmpty)
+		{
+			$query->whereIn($db->quoteName('c.id'), $visibleCategoryIds, ParameterType::INTEGER);
+		}
 
 		return $db->setQuery($query)->loadObjectList();
+	}
+
+	/**
+	 * @brief Return configured visitor-selectable page sizes.
+	 *
+	 * @return int[]
+	 */
+	public function getPageSizeOptions(): array
+	{
+		$params = $this->getResolvedParams();
+		$maximum = max(1, min(1000, (int) $params->get('archive_maximum_page_size', 200)));
+		$values = preg_split('/[,;\s]+/', (string) $params->get('archive_allowed_page_sizes', '10,20,50,100')) ?: [];
+		$options = array_values(array_unique(array_filter(array_map('intval', $values), static fn(int $value): bool => $value > 0 && $value <= $maximum)));
+		$default = max(1, min($maximum, (int) $params->get('archive_default_limit', $params->get('default_limit', 20))));
+		$options[] = $default;
+		$options = array_values(array_unique($options));
+		sort($options, SORT_NUMERIC);
+
+		return $options !== [] ? $options : [$default];
 	}
 
 	/**
@@ -269,7 +330,7 @@ class ArchiveModel extends ListModel
 		$db = $this->getDatabase();
 		$typeAlias = 'com_audioarchive.clip';
 		$published = 1;
-		$levels = array_values(array_unique(array_map('intval', $this->getCurrentUser()->getAuthorisedViewLevels())));
+		$levels = $this->getAuthorisedViewLevels();
 		$query = $db->getQuery(true)
 			->select([
 				$db->quoteName('t.id'),
@@ -402,10 +463,57 @@ class ArchiveModel extends ListModel
 		$requestedDirection = strtoupper($input->getCmd('direction', $defaultDirection));
 		$this->setState('list.direction', $requestedDirection === 'ASC' ? 'ASC' : 'DESC');
 
-		$defaultLimit = max(1, (int) $params->get('archive_default_limit', $params->get('default_limit', 20)));
-		$limit = $input->getInt('limit', $defaultLimit);
-		$this->setState('list.limit', max(1, min(200, $limit)));
+		$maximumLimit = max(1, min(1000, (int) $params->get('archive_maximum_page_size', 200)));
+		$allowedLimits = $this->getPageSizeOptions();
+		$defaultLimit = max(1, min($maximumLimit, (int) $params->get('archive_default_limit', $params->get('default_limit', 20))));
+		$requestedLimit = max(1, min($maximumLimit, $input->getInt('limit', $defaultLimit)));
+		$limit = in_array($requestedLimit, $allowedLimits, true) ? $requestedLimit : $defaultLimit;
+		$this->setState('list.limit', $limit);
 		$this->setState('list.start', max(0, $input->getInt('limitstart', 0)));
+	}
+
+	/**
+	 * @brief Return authorised access-level identifiers with a safe fallback.
+	 *
+	 * @return int[]
+	 */
+	private function getAuthorisedViewLevels(): array
+	{
+		$levels = array_values(array_unique(array_filter(array_map('intval', $this->getCurrentUser()->getAuthorisedViewLevels()), static fn(int $id): bool => $id > 0)));
+
+		return $levels !== [] ? $levels : [1];
+	}
+
+	/**
+	 * @brief Exclude clips or options beneath hidden ancestor categories.
+	 *
+	 * @param QueryInterface $query Query receiving the restriction.
+	 * @param string $categoryAlias Direct category alias.
+	 * @param int[] $levels Authorised access levels.
+	 * @param string $bindingPrefix Unique placeholder prefix.
+	 *
+	 * @return void
+	 */
+	private function addAncestorCategoryRestrictions(QueryInterface $query, string $categoryAlias, array $levels, string $bindingPrefix = 'archive'): void
+	{
+		$db = $this->getDatabase();
+		$extension = 'com_audioarchive';
+		$published = 1;
+		$extensionPlaceholder = ':' . $bindingPrefix . 'AncestorExtension';
+		$publishedPlaceholder = ':' . $bindingPrefix . 'AncestorPublished';
+		$ancestor = $db->getQuery(true)
+			->select('1')
+			->from($db->quoteName('#__categories', 'ancestor_' . $bindingPrefix))
+			->where($db->quoteName('ancestor_' . $bindingPrefix . '.extension') . ' = ' . $extensionPlaceholder)
+			->where($db->quoteName('ancestor_' . $bindingPrefix . '.lft') . ' < ' . $db->quoteName($categoryAlias . '.lft'))
+			->where($db->quoteName('ancestor_' . $bindingPrefix . '.rgt') . ' > ' . $db->quoteName($categoryAlias . '.rgt'))
+			->where(
+				'(' . $db->quoteName('ancestor_' . $bindingPrefix . '.published') . ' <> ' . $publishedPlaceholder
+				. ' OR ' . $db->quoteName('ancestor_' . $bindingPrefix . '.access') . ' NOT IN (' . implode(',', array_map('intval', $levels)) . '))'
+			);
+		$query->where('NOT EXISTS (' . $ancestor . ')')
+			->bind($extensionPlaceholder, $extension, ParameterType::STRING)
+			->bind($publishedPlaceholder, $published, ParameterType::INTEGER);
 	}
 
 	/**

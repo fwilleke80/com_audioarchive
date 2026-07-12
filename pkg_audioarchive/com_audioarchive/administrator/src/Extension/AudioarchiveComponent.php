@@ -12,6 +12,8 @@ namespace Willeke\Component\Audioarchive\Administrator\Extension;
 
 use Joomla\CMS\Categories\CategoryServiceInterface;
 use Joomla\CMS\Categories\CategoryServiceTrait;
+use Joomla\CMS\Component\Router\RouterServiceInterface;
+use Joomla\CMS\Component\Router\RouterServiceTrait;
 use Joomla\CMS\Extension\MVCComponent;
 use Joomla\CMS\Tag\TagServiceInterface;
 use Joomla\CMS\Tag\TagServiceTrait;
@@ -21,10 +23,11 @@ use Joomla\CMS\Tag\TagServiceTrait;
 /**
  * @brief Component extension class.
  */
-class AudioarchiveComponent extends MVCComponent implements CategoryServiceInterface, TagServiceInterface
+class AudioarchiveComponent extends MVCComponent implements CategoryServiceInterface, RouterServiceInterface, TagServiceInterface
 {
-    use CategoryServiceTrait;
-    use TagServiceTrait
+	use CategoryServiceTrait;
+	use RouterServiceTrait;
+	use TagServiceTrait
     {
         CategoryServiceTrait::getTableNameForSection insteadof TagServiceTrait;
         CategoryServiceTrait::getStateColumnForSection insteadof TagServiceTrait;

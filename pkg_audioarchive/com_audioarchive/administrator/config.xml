@@ -125,6 +125,11 @@
         <field name="archive_show_uploaded_filter" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_UPLOADED_FILTER_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
         <field name="archive_show_active_filters" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_ACTIVE_FILTERS_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
         <field name="archive_show_result_count" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_RESULT_COUNT_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        <field name="archive_show_pagination" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_PAGINATION_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        <field name="archive_show_page_size" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_PAGE_SIZE_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        <field name="archive_show_empty_categories" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_EMPTY_CATEGORIES_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SHOW_EMPTY_CATEGORIES_DESC" default="0"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        <field name="archive_allowed_page_sizes" type="text" label="COM_AUDIOARCHIVE_CONFIG_ALLOWED_PAGE_SIZES_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ALLOWED_PAGE_SIZES_DESC" default="10,20,50,100" />
+        <field name="archive_maximum_page_size" type="number" label="COM_AUDIOARCHIVE_CONFIG_MAXIMUM_PAGE_SIZE_LABEL" description="COM_AUDIOARCHIVE_CONFIG_MAXIMUM_PAGE_SIZE_DESC" default="200" min="1" max="1000" step="1" />
         <field name="archive_column_play" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_PLAY" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
         <field name="archive_column_title" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_TITLE" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
         <field name="archive_column_category" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_CATEGORY" default="0"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
@@ -132,6 +137,23 @@
         <field name="archive_column_recorded" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_RECORDED" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
         <field name="archive_column_uploaded" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_UPLOADED" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
         <field name="archive_column_tags" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_TAGS" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+    </fieldset>
+
+    <fieldset name="playback" label="COM_AUDIOARCHIVE_CONFIG_PLAYBACK_LABEL">
+        <field name="allow_original_downloads" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_ALLOW_DOWNLOADS_LABEL" default="1"><option value="0">JNO</option><option value="1">JYES</option></field>
+    </fieldset>
+
+    <fieldset name="detail" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_LABEL">
+        <field name="detail_show_duration" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_DURATION_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        <field name="detail_show_category" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_CATEGORY_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        <field name="detail_show_tags" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_TAGS_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        <field name="detail_show_recorded" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_RECORDED_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        <field name="detail_show_uploaded" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_UPLOADED_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        <field name="detail_show_original_filename" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_FILENAME_LABEL" default="0"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        <field name="detail_show_format" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_FORMAT_LABEL" default="0"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        <field name="detail_show_codec" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_CODEC_LABEL" default="0"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        <field name="detail_show_file_size" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_FILE_SIZE_LABEL" default="0"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        <field name="detail_show_download" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
     </fieldset>
 
     <fieldset name="processing" label="COM_AUDIOARCHIVE_CONFIG_PROCESSING_LABEL">

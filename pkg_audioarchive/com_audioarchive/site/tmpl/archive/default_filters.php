@@ -85,6 +85,7 @@ $selectedTags = array_map('intval', (array) $this->state->get('filter.tags', [])
 		</div>
 
 		<input type="hidden" name="sort" value="<?php echo $this->escape((string) $this->state->get('list.ordering')); ?>">
+		<input type="hidden" name="limit" value="<?php echo (int) $this->state->get('list.limit'); ?>">
 		<input type="hidden" name="direction" value="<?php echo strtolower($this->escape((string) $this->state->get('list.direction'))); ?>">
 		<div class="com-audioarchive-filter-actions">
 			<button class="btn btn-primary" type="submit"><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_APPLY'); ?></button>
