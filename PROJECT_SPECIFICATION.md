@@ -3,7 +3,7 @@
 ## Project Specification
 
 | Property | Value |
-|---|---|
+| -------- | ----- |
 | Project name | Joomla! Audio Archive |
 | Working package name | `pkg_audioarchive` |
 | Target platform | Joomla! 6.x |
@@ -18,7 +18,7 @@
 
 ---
 
-# 1. Project overview
+## 1. Project overview
 
 The Joomla! Audio Archive is a native Joomla! 6 extension package for managing and publishing a large collection of audio clips.
 
@@ -64,7 +64,7 @@ Administration is performed through Joomla's administrator interface and follows
 
 ---
 
-# 2. Project goals
+## 2. Project goals
 
 The component shall provide:
 
@@ -83,7 +83,7 @@ The component shall provide:
 
 ---
 
-# 3. Non-goals
+## 3. Non-goals
 
 The first release is not intended to provide:
 
@@ -109,9 +109,9 @@ These features may be considered in later versions.
 
 ---
 
-# 4. Design principles
+## 4. Design principles
 
-## 4.1 Joomla-native behaviour
+### 4.1 Joomla-native behaviour
 
 The extension shall use standard Joomla functionality wherever appropriate:
 
@@ -131,13 +131,13 @@ The extension shall use standard Joomla functionality wherever appropriate:
 
 The extension shall not introduce custom replacements for standard Joomla functionality without a strong technical reason.
 
-## 4.2 Server-side archive queries
+### 4.2 Server-side archive queries
 
 Filtering, sorting, access checks, and pagination shall be performed by the server and database.
 
 The complete archive shall never be loaded into JavaScript for client-side filtering.
 
-## 4.3 Progressive enhancement
+### 4.3 Progressive enhancement
 
 The public archive shall work without JavaScript for:
 
@@ -159,7 +159,7 @@ JavaScript may enhance:
 - Administrative batch progress
 - Searchable tag-selection controls
 
-## 4.4 Original files are preserved
+### 4.4 Original files are preserved
 
 The component shall retain the original uploaded or imported audio file.
 
@@ -167,7 +167,7 @@ The original file shall be used for downloads unless an administrator explicitly
 
 Derived preview files shall never replace or modify the original.
 
-## 4.5 Graceful degradation
+### 4.5 Graceful degradation
 
 The absence of FFmpeg, FFprobe, shell execution, waveform generation, or preview generation shall not prevent the archive from functioning.
 
@@ -183,11 +183,11 @@ Missing optional derivatives shall be reported but shall not invalidate the clip
 
 ---
 
-# 5. Extension package structure
+## 5. Extension package structure
 
 The installable package shall initially contain the following extensions.
 
-## 5.1 Main component
+### 5.1 Main component
 
 ```text
 com_audioarchive
@@ -210,7 +210,7 @@ Responsibilities:
 - Joomla Custom Fields integration
 - Routing and SEF URLs
 
-## 5.2 Latest clips module
+### 5.2 Latest clips module
 
 ```text
 mod_audioarchive_latest
@@ -223,7 +223,7 @@ Responsibilities:
 - Include an inline player
 - Link to clip detail pages
 
-## 5.3 Random clip module
+### 5.3 Random clip module
 
 ```text
 mod_audioarchive_random
@@ -238,7 +238,7 @@ Responsibilities:
 - Include an inline player
 - Link to the clip detail page
 
-## 5.4 Smart Search plugin
+### 5.4 Smart Search plugin
 
 ```text
 plg_finder_audioarchive
@@ -252,7 +252,7 @@ Responsibilities:
 - Generate correct detail-page routes
 - Respect access levels
 
-## 5.5 Scheduled Tasks plugin
+### 5.5 Scheduled Tasks plugin
 
 ```text
 plg_task_audioarchive
@@ -271,9 +271,9 @@ The Scheduled Tasks plugin is useful but shall not be required for ordinary fron
 
 ---
 
-# 6. Audio format policy
+## 6. Audio format policy
 
-## 6.1 General policy
+### 6.1 General policy
 
 The component shall distinguish between:
 
@@ -286,7 +286,7 @@ A file may be accepted into the archive even when it cannot be played directly i
 
 Such a file shall remain downloadable.
 
-## 6.2 Default accepted extensions
+### 6.2 Default accepted extensions
 
 The initial default list shall include:
 
@@ -307,7 +307,7 @@ The administrator may change the permitted extension list in the component confi
 
 The extension list alone shall not be considered sufficient validation.
 
-## 6.3 M4A handling
+### 6.3 M4A handling
 
 Existing M4A files shall be preserved and shall not be converted wholesale.
 
@@ -328,7 +328,7 @@ Where an M4A file contains browser-compatible AAC audio, the original may be use
 
 Where browser compatibility is uncertain, an optional preview may be generated when FFmpeg is available.
 
-## 6.4 MP3 preview format
+### 6.4 MP3 preview format
 
 When a compatibility preview is required, MP3 shall be the default preview format.
 
@@ -347,7 +347,7 @@ The default implementation does not require an Ogg preview in addition to MP3.
 
 Support for additional derived formats may be added later.
 
-## 6.5 Original downloads
+### 6.5 Original downloads
 
 The public download action shall deliver the original archive file.
 
@@ -355,11 +355,11 @@ Preview files shall normally be used only for browser playback.
 
 ---
 
-# 7. Media validation
+## 7. Media validation
 
 Uploaded and imported files shall be validated using several signals.
 
-## 7.1 Validation stages
+### 7.1 Validation stages
 
 1. Validate filename extension.
 2. Inspect MIME type using PHP Fileinfo.
@@ -368,7 +368,7 @@ Uploaded and imported files shall be validated using several signals.
 5. Reject files that do not appear to be valid supported media files.
 6. Record warnings when the extension, MIME type, and detected container disagree.
 
-## 7.2 Validation result
+### 7.2 Validation result
 
 The component shall record:
 
@@ -387,9 +387,9 @@ The public interface does not need to display all technical metadata.
 
 ---
 
-# 8. FFmpeg and FFprobe detection
+## 8. FFmpeg and FFprobe detection
 
-## 8.1 Automatic detection
+### 8.1 Automatic detection
 
 The component shall include a System Check page that determines whether FFmpeg and FFprobe are available.
 
@@ -406,7 +406,7 @@ ffmpeg
 
 The administrator may also configure explicit paths.
 
-## 8.2 Process execution checks
+### 8.2 Process execution checks
 
 The component shall check:
 
@@ -418,7 +418,7 @@ The component shall check:
 - Which version is installed
 - Whether a test media file can be analysed
 
-## 8.3 Secure process invocation
+### 8.3 Secure process invocation
 
 External processes shall be invoked using argument arrays rather than concatenated shell command strings.
 
@@ -432,7 +432,7 @@ Execution shall use:
 - Exit-code validation
 - Sanitised diagnostic messages
 
-## 8.4 System Check display
+### 8.4 System Check display
 
 The System Check page shall display information such as:
 
@@ -467,9 +467,9 @@ A Retest action shall be provided.
 
 ---
 
-# 9. Metadata extraction fallback
+## 9. Metadata extraction fallback
 
-## 9.1 Extraction hierarchy
+### 9.1 Extraction hierarchy
 
 Metadata shall be extracted using this order:
 
@@ -482,7 +482,7 @@ The expected PHP fallback library is getID3 or an equivalent locally packaged li
 
 The selected dependency and exact version shall be locked during implementation.
 
-## 9.2 Embedded metadata
+### 9.2 Embedded metadata
 
 The term embedded metadata shall cover format-specific systems such as:
 
@@ -494,7 +494,7 @@ The term embedded metadata shall cover format-specific systems such as:
 
 The system shall not assume that all files use ID3 tags.
 
-## 9.3 Automatic title creation
+### 9.3 Automatic title creation
 
 The initial public title shall be determined in this order:
 
@@ -513,7 +513,7 @@ Filename cleanup shall:
 
 The generated title remains editable.
 
-## 9.4 Recording date extraction
+### 9.4 Recording date extraction
 
 The initial recording date shall be determined in this order:
 
@@ -536,9 +536,9 @@ Filesystem dates shall not be treated as unquestionably accurate.
 
 ---
 
-# 10. File storage
+## 10. File storage
 
-## 10.1 Configurable paths
+### 10.1 Configurable paths
 
 The following paths shall be configurable:
 
@@ -547,13 +547,13 @@ The following paths shall be configurable:
 - Waveform storage directory
 - Import inbox directory
 
-## 10.2 Storage outside the public web root
+### 10.2 Storage outside the public web root
 
 Where the hosting environment permits it, original and derived files should be stored outside the publicly accessible web root.
 
 Files shall then be delivered through component controllers.
 
-## 10.3 Protected storage inside the web root
+### 10.3 Protected storage inside the web root
 
 If storage outside the web root is unavailable, the component shall:
 
@@ -562,7 +562,7 @@ If storage outside the web root is unavailable, the component shall:
 - Avoid exposing direct file URLs
 - Deliver files through the component
 
-## 10.4 Internal filenames
+### 10.4 Internal filenames
 
 Stored filenames shall not use the original client filename.
 
@@ -578,13 +578,13 @@ waveforms/4f/91/4f91d8e6-9a30-4e32-97ce-50de256f7f23.json
 
 Directory sharding shall prevent very large numbers of files from accumulating in one directory.
 
-## 10.5 Original filename
+### 10.5 Original filename
 
 The original filename shall be stored separately in the database.
 
 Changing a clip title or alias shall not rename or relocate the stored file unless a specific maintenance operation requests it.
 
-## 10.6 Path security
+### 10.6 Path security
 
 All paths shall be normalised and validated.
 
@@ -600,7 +600,7 @@ Symbolic-link traversal shall be disabled by default.
 
 ---
 
-# 11. File size and duration limits
+## 11. File size and duration limits
 
 The component configuration shall include:
 
@@ -624,11 +624,11 @@ Directory imports are not constrained by browser upload-size limits, but remain 
 
 ---
 
-# 12. Database model
+## 12. Database model
 
 The precise schema may be adjusted during implementation, but the following logical data model is required.
 
-## 12.1 Clips table
+### 12.1 Clips table
 
 Suggested table:
 
@@ -691,7 +691,7 @@ Recommended field characteristics:
 - `technical_metadata`: structured JSON or equivalent storage
 - `params`: per-item options
 
-## 12.2 File variants table
+### 12.2 File variants table
 
 Suggested table:
 
@@ -730,7 +730,7 @@ The original file record is mandatory.
 
 The preview record is optional.
 
-## 12.3 Waveform table
+### 12.3 Waveform table
 
 Suggested table:
 
@@ -756,7 +756,7 @@ processing_error
 
 Only one active waveform is required per clip in the initial release.
 
-## 12.4 Processing jobs table
+### 12.4 Processing jobs table
 
 Suggested table:
 
@@ -804,7 +804,7 @@ cancelled
 
 These are technical processing states, not publication workflow states.
 
-## 12.5 Joomla tags
+### 12.5 Joomla tags
 
 Tags shall use Joomla's standard tag system.
 
@@ -823,7 +823,7 @@ Tags are a flat vocabulary for this project. The component shall not implement:
 - Duplicate-meaning detection
 - Controlled vocabulary restrictions
 
-## 12.6 Categories
+### 12.6 Categories
 
 Each clip shall have one primary Joomla category.
 
@@ -831,7 +831,7 @@ An `Uncategorised` category may be used as the default.
 
 The default category for new and imported clips shall be configurable.
 
-## 12.7 Custom Fields
+### 12.7 Custom Fields
 
 The Custom Fields context shall be:
 
@@ -845,7 +845,7 @@ Core archive properties such as duration, dates, state, category, title, and acc
 
 ---
 
-# 13. Database indexes
+## 13. Database indexes
 
 The schema shall include indexes supporting common archive queries.
 
@@ -879,15 +879,15 @@ Tag filtering shall be implemented using efficient indexed tag-mapping queries.
 
 ---
 
-# 14. Duplicate detection
+## 14. Duplicate detection
 
-## 14.1 Checksum generation
+### 14.1 Checksum generation
 
 The component shall calculate SHA-256 for imported original files.
 
 Checksum generation is required because implementation cost is low and the value is useful.
 
-## 14.2 Duplicate policies
+### 14.2 Duplicate policies
 
 The component configuration shall provide:
 
@@ -903,7 +903,7 @@ Default:
 Warn but allow import
 ```
 
-## 14.3 Duplicate behaviour
+### 14.3 Duplicate behaviour
 
 When a matching checksum already exists, the administrator shall be shown:
 
@@ -920,7 +920,7 @@ Duplicate detection shall not assume that matching filenames represent matching 
 
 ---
 
-# 15. Joomla publication workflow
+## 15. Joomla publication workflow
 
 The component shall use Joomla's standard item states:
 
@@ -945,9 +945,9 @@ Publication shall only be blocked when the original file is missing or invalid.
 
 ---
 
-# 16. Joomla ACL and access levels
+## 16. Joomla ACL and access levels
 
-## 16.1 Standard permissions
+### 16.1 Standard permissions
 
 The component shall support standard Joomla actions:
 
@@ -961,7 +961,7 @@ core.edit.state
 core.edit.own
 ```
 
-## 16.2 Custom permissions
+### 16.2 Custom permissions
 
 Custom actions may be added where standard actions are insufficient:
 
@@ -971,7 +971,7 @@ audioarchive.process
 audioarchive.managefiles
 ```
 
-## 16.3 Permission hierarchy
+### 16.3 Permission hierarchy
 
 Permissions shall follow Joomla inheritance:
 
@@ -982,7 +982,7 @@ Global configuration
             Clip
 ```
 
-## 16.4 Access levels
+### 16.4 Access levels
 
 Every clip shall have a Joomla access level.
 
@@ -997,15 +997,15 @@ Frontend list, detail, playback, and download requests shall verify:
 
 The default access level for new clips shall be configurable.
 
-## 16.5 Administrator interface
+### 16.5 Administrator interface
 
 Administrator actions and toolbar buttons shall only be shown when the current user is authorised to perform the corresponding action.
 
 ---
 
-# 17. Administrator interface
+## 17. Administrator interface
 
-## 17.1 Dashboard
+### 17.1 Dashboard
 
 The component dashboard should show:
 
@@ -1022,7 +1022,7 @@ The component dashboard should show:
 - Storage path status
 - Recent imports
 
-## 17.2 Clip manager
+### 17.2 Clip manager
 
 The clip manager shall provide a Joomla-style list view.
 
@@ -1067,11 +1067,11 @@ Administrator sorting should include:
 - Download count
 - ID
 
-## 17.3 Clip edit form
+### 17.3 Clip edit form
 
 The edit form shall contain sections for:
 
-### Basic metadata
+#### Basic metadata
 
 - Title
 - Alias
@@ -1084,7 +1084,7 @@ The edit form shall contain sections for:
 - Publication start
 - Publication end
 
-### File information
+#### File information
 
 - Original filename
 - Stored file type
@@ -1097,12 +1097,12 @@ The edit form shall contain sections for:
 - Preview status
 - Waveform status
 
-### Custom Fields
+#### Custom Fields
 
 - Standard Joomla Custom Fields
 - Grouped according to Joomla field groups
 
-### Publishing information
+#### Publishing information
 
 - Created date
 - Created by
@@ -1112,7 +1112,7 @@ The edit form shall contain sections for:
 - Download count
 - Item ID
 
-### Technical actions
+#### Technical actions
 
 - Reanalyse metadata
 - Regenerate preview
@@ -1122,7 +1122,7 @@ The edit form shall contain sections for:
 - Remove waveform
 - Verify stored files
 
-## 17.4 File replacement
+### 17.4 File replacement
 
 Replacing an original file shall:
 
@@ -1141,9 +1141,9 @@ A replacement-history feature is optional for a later version.
 
 ---
 
-# 18. Browser bulk upload
+## 18. Browser bulk upload
 
-## 18.1 Upload interface
+### 18.1 Upload interface
 
 The administrator shall be able to select multiple files in the browser.
 
@@ -1157,7 +1157,7 @@ The upload interface shall provide:
 - Cancel support where practical
 - Batch metadata settings
 
-## 18.2 Upload strategy
+### 18.2 Upload strategy
 
 Files shall be uploaded individually or in small controlled groups.
 
@@ -1170,7 +1170,7 @@ This reduces problems caused by:
 - Request timeouts
 - One failed file invalidating the entire batch
 
-## 18.3 Batch metadata
+### 18.3 Batch metadata
 
 The administrator shall be able to assign values applied to all files in the batch:
 
@@ -1182,7 +1182,7 @@ The administrator shall be able to assign values applied to all files in the bat
 
 Applying tags during bulk upload shall add the selected tags to every uploaded clip.
 
-## 18.4 Per-file result
+### 18.4 Per-file result
 
 After each upload, the interface shall show:
 
@@ -1198,15 +1198,15 @@ After each upload, the interface shall show:
 
 ---
 
-# 19. Server-directory import
+## 19. Server-directory import
 
-## 19.1 Import inbox
+### 19.1 Import inbox
 
 The component shall use a configured import inbox directory.
 
 Administrators shall not be allowed to browse arbitrary server directories through the component.
 
-## 19.2 Scan options
+### 19.2 Scan options
 
 The scan interface shall support:
 
@@ -1218,7 +1218,7 @@ The scan interface shall support:
 - Selecting some or all discovered files
 - Previewing metadata before import
 
-## 19.3 Scan result
+### 19.3 Scan result
 
 For each discovered file, display:
 
@@ -1236,7 +1236,7 @@ For each discovered file, display:
 - Import eligibility
 - Validation warnings
 
-## 19.4 Batch settings
+### 19.4 Batch settings
 
 The administrator shall select:
 
@@ -1248,7 +1248,7 @@ The administrator shall select:
 
 These values apply to all selected files.
 
-## 19.5 Import process
+### 19.5 Import process
 
 For each selected file:
 
@@ -1276,9 +1276,9 @@ Failed files shall remain in the inbox for review unless explicitly removed.
 
 ---
 
-# 20. Processing jobs
+## 20. Processing jobs
 
-## 20.1 Purpose
+### 20.1 Purpose
 
 Technical processing may take longer than a normal web request, especially for hundreds of files.
 
@@ -1289,7 +1289,7 @@ The job system shall make processing:
 - Observable
 - Safe from request timeouts
 
-## 20.2 Processing methods
+### 20.2 Processing methods
 
 Jobs may be processed by:
 
@@ -1297,13 +1297,13 @@ Jobs may be processed by:
 2. Joomla Scheduled Tasks
 3. A future Joomla console command
 
-## 20.3 Administrator processing
+### 20.3 Administrator processing
 
 The administrator shall be able to run pending jobs in small batches.
 
 The interface may use AJAX for progress, but each request shall process only a limited number of jobs or a limited execution time.
 
-## 20.4 Scheduled Tasks
+### 20.4 Scheduled Tasks
 
 The Scheduled Tasks plugin shall process a configurable number of pending jobs per invocation.
 
@@ -1324,7 +1324,7 @@ Cron is not required for:
 - Downloads
 - Ordinary editing
 
-## 20.5 Retry behaviour
+### 20.5 Retry behaviour
 
 Jobs shall record:
 
@@ -1343,9 +1343,9 @@ Administrators shall be able to:
 
 ---
 
-# 21. Preview generation
+## 21. Preview generation
 
-## 21.1 Conditions
+### 21.1 Conditions
 
 A preview may be generated when:
 
@@ -1354,7 +1354,7 @@ A preview may be generated when:
 - An administrator explicitly requests a preview
 - Configuration requires previews for all originals
 
-## 21.2 Default policy
+### 21.2 Default policy
 
 Default:
 
@@ -1362,7 +1362,7 @@ Default:
 Generate previews only when required for browser compatibility
 ```
 
-## 21.3 Preview status
+### 21.3 Preview status
 
 Supported values:
 
@@ -1375,7 +1375,7 @@ failed
 stale
 ```
 
-## 21.4 FFmpeg absence
+### 21.4 FFmpeg absence
 
 When FFmpeg is unavailable:
 
@@ -1387,9 +1387,9 @@ When FFmpeg is unavailable:
 
 ---
 
-# 22. Waveforms
+## 22. Waveforms
 
-## 22.1 Waveform representation
+### 22.1 Waveform representation
 
 Waveforms shall be stored as pre-generated peak data rather than pre-rendered images.
 
@@ -1397,7 +1397,7 @@ The initial format should be compact JSON containing normalised sample peaks.
 
 The waveform data should contain enough detail for responsive rendering.
 
-## 22.2 Waveform generation
+### 22.2 Waveform generation
 
 When FFmpeg is available:
 
@@ -1409,7 +1409,7 @@ When FFmpeg is available:
 6. Store the resulting data file.
 7. Record generator and version information.
 
-## 22.3 Waveform configuration
+### 22.3 Waveform configuration
 
 Options shall include:
 
@@ -1423,7 +1423,7 @@ Options shall include:
 - Lazy-load waveform data
 - Queue missing waveform when detail page is first viewed
 
-## 22.4 Lazy behaviour
+### 22.4 Lazy behaviour
 
 Public visitors shall never synchronously generate a waveform.
 
@@ -1435,7 +1435,7 @@ Actual generation occurs later through:
 - Scheduled Tasks
 - A future console command
 
-## 22.5 Waveform absence
+### 22.5 Waveform absence
 
 A missing or failed waveform shall not prevent:
 
@@ -1446,7 +1446,7 @@ A missing or failed waveform shall not prevent:
 
 The waveform area shall simply be omitted or show a non-intrusive unavailable state.
 
-## 22.6 Frontend renderer
+### 22.6 Frontend renderer
 
 The waveform renderer shall be packaged locally.
 
@@ -1456,9 +1456,9 @@ No runtime dependency shall be loaded from a public CDN.
 
 ---
 
-# 23. Public archive view
+## 23. Public archive view
 
-## 23.1 General layout
+### 23.1 General layout
 
 The archive page shall contain:
 
@@ -1470,7 +1470,7 @@ The archive page shall contain:
 6. Sortable result table
 7. Pagination
 
-## 23.2 Filter form method
+### 23.2 Filter form method
 
 The filter form shall use HTTP GET.
 
@@ -1480,7 +1480,7 @@ AJAX filtering is not required.
 
 Filter URLs shall be bookmarkable and shareable.
 
-## 23.3 Filter parameters
+### 23.3 Filter parameters
 
 The archive shall support:
 
@@ -1512,7 +1512,7 @@ limit
 start
 ```
 
-## 23.4 Text search
+### 23.4 Text search
 
 The text search shall inspect the component's built-in text fields:
 
@@ -1525,7 +1525,7 @@ The first release does not require archive-filter searching of arbitrary Custom 
 
 Smart Search may index selected Custom Field values separately.
 
-## 23.5 Tag filtering
+### 23.5 Tag filtering
 
 Visitors may select multiple tags.
 
@@ -1544,7 +1544,7 @@ Selected tags:
 
 The result must contain all three tags.
 
-## 23.6 Category filtering
+### 23.6 Category filtering
 
 The initial public filter shall support:
 
@@ -1553,7 +1553,7 @@ The initial public filter shall support:
 
 Support for selecting multiple categories may be added later.
 
-## 23.7 Duration filtering
+### 23.7 Duration filtering
 
 Duration values shall be converted to milliseconds for database comparison.
 
@@ -1573,21 +1573,21 @@ These represent:
 
 Invalid values shall produce a clear validation message.
 
-## 23.8 Date filtering
+### 23.8 Date filtering
 
 Recording-date and upload-date ranges shall be inclusive.
 
 When only a start or end date is supplied, the query shall use the supplied boundary only.
 
-## 23.9 Reset behaviour
+### 23.9 Reset behaviour
 
 A Reset action shall clear archive filters while preserving the current archive menu item.
 
 ---
 
-# 24. Archive table
+## 24. Archive table
 
-## 24.1 Default columns
+### 24.1 Default columns
 
 The default table shall contain:
 
@@ -1600,7 +1600,7 @@ Upload date
 Tags
 ```
 
-## 24.2 Optional columns
+### 24.2 Optional columns
 
 Administrators may enable:
 
@@ -1613,7 +1613,7 @@ Administrators may enable:
 - File size
 - Selected Custom Fields
 
-## 24.3 Configuration levels
+### 24.3 Configuration levels
 
 Column visibility shall be configurable through:
 
@@ -1622,7 +1622,7 @@ Column visibility shall be configurable through:
 
 Menu-item options take precedence over component defaults.
 
-## 24.4 Sorting
+### 24.4 Sorting
 
 Clicking a sortable table header shall:
 
@@ -1648,7 +1648,7 @@ Optional sortable fields:
 
 Arbitrary Custom Field columns are not required to be sortable in the first release.
 
-## 24.5 Default sorting
+### 24.5 Default sorting
 
 Default:
 
@@ -1658,7 +1658,7 @@ Upload date descending
 
 This displays the newest imported clips first.
 
-## 24.6 Accessibility
+### 24.6 Accessibility
 
 Sortable headers shall use:
 
@@ -1669,7 +1669,7 @@ Sortable headers shall use:
 
 ---
 
-# 25. Tag result counts
+## 25. Tag result counts
 
 The component configuration shall provide:
 
@@ -1679,15 +1679,15 @@ Total counts
 Contextual counts
 ```
 
-## 25.1 Total counts
+### 25.1 Total counts
 
 Shows the total number of accessible published clips assigned to each tag.
 
-## 25.2 Contextual counts
+### 25.2 Contextual counts
 
 Shows how many clips would remain for each tag while respecting the other active filters.
 
-## 25.3 Default
+### 25.3 Default
 
 ```text
 Off
@@ -1697,7 +1697,7 @@ Contextual counts may use caching to avoid expensive repeated queries.
 
 ---
 
-# 26. Pagination
+## 26. Pagination
 
 All archive results shall use server-side Joomla pagination.
 
@@ -1713,9 +1713,9 @@ The result count shall represent the complete filtered result set.
 
 ---
 
-# 27. Inline playback
+## 27. Inline playback
 
-## 27.1 Table player
+### 27.1 Table player
 
 Each row shall provide a play control.
 
@@ -1728,7 +1728,7 @@ The player shall:
 - Display an accessible play/pause state
 - Provide a fallback link to the detail page
 
-## 27.2 JavaScript requirement
+### 27.2 JavaScript requirement
 
 JavaScript may be used for compact play buttons and one-player-at-a-time behaviour.
 
@@ -1738,7 +1738,7 @@ Without JavaScript, the visitor shall still be able to:
 - Use native playback where available
 - Download the file
 
-## 27.3 Playback source order
+### 27.3 Playback source order
 
 The component shall choose playback sources in this order:
 
@@ -1749,7 +1749,7 @@ The component shall choose playback sources in this order:
 
 Where useful, multiple `<source>` elements may be emitted.
 
-## 27.4 Unsupported formats
+### 27.4 Unsupported formats
 
 When no browser-compatible source exists, show:
 
@@ -1760,7 +1760,7 @@ You can download the original file.
 
 ---
 
-# 28. Clip detail view
+## 28. Clip detail view
 
 The detail page shall display:
 
@@ -1795,9 +1795,9 @@ Optional display settings shall control:
 
 ---
 
-# 29. Routing and URLs
+## 29. Routing and URLs
 
-## 29.1 SEF routing
+### 29.1 SEF routing
 
 The component shall implement a Joomla router.
 
@@ -1813,13 +1813,13 @@ The ID guarantees uniqueness.
 
 The alias provides a readable URL.
 
-## 29.2 Alias changes
+### 29.2 Alias changes
 
 Changing the alias may change the canonical URL.
 
 Changing only the original file shall not change the URL.
 
-## 29.3 Canonical URLs
+### 29.3 Canonical URLs
 
 The detail view shall emit a canonical route for the current clip.
 
@@ -1827,9 +1827,9 @@ Filter pages shall preserve query parameters in a predictable order where practi
 
 ---
 
-# 30. File streaming
+## 30. File streaming
 
-## 30.1 Playback endpoint
+### 30.1 Playback endpoint
 
 The playback endpoint shall:
 
@@ -1845,7 +1845,7 @@ The playback endpoint shall:
 - Avoid direct path disclosure
 - Avoid incrementing the download count
 
-## 30.2 Download endpoint
+### 30.2 Download endpoint
 
 The download endpoint shall:
 
@@ -1857,7 +1857,7 @@ The download endpoint shall:
 - Support large-file streaming
 - Avoid loading the complete file into PHP memory
 
-## 30.3 Range requests
+### 30.3 Range requests
 
 Range handling is required for:
 
@@ -1869,21 +1869,21 @@ Range requests used for playback shall not inflate download counts.
 
 ---
 
-# 31. Playback counts
+## 31. Playback counts
 
-## 31.1 Counting rule
+### 31.1 Counting rule
 
 A playback shall be counted when playback actually begins.
 
 Loading metadata or opening a page shall not count.
 
-## 31.2 Client reporting
+### 31.2 Client reporting
 
 A small JavaScript request may record the first play event for a clip during the current page view.
 
 Repeated pause and resume actions on the same page shall not repeatedly increment the count.
 
-## 31.3 Privacy
+### 31.3 Privacy
 
 The first release shall store only aggregate counts.
 
@@ -1893,13 +1893,13 @@ It shall not require storing:
 - User-agent history
 - Personal listening history
 
-## 31.4 Accuracy
+### 31.4 Accuracy
 
 Playback counts are informational and are not intended as tamper-proof analytics.
 
 ---
 
-# 32. Download counts
+## 32. Download counts
 
 A download shall be counted after:
 
@@ -1916,9 +1916,9 @@ Reasonable protection against repeated technical requests may be implemented usi
 
 ---
 
-# 33. Joomla Custom Fields
+## 33. Joomla Custom Fields
 
-## 33.1 Context
+### 33.1 Context
 
 The component shall expose:
 
@@ -1928,7 +1928,7 @@ com_audioarchive.clip
 
 as a Joomla Custom Fields context.
 
-## 33.2 Administrator forms
+### 33.2 Administrator forms
 
 Custom Fields shall appear in the clip edit form according to:
 
@@ -1937,13 +1937,13 @@ Custom Fields shall appear in the clip edit form according to:
 - Access permissions
 - Field publication state
 
-## 33.3 Frontend rendering
+### 33.3 Frontend rendering
 
 Configured Custom Field groups may be rendered on the clip detail page.
 
 Selected Custom Fields may be displayed as archive columns.
 
-## 33.4 Limitations in the first release
+### 33.4 Limitations in the first release
 
 The first release does not require:
 
@@ -1962,7 +1962,7 @@ Support may later be added for explicitly supported field types, such as:
 
 ---
 
-# 34. Smart Search
+## 34. Smart Search
 
 The Finder plugin shall index:
 
@@ -1987,9 +1987,9 @@ Reindexing shall be possible through Joomla Smart Search tools.
 
 ---
 
-# 35. Latest clips module
+## 35. Latest clips module
 
-## 35.1 Required options
+### 35.1 Required options
 
 The latest-clips module shall provide:
 
@@ -2010,7 +2010,7 @@ The latest-clips module shall provide:
 - Show detail link
 - Module caching options
 
-## 35.2 Default ordering
+### 35.2 Default ordering
 
 Default:
 
@@ -2018,15 +2018,15 @@ Default:
 Upload date descending
 ```
 
-## 35.3 Access
+### 35.3 Access
 
 The module shall only show clips that the current visitor may view.
 
 ---
 
-# 36. Random clip module
+## 36. Random clip module
 
-## 36.1 Modes
+### 36.1 Modes
 
 The random module shall support:
 
@@ -2035,7 +2035,7 @@ Random on each uncached request
 Stable clip of the day
 ```
 
-## 36.2 Clip-of-the-day selection
+### 36.2 Clip-of-the-day selection
 
 The daily selection shall be deterministic for:
 
@@ -2045,7 +2045,7 @@ The daily selection shall be deterministic for:
 
 The implementation should avoid expensive `ORDER BY RAND()` queries over the entire archive.
 
-## 36.3 Restrictions
+### 36.3 Restrictions
 
 The module shall support:
 
@@ -2055,7 +2055,7 @@ The module shall support:
 - Publication checks
 - Optional requirement for a playable source
 
-## 36.4 Display
+### 36.4 Display
 
 The module shall support:
 
@@ -2070,9 +2070,9 @@ The module shall support:
 
 ---
 
-# 37. Component configuration
+## 37. Component configuration
 
-## 37.1 General settings
+### 37.1 General settings
 
 - Default category
 - Default access level
@@ -2086,7 +2086,7 @@ The module shall support:
 - Enable Custom Fields
 - Enable Smart Search integration
 
-## 37.2 Storage settings
+### 37.2 Storage settings
 
 - Original-file directory
 - Preview-file directory
@@ -2096,7 +2096,7 @@ The module shall support:
 - Allow symbolic links
 - Directory creation permissions where applicable
 
-## 37.3 Upload settings
+### 37.3 Upload settings
 
 - Maximum file size
 - Maximum duration
@@ -2108,7 +2108,7 @@ The module shall support:
 - Automatically queue technical processing
 - Delete inbox file after successful import
 
-## 37.4 Playback settings
+### 37.4 Playback settings
 
 - Prefer original playback
 - Generate compatibility preview when required
@@ -2118,7 +2118,7 @@ The module shall support:
 - Allow original downloads
 - Inline-player presentation
 
-## 37.5 Waveform settings
+### 37.5 Waveform settings
 
 - Enable waveform generation
 - Generate during import
@@ -2129,7 +2129,7 @@ The module shall support:
 - Lazy-load waveform
 - Queue missing waveform on first detail view
 
-## 37.6 List settings
+### 37.6 List settings
 
 - Visible columns
 - Sortable columns
@@ -2146,7 +2146,7 @@ The module shall support:
 - Show description excerpt
 - Description excerpt length
 
-## 37.7 Detail-view settings
+### 37.7 Detail-view settings
 
 - Show category
 - Show tags
@@ -2162,7 +2162,7 @@ The module shall support:
 - Show waveform
 - Show download button
 
-## 37.8 Processing settings
+### 37.8 Processing settings
 
 - FFprobe path
 - FFmpeg path
@@ -2174,7 +2174,7 @@ The module shall support:
 - Retain completed jobs for a configured number of days
 - Retain failed-job diagnostics
 
-## 37.9 Menu-item overrides
+### 37.9 Menu-item overrides
 
 Archive menu items shall be able to override appropriate component defaults, including:
 
@@ -2192,9 +2192,9 @@ Archive menu items shall be able to override appropriate component defaults, inc
 
 ---
 
-# 38. Security requirements
+## 38. Security requirements
 
-## 38.1 Administrator actions
+### 38.1 Administrator actions
 
 All state-changing administrator requests shall require:
 
@@ -2203,7 +2203,7 @@ All state-changing administrator requests shall require:
 - Appropriate ACL permission
 - Validated input
 
-## 38.2 Upload security
+### 38.2 Upload security
 
 The component shall:
 
@@ -2216,7 +2216,7 @@ The component shall:
 - Avoid serving uploaded files directly
 - Log validation failures
 
-## 38.3 Output security
+### 38.3 Output security
 
 All frontend output shall be escaped according to context.
 
@@ -2224,13 +2224,13 @@ Descriptions shall use Joomla's configured editor and content filtering.
 
 Custom Field output shall use Joomla rendering and filtering.
 
-## 38.4 SQL security
+### 38.4 SQL security
 
 Queries shall use Joomla's database query API and bound values.
 
 No user-provided filter value shall be concatenated directly into SQL.
 
-## 38.5 Process security
+### 38.5 Process security
 
 External process arguments shall be supplied separately.
 
@@ -2238,7 +2238,7 @@ Only configured administrator-controlled executable paths may be used.
 
 Public users shall never be able to supply executable paths or processing arguments.
 
-## 38.6 Count endpoints
+### 38.6 Count endpoints
 
 Playback-count requests shall:
 
@@ -2249,9 +2249,9 @@ Playback-count requests shall:
 
 ---
 
-# 39. Performance requirements
+## 39. Performance requirements
 
-## 39.1 Archive query
+### 39.1 Archive query
 
 The archive shall remain responsive with several thousand clips.
 
@@ -2265,7 +2265,7 @@ The query shall:
 - Select only fields required by the current view
 - Paginate at database level
 
-## 39.2 Tag AND filtering
+### 39.2 Tag AND filtering
 
 When multiple tags are selected, the database query shall ensure that each result contains all selected tags.
 
@@ -2277,25 +2277,25 @@ An implementation may use:
 
 The implementation shall be tested with large tag sets.
 
-## 39.3 Random module
+### 39.3 Random module
 
 The random module should avoid scanning and randomly sorting the entire archive for every request.
 
 Stable daily selection may use a deterministic hash and eligible ID list or another efficient method.
 
-## 39.4 Waveform loading
+### 39.4 Waveform loading
 
 Waveform data shall be loaded only when required.
 
 List-view waveform loading shall be disabled by default.
 
-## 39.5 File delivery
+### 39.5 File delivery
 
 Audio streaming and downloads shall use chunked file delivery or an equivalent low-memory mechanism.
 
 ---
 
-# 40. Accessibility
+## 40. Accessibility
 
 The frontend should target WCAG 2.2 AA where practical.
 
@@ -2319,7 +2319,7 @@ Decorative waveforms shall be hidden from assistive technology.
 
 ---
 
-# 41. Responsive design
+## 41. Responsive design
 
 The archive shall support desktop, tablet, and mobile layouts.
 
@@ -2335,7 +2335,7 @@ The Joomla template shall retain control over visual styling through layouts and
 
 ---
 
-# 42. Template overrides
+## 42. Template overrides
 
 The component and modules shall use Joomla layout files that can be overridden by templates.
 
@@ -2355,7 +2355,7 @@ Business logic shall not be embedded in template files.
 
 ---
 
-# 43. Logging and diagnostics
+## 43. Logging and diagnostics
 
 The component shall use Joomla logging facilities.
 
@@ -2389,9 +2389,9 @@ Public error messages shall not expose:
 
 ---
 
-# 44. Error handling
+## 44. Error handling
 
-## 44.1 Import failures
+### 44.1 Import failures
 
 A failed import shall:
 
@@ -2401,7 +2401,7 @@ A failed import shall:
 - Allow retry
 - Clean up incomplete managed-storage files
 
-## 44.2 Missing original
+### 44.2 Missing original
 
 A clip whose original file is missing shall:
 
@@ -2410,7 +2410,7 @@ A clip whose original file is missing shall:
 - Return an appropriate HTTP status
 - Never expose the expected filesystem path
 
-## 44.3 Failed derivative
+### 44.3 Failed derivative
 
 A failed preview or waveform shall:
 
@@ -2419,7 +2419,7 @@ A failed preview or waveform shall:
 - Allow retry
 - Not block publication
 
-## 44.4 Database transaction use
+### 44.4 Database transaction use
 
 Database changes and file operations shall be coordinated carefully.
 
@@ -2427,9 +2427,9 @@ Where full atomicity is impossible, compensating cleanup shall remove incomplete
 
 ---
 
-# 45. Installation and updates
+## 45. Installation and updates
 
-## 45.1 Installation
+### 45.1 Installation
 
 The package installer shall:
 
@@ -2443,7 +2443,7 @@ The package installer shall:
 - Create an `Uncategorised` audio category where appropriate
 - Display a post-installation system check
 
-## 45.2 Updates
+### 45.2 Updates
 
 Updates shall use Joomla schema versioning.
 
@@ -2457,11 +2457,11 @@ Database and configuration migrations shall preserve:
 - Counts
 - Derivative records
 
-## 45.3 Update server
+### 45.3 Update server
 
 The package should support a Joomla update server when distributed beyond the development site.
 
-## 45.4 Uninstallation
+### 45.4 Uninstallation
 
 Uninstallation shall never silently delete original audio files.
 
@@ -2476,7 +2476,7 @@ The exact database-retention policy shall be documented before release.
 
 ---
 
-# 46. Backup and migration
+## 46. Backup and migration
 
 A complete backup shall include:
 
@@ -2494,7 +2494,7 @@ A maintenance tool should verify file references after moving the site.
 
 ---
 
-# 47. Language handling
+## 47. Language handling
 
 The archive content itself does not require Joomla multilingual associations.
 
@@ -2511,7 +2511,7 @@ No interface text shall be hard-coded into PHP or JavaScript.
 
 ---
 
-# 48. Third-party dependencies
+## 48. Third-party dependencies
 
 All runtime dependencies shall be packaged locally.
 
@@ -2533,9 +2533,9 @@ FFmpeg and FFprobe are optional server-provided executables and are not packaged
 
 ---
 
-# 49. Testing requirements
+## 49. Testing requirements
 
-## 49.1 Unit tests
+### 49.1 Unit tests
 
 Unit tests should cover:
 
@@ -2553,7 +2553,7 @@ Unit tests should cover:
 - Daily random-selection logic
 - Query-state parsing
 
-## 49.2 Integration tests
+### 49.2 Integration tests
 
 Integration tests should cover:
 
@@ -2576,7 +2576,7 @@ Integration tests should cover:
 - Duplicate detection
 - File replacement
 
-## 49.3 Media fixtures
+### 49.3 Media fixtures
 
 Test fixtures should include:
 
@@ -2596,7 +2596,7 @@ Test fixtures should include:
 - File with Unicode filename
 - Duplicate files with different filenames
 
-## 49.4 Browser tests
+### 49.4 Browser tests
 
 Playback and layout should be tested in current versions of:
 
@@ -2607,7 +2607,7 @@ Playback and layout should be tested in current versions of:
 
 Testing should include desktop and mobile layouts.
 
-## 49.5 Security tests
+### 49.5 Security tests
 
 Security tests should include:
 
@@ -2624,15 +2624,15 @@ Security tests should include:
 
 ---
 
-# 50. Acceptance criteria
+## 50. Acceptance criteria
 
-## 50.1 Installation
+### 50.1 Installation
 
 The package installs successfully on a supported Joomla! 6 installation.
 
 All required extensions are enabled or clearly reported.
 
-## 50.2 Existing archive import
+### 50.2 Existing archive import
 
 An administrator can import the existing collection of more than 800 M4A files through the configured directory importer in manageable batches.
 
@@ -2646,7 +2646,7 @@ For each valid file, the system automatically determines where available:
 - Recording date
 - Checksum
 
-## 50.3 Metadata management
+### 50.3 Metadata management
 
 An authorised administrator can:
 
@@ -2661,7 +2661,7 @@ An authorised administrator can:
 - Replace files
 - Retry failed processing
 
-## 50.4 Public filtering
+### 50.4 Public filtering
 
 Visitors can combine:
 
@@ -2675,7 +2675,7 @@ Visitors can combine:
 
 The database applies the filters before pagination.
 
-## 50.5 Sorting
+### 50.5 Sorting
 
 Visitors can sort by:
 
@@ -2688,7 +2688,7 @@ Both ascending and descending ordering work.
 
 Active filters remain applied.
 
-## 50.6 Playback
+### 50.6 Playback
 
 Visitors can play browser-compatible clips inline.
 
@@ -2696,23 +2696,23 @@ Starting another clip pauses or stops the current clip when JavaScript is availa
 
 Unsupported formats present a download fallback.
 
-## 50.7 Detail page
+### 50.7 Detail page
 
 Each accessible clip has a detail page containing configured metadata, player, tags, category, Custom Fields, download action, and waveform where available.
 
-## 50.8 Downloads
+### 50.8 Downloads
 
 Visitors can download the original file without seeing its managed server path.
 
 Access restrictions are enforced.
 
-## 50.9 Waveforms
+### 50.9 Waveforms
 
 When FFmpeg is available and waveform generation is enabled, waveform data can be generated and displayed.
 
 When FFmpeg is unavailable, the remainder of the component remains functional.
 
-## 50.10 Modules
+### 50.10 Modules
 
 The latest and random modules:
 
@@ -2722,7 +2722,7 @@ The latest and random modules:
 - Include inline playback
 - Link to detail pages
 
-## 50.11 Joomla integration
+### 50.11 Joomla integration
 
 The component works with:
 
@@ -2738,9 +2738,9 @@ The component works with:
 
 ---
 
-# 51. Recommended implementation phases
+## 51. Recommended implementation phases
 
-## Phase 1: Foundation
+### Phase 1: Foundation
 
 - Package skeleton
 - Component installation
@@ -2752,7 +2752,7 @@ The component works with:
 - Basic administrator clip CRUD
 - Component configuration
 
-## Phase 2: File handling
+### Phase 2: File handling
 
 - Managed storage
 - Single upload
@@ -2766,7 +2766,7 @@ The component works with:
 - Date extraction
 - Checksums
 
-## Phase 3: Public archive
+### Phase 3: Public archive
 
 - Archive model
 - GET filter form
@@ -2780,7 +2780,7 @@ The component works with:
 - Pagination
 - Configurable columns
 
-## Phase 4: Playback and downloads
+### Phase 4: Playback and downloads
 
 - Protected stream endpoint
 - Range requests
@@ -2790,7 +2790,7 @@ The component works with:
 - Playback counts
 - Download counts
 
-## Phase 5: Joomla integrations
+### Phase 5: Joomla integrations
 
 - Custom Fields
 - Smart Search
@@ -2798,7 +2798,7 @@ The component works with:
 - Template overrides
 - Language files
 
-## Phase 6: Processing system
+### Phase 6: Processing system
 
 - FFmpeg and FFprobe detection
 - Job queue
@@ -2807,7 +2807,7 @@ The component works with:
 - Preview generation
 - Technical diagnostics
 
-## Phase 7: Waveforms
+### Phase 7: Waveforms
 
 - Peak-data generation
 - Local waveform renderer
@@ -2815,7 +2815,7 @@ The component works with:
 - Optional compact list waveform
 - Lazy waveform loading
 
-## Phase 8: Modules and hardening
+### Phase 8: Modules and hardening
 
 - Latest module
 - Random and clip-of-the-day module
@@ -2827,7 +2827,7 @@ The component works with:
 
 ---
 
-# 52. Optional later enhancements
+## 52. Optional later enhancements
 
 Possible future additions include:
 
@@ -2858,7 +2858,7 @@ Possible future additions include:
 
 ---
 
-# 53. Final agreed defaults
+## 53. Final agreed defaults
 
 Unless changed before implementation, the following defaults apply:
 
