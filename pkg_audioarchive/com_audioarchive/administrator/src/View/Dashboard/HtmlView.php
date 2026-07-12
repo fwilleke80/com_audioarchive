@@ -20,6 +20,9 @@ class HtmlView extends BaseHtmlView
     /** @var array<string, mixed> */
     protected array $systemCheck = [];
 
+    /** @var string */
+    protected string $version = '';
+
     /**
      * @brief Display the dashboard.
      *
@@ -31,6 +34,7 @@ class HtmlView extends BaseHtmlView
     {
         $this->getDocument()->getWebAssetManager()->useStyle('com_audioarchive.admin');
         $this->counts = $this->get('Counts');
+        $this->version = $this->get('Version');
         $this->systemCheck = $this->get('SystemCheck');
         $this->addToolbar();
         parent::display($tpl);

@@ -54,10 +54,20 @@ $translateValue = static function (string $value): string
 
     <div class="card mb-4">
         <div class="card-body">
-            <h2 class="h4"><?php echo Text::_('COM_AUDIOARCHIVE_DASHBOARD_FOUNDATION_HEADING'); ?></h2>
+            <div class="d-flex flex-wrap align-items-baseline justify-content-between gap-2">
+                <h2 class="h4"><?php echo Text::_('COM_AUDIOARCHIVE_DASHBOARD_FOUNDATION_HEADING'); ?></h2>
+                <?php if ($this->version !== '') : ?>
+                    <span class="text-body-secondary">
+                        <?php echo Text::sprintf('COM_AUDIOARCHIVE_DASHBOARD_VERSION', htmlspecialchars($this->version, ENT_QUOTES, 'UTF-8')); ?>
+                    </span>
+                <?php endif; ?>
+            </div>
             <p><?php echo Text::_('COM_AUDIOARCHIVE_DASHBOARD_FOUNDATION_TEXT'); ?></p>
             <a class="btn btn-primary" href="<?php echo Route::_('index.php?option=com_audioarchive&view=clips'); ?>">
                 <?php echo Text::_('COM_AUDIOARCHIVE_MANAGE_CLIPS'); ?>
+            </a>
+            <a class="btn btn-outline-primary" href="<?php echo Route::_('index.php?option=com_audioarchive&view=upload'); ?>">
+                <?php echo Text::_('COM_AUDIOARCHIVE_BULK_UPLOAD_TITLE'); ?>
             </a>
             <a class="btn btn-outline-secondary" href="<?php echo Route::_('index.php?option=com_categories&view=categories&extension=com_audioarchive'); ?>">
                 <?php echo Text::_('COM_AUDIOARCHIVE_MANAGE_CATEGORIES'); ?>

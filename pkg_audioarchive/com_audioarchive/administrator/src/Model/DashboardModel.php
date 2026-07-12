@@ -4,6 +4,7 @@ namespace Willeke\Component\Audioarchive\Administrator\Model;
 
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
+use Joomla\Database\ParameterType;
 use Willeke\Component\Audioarchive\Administrator\Service\SystemCheckService;
 
 \defined('_JEXEC') or die;
@@ -45,6 +46,29 @@ class DashboardModel extends BaseDatabaseModel
             'waveform_attention' => (int) ($row['waveform_attention'] ?? 0),
         ];
     }
+
+    /**
+     * @brief Return the installed component version from Joomla extension metadata.
+     *
+     * @return string Installed version.
+     */
+    public function getVersion(): string
+    {
+        $database = $this->getDatabase();
+        $type = 'component';
+        $element = 'com_audioarchive';
+        $query = $database->getQuery(true)
+            ->select($database->quoteName('manifest_cache'))
+            ->from($database->quoteName('#__extensions'))
+            ->where($database->quoteName('type') . ' = :type')
+            ->where($database->quoteName('element') . ' = :element')
+            ->bind(':type', $type, ParameterType::STRING)
+            ->bind(':element', $element, ParameterType::STRING);
+        $manifest = json_decode((string) $database->setQuery($query)->loadResult(), true);
+
+        return is_array($manifest) ? (string) ($manifest['version'] ?? '') : '';
+    }
+
     /**
      * @brief Run non-destructive configuration and server diagnostics.
      *

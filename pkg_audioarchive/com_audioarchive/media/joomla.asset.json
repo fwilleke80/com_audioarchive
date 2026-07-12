@@ -1,7 +1,7 @@
 {
     "$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
     "name": "com_audioarchive",
-    "version": "0.1.0-dev8",
+    "version": "0.2.0-dev3",
     "description": "Joomla Audio Archive assets",
     "license": "GPL-2.0-or-later",
     "assets": [
@@ -9,6 +9,17 @@
             "name": "com_audioarchive.admin",
             "type": "style",
             "uri": "com_audioarchive/admin.css"
+        },
+        {
+            "name": "com_audioarchive.bulk-upload",
+            "type": "script",
+            "uri": "com_audioarchive/bulk-upload.js",
+            "attributes": {
+                "type": "module"
+            },
+            "dependencies": [
+                "core"
+            ]
         }
     ]
 }

@@ -27,6 +27,9 @@ class ClipModel extends AdminModel
     /** @var string */
     public $typeAlias = 'com_audioarchive.clip';
 
+    /** @var array<string, mixed>|null */
+    private ?array $lastPreparedUpload = null;
+
     /**
      * @brief Return the edit form.
      *
@@ -145,6 +148,7 @@ class ClipModel extends AdminModel
             ? $files['audio_file']
             : null;
         $preparedUpload = null;
+        $titleWasGenerated = false;
         $task = $app->getInput()->getCmd('task');
         $existingClipId = $task === 'save2copy' ? 0 : (int) ($data['id'] ?? 0);
 
@@ -159,6 +163,7 @@ class ClipModel extends AdminModel
             try
             {
                 $preparedUpload = $uploadService->prepare($upload, $existingClipId);
+                $this->lastPreparedUpload = $preparedUpload;
             }
             catch (\Throwable $exception)
             {
@@ -169,6 +174,7 @@ class ClipModel extends AdminModel
             if (trim((string) ($data['title'] ?? '')) === '')
             {
                 $data['title'] = $uploadService->generateTitle($preparedUpload);
+                $titleWasGenerated = true;
             }
 
             if (trim((string) ($data['recorded_at'] ?? '')) === '')
@@ -180,6 +186,15 @@ class ClipModel extends AdminModel
         }
 
         unset($data['audio_file']);
+
+        if ($existingClipId === 0 && $titleWasGenerated)
+        {
+            [$data['title'], $data['alias']] = $this->generateNewTitle(
+                (int) ($data['catid'] ?? 0),
+                (string) ($data['alias'] ?? ''),
+                (string) $data['title']
+            );
+        }
 
         foreach ([
             'uuid',
@@ -258,11 +273,37 @@ class ClipModel extends AdminModel
         }
         catch (\Throwable $exception)
         {
+            if ($existingClipId === 0 && $clipId > 0)
+            {
+                try
+                {
+                    $this->removeIncompleteClip($clipId);
+                }
+                catch (\Throwable $cleanupException)
+                {
+                    Factory::getApplication()->enqueueMessage(
+                        Text::sprintf('COM_AUDIOARCHIVE_WARNING_INCOMPLETE_CLIP_CLEANUP_FAILED', $cleanupException->getMessage()),
+                        'warning'
+                    );
+                }
+            }
+
             $this->setError(Text::sprintf('COM_AUDIOARCHIVE_ERROR_UPLOAD_AFTER_SAVE', $exception->getMessage()));
             return false;
         }
 
         return true;
+    }
+
+
+    /**
+     * @brief Return information from the most recent upload prepared by this model.
+     *
+     * @return array<string, mixed>|null Prepared upload information.
+     */
+    public function getLastPreparedUpload(): ?array
+    {
+        return $this->lastPreparedUpload;
     }
 
     /**
@@ -429,6 +470,24 @@ class ClipModel extends AdminModel
         }
 
         return parent::canEditState($record);
+    }
+
+
+    /**
+     * @brief Remove a newly created clip after its original file could not be attached.
+     *
+     * @param int $clipId Clip identifier.
+     *
+     * @return void
+     */
+    private function removeIncompleteClip(int $clipId): void
+    {
+        $table = $this->getTable();
+
+        if ($clipId > 0 && $table->load($clipId))
+        {
+            $table->delete($clipId);
+        }
     }
 
     /**
