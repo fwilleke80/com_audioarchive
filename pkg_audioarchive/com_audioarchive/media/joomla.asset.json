@@ -1,10 +1,15 @@
 {
     "$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
     "name": "com_audioarchive",
-    "version": "0.2.0-dev6",
+    "version": "0.3.0-dev2",
     "description": "Joomla Audio Archive assets",
     "license": "GPL-2.0-or-later",
     "assets": [
+        {
+            "name": "com_audioarchive.site",
+            "type": "style",
+            "uri": "com_audioarchive/site.css"
+        },
         {
             "name": "com_audioarchive.admin",
             "type": "style",

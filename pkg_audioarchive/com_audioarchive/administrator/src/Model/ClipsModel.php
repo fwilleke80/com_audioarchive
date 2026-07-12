@@ -2,6 +2,7 @@
 
 namespace Willeke\Component\Audioarchive\Administrator\Model;
 
+use Joomla\CMS\Helper\TagsHelper;
 use Joomla\CMS\MVC\Model\ListModel;
 use Joomla\Database\ParameterType;
 use Joomla\Database\QueryInterface;
@@ -119,8 +120,62 @@ class ClipsModel extends ListModel
         return $query;
     }
 
-    /**
-     * @brief Populate filters and ordering from the request.
+
+	/**
+	 * @brief Add tag data to administrator list rows.
+	 *
+	 * @return array
+	 */
+	public function getItems()
+	{
+		$items = parent::getItems();
+		$ids = array_map(static fn(object $item): int => (int) $item->id, $items);
+		$tags = $ids ? (new TagsHelper())->getMultipleItemTags('com_audioarchive.clip', $ids, true) : [];
+		foreach ($items as $item)
+		{
+			$item->tags = $tags[(int) $item->id] ?? [];
+		}
+		return $items;
+	}
+
+	/**
+	 * @brief Return categories for the batch-edit dialog.
+	 *
+	 * @return object[]
+	 */
+	public function getBatchCategories(): array
+	{
+		$db = $this->getDatabase();
+		$extension = 'com_audioarchive';
+		$query = $db->getQuery(true)
+			->select([$db->quoteName('id'), $db->quoteName('title'), $db->quoteName('level')])
+			->from($db->quoteName('#__categories'))
+			->where($db->quoteName('extension') . ' = :extension')
+			->whereIn($db->quoteName('published'), [0, 1])
+			->order($db->quoteName('lft') . ' ASC')
+			->bind(':extension', $extension, ParameterType::STRING);
+		return $db->setQuery($query)->loadObjectList();
+	}
+
+	/**
+	 * @brief Return global tags for the batch-edit dialog.
+	 *
+	 * @return object[]
+	 */
+	public function getBatchTags(): array
+	{
+		$db = $this->getDatabase();
+		$query = $db->getQuery(true)
+			->select([$db->quoteName('id'), $db->quoteName('title'), $db->quoteName('path')])
+			->from($db->quoteName('#__tags'))
+			->where($db->quoteName('published') . ' = 1')
+			->where($db->quoteName('id') . ' > 1')
+			->order($db->quoteName('path') . ' ASC');
+		return $db->setQuery($query)->loadObjectList();
+	}
+
+	/**
+	 * @brief Populate filters and ordering from the request.
      *
      * @param string|null $ordering Default ordering.
      * @param string|null $direction Default direction.

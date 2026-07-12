@@ -1,0 +1,139 @@
+.com-audioarchive-filters
+{
+	margin-block: 1.5rem;
+	padding: 1rem;
+	border: 1px solid currentColor;
+	border-color: color-mix(in srgb, currentColor 20%, transparent);
+	border-radius: .35rem;
+}
+
+.com-audioarchive-filter-grid
+{
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+	gap: 1rem;
+}
+
+.com-audioarchive-filter label
+{
+	display: block;
+	font-weight: 600;
+	margin-bottom: .25rem;
+}
+
+.com-audioarchive-filter-pair
+{
+	display: grid;
+	grid-template-columns: auto 1fr;
+	align-items: center;
+	gap: .35rem .65rem;
+}
+
+.com-audioarchive-filter-actions
+{
+	display: flex;
+	gap: .5rem;
+	margin-top: 1rem;
+}
+
+.com-audioarchive-active-filters
+{
+	display: flex;
+	flex-wrap: wrap;
+	gap: .5rem;
+	align-items: center;
+	margin-block: 1rem;
+}
+
+.com-audioarchive-active-filters span
+{
+	padding: .2rem .55rem;
+	border: 1px solid currentColor;
+	border-radius: 999px;
+}
+
+.com-audioarchive-table-wrapper
+{
+	overflow-x: auto;
+}
+
+.com-audioarchive-table
+{
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.com-audioarchive-table th,
+.com-audioarchive-table td
+{
+	padding: .65rem;
+	border-bottom: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+	text-align: start;
+	vertical-align: top;
+}
+
+.com-audioarchive-play-placeholder
+{
+	min-width: 2.25rem;
+	min-height: 2.25rem;
+}
+
+.com-audioarchive-tag-list
+{
+	display: flex;
+	flex-wrap: wrap;
+	gap: .35rem;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.com-audioarchive-tag-list li
+{
+	padding: .1rem .45rem;
+	border: 1px solid currentColor;
+	border-radius: 999px;
+}
+
+.com-audioarchive-pagination
+{
+	margin-top: 1rem;
+}
+
+@media (max-width: 48rem)
+{
+	.com-audioarchive-table thead
+	{
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+	}
+
+	.com-audioarchive-table,
+	.com-audioarchive-table tbody,
+	.com-audioarchive-table tr,
+	.com-audioarchive-table th,
+	.com-audioarchive-table td
+	{
+		display: block;
+		width: 100%;
+	}
+
+	.com-audioarchive-table tr
+	{
+		margin-bottom: 1rem;
+		border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+	}
+
+	.com-audioarchive-table td::before,
+	.com-audioarchive-table th::before
+	{
+		content: attr(data-label);
+		display: block;
+		font-size: .8em;
+		font-weight: 600;
+		opacity: .7;
+	}
+}

@@ -11,6 +11,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Table\Table;
 use Joomla\Registry\Registry;
 use Joomla\Database\ParameterType;
+use Joomla\Utilities\ArrayHelper;
 use Willeke\Component\Audioarchive\Administrator\Service\AudioUploadService;
 
 \defined('_JEXEC') or die;
@@ -386,8 +387,158 @@ class ClipModel extends AdminModel
         return $service->verifyForClip($clipId);
     }
 
-    /**
-     * @brief Permanently delete clips and their recorded managed files.
+
+	/**
+	 * @brief Apply category and tag changes to selected clips.
+	 *
+	 * @param int[] $ids Clip identifiers.
+	 * @param array<string, mixed> $batch Batch settings.
+	 *
+	 * @return bool
+	 */
+	public function batchUpdate(array $ids, array $batch): bool
+	{
+		$ids = array_values(array_unique(ArrayHelper::toInteger($ids)));
+		$categoryId = (int) ($batch['category_id'] ?? 0);
+		$applyTags = (int) ($batch['apply_tags'] ?? 0) === 1;
+		$tagMode = ($batch['tag_mode'] ?? 'add') === 'replace' ? 'replace' : 'add';
+		$selectedTags = array_values(array_unique(ArrayHelper::toInteger((array) ($batch['tags'] ?? []))));
+
+		if (!$ids || ($categoryId <= 0 && !$applyTags))
+		{
+			$this->setError(Text::_('COM_AUDIOARCHIVE_BATCH_NOTHING_TO_APPLY'));
+			return false;
+		}
+
+		if ($categoryId > 0 && !$this->getValidCategoryId($categoryId))
+		{
+			$this->setError(Text::_('COM_AUDIOARCHIVE_BATCH_INVALID_CATEGORY'));
+			return false;
+		}
+
+		if ($categoryId > 0 && !$this->getCurrentUser()->authorise('core.create', 'com_audioarchive.category.' . $categoryId))
+		{
+			$this->setError(Text::_('COM_AUDIOARCHIVE_BATCH_CATEGORY_DENIED'));
+			return false;
+		}
+
+		if ($applyTags && $selectedTags && !$this->validateBatchTags($selectedTags))
+		{
+			$this->setError(Text::_('COM_AUDIOARCHIVE_BATCH_INVALID_TAGS'));
+			return false;
+		}
+
+		$db = $this->getDatabase();
+		$db->transactionStart();
+		try
+		{
+			foreach ($ids as $id)
+			{
+				$asset = 'com_audioarchive.clip.' . $id;
+				if (!$this->getCurrentUser()->authorise('core.edit', $asset))
+				{
+					throw new \RuntimeException(Text::sprintf('COM_AUDIOARCHIVE_BATCH_EDIT_DENIED', $id));
+				}
+
+				$table = $this->getTable();
+				if (!$table->load($id))
+				{
+					throw new \RuntimeException(Text::sprintf('COM_AUDIOARCHIVE_BATCH_CLIP_NOT_FOUND', $id));
+				}
+
+				$tagHelper = new TagsHelper();
+				$tagHelper->typeAlias = $this->typeAlias;
+				$currentTagString = (string) $tagHelper->getTagIds($id, $this->typeAlias);
+				$currentTags = $currentTagString === '' ? [] : ArrayHelper::toInteger(explode(',', $currentTagString));
+
+				if ($categoryId > 0)
+				{
+					$table->catid = $categoryId;
+				}
+
+				$table->modified = Factory::getDate()->toSql();
+				$table->modified_by = (int) $this->getCurrentUser()->id;
+				$table->version = max(1, (int) $table->version + 1);
+				$table->clearTagsHelper();
+				if (!$table->check() || !$table->store(true))
+				{
+					throw new \RuntimeException($table->getError());
+				}
+
+				if ($categoryId > 0)
+				{
+					$this->updateUcmCategory($id, $categoryId);
+				}
+
+				if ($applyTags)
+				{
+					$finalTags = $tagMode === 'replace'
+						? $selectedTags
+						: array_values(array_unique(array_merge($currentTags, $selectedTags)));
+					$tagHelper->preStoreProcess($table, $finalTags);
+					if (!$tagHelper->postStore($table, $finalTags, true))
+					{
+						throw new \RuntimeException(Text::sprintf('COM_AUDIOARCHIVE_BATCH_TAG_STORE_FAILED', $id));
+					}
+				}
+			}
+			$db->transactionCommit();
+		}
+		catch (\Throwable $exception)
+		{
+			$db->transactionRollback();
+			$this->setError($exception->getMessage());
+			return false;
+		}
+
+		$this->cleanCache();
+		return true;
+	}
+
+	/**
+	 * @brief Verify that all requested batch tag identifiers exist.
+	 *
+	 * @param int[] $tagIds Tag identifiers.
+	 *
+	 * @return bool
+	 */
+	private function validateBatchTags(array $tagIds): bool
+	{
+		$db = $this->getDatabase();
+		$query = $db->getQuery(true)
+			->select('COUNT(*)')
+			->from($db->quoteName('#__tags'))
+			->whereIn($db->quoteName('id'), $tagIds, ParameterType::INTEGER)
+			->where($db->quoteName('id') . ' > 1')
+			->where($db->quoteName('published') . ' = 1');
+		return (int) $db->setQuery($query)->loadResult() === count($tagIds);
+	}
+
+	/**
+	 * @brief Keep Joomla UCM category data aligned after a batch move.
+	 *
+	 * @param int $clipId Clip identifier.
+	 * @param int $categoryId Category identifier.
+	 *
+	 * @return void
+	 */
+	private function updateUcmCategory(int $clipId, int $categoryId): void
+	{
+		$db = $this->getDatabase();
+		$typeAlias = $this->typeAlias;
+		$query = $db->getQuery(true)
+			->update($db->quoteName('#__ucm_content'))
+			->set($db->quoteName('core_catid') . ' = :categoryId')
+			->where($db->quoteName('core_content_item_id') . ' = :clipId')
+			->where($db->quoteName('core_type_alias') . ' = :typeAlias')
+			->bind(':categoryId', $categoryId, ParameterType::INTEGER)
+			->bind(':clipId', $clipId, ParameterType::INTEGER)
+			->bind(':typeAlias', $typeAlias, ParameterType::STRING);
+		$db->setQuery($query)->execute();
+	}
+
+	/**
+	 * @brief Permanently delete clips and their recorded managed files.
      *
      * @param array $pks Clip identifiers.
      *

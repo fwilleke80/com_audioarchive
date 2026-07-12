@@ -19,6 +19,8 @@ class HtmlView extends BaseHtmlView
     protected $state;
     public $filterForm;
     public $activeFilters;
+    public array $batchCategories = [];
+    public array $batchTags = [];
 
     /**
      * @brief Display the clip list.
@@ -35,6 +37,8 @@ class HtmlView extends BaseHtmlView
         $this->state = $this->get('State');
         $this->filterForm = $this->get('FilterForm');
         $this->activeFilters = $this->get('ActiveFilters');
+        $this->batchCategories = $this->get('BatchCategories');
+        $this->batchTags = $this->get('BatchTags');
 
         if (count($errors = $this->get('Errors')))
         {
@@ -53,29 +57,43 @@ class HtmlView extends BaseHtmlView
     private function addToolbar(): void
     {
         $user = Factory::getApplication()->getIdentity();
+        $toolbar = $this->getDocument()->getToolbar();
         ToolbarHelper::title(Text::_('COM_AUDIOARCHIVE_CLIPS_TITLE'), 'music');
 
         if ($user->authorise('core.create', 'com_audioarchive'))
         {
-            ToolbarHelper::addNew('clip.add');
+            $toolbar->addNew('clip.add');
         }
 
         if ($user->authorise('core.edit.state', 'com_audioarchive'))
         {
-            ToolbarHelper::publish('clips.publish', 'JTOOLBAR_PUBLISH', true);
-            ToolbarHelper::unpublish('clips.unpublish', 'JTOOLBAR_UNPUBLISH', true);
-            ToolbarHelper::archiveList('clips.archive');
-            ToolbarHelper::trash('clips.trash');
+            $toolbar->publish('clips.publish')->listCheck(true);
+            $toolbar->unpublish('clips.unpublish')->listCheck(true);
+            $toolbar->archive('clips.archive')->listCheck(true);
+            $toolbar->trash('clips.trash')->listCheck(true);
+        }
+
+        if ($user->authorise('core.edit', 'com_audioarchive'))
+        {
+            $toolbar->popupButton('batch', 'JTOOLBAR_BATCH')
+                ->popupType('inline')
+                ->textHeader(Text::_('COM_AUDIOARCHIVE_BATCH_TITLE'))
+                ->url('#joomla-dialog-audioarchive-batch')
+                ->modalWidth('800px')
+                ->modalHeight('fit-content')
+                ->listCheck(true);
         }
 
         if ($user->authorise('core.delete', 'com_audioarchive'))
         {
-            ToolbarHelper::deleteList('JGLOBAL_CONFIRM_DELETE', 'clips.delete');
+            $toolbar->delete('clips.delete')
+                ->message('JGLOBAL_CONFIRM_DELETE')
+                ->listCheck(true);
         }
 
         if ($user->authorise('core.options', 'com_audioarchive'))
         {
-            ToolbarHelper::preferences('com_audioarchive');
+            $toolbar->preferences('com_audioarchive');
         }
     }
 }

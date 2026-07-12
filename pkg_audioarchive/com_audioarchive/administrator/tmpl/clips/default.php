@@ -30,6 +30,7 @@ $listDirn = $this->escape($this->state->get('list.direction'));
                     <th scope="col"><?php echo HTMLHelper::_('searchtools.sort', 'COM_AUDIOARCHIVE_FIELD_RECORDING_DATE', 'a.recorded_at', $listDirn, $listOrder); ?></th>
                     <th scope="col"><?php echo HTMLHelper::_('searchtools.sort', 'COM_AUDIOARCHIVE_FIELD_UPLOAD_DATE', 'a.uploaded_at', $listDirn, $listOrder); ?></th>
                     <th scope="col"><?php echo HTMLHelper::_('searchtools.sort', 'JGRID_HEADING_ACCESS', 'access_level', $listDirn, $listOrder); ?></th>
+                    <th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_TAGS'); ?></th>
                     <th scope="col" class="w-5"><?php echo HTMLHelper::_('searchtools.sort', 'JGRID_HEADING_ID', 'a.id', $listDirn, $listOrder); ?></th>
                 </tr>
             </thead>
@@ -59,6 +60,7 @@ $listDirn = $this->escape($this->state->get('list.direction'));
                         <td><?php echo $item->recorded_at ? HTMLHelper::_('date', $item->recorded_at, Text::_('DATE_FORMAT_LC4')) : '&mdash;'; ?></td>
                         <td><?php echo HTMLHelper::_('date', $item->uploaded_at, Text::_('DATE_FORMAT_LC4')); ?></td>
                         <td><?php echo $this->escape($item->access_level); ?></td>
+                        <td><?php echo $item->tags ? $this->escape(implode(', ', array_map(static fn($tag) => $tag->title, $item->tags))) : '&mdash;'; ?></td>
                         <td><?php echo (int) $item->id; ?></td>
                     </tr>
                 <?php endforeach; ?>
@@ -67,6 +69,8 @@ $listDirn = $this->escape($this->state->get('list.direction'));
 
         <?php echo $this->pagination->getListFooter(); ?>
     <?php endif; ?>
+
+    <?php echo $this->loadTemplate('batch'); ?>
 
     <input type="hidden" name="task" value="">
     <input type="hidden" name="boxchecked" value="0">
