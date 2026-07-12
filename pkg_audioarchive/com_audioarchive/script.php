@@ -248,13 +248,68 @@ return new class () implements InstallerScriptInterface
     }
 
     /**
-     * @brief Register the Audio Archive clip content type with Joomla.
+     * @brief Register or repair the Audio Archive clip content type with Joomla.
      *
      * @param DatabaseInterface $database Joomla database connection.
      * @return void
      */
     private function ensureContentType(DatabaseInterface $database): void
     {
+        $tableDefinition = json_encode(
+            [
+                'special' => [
+                    'dbtable' => '#__audioarchive_clips',
+                    'key' => 'id',
+                    'type' => 'ClipTable',
+                    'prefix' => 'Willeke\\Component\\Audioarchive\\Administrator\\Table\\',
+                    'config' => 'array()',
+                ],
+                'common' => [
+                    'dbtable' => '#__ucm_content',
+                    'key' => 'ucm_id',
+                    'type' => 'Corecontent',
+                    'prefix' => 'Joomla\\CMS\\Table\\',
+                    'config' => 'array()',
+                ],
+            ],
+            JSON_THROW_ON_ERROR
+        );
+
+        $fieldMappings = json_encode(
+            [
+                'common' => [
+                    'core_content_item_id' => 'id',
+                    'core_title' => 'title',
+                    'core_state' => 'state',
+                    'core_alias' => 'alias',
+                    'core_created_user_id' => 'created_by',
+                    'core_created_by_alias' => 'null',
+                    'core_created_time' => 'created',
+                    'core_modified_time' => 'modified',
+                    'core_body' => 'description',
+                    'core_hits' => 'play_count',
+                    'core_publish_up' => 'publish_up',
+                    'core_publish_down' => 'publish_down',
+                    'core_access' => 'access',
+                    'core_params' => 'params',
+                    'core_featured' => 'null',
+                    'core_metadata' => 'null',
+                    'core_language' => 'language',
+                    'core_images' => 'null',
+                    'core_urls' => 'null',
+                    'core_version' => 'version',
+                    'core_ordering' => 'ordering',
+                    'core_metakey' => 'null',
+                    'core_metadesc' => 'null',
+                    'core_catid' => 'catid',
+                    'asset_id' => 'asset_id',
+                    'note' => 'null',
+                ],
+                'special' => new stdClass(),
+            ],
+            JSON_THROW_ON_ERROR
+        );
+
         $query = $database->getQuery(true)
             ->select($database->quoteName('type_id'))
             ->from($database->quoteName('#__content_types'))
@@ -264,41 +319,39 @@ return new class () implements InstallerScriptInterface
 
         if ($existingId > 0)
         {
-            return;
+            $query = $database->getQuery(true)
+                ->update($database->quoteName('#__content_types'))
+                ->set([
+                    $database->quoteName('type_title') . ' = ' . $database->quote('Audio Archive Clip'),
+                    $database->quoteName('table') . ' = ' . $database->quote($tableDefinition),
+                    $database->quoteName('rules') . ' = ' . $database->quote(''),
+                    $database->quoteName('field_mappings') . ' = ' . $database->quote($fieldMappings),
+                ])
+                ->where($database->quoteName('type_id') . ' = ' . $existingId);
         }
-
-        $tableDefinition = json_encode(
-            [
-                'special' => [
-                    'dbtable' => '#__audioarchive_clips',
-                    'key' => 'id',
-                    'type' => 'Clip',
-                    'prefix' => 'Willeke\\Component\\Audioarchive\\Administrator\\Table\\',
-                ],
-            ],
-            JSON_THROW_ON_ERROR
-        );
-
-        $query = $database->getQuery(true)
-            ->insert($database->quoteName('#__content_types'))
-            ->columns([
-                $database->quoteName('type_title'),
-                $database->quoteName('type_alias'),
-                $database->quoteName('table'),
-                $database->quoteName('rules'),
-                $database->quoteName('field_mappings'),
-                $database->quoteName('router'),
-                $database->quoteName('content_history_options'),
-            ])
-            ->values(implode(', ', [
-                $database->quote('Audio Archive Clip'),
-                $database->quote('com_audioarchive.clip'),
-                $database->quote($tableDefinition),
-                $database->quote(''),
-                $database->quote('{}'),
-                $database->quote(''),
-                $database->quote('{}'),
-            ]));
+        else
+        {
+            $query = $database->getQuery(true)
+                ->insert($database->quoteName('#__content_types'))
+                ->columns([
+                    $database->quoteName('type_title'),
+                    $database->quoteName('type_alias'),
+                    $database->quoteName('table'),
+                    $database->quoteName('rules'),
+                    $database->quoteName('field_mappings'),
+                    $database->quoteName('router'),
+                    $database->quoteName('content_history_options'),
+                ])
+                ->values(implode(', ', [
+                    $database->quote('Audio Archive Clip'),
+                    $database->quote('com_audioarchive.clip'),
+                    $database->quote($tableDefinition),
+                    $database->quote(''),
+                    $database->quote($fieldMappings),
+                    $database->quote(''),
+                    $database->quote('{}'),
+                ]));
+        }
 
         $database->setQuery($query)->execute();
     }
