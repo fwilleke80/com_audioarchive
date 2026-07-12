@@ -7,6 +7,7 @@ use Joomla\CMS\Form\Form;
 use Joomla\Registry\Registry;
 use Willeke\Component\Audioarchive\Administrator\Service\AudioUploadService;
 use Willeke\Component\Audioarchive\Administrator\Service\DirectoryImportService;
+use Willeke\Component\Audioarchive\Administrator\Service\ImportCategoryService;
 
 \defined('_JEXEC') or die;
 
@@ -44,6 +45,8 @@ class ImportModel extends UploadModel
 		$data->recursive = (int) $params->get('recursive_import', 0);
 		$data->duplicate_policy = 'component';
 		$data->delete_source = (int) $params->get('delete_inbox_after_import', 1);
+		$data->category_mode = 'selected';
+		$data->create_missing_categories = 1;
 
 		return $data;
 	}
@@ -119,6 +122,75 @@ class ImportModel extends UploadModel
 	public function deleteInboxFile(string $relativePath): bool
 	{
 		return (new DirectoryImportService($this->getComponentParams()))->deleteSource($relativePath);
+	}
+
+
+	/**
+	 * @brief Preview a category assignment for one inbox file.
+	 *
+	 * @param string $relativePath Inbox-relative file path.
+	 * @param string $mode Selected-category or folder-derived mode.
+	 * @param int $baseCategoryId Optional base category.
+	 * @param bool $createMissing Whether missing folder categories may be created.
+	 *
+	 * @return array<string, mixed> Category plan.
+	 */
+	public function planCategory(
+		string $relativePath,
+		string $mode,
+		int $baseCategoryId,
+		bool $createMissing
+	): array
+	{
+		$fallbackCategoryId = $this->getDefaultCategoryId();
+		$service = new ImportCategoryService($this->getDatabase(), $this->getCurrentUser());
+
+		return $service->plan(
+			$relativePath,
+			$mode,
+			$this->getValidCategoryId($baseCategoryId),
+			$fallbackCategoryId,
+			$createMissing
+		);
+	}
+
+	/**
+	 * @brief Resolve and create the category assignment for one inbox file.
+	 *
+	 * @param string $relativePath Inbox-relative file path.
+	 * @param string $mode Selected-category or folder-derived mode.
+	 * @param int $baseCategoryId Optional base category.
+	 * @param bool $createMissing Whether missing folder categories may be created.
+	 *
+	 * @return array<string, mixed> Resolved category data.
+	 */
+	public function resolveCategory(
+		string $relativePath,
+		string $mode,
+		int $baseCategoryId,
+		bool $createMissing
+	): array
+	{
+		$fallbackCategoryId = $this->getDefaultCategoryId();
+		$service = new ImportCategoryService($this->getDatabase(), $this->getCurrentUser());
+
+		return $service->resolve(
+			$relativePath,
+			$mode,
+			$this->getValidCategoryId($baseCategoryId),
+			$fallbackCategoryId,
+			$createMissing
+		);
+	}
+
+	/**
+	 * @brief Return the configured valid default category.
+	 *
+	 * @return int Category identifier or zero.
+	 */
+	private function getDefaultCategoryId(): int
+	{
+		return $this->getValidCategoryId((int) $this->getComponentParams()->get('default_category', 0));
 	}
 
 	/**

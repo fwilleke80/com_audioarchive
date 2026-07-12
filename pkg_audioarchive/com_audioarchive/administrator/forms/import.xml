@@ -42,15 +42,38 @@
 
     <fieldset name="metadata" label="COM_AUDIOARCHIVE_BULK_UPLOAD_METADATA_TITLE">
         <field
+            name="category_mode"
+            type="list"
+            label="COM_AUDIOARCHIVE_IMPORT_CATEGORY_MODE_LABEL"
+            description="COM_AUDIOARCHIVE_IMPORT_CATEGORY_MODE_DESC"
+            default="selected"
+            validate="options"
+        >
+            <option value="selected">COM_AUDIOARCHIVE_IMPORT_CATEGORY_MODE_SELECTED</option>
+            <option value="folders">COM_AUDIOARCHIVE_IMPORT_CATEGORY_MODE_FOLDERS</option>
+        </field>
+        <field
             name="catid"
             type="category"
             extension="com_audioarchive"
             published="0,1"
-            label="JCATEGORY"
-            required="true"
+            label="COM_AUDIOARCHIVE_IMPORT_BASE_CATEGORY_LABEL"
+            description="COM_AUDIOARCHIVE_IMPORT_BASE_CATEGORY_DESC"
             default=""
         >
-            <option value="">JOPTION_SELECT_CATEGORY</option>
+            <option value="">COM_AUDIOARCHIVE_IMPORT_NO_BASE_CATEGORY</option>
+        </field>
+        <field
+            name="create_missing_categories"
+            type="radio"
+            layout="joomla.form.field.radio.switcher"
+            label="COM_AUDIOARCHIVE_IMPORT_CREATE_CATEGORIES_LABEL"
+            description="COM_AUDIOARCHIVE_IMPORT_CREATE_CATEGORIES_DESC"
+            default="1"
+            filter="integer"
+        >
+            <option value="0">JNO</option>
+            <option value="1">JYES</option>
         </field>
         <field
             name="tags"

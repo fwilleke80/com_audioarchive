@@ -28,6 +28,7 @@ foreach ([
 	'COM_AUDIOARCHIVE_DUPLICATE_EDIT_LINK',
 	'COM_AUDIOARCHIVE_IMPORT_SOURCE_REMOVED',
 	'COM_AUDIOARCHIVE_IMPORT_SOURCE_PRESERVED',
+	'COM_AUDIOARCHIVE_IMPORT_CATEGORY_WILL_CREATE',
 ] as $key)
 {
 	Text::script($key);
@@ -71,10 +72,12 @@ $tokenName = Session::getFormToken();
 					<p class="text-body-secondary"><?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_METADATA_DESC'); ?></p>
 					<div class="row g-3">
 						<div class="col-12 col-lg-6">
+							<?php echo $this->form->renderField('category_mode'); ?>
 							<?php echo $this->form->renderField('catid'); ?>
-							<?php echo $this->form->renderField('tags'); ?>
+							<?php echo $this->form->renderField('create_missing_categories'); ?>
 						</div>
 						<div class="col-12 col-lg-6">
+							<?php echo $this->form->renderField('tags'); ?>
 							<?php echo $this->form->renderField('access'); ?>
 							<?php echo $this->form->renderField('state'); ?>
 							<?php echo $this->form->renderField('recorded_at'); ?>
@@ -118,6 +121,7 @@ $tokenName = Session::getFormToken();
 					<tr>
 						<th scope="col" class="text-center"><?php echo Text::_('JGLOBAL_CHECK_ALL'); ?></th>
 						<th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_PATH'); ?></th>
+						<th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_CATEGORY_COLUMN'); ?></th>
 						<th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_METADATA'); ?></th>
 						<th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_STATUS'); ?></th>
 						<th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_RESULT'); ?></th>

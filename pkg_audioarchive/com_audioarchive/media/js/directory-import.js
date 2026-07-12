@@ -138,7 +138,7 @@
 		startButton.disabled = running || selected === 0;
 		stopButton.classList.toggle('d-none', !running);
 		stopButton.disabled = !running || stopRequested;
-		['jform_recursive', 'jform_duplicate_policy', 'jform_delete_source', 'jform_catid', 'jform_tags', 'jform_access', 'jform_state', 'jform_recorded_at'].forEach((id) =>
+		['jform_recursive', 'jform_duplicate_policy', 'jform_delete_source', 'jform_category_mode', 'jform_catid', 'jform_create_missing_categories', 'jform_tags', 'jform_access', 'jform_state', 'jform_recorded_at'].forEach((id) =>
 		{
 			const field = document.getElementById(id);
 
@@ -189,6 +189,7 @@
 		const badge = row.querySelector('.com-audioarchive-import-status');
 		badge.className = `badge com-audioarchive-import-status ${state[0]}`;
 		badge.textContent = translate(state[1], state[2]);
+		const category = row.querySelector('.com-audioarchive-import-category');
 		const metadata = row.querySelector('.com-audioarchive-import-metadata');
 		const result = row.querySelector('.com-audioarchive-import-result');
 		const actions = row.querySelector('.com-audioarchive-import-actions');
@@ -196,6 +197,11 @@
 
 		if (job.analysis)
 		{
+			const categoryPath = job.analysis.category_path || '';
+			const categoryCreation = job.analysis.category_will_create
+				? `<div class="small text-info">${escapeHtml(translate('COM_AUDIOARCHIVE_IMPORT_CATEGORY_WILL_CREATE', 'Missing categories will be created during import.'))}</div>`
+				: '';
+			category.innerHTML = `<span class="text-break">${escapeHtml(categoryPath)}</span>${categoryCreation}`;
 			const details = [
 				job.analysis.proposed_title,
 				job.analysis.duration,
@@ -220,6 +226,7 @@
 		}
 		else
 		{
+			category.textContent = '';
 			metadata.textContent = '';
 		}
 
@@ -229,6 +236,7 @@
 				? translate('COM_AUDIOARCHIVE_IMPORT_SOURCE_REMOVED', 'Source removed from inbox')
 				: translate('COM_AUDIOARCHIVE_IMPORT_SOURCE_PRESERVED', 'Source retained in inbox');
 			result.innerHTML = `<strong>${escapeHtml(job.result.title || job.filename)}</strong><div class="small text-body-secondary">${escapeHtml(sourceState)}</div>`;
+			category.textContent = job.result.category || job.analysis?.category_path || '';
 			const link = document.createElement('a');
 			link.className = 'btn btn-sm btn-outline-primary';
 			link.href = job.result.edit_url;
@@ -282,6 +290,7 @@
 			row.innerHTML = `
 				<td class="text-center"><input type="checkbox" class="form-check-input com-audioarchive-import-select" aria-label="${escapeHtml(job.path)}"></td>
 				<td><div class="fw-semibold text-break">${escapeHtml(job.path)}</div><div class="small text-body-secondary">${escapeHtml(formatBytes(job.size))}</div></td>
+				<td class="com-audioarchive-import-category"></td>
 				<td class="com-audioarchive-import-metadata"></td>
 				<td><span class="badge bg-secondary com-audioarchive-import-status"></span></td>
 				<td class="com-audioarchive-import-result"></td>
@@ -317,6 +326,9 @@
 		const data = new FormData();
 		data.append('path', job.path);
 		data.append('duplicate_policy', document.getElementById('jform_duplicate_policy')?.value || 'component');
+		data.append('category_mode', document.getElementById('jform_category_mode')?.value || 'selected');
+		data.append('catid', document.getElementById('jform_catid')?.value || '0');
+		data.append('create_missing_categories', document.querySelector('input[name="jform[create_missing_categories]"]:checked')?.value || '0');
 
 		try
 		{
@@ -366,7 +378,9 @@
 	 * @returns {object} Batch values.
 	 */
 	const readBatchMetadata = () => ({
+		categoryMode: document.getElementById('jform_category_mode')?.value || 'selected',
 		catid: document.getElementById('jform_catid')?.value || '',
+		createMissingCategories: document.querySelector('input[name="jform[create_missing_categories]"]:checked')?.value || '0',
 		tags: Array.from(document.querySelectorAll('#jform_tags option:checked')).map((option) => option.value).filter(Boolean),
 		access: document.getElementById('jform_access')?.value || '1',
 		state: document.getElementById('jform_state')?.value || '0',
@@ -388,7 +402,9 @@
 		renderJob(job);
 		const data = new FormData();
 		data.append('path', job.path);
+		data.append('jform[category_mode]', batchMetadata.categoryMode);
 		data.append('jform[catid]', batchMetadata.catid);
+		data.append('jform[create_missing_categories]', batchMetadata.createMissingCategories);
 		data.append('jform[access]', batchMetadata.access);
 		data.append('jform[state]', batchMetadata.state);
 		data.append('jform[recorded_at]', batchMetadata.recordedAt);
@@ -490,5 +506,28 @@
 		stopButton.disabled = true;
 	});
 
+	const updateCategoryMode = () =>
+	{
+		const folderMode = (document.getElementById('jform_category_mode')?.value || 'selected') === 'folders';
+		const createField = document.getElementById('jform_create_missing_categories')?.closest('.control-group');
+
+		if (createField)
+		{
+			createField.classList.toggle('d-none', !folderMode);
+		}
+
+		if (folderMode)
+		{
+			const recursive = document.querySelector('input[name="jform[recursive]"][value="1"]');
+
+			if (recursive && !recursive.checked)
+			{
+				recursive.click();
+			}
+		}
+	};
+
+	document.getElementById('jform_category_mode')?.addEventListener('change', updateCategoryMode);
+	updateCategoryMode();
 	updateControls();
 })();

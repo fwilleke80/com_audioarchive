@@ -59,9 +59,18 @@ class ImportController extends BaseController
 			$app = Factory::getApplication();
 			$relativePath = $app->getInput()->post->getString('path');
 			$policyChoice = $app->getInput()->post->getCmd('duplicate_policy', 'component');
+			$categoryMode = $app->getInput()->post->getCmd('category_mode', 'selected');
+			$baseCategoryId = $app->getInput()->post->getInt('catid', 0);
+			$createMissingCategories = $app->getInput()->post->getBool('create_missing_categories', true);
 			/** @var ImportModel $model */
 			$model = $this->getModel('Import');
 			$effectivePolicy = $model->resolveDuplicatePolicy($policyChoice);
+			$categoryPlan = $model->planCategory(
+				$relativePath,
+				$categoryMode,
+				$baseCategoryId,
+				$createMissingCategories
+			);
 			$result = $model->prepareInboxFile($relativePath, 'ignore');
 			$prepared = $result['prepared'];
 			$uploadService = $model->createAudioUploadService();
@@ -70,7 +79,8 @@ class ImportController extends BaseController
 			$duplicate = is_object($prepared['duplicate'] ?? null)
 				? $this->normaliseDuplicate($prepared['duplicate'])
 				: null;
-			$eligible = !($duplicate !== null && $effectivePolicy === 'reject');
+			$eligible = (bool) $categoryPlan['eligible']
+				&& !($duplicate !== null && $effectivePolicy === 'reject');
 			$warnings = array_values(array_filter((array) ($metadata['warnings'] ?? [])));
 
 			if ($duplicate !== null && $effectivePolicy === 'warn')
@@ -97,10 +107,15 @@ class ImportController extends BaseController
 					'warnings' => $warnings,
 					'duplicate' => $duplicate,
 					'duplicate_policy' => $effectivePolicy,
+					'category_path' => (string) $categoryPlan['path'],
+					'category_missing' => array_values((array) $categoryPlan['missing']),
+					'category_will_create' => (bool) $categoryPlan['will_create'],
 				],
 				$eligible
 					? Text::_('COM_AUDIOARCHIVE_IMPORT_INSPECT_SUCCESS')
-					: Text::_('COM_AUDIOARCHIVE_IMPORT_DUPLICATE_REJECTED'),
+					: ((string) $categoryPlan['message'] !== ''
+						? (string) $categoryPlan['message']
+						: Text::_('COM_AUDIOARCHIVE_IMPORT_DUPLICATE_REJECTED')),
 				false,
 				200
 			);
@@ -148,11 +163,28 @@ class ImportController extends BaseController
 				);
 			}
 
-			$categoryId = $importModel->getValidCategoryId((int) ($data['catid'] ?? 0));
+			$relativePath = $app->getInput()->post->getString('path');
+			$requestedBaseCategoryId = (int) ($data['catid'] ?? 0);
 
-			if ($categoryId <= 0)
+			if ($requestedBaseCategoryId > 0 && $importModel->getValidCategoryId($requestedBaseCategoryId) <= 0)
 			{
-				throw new \RuntimeException(Text::_('JLIB_DATABASE_ERROR_CATEGORY_REQUIRED'), 400);
+				throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_IMPORT_CATEGORY_BASE_INVALID'), 400);
+			}
+
+			$categoryResult = $importModel->resolveCategory(
+				$relativePath,
+				(string) ($data['category_mode'] ?? 'selected'),
+				$requestedBaseCategoryId,
+				(int) ($data['create_missing_categories'] ?? 1) === 1
+			);
+			$categoryId = (int) ($categoryResult['category_id'] ?? 0);
+
+			if (!(bool) ($categoryResult['eligible'] ?? false) || $categoryId <= 0)
+			{
+				throw new \RuntimeException(
+					(string) ($categoryResult['message'] ?? Text::_('JLIB_DATABASE_ERROR_CATEGORY_REQUIRED')),
+					400
+				);
 			}
 
 			$categoryAsset = 'com_audioarchive.category.' . $categoryId;
@@ -167,7 +199,6 @@ class ImportController extends BaseController
 				$data['state'] = 0;
 			}
 
-			$relativePath = $app->getInput()->post->getString('path');
 			$effectivePolicy = $importModel->resolveDuplicatePolicy((string) ($data['duplicate_policy'] ?? 'component'));
 			$preparedResult = $importModel->prepareInboxFile($relativePath, $effectivePolicy);
 			$prepared = $preparedResult['prepared'];
@@ -182,7 +213,13 @@ class ImportController extends BaseController
 				(array) ($data['tags'] ?? []),
 				static fn ($value): bool => (string) $value !== ''
 			));
-			unset($data['recursive'], $data['duplicate_policy'], $data['delete_source']);
+			unset(
+				$data['recursive'],
+				$data['duplicate_policy'],
+				$data['delete_source'],
+				$data['category_mode'],
+				$data['create_missing_categories']
+			);
 
 			/** @var ClipModel $clipModel */
 			$clipModel = $this->getModel('Clip', 'Administrator', ['ignore_request' => true]);
@@ -236,7 +273,7 @@ class ImportController extends BaseController
 					'codec' => (string) $file->audio_codec,
 					'sample_rate' => (int) ($technicalMetadata['sample_rate'] ?? 0),
 					'channels' => (int) ($technicalMetadata['channels'] ?? 0),
-					'category' => $importModel->getCategoryTitle($categoryId),
+					'category' => (string) ($categoryResult['path'] ?: $importModel->getCategoryTitle($categoryId)),
 					'state' => (int) $item->state,
 					'edit_url' => Route::_('index.php?option=com_audioarchive&task=clip.edit&id=' . $clipId, false),
 					'messages' => $this->normaliseMessages($app->getMessageQueue(true)),
