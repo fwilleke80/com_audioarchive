@@ -43,6 +43,16 @@ class ClipTable extends Table implements TaggableTableInterface, CurrentUserInte
     }
 
     /**
+     * @brief Return the Joomla content-type alias used for tags and UCM features.
+     *
+     * @return string Content-type alias.
+     */
+    public function getTypeAlias()
+    {
+        return $this->typeAlias;
+    }
+
+    /**
      * @brief Bind form data to the table.
      *
      * @param array|object $src Source data.

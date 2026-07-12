@@ -6,7 +6,7 @@ use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\MVC\Model\AdminModel;
-use Joomla\CMS\Tag\TagsHelper;
+use Joomla\CMS\Helper\TagsHelper;
 use Joomla\CMS\Table\Table;
 use Joomla\Registry\Registry;
 
@@ -104,9 +104,8 @@ class ClipModel extends AdminModel
 
         if ($item && !empty($item->id))
         {
-            $tags = new TagsHelper();
-            $tags->getTagIds((int) $item->id, $this->typeAlias);
-            $item->tags = $tags;
+            $item->tags = new TagsHelper();
+            $item->tags->getTagIds((int) $item->id, $this->typeAlias);
         }
 
         if ($item && isset($item->params))

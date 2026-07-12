@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<form addfieldprefix="Joomla\CMS\Form\Field">
+<form>
     <fieldset name="details" label="COM_AUDIOARCHIVE_FIELDSET_DETAILS">
         <field name="id" type="hidden" />
+        <field name="asset_id" type="hidden" filter="unset" />
+        <field name="checked_out" type="hidden" filter="unset" />
+        <field name="checked_out_time" type="hidden" filter="unset" />
         <field name="title" type="text" label="JGLOBAL_TITLE" required="true" maxlength="255" />
         <field name="alias" type="text" label="JFIELD_ALIAS_LABEL" maxlength="400" hint="JFIELD_ALIAS_PLACEHOLDER" />
-        <field name="catid" type="categoryedit" extension="com_audioarchive" label="JCATEGORY" required="true" default="0" />
+        <field name="catid" type="categoryedit" extension="com_audioarchive" label="JCATEGORY" addfieldprefix="Joomla\Component\Categories\Administrator\Field" required="true" default="0" />
         <field name="tags" type="tag" label="JTAG" multiple="true" mode="ajax" custom="allow" />
-        <field name="description" type="editor" label="JGLOBAL_DESCRIPTION" buttons="true" filter="JComponentHelper::filterText" />
+        <field name="description" type="editor" label="JGLOBAL_DESCRIPTION" buttons="true" filter="\Joomla\CMS\Component\ComponentHelper::filterText" />
         <field name="recorded_at" type="calendar" label="COM_AUDIOARCHIVE_FIELD_RECORDING_DATE" translateformat="true" showtime="true" filter="user_utc" />
         <field name="recorded_date_source" type="list" label="COM_AUDIOARCHIVE_FIELD_RECORDING_DATE_SOURCE" default="manual" validate="options">
             <option value="embedded">COM_AUDIOARCHIVE_DATE_SOURCE_EMBEDDED</option>

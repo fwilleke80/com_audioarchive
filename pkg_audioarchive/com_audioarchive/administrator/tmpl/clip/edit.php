@@ -10,7 +10,7 @@ use Joomla\CMS\Router\Route;
 HTMLHelper::_('behavior.formvalidator');
 HTMLHelper::_('behavior.keepalive');
 ?>
-<form action="<?php echo Route::_('index.php?option=com_audioarchive&layout=edit&id=' . (int) $this->item->id); ?>" method="post" name="adminForm" id="clip-form" class="form-validate">
+<form action="<?php echo Route::_('index.php?option=com_audioarchive&view=clip&layout=edit&id=' . (int) $this->item->id); ?>" method="post" name="adminForm" id="clip-form" class="form-validate">
     <?php echo LayoutHelper::render('joomla.edit.title_alias', $this); ?>
 
     <div class="main-card">
