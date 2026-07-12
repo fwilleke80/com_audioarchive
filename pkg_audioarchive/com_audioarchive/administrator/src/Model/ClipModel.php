@@ -30,6 +30,9 @@ class ClipModel extends AdminModel
     /** @var array<string, mixed>|null */
     private ?array $lastPreparedUpload = null;
 
+    /** @var array<string, mixed>|null */
+    private ?array $pendingPreparedUpload = null;
+
     /**
      * @brief Return the edit form.
      *
@@ -147,7 +150,8 @@ class ClipModel extends AdminModel
         $upload = is_array($files) && isset($files['audio_file']) && is_array($files['audio_file'])
             ? $files['audio_file']
             : null;
-        $preparedUpload = null;
+        $preparedUpload = $this->pendingPreparedUpload;
+        $this->pendingPreparedUpload = null;
         $titleWasGenerated = false;
         $task = $app->getInput()->getCmd('task');
         $existingClipId = $task === 'save2copy' ? 0 : (int) ($data['id'] ?? 0);
@@ -170,6 +174,12 @@ class ClipModel extends AdminModel
                 $this->setError($exception->getMessage());
                 return false;
             }
+
+        }
+
+        if ($preparedUpload !== null)
+        {
+            $this->lastPreparedUpload = $preparedUpload;
 
             if (trim((string) ($data['title'] ?? '')) === '')
             {
@@ -304,6 +314,21 @@ class ClipModel extends AdminModel
     public function getLastPreparedUpload(): ?array
     {
         return $this->lastPreparedUpload;
+    }
+
+    /**
+     * @brief Save a new clip from an already validated server-side source file.
+     *
+     * @param array<string, mixed> $data Clip metadata.
+     * @param array<string, mixed> $prepared Prepared source-file data.
+     *
+     * @return bool True on success.
+     */
+    public function savePreparedFile(array $data, array $prepared): bool
+    {
+        $this->pendingPreparedUpload = $prepared;
+
+        return $this->save($data);
     }
 
     /**

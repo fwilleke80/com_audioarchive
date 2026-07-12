@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form>
+    <fieldset name="scan" label="COM_AUDIOARCHIVE_IMPORT_SCAN_OPTIONS_TITLE">
+        <field
+            name="recursive"
+            type="radio"
+            layout="joomla.form.field.radio.switcher"
+            label="COM_AUDIOARCHIVE_IMPORT_RECURSIVE_LABEL"
+            description="COM_AUDIOARCHIVE_IMPORT_RECURSIVE_DESC"
+            default="0"
+            filter="integer"
+        >
+            <option value="0">JNO</option>
+            <option value="1">JYES</option>
+        </field>
+        <field
+            name="duplicate_policy"
+            type="list"
+            label="COM_AUDIOARCHIVE_IMPORT_DUPLICATE_POLICY_LABEL"
+            description="COM_AUDIOARCHIVE_IMPORT_DUPLICATE_POLICY_DESC"
+            default="component"
+            validate="options"
+        >
+            <option value="component">COM_AUDIOARCHIVE_IMPORT_DUPLICATE_POLICY_COMPONENT</option>
+            <option value="ignore">COM_AUDIOARCHIVE_DUPLICATE_IGNORE</option>
+            <option value="warn">COM_AUDIOARCHIVE_DUPLICATE_WARN</option>
+            <option value="reject">COM_AUDIOARCHIVE_DUPLICATE_REJECT</option>
+        </field>
+        <field
+            name="delete_source"
+            type="radio"
+            layout="joomla.form.field.radio.switcher"
+            label="COM_AUDIOARCHIVE_IMPORT_DELETE_SOURCE_LABEL"
+            description="COM_AUDIOARCHIVE_IMPORT_DELETE_SOURCE_DESC"
+            default="1"
+            filter="integer"
+        >
+            <option value="0">JNO</option>
+            <option value="1">JYES</option>
+        </field>
+    </fieldset>
+
+    <fieldset name="metadata" label="COM_AUDIOARCHIVE_BULK_UPLOAD_METADATA_TITLE">
+        <field
+            name="catid"
+            type="category"
+            extension="com_audioarchive"
+            published="0,1"
+            label="JCATEGORY"
+            required="true"
+            default=""
+        >
+            <option value="">JOPTION_SELECT_CATEGORY</option>
+        </field>
+        <field
+            name="tags"
+            type="tag"
+            label="JTAG"
+            multiple="true"
+            mode="ajax"
+            custom="allow"
+        />
+        <field
+            name="access"
+            type="accesslevel"
+            label="JFIELD_ACCESS_LABEL"
+            default="1"
+            required="true"
+        />
+        <field
+            name="state"
+            type="list"
+            label="JSTATUS"
+            default="0"
+            required="true"
+            validate="options"
+        >
+            <option value="1">JPUBLISHED</option>
+            <option value="0">JUNPUBLISHED</option>
+        </field>
+        <field
+            name="recorded_at"
+            type="calendar"
+            label="COM_AUDIOARCHIVE_BULK_UPLOAD_RECORDING_DATE"
+            description="COM_AUDIOARCHIVE_BULK_UPLOAD_RECORDING_DATE_DESC"
+            translateformat="true"
+            showtime="true"
+            filter="user_utc"
+        />
+    </fieldset>
+</form>

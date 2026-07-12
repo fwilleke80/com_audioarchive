@@ -132,9 +132,9 @@ class ManagedStorageService
      *
      * @return array{storage_key:string,absolute_path:string} Stored path data.
      */
-    public function storeOriginal(string $temporaryPath, string $uuid, string $extension): array
+    public function storeOriginal(string $temporaryPath, string $uuid, string $extension, bool $moveSource = true): array
     {
-        return $this->storeOriginalFile($temporaryPath, $uuid, $extension, '');
+        return $this->storeOriginalFile($temporaryPath, $uuid, $extension, '', $moveSource);
     }
 
     /**
@@ -151,7 +151,7 @@ class ManagedStorageService
      */
     public function storeReplacementOriginal(string $temporaryPath, string $uuid, string $extension): array
     {
-        return $this->storeOriginalFile($temporaryPath, $uuid, $extension, '-r' . bin2hex(random_bytes(6)));
+        return $this->storeOriginalFile($temporaryPath, $uuid, $extension, '-r' . bin2hex(random_bytes(6)), true);
     }
 
     /**
@@ -164,7 +164,7 @@ class ManagedStorageService
      *
      * @return array{storage_key:string,absolute_path:string} Stored path data.
      */
-    private function storeOriginalFile(string $temporaryPath, string $uuid, string $extension, string $suffix): array
+    private function storeOriginalFile(string $temporaryPath, string $uuid, string $extension, string $suffix, bool $moveSource): array
     {
         if (!is_file($temporaryPath) || !is_readable($temporaryPath))
         {
@@ -210,9 +210,14 @@ class ManagedStorageService
         }
 
         $temporaryDestination = $destination . '.part-' . bin2hex(random_bytes(6));
-        $moved = is_uploaded_file($temporaryPath)
-            ? @move_uploaded_file($temporaryPath, $temporaryDestination)
-            : @rename($temporaryPath, $temporaryDestination);
+        $moved = false;
+
+        if ($moveSource)
+        {
+            $moved = is_uploaded_file($temporaryPath)
+                ? @move_uploaded_file($temporaryPath, $temporaryDestination)
+                : @rename($temporaryPath, $temporaryDestination);
+        }
 
         if (!$moved)
         {

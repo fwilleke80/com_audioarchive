@@ -66,9 +66,16 @@ $translateValue = static function (string $value): string
             <a class="btn btn-primary" href="<?php echo Route::_('index.php?option=com_audioarchive&view=clips'); ?>">
                 <?php echo Text::_('COM_AUDIOARCHIVE_MANAGE_CLIPS'); ?>
             </a>
-            <a class="btn btn-outline-primary" href="<?php echo Route::_('index.php?option=com_audioarchive&view=upload'); ?>">
-                <?php echo Text::_('COM_AUDIOARCHIVE_BULK_UPLOAD_TITLE'); ?>
-            </a>
+            <?php if (Factory::getApplication()->getIdentity()->authorise('audioarchive.managefiles', 'com_audioarchive')) : ?>
+                <a class="btn btn-outline-primary" href="<?php echo Route::_('index.php?option=com_audioarchive&view=upload'); ?>">
+                    <?php echo Text::_('COM_AUDIOARCHIVE_BULK_UPLOAD_TITLE'); ?>
+                </a>
+            <?php endif; ?>
+            <?php if (Factory::getApplication()->getIdentity()->authorise('audioarchive.import', 'com_audioarchive')) : ?>
+                <a class="btn btn-outline-primary" href="<?php echo Route::_('index.php?option=com_audioarchive&view=import'); ?>">
+                    <?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_TITLE'); ?>
+                </a>
+            <?php endif; ?>
             <a class="btn btn-outline-secondary" href="<?php echo Route::_('index.php?option=com_categories&view=categories&extension=com_audioarchive'); ?>">
                 <?php echo Text::_('COM_AUDIOARCHIVE_MANAGE_CATEGORIES'); ?>
             </a>

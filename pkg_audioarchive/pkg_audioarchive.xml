@@ -2,8 +2,8 @@
 <extension type="package" method="upgrade">
     <name>Joomla! Audio Archive Package</name>
     <packagename>audioarchive</packagename>
-    <version>0.2.0-dev3</version>
-    <creationDate>2026-07-12</creationDate>
+    <version>0.2.0-dev5</version>
+    <creationDate>2026-07-13</creationDate>
     <author>Frank Willeke</author>
     <authorEmail></authorEmail>
     <authorUrl></authorUrl>

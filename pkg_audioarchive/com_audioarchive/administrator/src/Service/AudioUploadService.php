@@ -69,7 +69,7 @@ class AudioUploadService
      *
      * @return array<string, mixed> Prepared immutable upload data.
      */
-    public function prepare(array $upload, int $excludeClipId = 0): array
+    public function prepare(array $upload, int $excludeClipId = 0, string $duplicatePolicyOverride = ''): array
     {
         $error = (int) ($upload['error'] ?? UPLOAD_ERR_NO_FILE);
 
@@ -152,7 +152,9 @@ class AudioUploadService
         }
 
         $duplicate = $this->findDuplicate($checksum, $excludeClipId);
-        $duplicatePolicy = (string) $this->params->get('duplicate_policy', 'warn');
+        $duplicatePolicy = $duplicatePolicyOverride !== ''
+            ? $duplicatePolicyOverride
+            : (string) $this->params->get('duplicate_policy', 'warn');
 
         if ($duplicate !== null && $duplicatePolicy === 'reject')
         {
@@ -182,7 +184,35 @@ class AudioUploadService
             'checksum_sha256' => $checksum,
             'metadata' => $metadata,
             'duplicate' => $duplicate,
+            'preserve_source' => false,
         ];
+    }
+
+    /**
+     * @brief Validate one existing file from the configured import inbox.
+     *
+     * @param string $path Absolute source path.
+     * @param string $filename Original filename or relative inbox path.
+     * @param string $duplicatePolicy Optional duplicate-policy override.
+     *
+     * @return array<string, mixed> Prepared immutable file data.
+     */
+    public function prepareLocalFile(string $path, string $filename, string $duplicatePolicy = ''): array
+    {
+        $prepared = $this->prepare(
+            [
+                'error' => UPLOAD_ERR_OK,
+                'tmp_name' => $path,
+                'name' => basename($filename),
+                'size' => is_file($path) ? (int) filesize($path) : 0,
+            ],
+            0,
+            $duplicatePolicy
+        );
+        $prepared['preserve_source'] = true;
+        $prepared['source_relative_path'] = str_replace('\\', '/', $filename);
+
+        return $prepared;
     }
 
     /**
@@ -209,7 +239,8 @@ class AudioUploadService
         $stored = $this->storage->storeOriginal(
             (string) $prepared['temporary_path'],
             $uuid,
-            (string) $prepared['extension']
+            (string) $prepared['extension'],
+            !(bool) ($prepared['preserve_source'] ?? false)
         );
         $metadata = (array) $prepared['metadata'];
         $now = Factory::getDate()->toSql();
