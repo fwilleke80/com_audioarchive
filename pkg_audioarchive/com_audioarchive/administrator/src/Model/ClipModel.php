@@ -145,6 +145,8 @@ class ClipModel extends AdminModel
             ? $files['audio_file']
             : null;
         $preparedUpload = null;
+        $task = $app->getInput()->getCmd('task');
+        $existingClipId = $task === 'save2copy' ? 0 : (int) ($data['id'] ?? 0);
 
         if ($upload !== null && (int) ($upload['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE)
         {
@@ -156,7 +158,7 @@ class ClipModel extends AdminModel
 
             try
             {
-                $preparedUpload = $uploadService->prepare($upload);
+                $preparedUpload = $uploadService->prepare($upload, $existingClipId);
             }
             catch (\Throwable $exception)
             {
@@ -195,7 +197,7 @@ class ClipModel extends AdminModel
             unset($data[$managedField]);
         }
 
-        if ($app->getInput()->getCmd('task') === 'save2copy')
+        if ($task === 'save2copy')
         {
             [$data['title'], $data['alias']] = $this->generateNewTitle(
                 (int) $data['catid'],
@@ -234,9 +236,22 @@ class ClipModel extends AdminModel
 
         try
         {
-            $uploadService->storeForClip($clipId, (string) $table->uuid, $preparedUpload);
+            $existingOriginal = $uploadService->getOriginalFile($clipId);
+            $resultWarnings = [];
 
-            foreach ((array) ($preparedUpload['metadata']['warnings'] ?? []) as $warning)
+            if ($existingOriginal === null)
+            {
+                $uploadService->storeForClip($clipId, (string) $table->uuid, $preparedUpload);
+                $app->enqueueMessage(Text::_('COM_AUDIOARCHIVE_UPLOAD_STORED_SUCCESS'), 'success');
+            }
+            else
+            {
+                $result = $uploadService->replaceForClip($clipId, (string) $table->uuid, $preparedUpload);
+                $resultWarnings = (array) ($result['warnings'] ?? []);
+                $app->enqueueMessage(Text::_('COM_AUDIOARCHIVE_REPLACEMENT_STORED_SUCCESS'), 'success');
+            }
+
+            foreach (array_merge((array) ($preparedUpload['metadata']['warnings'] ?? []), $resultWarnings) as $warning)
             {
                 $app->enqueueMessage((string) $warning, 'warning');
             }
@@ -267,6 +282,42 @@ class ClipModel extends AdminModel
         );
 
         return $service->getOriginalFile($clipId);
+    }
+
+    /**
+     * @brief Reinspect the current clip's stored original.
+     *
+     * @param int $clipId Clip identifier.
+     *
+     * @return string[] Inspector warnings.
+     */
+    public function reanalyseOriginal(int $clipId): array
+    {
+        $service = new AudioUploadService(
+            $this->getDatabase(),
+            ComponentHelper::getParams('com_audioarchive'),
+            $this->getCurrentUser()
+        );
+
+        return $service->reanalyseForClip($clipId);
+    }
+
+    /**
+     * @brief Verify the current clip's stored original.
+     *
+     * @param int $clipId Clip identifier.
+     *
+     * @return array{ok:bool,message:string} Verification result.
+     */
+    public function verifyOriginal(int $clipId): array
+    {
+        $service = new AudioUploadService(
+            $this->getDatabase(),
+            ComponentHelper::getParams('com_audioarchive'),
+            $this->getCurrentUser()
+        );
+
+        return $service->verifyForClip($clipId);
     }
 
     /**

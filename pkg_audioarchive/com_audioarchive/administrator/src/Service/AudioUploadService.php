@@ -65,10 +65,11 @@ class AudioUploadService
      * @brief Validate one PHP upload before saving the clip record.
      *
      * @param array<string, mixed> $upload PHP upload array.
+     * @param int $excludeClipId Clip to exclude from duplicate detection during replacement.
      *
      * @return array<string, mixed> Prepared immutable upload data.
      */
-    public function prepare(array $upload): array
+    public function prepare(array $upload, int $excludeClipId = 0): array
     {
         $error = (int) ($upload['error'] ?? UPLOAD_ERR_NO_FILE);
 
@@ -150,7 +151,7 @@ class AudioUploadService
             throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_ERROR_UPLOAD_CHECKSUM'));
         }
 
-        $duplicate = $this->findDuplicate($checksum);
+        $duplicate = $this->findDuplicate($checksum, $excludeClipId);
         $duplicatePolicy = (string) $this->params->get('duplicate_policy', 'warn');
 
         if ($duplicate !== null && $duplicatePolicy === 'reject')
@@ -158,8 +159,7 @@ class AudioUploadService
             throw new \RuntimeException(
                 Text::sprintf(
                     'COM_AUDIOARCHIVE_ERROR_DUPLICATE_REJECTED',
-                    (string) $duplicate->title,
-                    (int) $duplicate->clip_id
+                    $this->formatDuplicateDetails($duplicate)
                 )
             );
         }
@@ -168,8 +168,7 @@ class AudioUploadService
         {
             $warnings[] = Text::sprintf(
                 'COM_AUDIOARCHIVE_WARNING_DUPLICATE_ALLOWED',
-                (string) $duplicate->title,
-                (int) $duplicate->clip_id
+                $this->formatDuplicateDetails($duplicate)
             );
         }
 
@@ -271,6 +270,313 @@ class AudioUploadService
         }
 
         return $file;
+    }
+
+    /**
+     * @brief Replace a clip's original while preserving the previous file until commit.
+     *
+     * @param int $clipId Clip identifier.
+     * @param string $uuid Clip UUID.
+     * @param array<string, mixed> $prepared Prepared replacement upload.
+     *
+     * @return array{file:object,warnings:string[]} Updated file and cleanup warnings.
+     */
+    public function replaceForClip(int $clipId, string $uuid, array $prepared): array
+    {
+        $current = $this->getOriginalFile($clipId);
+
+        if ($current === null)
+        {
+            return [
+                'file' => $this->storeForClip($clipId, $uuid, $prepared),
+                'warnings' => [],
+            ];
+        }
+
+        $stored = $this->storage->storeReplacementOriginal(
+            (string) $prepared['temporary_path'],
+            $uuid,
+            (string) $prepared['extension']
+        );
+        $metadata = (array) $prepared['metadata'];
+        $now = Factory::getDate()->toSql();
+        $technicalMetadata = $this->technicalMetadataJson($metadata);
+        $hasPreview = $this->hasFileRole($clipId, 'preview');
+        $hasWaveform = $this->hasWaveform($clipId);
+        $previewStatus = $hasPreview
+            ? 'stale'
+            : ($this->requiresCompatibilityPreview($metadata) ? 'unavailable' : 'not_required');
+        $waveformStatus = $hasWaveform ? 'stale' : 'missing';
+        $storageKey = (string) $stored['storage_key'];
+        $extension = (string) $prepared['extension'];
+        $mimeType = (string) ($metadata['mime_type'] ?? '');
+        $container = (string) ($metadata['container_format'] ?? '');
+        $codec = (string) ($metadata['audio_codec'] ?? '');
+        $fileSize = (int) $prepared['file_size'];
+        $duration = (int) ($metadata['duration_ms'] ?? 0);
+        $checksum = (string) $prepared['checksum_sha256'];
+        $userId = (int) $this->user->id;
+        $available = 1;
+        $processingError = '';
+        $fileId = (int) $current->id;
+        $originalFilename = (string) $prepared['original_filename'];
+        $metadataStatus = 'available';
+
+        $this->database->transactionStart();
+
+        try
+        {
+            $fileQuery = $this->database->getQuery(true)
+                ->update($this->database->quoteName('#__audioarchive_files'))
+                ->set($this->database->quoteName('storage_key') . ' = :storageKey')
+                ->set($this->database->quoteName('file_extension') . ' = :extension')
+                ->set($this->database->quoteName('mime_type') . ' = :mimeType')
+                ->set($this->database->quoteName('container_format') . ' = :container')
+                ->set($this->database->quoteName('audio_codec') . ' = :codec')
+                ->set($this->database->quoteName('file_size') . ' = :fileSize')
+                ->set($this->database->quoteName('duration_ms') . ' = :duration')
+                ->set($this->database->quoteName('checksum_sha256') . ' = :checksum')
+                ->set($this->database->quoteName('created') . ' = :created')
+                ->set($this->database->quoteName('created_by') . ' = :createdBy')
+                ->set($this->database->quoteName('is_available') . ' = :available')
+                ->set($this->database->quoteName('processing_error') . ' = :processingError')
+                ->where($this->database->quoteName('id') . ' = :fileId')
+                ->bind(':storageKey', $storageKey, ParameterType::STRING)
+                ->bind(':extension', $extension, ParameterType::STRING)
+                ->bind(':mimeType', $mimeType, ParameterType::STRING)
+                ->bind(':container', $container, ParameterType::STRING)
+                ->bind(':codec', $codec, ParameterType::STRING)
+                ->bind(':fileSize', $fileSize, ParameterType::INTEGER)
+                ->bind(':duration', $duration, ParameterType::INTEGER)
+                ->bind(':checksum', $checksum, ParameterType::STRING)
+                ->bind(':created', $now, ParameterType::STRING)
+                ->bind(':createdBy', $userId, ParameterType::INTEGER)
+                ->bind(':available', $available, ParameterType::INTEGER)
+                ->bind(':processingError', $processingError, ParameterType::STRING)
+                ->bind(':fileId', $fileId, ParameterType::INTEGER);
+            $this->database->setQuery($fileQuery)->execute();
+
+            $clipQuery = $this->database->getQuery(true)
+                ->update($this->database->quoteName('#__audioarchive_clips'))
+                ->set($this->database->quoteName('original_filename') . ' = :originalFilename')
+                ->set($this->database->quoteName('duration_ms') . ' = :duration')
+                ->set($this->database->quoteName('metadata_status') . ' = :metadataStatus')
+                ->set($this->database->quoteName('preview_status') . ' = :previewStatus')
+                ->set($this->database->quoteName('waveform_status') . ' = :waveformStatus')
+                ->set($this->database->quoteName('technical_metadata') . ' = :technicalMetadata')
+                ->where($this->database->quoteName('id') . ' = :clipId')
+                ->bind(':originalFilename', $originalFilename, ParameterType::STRING)
+                ->bind(':duration', $duration, ParameterType::INTEGER)
+                ->bind(':metadataStatus', $metadataStatus, ParameterType::STRING)
+                ->bind(':previewStatus', $previewStatus, ParameterType::STRING)
+                ->bind(':waveformStatus', $waveformStatus, ParameterType::STRING)
+                ->bind(':technicalMetadata', $technicalMetadata, ParameterType::STRING)
+                ->bind(':clipId', $clipId, ParameterType::INTEGER);
+            $this->database->setQuery($clipQuery)->execute();
+            $this->database->transactionCommit();
+        }
+        catch (\Throwable $exception)
+        {
+            $this->database->transactionRollback();
+
+            try
+            {
+                $this->storage->deleteManagedFile('original', $storageKey);
+            }
+            catch (\Throwable $cleanupException)
+            {
+                // Preserve the database exception; the staged replacement remains unreferenced.
+            }
+
+            throw $exception;
+        }
+
+        $warnings = [];
+
+        try
+        {
+            if (!$this->storage->deleteManagedFile('original', (string) $current->storage_key))
+            {
+                $warnings[] = Text::_('COM_AUDIOARCHIVE_WARNING_OLD_ORIGINAL_NOT_DELETED');
+            }
+        }
+        catch (\Throwable $exception)
+        {
+            $warnings[] = Text::_('COM_AUDIOARCHIVE_WARNING_OLD_ORIGINAL_NOT_DELETED');
+        }
+
+        $current->storage_key = $storageKey;
+        $current->file_extension = $extension;
+        $current->mime_type = $mimeType;
+        $current->container_format = $container;
+        $current->audio_codec = $codec;
+        $current->file_size = $fileSize;
+        $current->duration_ms = $duration;
+        $current->checksum_sha256 = $checksum;
+        $current->created = $now;
+        $current->created_by = $userId;
+        $current->is_available = 1;
+        $current->processing_error = '';
+
+        return ['file' => $current, 'warnings' => $warnings];
+    }
+
+    /**
+     * @brief Reinspect the stored original and refresh technical metadata.
+     *
+     * @param int $clipId Clip identifier.
+     *
+     * @return string[] Inspector warnings.
+     */
+    public function reanalyseForClip(int $clipId): array
+    {
+        $file = $this->requireOriginalFile($clipId);
+        $path = $this->storage->resolveManagedPath('original', (string) $file->storage_key);
+
+        if (!is_file($path) || is_link($path) || !is_readable($path))
+        {
+            $this->setFileAvailability((int) $file->id, false, Text::_('COM_AUDIOARCHIVE_VERIFY_FILE_MISSING'));
+            throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_ERROR_ORIGINAL_NOT_READABLE'));
+        }
+
+        $clip = $this->getClipSummary($clipId);
+        $metadata = $this->inspector->inspect($path, (string) $clip->original_filename);
+
+        if (!(bool) ($metadata['valid'] ?? false))
+        {
+            $errors = array_values(array_filter((array) ($metadata['errors'] ?? [])));
+            $message = $errors !== [] ? implode(' ', $errors) : Text::_('COM_AUDIOARCHIVE_ERROR_UPLOAD_INVALID_MEDIA_UNKNOWN');
+            $this->setFileAvailability((int) $file->id, false, $message);
+            throw new \RuntimeException(Text::sprintf('COM_AUDIOARCHIVE_ERROR_REANALYSE_INVALID', $message));
+        }
+
+        $checksum = hash_file('sha256', $path);
+
+        if (!is_string($checksum) || strlen($checksum) !== 64)
+        {
+            throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_ERROR_UPLOAD_CHECKSUM'));
+        }
+
+        $fileSize = (int) filesize($path);
+        $duration = (int) ($metadata['duration_ms'] ?? 0);
+        $mimeType = (string) ($metadata['mime_type'] ?? '');
+        $container = (string) ($metadata['container_format'] ?? '');
+        $codec = (string) ($metadata['audio_codec'] ?? '');
+        $technicalMetadata = $this->technicalMetadataJson($metadata);
+        $available = 1;
+        $processingError = '';
+        $fileId = (int) $file->id;
+        $metadataStatus = 'available';
+        $contentChanged = !hash_equals((string) $file->checksum_sha256, $checksum);
+        $previewStatus = $this->hasFileRole($clipId, 'preview')
+            ? 'stale'
+            : ($this->requiresCompatibilityPreview($metadata) ? 'unavailable' : 'not_required');
+        $waveformStatus = $this->hasWaveform($clipId) ? 'stale' : 'missing';
+
+        $this->database->transactionStart();
+
+        try
+        {
+            $fileQuery = $this->database->getQuery(true)
+                ->update($this->database->quoteName('#__audioarchive_files'))
+                ->set($this->database->quoteName('mime_type') . ' = :mimeType')
+                ->set($this->database->quoteName('container_format') . ' = :container')
+                ->set($this->database->quoteName('audio_codec') . ' = :codec')
+                ->set($this->database->quoteName('file_size') . ' = :fileSize')
+                ->set($this->database->quoteName('duration_ms') . ' = :duration')
+                ->set($this->database->quoteName('checksum_sha256') . ' = :checksum')
+                ->set($this->database->quoteName('is_available') . ' = :available')
+                ->set($this->database->quoteName('processing_error') . ' = :processingError')
+                ->where($this->database->quoteName('id') . ' = :fileId')
+                ->bind(':mimeType', $mimeType, ParameterType::STRING)
+                ->bind(':container', $container, ParameterType::STRING)
+                ->bind(':codec', $codec, ParameterType::STRING)
+                ->bind(':fileSize', $fileSize, ParameterType::INTEGER)
+                ->bind(':duration', $duration, ParameterType::INTEGER)
+                ->bind(':checksum', $checksum, ParameterType::STRING)
+                ->bind(':available', $available, ParameterType::INTEGER)
+                ->bind(':processingError', $processingError, ParameterType::STRING)
+                ->bind(':fileId', $fileId, ParameterType::INTEGER);
+            $this->database->setQuery($fileQuery)->execute();
+
+            $clipQuery = $this->database->getQuery(true)
+                ->update($this->database->quoteName('#__audioarchive_clips'))
+                ->set($this->database->quoteName('duration_ms') . ' = :duration')
+                ->set($this->database->quoteName('metadata_status') . ' = :metadataStatus')
+                ->set($this->database->quoteName('technical_metadata') . ' = :technicalMetadata')
+                ->where($this->database->quoteName('id') . ' = :clipId')
+                ->bind(':duration', $duration, ParameterType::INTEGER)
+                ->bind(':metadataStatus', $metadataStatus, ParameterType::STRING)
+                ->bind(':technicalMetadata', $technicalMetadata, ParameterType::STRING)
+                ->bind(':clipId', $clipId, ParameterType::INTEGER);
+
+            if ($contentChanged)
+            {
+                $clipQuery->set($this->database->quoteName('preview_status') . ' = :previewStatus')
+                    ->set($this->database->quoteName('waveform_status') . ' = :waveformStatus')
+                    ->bind(':previewStatus', $previewStatus, ParameterType::STRING)
+                    ->bind(':waveformStatus', $waveformStatus, ParameterType::STRING);
+            }
+
+            $this->database->setQuery($clipQuery)->execute();
+            $this->database->transactionCommit();
+        }
+        catch (\Throwable $exception)
+        {
+            $this->database->transactionRollback();
+            throw $exception;
+        }
+
+        return array_values(array_unique(array_filter((array) ($metadata['warnings'] ?? []))));
+    }
+
+    /**
+     * @brief Verify existence, readability, size, and checksum of a stored original.
+     *
+     * @param int $clipId Clip identifier.
+     *
+     * @return array{ok:bool,message:string}
+     */
+    public function verifyForClip(int $clipId): array
+    {
+        $file = $this->requireOriginalFile($clipId);
+        $path = $this->storage->resolveManagedPath('original', (string) $file->storage_key);
+        $problems = [];
+
+        if (!file_exists($path))
+        {
+            $problems[] = Text::_('COM_AUDIOARCHIVE_VERIFY_FILE_MISSING');
+        }
+        elseif (is_link($path) || !is_file($path))
+        {
+            $problems[] = Text::_('COM_AUDIOARCHIVE_VERIFY_FILE_INVALID_TYPE');
+        }
+        elseif (!is_readable($path))
+        {
+            $problems[] = Text::_('COM_AUDIOARCHIVE_VERIFY_FILE_NOT_READABLE');
+        }
+        else
+        {
+            $actualSize = (int) filesize($path);
+
+            if ($actualSize !== (int) $file->file_size)
+            {
+                $problems[] = Text::sprintf('COM_AUDIOARCHIVE_VERIFY_SIZE_MISMATCH', (int) $file->file_size, $actualSize);
+            }
+
+            $actualChecksum = hash_file('sha256', $path);
+
+            if (!is_string($actualChecksum) || !hash_equals((string) $file->checksum_sha256, $actualChecksum))
+            {
+                $problems[] = Text::_('COM_AUDIOARCHIVE_VERIFY_CHECKSUM_MISMATCH');
+            }
+        }
+
+        $ok = $problems === [];
+        $message = $ok ? Text::_('COM_AUDIOARCHIVE_VERIFY_SUCCESS') : implode(' ', $problems);
+        $this->setFileAvailability((int) $file->id, $ok, $ok ? '' : $message);
+
+        return ['ok' => $ok, 'message' => $message];
     }
 
     /**
@@ -433,13 +739,176 @@ class AudioUploadService
     }
 
     /**
+     * @brief Require an original-file record for a clip.
+     *
+     * @param int $clipId Clip identifier.
+     *
+     * @return object File row.
+     */
+    private function requireOriginalFile(int $clipId): object
+    {
+        $file = $this->getOriginalFile($clipId);
+
+        if ($file === null)
+        {
+            throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_ERROR_NO_ORIGINAL_FILE'));
+        }
+
+        return $file;
+    }
+
+    /**
+     * @brief Load the minimal clip fields needed by file operations.
+     *
+     * @param int $clipId Clip identifier.
+     *
+     * @return object Clip summary.
+     */
+    private function getClipSummary(int $clipId): object
+    {
+        $query = $this->database->getQuery(true)
+            ->select([
+                $this->database->quoteName('id'),
+                $this->database->quoteName('uuid'),
+                $this->database->quoteName('original_filename'),
+            ])
+            ->from($this->database->quoteName('#__audioarchive_clips'))
+            ->where($this->database->quoteName('id') . ' = :clipId')
+            ->bind(':clipId', $clipId, ParameterType::INTEGER);
+        $clip = $this->database->setQuery($query, 0, 1)->loadObject();
+
+        if (!is_object($clip))
+        {
+            throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_ERROR_SAVED_CLIP_NOT_FOUND'));
+        }
+
+        return $clip;
+    }
+
+    /**
+     * @brief Persist the latest stored-file availability result.
+     *
+     * @param int $fileId File-record identifier.
+     * @param bool $available Availability state.
+     * @param string $error Processing diagnostic.
+     *
+     * @return void
+     */
+    private function setFileAvailability(int $fileId, bool $available, string $error): void
+    {
+        $availability = $available ? 1 : 0;
+        $query = $this->database->getQuery(true)
+            ->update($this->database->quoteName('#__audioarchive_files'))
+            ->set($this->database->quoteName('is_available') . ' = :available')
+            ->set($this->database->quoteName('processing_error') . ' = :processingError')
+            ->where($this->database->quoteName('id') . ' = :fileId')
+            ->bind(':available', $availability, ParameterType::INTEGER)
+            ->bind(':processingError', $error, ParameterType::STRING)
+            ->bind(':fileId', $fileId, ParameterType::INTEGER);
+        $this->database->setQuery($query)->execute();
+    }
+
+    /**
+     * @brief Check whether a clip has a file record with a given role.
+     *
+     * @param int $clipId Clip identifier.
+     * @param string $role File role.
+     *
+     * @return bool True when a matching record exists.
+     */
+    private function hasFileRole(int $clipId, string $role): bool
+    {
+        $query = $this->database->getQuery(true)
+            ->select('COUNT(*)')
+            ->from($this->database->quoteName('#__audioarchive_files'))
+            ->where($this->database->quoteName('clip_id') . ' = :clipId')
+            ->where($this->database->quoteName('file_role') . ' = :role')
+            ->bind(':clipId', $clipId, ParameterType::INTEGER)
+            ->bind(':role', $role, ParameterType::STRING);
+
+        return (int) $this->database->setQuery($query)->loadResult() > 0;
+    }
+
+    /**
+     * @brief Check whether a clip already has generated waveform data.
+     *
+     * @param int $clipId Clip identifier.
+     *
+     * @return bool True when a waveform row exists.
+     */
+    private function hasWaveform(int $clipId): bool
+    {
+        $query = $this->database->getQuery(true)
+            ->select('COUNT(*)')
+            ->from($this->database->quoteName('#__audioarchive_waveforms'))
+            ->where($this->database->quoteName('clip_id') . ' = :clipId')
+            ->bind(':clipId', $clipId, ParameterType::INTEGER);
+
+        return (int) $this->database->setQuery($query)->loadResult() > 0;
+    }
+
+    /**
+     * @brief Build a detailed duplicate description with an administrator edit link.
+     *
+     * @param object $duplicate Existing duplicate summary.
+     *
+     * @return string HTML-safe duplicate details.
+     */
+    private function formatDuplicateDetails(object $duplicate): string
+    {
+        $clipId = (int) $duplicate->clip_id;
+        $title = htmlspecialchars((string) $duplicate->title, ENT_QUOTES, 'UTF-8');
+        $filenameText = trim((string) $duplicate->original_filename);
+        $categoryText = trim((string) ($duplicate->category_title ?? ''));
+        $uploadedText = trim((string) $duplicate->uploaded_at);
+        $filename = htmlspecialchars($filenameText !== '' ? $filenameText : Text::_('JNONE'), ENT_QUOTES, 'UTF-8');
+        $category = htmlspecialchars($categoryText !== '' ? $categoryText : Text::_('JNONE'), ENT_QUOTES, 'UTF-8');
+        $uploaded = htmlspecialchars($uploadedText !== '' ? $uploadedText : Text::_('JNONE'), ENT_QUOTES, 'UTF-8');
+        $state = htmlspecialchars($this->stateLabel((int) $duplicate->state), ENT_QUOTES, 'UTF-8');
+        $url = 'index.php?option=com_audioarchive&task=clip.edit&id=' . $clipId;
+        $link = '<a href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '">'
+            . htmlspecialchars(Text::_('COM_AUDIOARCHIVE_DUPLICATE_EDIT_LINK'), ENT_QUOTES, 'UTF-8')
+            . '</a>';
+
+        return Text::sprintf(
+            'COM_AUDIOARCHIVE_DUPLICATE_DETAILS',
+            $title,
+            $clipId,
+            $filename,
+            $category,
+            $uploaded,
+            $state,
+            $link
+        );
+    }
+
+    /**
+     * @brief Translate one Joomla publication state.
+     *
+     * @param int $state Publication state.
+     *
+     * @return string State label.
+     */
+    private function stateLabel(int $state): string
+    {
+        return match ($state)
+        {
+            1 => Text::_('JPUBLISHED'),
+            2 => Text::_('JARCHIVED'),
+            -2 => Text::_('JTRASHED'),
+            default => Text::_('JUNPUBLISHED'),
+        };
+    }
+
+    /**
      * @brief Find an exact duplicate by SHA-256 checksum.
      *
      * @param string $checksum SHA-256 checksum.
+     * @param int $excludeClipId Clip excluded during original replacement.
      *
      * @return object|null Existing file and clip summary.
      */
-    private function findDuplicate(string $checksum): ?object
+    private function findDuplicate(string $checksum, int $excludeClipId = 0): ?object
     {
         $role = 'original';
         $query = $this->database->getQuery(true)
@@ -450,13 +919,21 @@ class AudioUploadService
                 $this->database->quoteName('c.original_filename'),
                 $this->database->quoteName('c.state'),
                 $this->database->quoteName('c.uploaded_at'),
+                $this->database->quoteName('cat.title', 'category_title'),
             ])
             ->from($this->database->quoteName('#__audioarchive_files', 'f'))
             ->join('INNER', $this->database->quoteName('#__audioarchive_clips', 'c'), $this->database->quoteName('c.id') . ' = ' . $this->database->quoteName('f.clip_id'))
+            ->join('LEFT', $this->database->quoteName('#__categories', 'cat'), $this->database->quoteName('cat.id') . ' = ' . $this->database->quoteName('c.catid'))
             ->where($this->database->quoteName('f.file_role') . ' = :role')
             ->where($this->database->quoteName('f.checksum_sha256') . ' = :checksum')
             ->bind(':role', $role, ParameterType::STRING)
             ->bind(':checksum', $checksum, ParameterType::STRING);
+
+        if ($excludeClipId > 0)
+        {
+            $query->where($this->database->quoteName('f.clip_id') . ' <> :excludeClipId')
+                ->bind(':excludeClipId', $excludeClipId, ParameterType::INTEGER);
+        }
         $result = $this->database->setQuery($query, 0, 1)->loadObject();
 
         return is_object($result) ? $result : null;

@@ -134,6 +134,38 @@ class ManagedStorageService
      */
     public function storeOriginal(string $temporaryPath, string $uuid, string $extension): array
     {
+        return $this->storeOriginalFile($temporaryPath, $uuid, $extension, '');
+    }
+
+    /**
+     * @brief Store a replacement original under a fresh managed key.
+     *
+     * Keeping the replacement under a fresh key allows the existing original
+     * to remain untouched until the database transaction has committed.
+     *
+     * @param string $temporaryPath PHP upload temporary path.
+     * @param string $uuid Clip UUID.
+     * @param string $extension Validated lowercase extension.
+     *
+     * @return array{storage_key:string,absolute_path:string} Stored path data.
+     */
+    public function storeReplacementOriginal(string $temporaryPath, string $uuid, string $extension): array
+    {
+        return $this->storeOriginalFile($temporaryPath, $uuid, $extension, '-r' . bin2hex(random_bytes(6)));
+    }
+
+    /**
+     * @brief Store an original using a validated generated basename suffix.
+     *
+     * @param string $temporaryPath PHP upload temporary path.
+     * @param string $uuid Clip UUID.
+     * @param string $extension Validated lowercase extension.
+     * @param string $suffix Generated filename suffix.
+     *
+     * @return array{storage_key:string,absolute_path:string} Stored path data.
+     */
+    private function storeOriginalFile(string $temporaryPath, string $uuid, string $extension, string $suffix): array
+    {
         if (!is_file($temporaryPath) || !is_readable($temporaryPath))
         {
             throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_STORAGE_ERROR_TEMP_NOT_READABLE'));
@@ -151,10 +183,17 @@ class ManagedStorageService
             throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_STORAGE_ERROR_EXTENSION'));
         }
 
+        if ($suffix !== '' && !preg_match('/^-r[0-9a-f]{12}$/', $suffix))
+        {
+            throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_STORAGE_ERROR_FILENAME_SUFFIX'));
+        }
+
         $root = $this->ensureDirectory('original');
-        $compactUuid = strtolower(str_replace('-', '', $uuid));
+        $normalisedUuid = strtolower($uuid);
+        $compactUuid = str_replace('-', '', $normalisedUuid);
         $relativeDirectory = substr($compactUuid, 0, 2) . '/' . substr($compactUuid, 2, 2);
-        $relativePath = $relativeDirectory . '/' . strtolower($uuid) . '.' . $extension;
+        $basename = $normalisedUuid . $suffix . '.' . $extension;
+        $relativePath = $relativeDirectory . '/' . $basename;
         $directory = $root . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativeDirectory);
 
         if (!is_dir($directory) && !@mkdir($directory, 0750, true) && !is_dir($directory))
@@ -163,7 +202,7 @@ class ManagedStorageService
         }
 
         $this->assertContainedPath($root, $directory);
-        $destination = $directory . DIRECTORY_SEPARATOR . strtolower($uuid) . '.' . $extension;
+        $destination = $directory . DIRECTORY_SEPARATOR . $basename;
 
         if (file_exists($destination))
         {

@@ -18,6 +18,8 @@ class HtmlView extends BaseHtmlView
     protected $item;
     protected $state;
     protected $originalFile;
+    protected bool $canManageFiles = false;
+    protected bool $canProcess = false;
 
     /**
      * @brief Display the edit form.
@@ -33,6 +35,9 @@ class HtmlView extends BaseHtmlView
         $this->item = $this->get('Item');
         $this->state = $this->get('State');
         $this->originalFile = $this->get('OriginalFile');
+        $user = Factory::getApplication()->getIdentity();
+        $this->canManageFiles = $user->authorise('audioarchive.managefiles', 'com_audioarchive');
+        $this->canProcess = $user->authorise('audioarchive.process', 'com_audioarchive');
 
         if (count($errors = $this->get('Errors')))
         {

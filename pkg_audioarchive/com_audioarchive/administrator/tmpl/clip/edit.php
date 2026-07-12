@@ -56,7 +56,16 @@ HTMLHelper::_('behavior.keepalive');
                 $channels = max(0, (int) ($technicalMetadata['channels'] ?? 0));
                 $bitrate = max(0, (int) ($technicalMetadata['bitrate'] ?? 0));
                 ?>
-                <div class="alert alert-success"><?php echo Text::_('COM_AUDIOARCHIVE_ORIGINAL_STORED'); ?></div>
+                <?php if ((int) $this->originalFile->is_available === 1) : ?>
+                    <div class="alert alert-success"><?php echo Text::_('COM_AUDIOARCHIVE_ORIGINAL_STORED'); ?></div>
+                <?php else : ?>
+                    <div class="alert alert-danger">
+                        <?php echo Text::_('COM_AUDIOARCHIVE_ORIGINAL_UNAVAILABLE'); ?>
+                        <?php if (trim((string) $this->originalFile->processing_error) !== '') : ?>
+                            <br><?php echo htmlspecialchars((string) $this->originalFile->processing_error, ENT_QUOTES, 'UTF-8'); ?>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
                 <dl class="row">
                     <dt class="col-sm-3"><?php echo Text::_('COM_AUDIOARCHIVE_FIELD_ORIGINAL_FILENAME'); ?></dt>
                     <dd class="col-sm-9"><?php echo htmlspecialchars((string) $this->item->original_filename, ENT_QUOTES, 'UTF-8'); ?></dd>
@@ -79,7 +88,31 @@ HTMLHelper::_('behavior.keepalive');
                     <dt class="col-sm-3"><?php echo Text::_('COM_AUDIOARCHIVE_FIELD_CHECKSUM'); ?></dt>
                     <dd class="col-sm-9"><code><?php echo htmlspecialchars((string) $this->originalFile->checksum_sha256, ENT_QUOTES, 'UTF-8'); ?></code></dd>
                 </dl>
-                <div class="alert alert-secondary mb-0"><?php echo Text::_('COM_AUDIOARCHIVE_FILE_REPLACEMENT_LATER'); ?></div>
+
+                <?php if ($this->canManageFiles && $this->form->getField('audio_file') !== false) : ?>
+                    <hr>
+                    <h3 class="h5"><?php echo Text::_('COM_AUDIOARCHIVE_REPLACE_ORIGINAL_TITLE'); ?></h3>
+                    <div class="alert alert-warning">
+                        <?php echo Text::_('COM_AUDIOARCHIVE_REPLACE_ORIGINAL_NOTICE'); ?>
+                    </div>
+                    <?php echo $this->form->renderField('audio_file'); ?>
+                <?php endif; ?>
+
+                <?php if ($this->canProcess) : ?>
+                    <hr>
+                    <h3 class="h5"><?php echo Text::_('COM_AUDIOARCHIVE_TECHNICAL_ACTIONS_TITLE'); ?></h3>
+                    <p class="text-muted"><?php echo Text::_('COM_AUDIOARCHIVE_TECHNICAL_ACTIONS_NOTE'); ?></p>
+                    <div class="btn-toolbar gap-2" role="toolbar">
+                        <button type="button" class="btn btn-secondary" onclick="Joomla.submitbutton('clip.verify');">
+                            <span class="icon-check" aria-hidden="true"></span>
+                            <?php echo Text::_('COM_AUDIOARCHIVE_ACTION_VERIFY_FILE'); ?>
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="Joomla.submitbutton('clip.reanalyse');">
+                            <span class="icon-refresh" aria-hidden="true"></span>
+                            <?php echo Text::_('COM_AUDIOARCHIVE_ACTION_REANALYSE'); ?>
+                        </button>
+                    </div>
+                <?php endif; ?>
             <?php endif; ?>
 
             <hr>
