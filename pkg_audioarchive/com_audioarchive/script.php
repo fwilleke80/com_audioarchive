@@ -14,7 +14,7 @@ use Joomla\Registry\Registry;
 
 return new class () implements InstallerScriptInterface
 {
-	private const SCHEMA_VERSION = '0.1.2';
+	private const SCHEMA_VERSION = '0.1.3';
 
 	private const CATEGORY_MENU_LINK = 'index.php?option=com_categories&view=categories&extension=com_audioarchive';
 
@@ -497,11 +497,17 @@ return new class () implements InstallerScriptInterface
 	 */
 	private function repairCheckoutColumns(DatabaseInterface $database): void
 	{
-		$query = 'ALTER TABLE ' . $database->quoteName('#__audioarchive_clips')
-			. ' MODIFY ' . $database->quoteName('checked_out') . ' int unsigned DEFAULT NULL,'
-			. ' MODIFY ' . $database->quoteName('checked_out_time') . ' datetime DEFAULT NULL';
+		$queries = [
+			'ALTER TABLE ' . $database->quoteName('#__audioarchive_clips')
+				. ' MODIFY ' . $database->quoteName('checked_out') . ' int unsigned DEFAULT NULL',
+			'ALTER TABLE ' . $database->quoteName('#__audioarchive_clips')
+				. ' MODIFY ' . $database->quoteName('checked_out_time') . ' datetime DEFAULT NULL',
+		];
 
-		$database->setQuery($query)->execute();
+		foreach ($queries as $query)
+		{
+			$database->setQuery($query)->execute();
+		}
 	}
 
 	/**

@@ -247,6 +247,7 @@ class ClipModel extends AdminModel
         }
 
         $database = $this->getDatabase();
+        $extension = 'com_audioarchive';
         $query = $database->getQuery(true)
             ->select($database->quoteName('id'))
             ->from($database->quoteName('#__categories'))
@@ -254,7 +255,7 @@ class ClipModel extends AdminModel
             ->where($database->quoteName('extension') . ' = :extension')
             ->whereIn($database->quoteName('published'), [0, 1])
             ->bind(':categoryId', $categoryId, ParameterType::INTEGER)
-            ->bind(':extension', 'com_audioarchive');
+            ->bind(':extension', $extension, ParameterType::STRING);
 
         return (int) $database->setQuery($query)->loadResult();
     }

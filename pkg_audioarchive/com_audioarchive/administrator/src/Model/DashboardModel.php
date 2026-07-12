@@ -2,7 +2,9 @@
 
 namespace Willeke\Component\Audioarchive\Administrator\Model;
 
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
+use Willeke\Component\Audioarchive\Administrator\Service\SystemCheckService;
 
 \defined('_JEXEC') or die;
 
@@ -43,4 +45,19 @@ class DashboardModel extends BaseDatabaseModel
             'waveform_attention' => (int) ($row['waveform_attention'] ?? 0),
         ];
     }
+    /**
+     * @brief Run non-destructive configuration and server diagnostics.
+     *
+     * @return array<string, mixed> Structured system-check result.
+     */
+    public function getSystemCheck(): array
+    {
+        $service = new SystemCheckService(
+            $this->getDatabase(),
+            ComponentHelper::getParams('com_audioarchive')
+        );
+
+        return $service->run();
+    }
+
 }
