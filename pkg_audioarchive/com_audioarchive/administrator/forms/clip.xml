@@ -5,7 +5,7 @@
         <field name="asset_id" type="hidden" filter="unset" />
         <field name="checked_out" type="hidden" filter="unset" />
         <field name="checked_out_time" type="hidden" filter="unset" />
-        <field name="title" type="text" label="JGLOBAL_TITLE" required="true" maxlength="255" />
+        <field name="title" type="text" label="JGLOBAL_TITLE" required="false" description="COM_AUDIOARCHIVE_FIELD_TITLE_UPLOAD_DESC" maxlength="255" />
         <field name="alias" type="text" label="JFIELD_ALIAS_LABEL" maxlength="400" hint="JFIELD_ALIAS_PLACEHOLDER" />
         <field
             name="catid"
@@ -46,6 +46,14 @@
     </fieldset>
 
     <fieldset name="file" label="COM_AUDIOARCHIVE_FIELDSET_FILE_INFORMATION">
+        <field
+            name="audio_file"
+            type="file"
+            label="COM_AUDIOARCHIVE_FIELD_AUDIO_FILE"
+            description="COM_AUDIOARCHIVE_FIELD_AUDIO_FILE_DESC"
+            accept="audio/*,.m4a,.mp4,.aac,.mp3,.ogg,.oga,.opus,.wav,.flac,.webm"
+            filter="raw"
+        />
         <field name="original_filename" type="text" label="COM_AUDIOARCHIVE_FIELD_ORIGINAL_FILENAME" readonly="true" />
         <field name="duration_ms" type="number" label="COM_AUDIOARCHIVE_FIELD_DURATION_MS" readonly="true" />
         <field name="uploaded_at" type="calendar" label="COM_AUDIOARCHIVE_FIELD_UPLOAD_DATE" translateformat="true" showtime="true" readonly="true" filter="user_utc" />

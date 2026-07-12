@@ -66,7 +66,8 @@ CREATE TABLE IF NOT EXISTS `#__audioarchive_files` (
     PRIMARY KEY (`id`),
     KEY `idx_audioarchive_file_clip` (`clip_id`),
     KEY `idx_audioarchive_file_role` (`file_role`),
-    KEY `idx_audioarchive_file_checksum` (`checksum_sha256`)
+    KEY `idx_audioarchive_file_checksum` (`checksum_sha256`),
+    UNIQUE KEY `idx_audioarchive_file_clip_role` (`clip_id`, `file_role`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `#__audioarchive_waveforms` (

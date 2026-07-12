@@ -17,6 +17,7 @@ class HtmlView extends BaseHtmlView
     protected $form;
     protected $item;
     protected $state;
+    protected $originalFile;
 
     /**
      * @brief Display the edit form.
@@ -31,6 +32,7 @@ class HtmlView extends BaseHtmlView
         $this->form = $this->get('Form');
         $this->item = $this->get('Item');
         $this->state = $this->get('State');
+        $this->originalFile = $this->get('OriginalFile');
 
         if (count($errors = $this->get('Errors')))
         {

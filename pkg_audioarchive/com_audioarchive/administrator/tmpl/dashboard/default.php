@@ -1,5 +1,7 @@
 <?php
 
+use Joomla\CMS\Factory;
+use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 
@@ -82,6 +84,14 @@ $translateValue = static function (string $value): string
                 <a class="btn btn-sm btn-outline-primary" href="<?php echo Route::_('index.php?option=com_audioarchive&view=dashboard&retest=1'); ?>">
                     <?php echo Text::_('COM_AUDIOARCHIVE_SYSTEM_CHECK_RETEST'); ?>
                 </a>
+                <?php if (Factory::getApplication()->getIdentity()->authorise('audioarchive.managefiles', 'com_audioarchive')) : ?>
+                    <form action="<?php echo Route::_('index.php?option=com_audioarchive&task=dashboard.createDirectories'); ?>" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary">
+                            <?php echo Text::_('COM_AUDIOARCHIVE_CREATE_STORAGE_DIRECTORIES'); ?>
+                        </button>
+                        <?php echo HTMLHelper::_('form.token'); ?>
+                    </form>
+                <?php endif; ?>
             </div>
         </div>
 

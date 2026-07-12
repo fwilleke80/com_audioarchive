@@ -14,7 +14,7 @@ use Joomla\Registry\Registry;
 
 return new class () implements InstallerScriptInterface
 {
-	private const SCHEMA_VERSION = '0.1.3';
+	private const SCHEMA_VERSION = '0.2.0';
 
 	private const CATEGORY_MENU_LINK = 'index.php?option=com_categories&view=categories&extension=com_audioarchive';
 
@@ -387,6 +387,7 @@ return new class () implements InstallerScriptInterface
 			}
 
 			$this->repairCheckoutColumns($database);
+			$this->ensureFileRoleUniqueIndex($database);
 			$this->ensureContentType($database);
 			$this->recordSchemaVersion($database);
 
@@ -414,6 +415,36 @@ return new class () implements InstallerScriptInterface
 
 			return false;
 		}
+	}
+
+
+	/**
+	 * @brief Ensure that each clip has at most one file for a given role.
+	 *
+	 * @param DatabaseInterface $database Joomla database connection.
+	 * @return void
+	 */
+	private function ensureFileRoleUniqueIndex(DatabaseInterface $database): void
+	{
+		if (!$this->tableExists($database, 'audioarchive_files'))
+		{
+			return;
+		}
+
+		$table = $database->replacePrefix('#__audioarchive_files');
+		$query = 'SHOW INDEX FROM ' . $database->quoteName($table)
+			. ' WHERE ' . $database->quoteName('Key_name')
+			. ' = ' . $database->quote('idx_audioarchive_file_clip_role');
+
+		if ($database->setQuery($query)->loadObject() !== null)
+		{
+			return;
+		}
+
+		$query = 'ALTER TABLE ' . $database->quoteName($table)
+			. ' ADD UNIQUE KEY ' . $database->quoteName('idx_audioarchive_file_clip_role')
+			. ' (' . $database->quoteName('clip_id') . ', ' . $database->quoteName('file_role') . ')';
+		$database->setQuery($query)->execute();
 	}
 
 	/**

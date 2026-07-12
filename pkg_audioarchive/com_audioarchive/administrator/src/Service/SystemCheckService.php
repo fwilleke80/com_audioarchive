@@ -111,8 +111,6 @@ class SystemCheckService
     private function runtimeChecks(bool $processAvailable, array $ffprobe, array $ffmpeg): array
     {
         $fileinfoAvailable = extension_loaded('fileinfo') && function_exists('finfo_open');
-        $metadataAvailable = $ffprobe['available'];
-
         return [
             $this->check(
                 'COM_AUDIOARCHIVE_SYSTEM_CHECK_PHP_VERSION',
@@ -135,9 +133,11 @@ class SystemCheckService
             $this->executableCheck('COM_AUDIOARCHIVE_SYSTEM_CHECK_FFMPEG', $ffmpeg),
             $this->check(
                 'COM_AUDIOARCHIVE_SYSTEM_CHECK_METADATA_EXTRACTION',
-                $metadataAvailable ? 'ok' : 'warning',
-                $metadataAvailable ? 'FFprobe' : 'COM_AUDIOARCHIVE_SYSTEM_CHECK_MANUAL_ONLY',
-                $metadataAvailable ? '' : 'COM_AUDIOARCHIVE_SYSTEM_CHECK_PHP_FALLBACK_PENDING'
+                'ok',
+                $ffprobe['available'] ? 'FFprobe' : 'COM_AUDIOARCHIVE_SYSTEM_CHECK_PHP_INSPECTOR',
+                $ffprobe['available']
+                    ? 'COM_AUDIOARCHIVE_SYSTEM_CHECK_PHP_INSPECTOR_AVAILABLE'
+                    : MediaInspectorService::getVersion()
             ),
             $this->check(
                 'COM_AUDIOARCHIVE_SYSTEM_CHECK_PREVIEW_GENERATION',

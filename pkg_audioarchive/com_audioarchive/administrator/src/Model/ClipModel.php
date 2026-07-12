@@ -7,9 +7,11 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\MVC\Model\AdminModel;
 use Joomla\CMS\Helper\TagsHelper;
+use Joomla\CMS\Language\Text;
 use Joomla\CMS\Table\Table;
 use Joomla\Registry\Registry;
 use Joomla\Database\ParameterType;
+use Willeke\Component\Audioarchive\Administrator\Service\AudioUploadService;
 
 \defined('_JEXEC') or die;
 
@@ -59,6 +61,11 @@ class ClipModel extends AdminModel
         {
             $form->setFieldAttribute('created_by', 'disabled', 'true');
             $form->setFieldAttribute('created_by', 'filter', 'unset');
+        }
+
+        if (!$this->getCurrentUser()->authorise('audioarchive.managefiles', 'com_audioarchive'))
+        {
+            $form->removeField('audio_file');
         }
 
         return $form;
@@ -122,7 +129,7 @@ class ClipModel extends AdminModel
     }
 
     /**
-     * @brief Save clip metadata while protecting managed technical fields.
+     * @brief Save clip metadata and an optional original audio upload.
      *
      * @param array $data Submitted form data.
      *
@@ -130,6 +137,48 @@ class ClipModel extends AdminModel
      */
     public function save($data)
     {
+        $app = Factory::getApplication();
+        $params = ComponentHelper::getParams('com_audioarchive');
+        $uploadService = new AudioUploadService($this->getDatabase(), $params, $this->getCurrentUser());
+        $files = $app->getInput()->files->get('jform', [], 'array');
+        $upload = is_array($files) && isset($files['audio_file']) && is_array($files['audio_file'])
+            ? $files['audio_file']
+            : null;
+        $preparedUpload = null;
+
+        if ($upload !== null && (int) ($upload['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE)
+        {
+            if (!$this->getCurrentUser()->authorise('audioarchive.managefiles', 'com_audioarchive'))
+            {
+                $this->setError(Text::_('JERROR_ALERTNOAUTHOR'));
+                return false;
+            }
+
+            try
+            {
+                $preparedUpload = $uploadService->prepare($upload);
+            }
+            catch (\Throwable $exception)
+            {
+                $this->setError($exception->getMessage());
+                return false;
+            }
+
+            if (trim((string) ($data['title'] ?? '')) === '')
+            {
+                $data['title'] = $uploadService->generateTitle($preparedUpload);
+            }
+
+            if (trim((string) ($data['recorded_at'] ?? '')) === '')
+            {
+                $recordingDate = $uploadService->determineRecordingDate($preparedUpload);
+                $data['recorded_at'] = $recordingDate['date'];
+                $data['recorded_date_source'] = $recordingDate['source'];
+            }
+        }
+
+        unset($data['audio_file']);
+
         foreach ([
             'uuid',
             'original_filename',
@@ -146,19 +195,118 @@ class ClipModel extends AdminModel
             unset($data[$managedField]);
         }
 
-        if (Factory::getApplication()->getInput()->getCmd('task') === 'save2copy')
+        if ($app->getInput()->getCmd('task') === 'save2copy')
         {
-            $original = $this->getTable();
-            $original->load((int) ($data['id'] ?? 0));
             [$data['title'], $data['alias']] = $this->generateNewTitle(
                 (int) $data['catid'],
                 (string) ($data['alias'] ?? ''),
                 (string) ($data['title'] ?? '')
             );
             $data['state'] = 0;
+            $data['original_filename'] = '';
+            $data['duration_ms'] = 0;
+            $data['metadata_status'] = 'missing';
+            $data['preview_status'] = 'not_required';
+            $data['waveform_status'] = 'missing';
+            $data['technical_metadata'] = '{}';
+            $data['play_count'] = 0;
+            $data['download_count'] = 0;
         }
 
-        return parent::save($data);
+        if (!parent::save($data))
+        {
+            return false;
+        }
+
+        if ($preparedUpload === null)
+        {
+            return true;
+        }
+
+        $clipId = (int) $this->getState($this->getName() . '.id');
+        $table = $this->getTable();
+
+        if ($clipId <= 0 || !$table->load($clipId))
+        {
+            $this->setError(Text::_('COM_AUDIOARCHIVE_ERROR_SAVED_CLIP_NOT_FOUND'));
+            return false;
+        }
+
+        try
+        {
+            $uploadService->storeForClip($clipId, (string) $table->uuid, $preparedUpload);
+
+            foreach ((array) ($preparedUpload['metadata']['warnings'] ?? []) as $warning)
+            {
+                $app->enqueueMessage((string) $warning, 'warning');
+            }
+        }
+        catch (\Throwable $exception)
+        {
+            $this->setError(Text::sprintf('COM_AUDIOARCHIVE_ERROR_UPLOAD_AFTER_SAVE', $exception->getMessage()));
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @brief Return the original file record attached to the current clip.
+     *
+     * @param int|null $clipId Optional clip identifier.
+     *
+     * @return object|null File row.
+     */
+    public function getOriginalFile(?int $clipId = null): ?object
+    {
+        $clipId ??= (int) $this->getState('clip.id');
+        $service = new AudioUploadService(
+            $this->getDatabase(),
+            ComponentHelper::getParams('com_audioarchive'),
+            $this->getCurrentUser()
+        );
+
+        return $service->getOriginalFile($clipId);
+    }
+
+    /**
+     * @brief Permanently delete clips and their recorded managed files.
+     *
+     * @param array $pks Clip identifiers.
+     *
+     * @return bool
+     */
+    public function delete(&$pks)
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', (array) $pks))));
+
+        if (!parent::delete($pks))
+        {
+            return false;
+        }
+
+        try
+        {
+            $service = new AudioUploadService(
+                $this->getDatabase(),
+                ComponentHelper::getParams('com_audioarchive'),
+                $this->getCurrentUser()
+            );
+
+            foreach ($service->removeFilesForClips($ids) as $warning)
+            {
+                Factory::getApplication()->enqueueMessage($warning, 'warning');
+            }
+        }
+        catch (\Throwable $exception)
+        {
+            Factory::getApplication()->enqueueMessage(
+                Text::sprintf('COM_AUDIOARCHIVE_WARNING_FILE_CLEANUP_FAILED', $exception->getMessage()),
+                'warning'
+            );
+        }
+
+        return true;
     }
 
     /**
