@@ -11,7 +11,7 @@ use Joomla\Database\DatabaseInterface;
 
 return new class () implements InstallerScriptInterface
 {
-    private const SCHEMA_VERSION = '0.1.0';
+    private const SCHEMA_VERSION = '0.1.1';
 
     private const CATEGORY_MENU_LINK = 'index.php?option=com_categories&view=categories&extension=com_audioarchive';
 
@@ -139,6 +139,7 @@ return new class () implements InstallerScriptInterface
                 $this->executeSchemaFile($database);
             }
 
+            $this->repairCheckoutColumns($database);
             $this->ensureContentType($database);
             $this->recordSchemaVersion($database);
 
@@ -224,6 +225,26 @@ return new class () implements InstallerScriptInterface
 
             $database->setQuery($query)->execute();
         }
+    }
+
+    /**
+     * @brief Align checkout columns with Joomla's nullable check-in semantics.
+     *
+     * Joomla writes SQL NULL to both checkout fields when a table declares
+     * support for nullable values. Existing development installations used a
+     * non-nullable checked_out column, so every install and update repairs the
+     * column definition idempotently.
+     *
+     * @param DatabaseInterface $database Joomla database connection.
+     * @return void
+     */
+    private function repairCheckoutColumns(DatabaseInterface $database): void
+    {
+        $query = 'ALTER TABLE ' . $database->quoteName('#__audioarchive_clips')
+            . ' MODIFY ' . $database->quoteName('checked_out') . ' int unsigned DEFAULT NULL,'
+            . ' MODIFY ' . $database->quoteName('checked_out_time') . ' datetime DEFAULT NULL';
+
+        $database->setQuery($query)->execute();
     }
 
     /**

@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS `#__audioarchive_clips` (
     `created_by` int unsigned NOT NULL DEFAULT 0,
     `modified` datetime DEFAULT NULL,
     `modified_by` int unsigned NOT NULL DEFAULT 0,
-    `checked_out` int unsigned NOT NULL DEFAULT 0,
+    `checked_out` int unsigned DEFAULT NULL,
     `checked_out_time` datetime DEFAULT NULL,
     `play_count` bigint unsigned NOT NULL DEFAULT 0,
     `download_count` bigint unsigned NOT NULL DEFAULT 0,
