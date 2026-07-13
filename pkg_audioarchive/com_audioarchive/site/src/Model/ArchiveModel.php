@@ -23,11 +23,17 @@ class ArchiveModel extends ListModel
 	/** @var array<int, int> */
 	private array $selectedTags = [];
 
+	/** @var array<int, int> */
+	private array $menuTags = [];
+
 	/** @var Registry|null */
 	private ?Registry $resolvedParams = null;
 
 	/** @var bool */
 	private bool $ignoreVisitorCategoryFilter = false;
+
+	/** @var bool */
+	private bool $ignoreVisitorFiltersForMaximum = false;
 
 	/**
 	 * @brief Construct the public list model.
@@ -131,7 +137,7 @@ class ArchiveModel extends ListModel
 		$this->addAncestorCategoryRestrictions($query, 'c', $levels);
 
 		$search = trim((string) $this->getState('filter.search'));
-		if ($search !== '')
+		if (!$this->ignoreVisitorFiltersForMaximum && $search !== '')
 		{
 			$search = '%' . str_replace(' ', '%', $search) . '%';
 			$query
@@ -152,47 +158,51 @@ class ArchiveModel extends ListModel
 			$query->where($db->quoteName('a.catid') . ' = :menuCategory')
 				->bind(':menuCategory', $menuCategoryId, ParameterType::INTEGER);
 		}
-		elseif (!$this->ignoreVisitorCategoryFilter && $categoryId > 0)
+		elseif (!$this->ignoreVisitorFiltersForMaximum && !$this->ignoreVisitorCategoryFilter && $categoryId > 0)
 		{
 			$query->where($db->quoteName('a.catid') . ' = :filterCategory')
 				->bind(':filterCategory', $categoryId, ParameterType::INTEGER);
 		}
 
-		$durationMinimum = $this->getState('filter.duration_min_ms');
-		if ($durationMinimum !== null)
+		if (!$this->ignoreVisitorFiltersForMaximum)
 		{
-			$durationMinimum = (int) $durationMinimum;
-			$query->where($db->quoteName('a.duration_ms') . ' >= :durationMinimum')
-				->bind(':durationMinimum', $durationMinimum, ParameterType::INTEGER);
-		}
-
-		$durationMaximum = $this->getState('filter.duration_max_ms');
-		if ($durationMaximum !== null)
-		{
-			$durationMaximum = (int) $durationMaximum;
-			$query->where($db->quoteName('a.duration_ms') . ' <= :durationMaximum')
-				->bind(':durationMaximum', $durationMaximum, ParameterType::INTEGER);
-		}
-
-		foreach ([
-			['filter.recorded_from_sql', 'a.recorded_at', '>=', ':recordedFrom'],
-			['filter.recorded_to_sql', 'a.recorded_at', '<=', ':recordedTo'],
-			['filter.uploaded_from_sql', 'a.uploaded_at', '>=', ':uploadedFrom'],
-			['filter.uploaded_to_sql', 'a.uploaded_at', '<=', ':uploadedTo'],
-		] as [$stateKey, $column, $operator, $placeholder])
-		{
-			$value = $this->getState($stateKey);
-			if ($value !== null)
+			$durationMinimum = $this->getState('filter.duration_min_ms');
+			if ($durationMinimum !== null)
 			{
-				$value = (string) $value;
-				$query->where($db->quoteName($column) . ' ' . $operator . ' ' . $placeholder)
-					->bind($placeholder, $value, ParameterType::STRING);
+				$durationMinimum = (int) $durationMinimum;
+				$query->where($db->quoteName('a.duration_ms') . ' >= :durationMinimum')
+					->bind(':durationMinimum', $durationMinimum, ParameterType::INTEGER);
+			}
+
+			$durationMaximum = $this->getState('filter.duration_max_ms');
+			if ($durationMaximum !== null)
+			{
+				$durationMaximum = (int) $durationMaximum;
+				$query->where($db->quoteName('a.duration_ms') . ' <= :durationMaximum')
+					->bind(':durationMaximum', $durationMaximum, ParameterType::INTEGER);
+			}
+
+			foreach ([
+				['filter.recorded_from_sql', 'a.recorded_at', '>=', ':recordedFrom'],
+				['filter.recorded_to_sql', 'a.recorded_at', '<=', ':recordedTo'],
+				['filter.uploaded_from_sql', 'a.uploaded_at', '>=', ':uploadedFrom'],
+				['filter.uploaded_to_sql', 'a.uploaded_at', '<=', ':uploadedTo'],
+			] as [$stateKey, $column, $operator, $placeholder])
+			{
+				$value = $this->getState($stateKey);
+				if ($value !== null)
+				{
+					$value = (string) $value;
+					$query->where($db->quoteName($column) . ' ' . $operator . ' ' . $placeholder)
+						->bind($placeholder, $value, ParameterType::STRING);
+				}
 			}
 		}
 
 		$tagBindings = [];
 		$typeBindings = [];
-		foreach ($this->selectedTags as $index => $tagId)
+		$activeTags = $this->ignoreVisitorFiltersForMaximum ? $this->menuTags : $this->selectedTags;
+		foreach ($activeTags as $index => $tagId)
 		{
 			$tagPlaceholder = ':archiveTag' . $index;
 			$typePlaceholder = ':archiveType' . $index;
@@ -299,6 +309,37 @@ class ArchiveModel extends ListModel
 		}
 
 		return $db->setQuery($query)->loadObjectList();
+	}
+
+
+	/**
+	 * @brief Return the longest publicly eligible clip duration for this archive menu item.
+	 *
+	 * Visitor-entered filters are intentionally ignored so the slider range remains stable.
+	 * Menu category/tag restrictions, publication rules, and access levels still apply.
+	 *
+	 * @return int Maximum duration in milliseconds.
+	 */
+	public function getMaximumDurationMs(): int
+	{
+		$db = $this->getDatabase();
+		$this->ignoreVisitorFiltersForMaximum = true;
+
+		try
+		{
+			$query = $this->getListQuery();
+		}
+		finally
+		{
+			$this->ignoreVisitorFiltersForMaximum = false;
+		}
+
+		$query
+			->clear('select')
+			->clear('order')
+			->select('MAX(' . $db->quoteName('a.duration_ms') . ')');
+
+		return max(0, (int) $db->setQuery($query)->loadResult());
 	}
 
 	/**
@@ -431,6 +472,7 @@ class ArchiveModel extends ListModel
 
 		$requestedTags = $this->normaliseIntegerList($input->get('tags', [], 'array'));
 		$menuTags = $this->normaliseIntegerList($params->get('archive_tag_restriction', []));
+		$this->menuTags = $menuTags;
 		$this->selectedTags = array_values(array_unique(array_merge($requestedTags, $menuTags)));
 		$this->setState('filter.tags', $requestedTags);
 

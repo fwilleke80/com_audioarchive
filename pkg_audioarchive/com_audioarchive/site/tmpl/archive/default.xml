@@ -48,6 +48,8 @@
 			<field name="detail_show_format" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_FORMAT_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
 			<field name="detail_show_codec" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_CODEC_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
 			<field name="detail_show_file_size" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_FILE_SIZE_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
+			<field name="detail_show_play_count" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_PLAY_COUNT_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
+			<field name="detail_show_download_count" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_COUNT_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
 			<field name="detail_show_download" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
 		</fieldset>
 		<fieldset name="columns" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_COLUMNS_LABEL">

@@ -157,6 +157,8 @@
         <field name="detail_show_format" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_FORMAT_LABEL" default="0"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
         <field name="detail_show_codec" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_CODEC_LABEL" default="0"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
         <field name="detail_show_file_size" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_FILE_SIZE_LABEL" default="0"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        <field name="detail_show_play_count" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_PLAY_COUNT_LABEL" default="0"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        <field name="detail_show_download_count" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_COUNT_LABEL" default="0"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
         <field name="detail_show_download" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
     </fieldset>
 

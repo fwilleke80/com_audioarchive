@@ -49,6 +49,14 @@ if ((int) $this->params->get('detail_show_file_size', 0) === 1)
 {
 	$rows[] = [Text::_('COM_AUDIOARCHIVE_FIELD_FILE_SIZE'), $formattedSize];
 }
+if ((int) $this->params->get('detail_show_play_count', 0) === 1)
+{
+	$rows[] = [Text::_('COM_AUDIOARCHIVE_FIELD_PLAY_COUNT'), number_format((int) $this->item->play_count)];
+}
+if ((int) $this->params->get('detail_show_download_count', 0) === 1)
+{
+	$rows[] = [Text::_('COM_AUDIOARCHIVE_FIELD_DOWNLOAD_COUNT'), number_format((int) $this->item->download_count)];
+}
 ?>
 <?php if ($rows) : ?>
 	<section class="com-audioarchive-info-card" aria-labelledby="audioarchive-details-heading">

@@ -31,7 +31,7 @@ use Joomla\CMS\Language\Text;
                 <?php if ($this->batchTags) : ?>
                     <fieldset class="com-audioarchive-batch-tags">
                         <legend class="form-label"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_TAGS_LABEL'); ?></legend>
-                        <div class="com-audioarchive-batch-tag-search" data-audioarchive-batch-tag-search-wrapper hidden>
+                        <div class="com-audioarchive-batch-tag-search" data-audioarchive-batch-tag-search-wrapper>
                             <label class="visually-hidden" for="audioarchive-batch-tag-search"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_TAG_SEARCH_LABEL'); ?></label>
                             <input
                                 class="form-control"

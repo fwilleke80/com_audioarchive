@@ -42,6 +42,9 @@ class HtmlView extends BaseHtmlView
 	/** @var int[] */
 	public array $pageSizeOptions = [];
 
+	/** @var int */
+	public int $maximumDurationSeconds = 0;
+
 	/** @var string */
 	public string $pageHeading = '';
 
@@ -77,6 +80,10 @@ class HtmlView extends BaseHtmlView
 		$this->tagOptions = $model->getTagOptions();
 		$this->filterErrors = $model->getFilterErrors();
 		$this->pageSizeOptions = $model->getPageSizeOptions();
+		$maximumDurationMs = $model->getMaximumDurationMs();
+		$this->maximumDurationSeconds = $maximumDurationMs > 0
+			? max(1, (int) ceil($maximumDurationMs / 1000))
+			: 0;
 
 		$app = Factory::getApplication();
 		$itemId = $app->getInput()->getInt('Itemid', 0);

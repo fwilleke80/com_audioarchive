@@ -60,6 +60,7 @@ class HtmlView extends BaseHtmlView
     {
         $user = Factory::getApplication()->getIdentity();
         $toolbar = $this->getDocument()->getToolbar();
+        $isTrashed = (int) $this->state->get('filter.state', 0) === -2;
         ToolbarHelper::title(Text::_('COM_AUDIOARCHIVE_CLIPS_TITLE'), 'music');
 
         if ($user->authorise('core.create', 'com_audioarchive'))
@@ -72,7 +73,11 @@ class HtmlView extends BaseHtmlView
             $toolbar->publish('clips.publish')->listCheck(true);
             $toolbar->unpublish('clips.unpublish')->listCheck(true);
             $toolbar->archive('clips.archive')->listCheck(true);
-            $toolbar->trash('clips.trash')->listCheck(true);
+
+            if (!$isTrashed)
+            {
+                $toolbar->trash('clips.trash')->listCheck(true);
+            }
         }
 
         if ($user->authorise('core.edit', 'com_audioarchive'))
@@ -86,7 +91,7 @@ class HtmlView extends BaseHtmlView
                 ->listCheck(true);
         }
 
-        if ($user->authorise('core.delete', 'com_audioarchive'))
+        if ($isTrashed && $user->authorise('core.delete', 'com_audioarchive'))
         {
             $toolbar->delete('clips.delete')
                 ->message('JGLOBAL_CONFIRM_DELETE')
