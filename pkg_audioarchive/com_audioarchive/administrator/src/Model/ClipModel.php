@@ -3,9 +3,12 @@
 namespace Willeke\Component\Audioarchive\Administrator\Model;
 
 use Joomla\CMS\Component\ComponentHelper;
+use Joomla\CMS\Event\Finder\AfterDeleteEvent;
+use Joomla\CMS\Event\Finder\AfterSaveEvent;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\MVC\Model\AdminModel;
+use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\CMS\Helper\TagsHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Table\Table;
@@ -286,6 +289,7 @@ class ClipModel extends AdminModel
 
         if ($preparedUpload === null)
         {
+            $this->notifyFinderAfterSave((int) $this->getState($this->getName() . '.id'));
             return true;
         }
 
@@ -340,6 +344,8 @@ class ClipModel extends AdminModel
             $this->setError(Text::sprintf('COM_AUDIOARCHIVE_ERROR_UPLOAD_AFTER_SAVE', $exception->getMessage()));
             return false;
         }
+
+        $this->notifyFinderAfterSave($clipId);
 
         return true;
     }
@@ -404,7 +410,19 @@ class ClipModel extends AdminModel
             $this->getCurrentUser()
         );
 
-        return $service->reanalyseForClip($clipId);
+        try
+        {
+            $warnings = $service->reanalyseForClip($clipId);
+        }
+        catch (\Throwable $exception)
+        {
+            $this->notifyFinderAfterSave($clipId);
+            throw $exception;
+        }
+
+        $this->notifyFinderAfterSave($clipId);
+
+        return $warnings;
     }
 
     /**
@@ -422,7 +440,10 @@ class ClipModel extends AdminModel
             $this->getCurrentUser()
         );
 
-        return $service->verifyForClip($clipId);
+        $result = $service->verifyForClip($clipId);
+        $this->notifyFinderAfterSave($clipId);
+
+        return $result;
     }
 
 
@@ -530,7 +551,97 @@ class ClipModel extends AdminModel
 		}
 
 		$this->cleanCache();
+
+		foreach ($ids as $id)
+		{
+			$this->notifyFinderAfterSave($id);
+		}
+
 		return true;
+	}
+
+	/**
+	 * @brief Notify enabled Finder plugins that a clip must be reindexed.
+	 *
+	 * @param int $clipId Clip identifier.
+	 *
+	 * @return void
+	 */
+	private function notifyFinderAfterSave(int $clipId): void
+	{
+		if ($clipId <= 0)
+		{
+			return;
+		}
+
+		try
+		{
+			$table = $this->getTable();
+
+			if (!$table->load($clipId))
+			{
+				return;
+			}
+
+			PluginHelper::importPlugin('finder');
+			Factory::getApplication()->getDispatcher()->dispatch(
+				'onFinderAfterSave',
+				new AfterSaveEvent('onFinderAfterSave', [
+					'context' => $this->typeAlias,
+					'subject' => $table,
+					'isNew' => false,
+				])
+			);
+		}
+		catch (\Throwable $exception)
+		{
+			Factory::getApplication()->enqueueMessage(
+				Text::sprintf(
+					'COM_AUDIOARCHIVE_WARNING_SMART_SEARCH_REINDEX_FAILED',
+					$clipId,
+					$exception->getMessage()
+				),
+				'warning'
+			);
+		}
+	}
+
+	/**
+	 * @brief Notify Finder plugins after compensating removal of an incomplete Clip.
+	 *
+	 * @param int $clipId Clip identifier.
+	 *
+	 * @return void
+	 */
+	private function notifyFinderAfterDelete(int $clipId): void
+	{
+		if ($clipId <= 0)
+		{
+			return;
+		}
+
+		try
+		{
+			PluginHelper::importPlugin('finder');
+			Factory::getApplication()->getDispatcher()->dispatch(
+				'onFinderAfterDelete',
+				new AfterDeleteEvent('onFinderAfterDelete', [
+					'context' => $this->typeAlias,
+					'subject' => (object) ['id' => $clipId],
+				])
+			);
+		}
+		catch (\Throwable $exception)
+		{
+			Factory::getApplication()->enqueueMessage(
+				Text::sprintf(
+					'COM_AUDIOARCHIVE_WARNING_SMART_SEARCH_REINDEX_FAILED',
+					$clipId,
+					$exception->getMessage()
+				),
+				'warning'
+			);
+		}
 	}
 
 	/**
@@ -701,6 +812,7 @@ class ClipModel extends AdminModel
         if ($clipId > 0 && $table->load($clipId))
         {
             $table->delete($clipId);
+            $this->notifyFinderAfterDelete($clipId);
         }
     }
 

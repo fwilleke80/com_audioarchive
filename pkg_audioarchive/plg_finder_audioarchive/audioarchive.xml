@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="plugin" group="finder" method="upgrade">
+    <name>PLG_FINDER_AUDIOARCHIVE</name>
+    <version>0.5.0-dev2</version>
+    <creationDate>2026-07-13</creationDate>
+    <author>Frank Willeke</author>
+    <copyright>Copyright (C) 2026 Frank Willeke.</copyright>
+    <license>GNU General Public License version 2 or later</license>
+    <description>PLG_FINDER_AUDIOARCHIVE_XML_DESCRIPTION</description>
+    <namespace path="src">Willeke\Plugin\Finder\Audioarchive</namespace>
+    <files>
+        <folder plugin="audioarchive">services</folder>
+        <folder>src</folder>
+    </files>
+    <languages>
+        <language tag="en-GB">language/en-GB/plg_finder_audioarchive.ini</language>
+        <language tag="en-GB">language/en-GB/plg_finder_audioarchive.sys.ini</language>
+        <language tag="de-DE">language/de-DE/plg_finder_audioarchive.ini</language>
+        <language tag="de-DE">language/de-DE/plg_finder_audioarchive.sys.ini</language>
+    </languages>
+</extension>

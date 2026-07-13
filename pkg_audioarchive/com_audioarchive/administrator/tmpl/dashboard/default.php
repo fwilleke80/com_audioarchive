@@ -81,6 +81,9 @@ $translateValue = static function (string $value): string
             <a class="btn btn-outline-secondary" href="<?php echo Route::_('index.php?option=com_categories&view=categories&extension=com_audioarchive'); ?>">
                 <?php echo Text::_('COM_AUDIOARCHIVE_MANAGE_CATEGORIES'); ?>
             </a>
+            <a class="btn btn-outline-secondary" href="<?php echo Route::_('index.php?option=com_finder&view=index'); ?>">
+                <?php echo Text::_('COM_AUDIOARCHIVE_SMART_SEARCH_INDEX'); ?>
+            </a>
             <a class="btn btn-outline-secondary" href="<?php echo Route::_('index.php?option=com_config&view=component&component=com_audioarchive'); ?>">
                 <?php echo Text::_('JOPTIONS'); ?>
             </a>
