@@ -2,7 +2,6 @@ Audio Archive - To Do
 =====================
 
 Frontend
-- Clicking on a tag in a row in the clips list table should list all clips that have that tag
 - Waveform display
 
 Modules
@@ -12,12 +11,16 @@ Modules
 - Add content plugin
   - Embeds a single clip in an article (by clip id)
 
-Build script
-- Add Python script that creates the final package .zip from the development folder tree:
-  - folder pkg_audioarchive -> pkg_audioarchive.zip
-  - subfolders: com_audioarchive et cetera: com_audioarchive.zip
-  - pkg_audioarchive.zip should contain pkg_audioarchive.xml, and the subfolders as .zip files (not as folders)
-  - pkg_audioarchive.zip should contain README.md, LICENSE. No GIT repo, no other files
+Scripts
+- In README.md, you mentioned python3 build.py and python3 validate.py. Write these scripts!
+
+---
+
+Backend
+- Bug: Column "JGRID_HEADING_ACTIONS" in import from inbox after scanning for files
+
+Frontend
+- Clicking on a tag in a row in the clips list table should list all clips that have that tag
 
 ---
 
