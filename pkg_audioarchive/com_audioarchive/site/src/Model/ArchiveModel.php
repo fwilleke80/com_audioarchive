@@ -178,8 +178,14 @@ class ArchiveModel extends ListModel
 			if ($durationMaximum !== null)
 			{
 				$durationMaximum = (int) $durationMaximum;
-				$query->where($db->quoteName('a.duration_ms') . ' <= :durationMaximum')
-					->bind(':durationMaximum', $durationMaximum, ParameterType::INTEGER);
+				$durationMaximumExclusive = $durationMaximum >= PHP_INT_MAX - 1000
+					? PHP_INT_MAX
+					: $durationMaximum + 1000;
+
+				// Durations are displayed as whole seconds using floor(). Therefore an
+				// upper value of 2 must include 2.000 through 2.999 seconds.
+				$query->where($db->quoteName('a.duration_ms') . ' < :durationMaximumExclusive')
+					->bind(':durationMaximumExclusive', $durationMaximumExclusive, ParameterType::INTEGER);
 			}
 
 			foreach ([
