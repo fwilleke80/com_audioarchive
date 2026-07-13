@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <extension type="component" method="upgrade">
     <name>COM_AUDIOARCHIVE</name>
-    <version>0.6.0-dev2.1</version>
+    <version>0.6.3</version>
     <creationDate>2026-07-13</creationDate>
     <author>Frank Willeke</author>
     <copyright>Copyright (C) 2026 Frank Willeke.</copyright>
@@ -9,7 +9,7 @@
     <description>COM_AUDIOARCHIVE_XML_DESCRIPTION</description>
     <element>com_audioarchive</element>
     <namespace path="src">Willeke\Component\Audioarchive</namespace>
-    <scriptfile>script.php</scriptfile>
+    <scriptfile>install.php</scriptfile>
 
     <install>
         <sql>
