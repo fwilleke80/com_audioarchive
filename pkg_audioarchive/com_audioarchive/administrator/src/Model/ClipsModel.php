@@ -2,6 +2,7 @@
 
 namespace Willeke\Component\Audioarchive\Administrator\Model;
 
+use Joomla\CMS\Factory;
 use Joomla\CMS\Helper\TagsHelper;
 use Joomla\CMS\MVC\Model\ListModel;
 use Joomla\Database\ParameterType;
@@ -189,5 +190,24 @@ class ClipsModel extends ListModel
         $this->setState('filter.category_id', $this->getUserStateFromRequest($this->context . '.filter.category_id', 'filter_category_id', 0, 'int'));
         $this->setState('filter.access', $this->getUserStateFromRequest($this->context . '.filter.access', 'filter_access', 0, 'int'));
         parent::populateState($ordering, $direction);
+
+        // Joomla currently posts the pagination offset as a top-level
+        // control field. Accept the list-scoped form as well so this remains
+        // robust if the core renderer changes its field grouping.
+        $input = Factory::getApplication()->getInput();
+
+        if ($input->exists('limitstart'))
+        {
+            $this->setState('list.start', max(0, $input->getInt('limitstart')));
+        }
+        else
+        {
+            $list = $input->get('list', [], 'array');
+
+            if (array_key_exists('limitstart', $list))
+            {
+                $this->setState('list.start', max(0, (int) $list['limitstart']));
+            }
+        }
     }
 }

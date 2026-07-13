@@ -562,6 +562,104 @@ class AudioUploadService
     }
 
     /**
+     * @brief Recalculate one stored original's SHA-256 checksum and recorded size.
+     *
+     * This operation does not reanalyse media metadata. When a previously valid
+     * checksum or file size changes, metadata and existing derivatives are marked
+     * stale so that a full reanalysis can be performed deliberately.
+     *
+     * @param int $clipId Clip identifier.
+     *
+     * @return array{content_changed:bool,checksum:string,file_size:int}
+     */
+    public function recalculateChecksumForClip(int $clipId): array
+    {
+        $file = $this->requireOriginalFile($clipId);
+        $path = $this->storage->resolveManagedPath('original', (string) $file->storage_key);
+
+        if (!is_file($path) || is_link($path) || !is_readable($path))
+        {
+            $this->setFileAvailability((int) $file->id, false, Text::_('COM_AUDIOARCHIVE_VERIFY_FILE_MISSING'));
+            throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_ERROR_ORIGINAL_NOT_READABLE'));
+        }
+
+        $checksum = hash_file('sha256', $path);
+
+        if (!is_string($checksum) || strlen($checksum) !== 64)
+        {
+            throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_ERROR_UPLOAD_CHECKSUM'));
+        }
+
+        $fileSize = max(0, (int) filesize($path));
+        $oldChecksum = strtolower(trim((string) $file->checksum_sha256));
+        $oldChecksumValid = preg_match('/^[0-9a-f]{64}$/', $oldChecksum) === 1;
+        $contentChanged = ($oldChecksumValid && !hash_equals($oldChecksum, $checksum))
+            || (int) $file->file_size !== $fileSize;
+        $available = 1;
+        $processingError = '';
+        $fileId = (int) $file->id;
+
+        $this->database->transactionStart();
+
+        try
+        {
+            $fileQuery = $this->database->getQuery(true)
+                ->update($this->database->quoteName('#__audioarchive_files'))
+                ->set($this->database->quoteName('checksum_sha256') . ' = :checksum')
+                ->set($this->database->quoteName('file_size') . ' = :fileSize')
+                ->set($this->database->quoteName('is_available') . ' = :available')
+                ->set($this->database->quoteName('processing_error') . ' = :processingError')
+                ->where($this->database->quoteName('id') . ' = :fileId')
+                ->bind(':checksum', $checksum, ParameterType::STRING)
+                ->bind(':fileSize', $fileSize, ParameterType::INTEGER)
+                ->bind(':available', $available, ParameterType::INTEGER)
+                ->bind(':processingError', $processingError, ParameterType::STRING)
+                ->bind(':fileId', $fileId, ParameterType::INTEGER);
+            $this->database->setQuery($fileQuery)->execute();
+
+            if ($contentChanged)
+            {
+                $metadataStatus = 'missing';
+                $clipQuery = $this->database->getQuery(true)
+                    ->update($this->database->quoteName('#__audioarchive_clips'))
+                    ->set($this->database->quoteName('metadata_status') . ' = :metadataStatus')
+                    ->where($this->database->quoteName('id') . ' = :clipId')
+                    ->bind(':metadataStatus', $metadataStatus, ParameterType::STRING)
+                    ->bind(':clipId', $clipId, ParameterType::INTEGER);
+
+                if ($this->hasFileRole($clipId, 'preview'))
+                {
+                    $previewStatus = 'stale';
+                    $clipQuery->set($this->database->quoteName('preview_status') . ' = :previewStatus')
+                        ->bind(':previewStatus', $previewStatus, ParameterType::STRING);
+                }
+
+                if ($this->hasWaveform($clipId))
+                {
+                    $waveformStatus = 'stale';
+                    $clipQuery->set($this->database->quoteName('waveform_status') . ' = :waveformStatus')
+                        ->bind(':waveformStatus', $waveformStatus, ParameterType::STRING);
+                }
+
+                $this->database->setQuery($clipQuery)->execute();
+            }
+
+            $this->database->transactionCommit();
+        }
+        catch (\Throwable $exception)
+        {
+            $this->database->transactionRollback();
+            throw $exception;
+        }
+
+        return [
+            'content_changed' => $contentChanged,
+            'checksum' => $checksum,
+            'file_size' => $fileSize,
+        ];
+    }
+
+    /**
      * @brief Verify existence, readability, size, and checksum of a stored original.
      *
      * @param int $clipId Clip identifier.

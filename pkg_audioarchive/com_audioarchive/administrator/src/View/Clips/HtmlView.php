@@ -42,6 +42,12 @@ class HtmlView extends BaseHtmlView
         $this->batchCategories = $this->get('BatchCategories');
         $this->batchTags = $this->get('BatchTags');
 
+        // Joomla 6 pagination and search tools operate on registered control
+        // fields rather than ad-hoc hidden inputs in the layout.
+        $this->filterForm->addControlField('task', '');
+        $this->filterForm->addControlField('boxchecked', '0');
+        $this->filterForm->addControlField('limitstart', (string) (int) $this->pagination->limitstart);
+
         if (count($errors = $this->get('Errors')))
         {
             throw new \RuntimeException(implode("\n", $errors), 500);

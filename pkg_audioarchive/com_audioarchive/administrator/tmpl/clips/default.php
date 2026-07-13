@@ -72,7 +72,5 @@ $listDirn = $this->escape($this->state->get('list.direction'));
 
     <?php echo $this->loadTemplate('batch'); ?>
 
-    <input type="hidden" name="task" value="">
-    <input type="hidden" name="boxchecked" value="0">
-    <?php echo HTMLHelper::_('form.token'); ?>
+    <?php echo $this->filterForm->renderControlFields(); ?>
 </form>

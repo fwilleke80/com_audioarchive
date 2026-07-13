@@ -109,6 +109,11 @@ $translateValue = static function (string $value): string
                     <?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_TITLE'); ?>
                 </a>
             <?php endif; ?>
+            <?php if (Factory::getApplication()->getIdentity()->authorise('audioarchive.process', 'com_audioarchive')) : ?>
+                <a class="btn btn-outline-primary" href="<?php echo Route::_('index.php?option=com_audioarchive&view=maintenance'); ?>">
+                    <?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_TITLE'); ?>
+                </a>
+            <?php endif; ?>
             <a class="btn btn-outline-secondary" href="<?php echo Route::_('index.php?option=com_categories&view=categories&extension=com_audioarchive'); ?>">
                 <?php echo Text::_('COM_AUDIOARCHIVE_MANAGE_CATEGORIES'); ?>
             </a>
