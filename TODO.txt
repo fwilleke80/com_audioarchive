@@ -1,0 +1,68 @@
+Audio Archive - To Do
+
+Modules
+- Add mod_audioarchive module
+  - Shows a configurable number of clips (at least 1)
+  - Picks either random clips, or latest clips, or clips filtered by a similar filter and sorting like the archive page
+- Add content plugin
+  - Embeds a single clip in an article (by clip id)
+
+Page titles and metadata
+- Breadcrumbs integration
+- Page titles and metadata
+- Proper routes when several Archive menu items exist
+- Better handling when aliases change
+
+---
+
+Frontend
+- There should be an option whether tags are shown in the clips list table. Configurable in the component settings and in the menu item, of course.
+- Duration filter: Since the two-handle slider starts with the handles set to 0 and maximum duration, the number fields for min and max duration should also start with these values.
+
+Backend
+- Add a play button in the edit clip page. the button will become available only if a clip file has been uploaded, of course.
+
+---
+
+Frontend
+- Filter section: Can we have "double sliders" to set the duration range more intuitively? A slider with two handles; the slider is colored between the two handles. Handle range is from 0 to the maximum duration (duration of the longest clip in the archive). the resulting Min/Max duration should still appear in two number fields, as they currently do, so it still works without JS. The slider should appear above the two number fields.
+- Optionally display play count and/or download count. Configurable in component settings and menu item.
+
+Backend
+- Show "Trash" button only if not currently viewing "Trashed" items. Vice versa, show "Delete" button only if currently viewing "Trashed" items.
+- You said, the batch edit dialog has a searchable tag list. Well, it does have those nice checkboxes, but it does not have a search field.
+
+
+Package
+- Package info after installing says "Installs the Joomla! Audio Archive component and its related extensions.". This should rather be a descriptive text about the package (Audio Archive, what does it do, what components, modules, et cetera are included...)
+
+---
+
+Backend
+- Settings panel title: "com_audioarchive_configuration" ?
+- Bulk edit (category and tag assignment to multiple selected clips): Can we have that as a popup menu where the top buttons are, instead of a large section below the clip list?
+- Bulk edit: Can we have the tag list same as in the frontend (list with checkboxes)?
+- On the dashboard, it still reads "Phase 2: file handling | Browser bulk upload is available alongside single-file upload, managed original storage, SHA-256 duplicate detection, replacement, verification, and pure-PHP media inspection. Preview and waveform generation remain optional later processing features.". Can we have a text that fits better?
+- On New/Edit Clip page: Rename tab "File Information" to "Audio file"
+- On New/Edit Clip page: Place tab "File information" (now "Audio File") before tab "Publishing"
+- On New/Edit Clip page: Automatically fill field "Created by" with current user
+- On New/Edit Clip page: Translation for last field in "Published" tab missing: JGLOBAL_FIELD_VERSION_LABEL
+- On New/Edit Clip page: "Recording-date source" really needed? And if yes, shouldn't it be set to "Embedded metadata" or "Filesystem" by default? And do we even need it, isn't it covered by the "Recording-date policy" set in the component settings?
+- Dashboard: Shows "checked" date and time as UTC. Use user's time zone instead.
+
+Frontend
+- Filter section collapsed or expanded by default? Add option to component settings, and menu item. And what if no JavaScript is available? In that case, filter section always expanded.
+
+More
+- Update README.md
+
+---
+
+Backend
+- Dashboard: Show listen / download counts
+
+Frontend
+- Show number of "found" clips above list table
+- Filter section collapsible
+- Filter section: Tags list: Multiple tags are selected with CTRL/CMD. Dan we have a list with checkboxes instead?
+
