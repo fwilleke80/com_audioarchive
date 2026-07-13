@@ -28,6 +28,7 @@
 			<field name="archive_show_result_count" type="list" label="COM_AUDIOARCHIVE_CONFIG_SHOW_RESULT_COUNT_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
 			<field name="archive_show_page_size" type="list" label="COM_AUDIOARCHIVE_CONFIG_SHOW_PAGE_SIZE_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
 			<field name="archive_show_empty_categories" type="list" label="COM_AUDIOARCHIVE_CONFIG_SHOW_EMPTY_CATEGORIES_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
+			<field name="archive_filters_initial_state" type="list" label="COM_AUDIOARCHIVE_CONFIG_FILTERS_INITIAL_STATE_LABEL" description="COM_AUDIOARCHIVE_CONFIG_FILTERS_INITIAL_STATE_DESC" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="expanded">COM_AUDIOARCHIVE_FILTERS_STATE_EXPANDED</option><option value="collapsed">COM_AUDIOARCHIVE_FILTERS_STATE_COLLAPSED</option></field>
 		</fieldset>
 		<fieldset name="filters" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_FILTERS_LABEL">
 			<field name="archive_show_search" type="list" label="COM_AUDIOARCHIVE_CONFIG_SHOW_SEARCH_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>

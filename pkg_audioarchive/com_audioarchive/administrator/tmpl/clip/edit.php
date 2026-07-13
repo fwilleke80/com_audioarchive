@@ -25,15 +25,6 @@ HTMLHelper::_('behavior.keepalive');
                     <?php echo $this->form->renderField('catid'); ?>
                     <?php echo $this->form->renderField('tags'); ?>
                     <?php echo $this->form->renderField('recorded_at'); ?>
-                    <?php echo $this->form->renderField('recorded_date_source'); ?>
-                </div>
-            </div>
-        <?php echo HTMLHelper::_('uitab.endTab'); ?>
-
-        <?php echo HTMLHelper::_('uitab.addTab', 'clipTab', 'publishing', Text::_('JGLOBAL_FIELDSET_PUBLISHING')); ?>
-            <div class="row">
-                <div class="col-lg-6">
-                    <?php echo $this->form->renderFieldset('publishing'); ?>
                 </div>
             </div>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
@@ -122,6 +113,14 @@ HTMLHelper::_('behavior.keepalive');
             <?php echo $this->form->renderField('waveform_status'); ?>
             <?php echo $this->form->renderField('play_count'); ?>
             <?php echo $this->form->renderField('download_count'); ?>
+        <?php echo HTMLHelper::_('uitab.endTab'); ?>
+
+        <?php echo HTMLHelper::_('uitab.addTab', 'clipTab', 'publishing', Text::_('JGLOBAL_FIELDSET_PUBLISHING')); ?>
+            <div class="row">
+                <div class="col-lg-6">
+                    <?php echo $this->form->renderFieldset('publishing'); ?>
+                </div>
+            </div>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
 
         <?php echo HTMLHelper::_('uitab.endTabSet'); ?>

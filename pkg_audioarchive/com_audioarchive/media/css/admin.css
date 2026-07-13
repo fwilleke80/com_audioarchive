@@ -47,3 +47,27 @@
 {
     white-space: nowrap;
 }
+
+.com-audioarchive-batch-tag-search
+{
+    margin-bottom: .75rem;
+}
+
+.com-audioarchive-batch-tag-options
+{
+    border: 1px solid var(--border-color, #adb5bd);
+    border-radius: .375rem;
+    max-height: 15rem;
+    overflow-y: auto;
+    padding: .75rem;
+}
+
+.com-audioarchive-batch-tag-option
+{
+    margin-bottom: .45rem;
+}
+
+.com-audioarchive-batch-tag-option:last-child
+{
+    margin-bottom: 0;
+}

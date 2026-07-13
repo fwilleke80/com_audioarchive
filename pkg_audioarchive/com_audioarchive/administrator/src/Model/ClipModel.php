@@ -102,6 +102,21 @@ class ClipModel extends AdminModel
                 $data->catid = $this->getValidCategoryId($requestedCategoryId);
                 $data->access = (int) $params->get('default_access', 1);
                 $data->state = (int) $params->get('default_state', 0);
+                $data->created_by = (int) $this->getCurrentUser()->id;
+            }
+        }
+
+        if ((int) $this->getState('clip.id') === 0)
+        {
+            $currentUserId = (int) $this->getCurrentUser()->id;
+
+            if (is_array($data) && empty($data['created_by']))
+            {
+                $data['created_by'] = $currentUserId;
+            }
+            elseif (is_object($data) && empty($data->created_by))
+            {
+                $data->created_by = $currentUserId;
             }
         }
 
@@ -154,8 +169,20 @@ class ClipModel extends AdminModel
         $preparedUpload = $this->pendingPreparedUpload;
         $this->pendingPreparedUpload = null;
         $titleWasGenerated = false;
+        $recordingDateWasGenerated = false;
         $task = $app->getInput()->getCmd('task');
         $existingClipId = $task === 'save2copy' ? 0 : (int) ($data['id'] ?? 0);
+        $existingRecordedAt = null;
+
+        if ($existingClipId > 0)
+        {
+            $existingTable = $this->getTable();
+
+            if ($existingTable->load($existingClipId))
+            {
+                $existingRecordedAt = trim((string) $existingTable->recorded_at);
+            }
+        }
 
         if ($upload !== null && (int) ($upload['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE)
         {
@@ -193,6 +220,17 @@ class ClipModel extends AdminModel
                 $recordingDate = $uploadService->determineRecordingDate($preparedUpload);
                 $data['recorded_at'] = $recordingDate['date'];
                 $data['recorded_date_source'] = $recordingDate['source'];
+                $recordingDateWasGenerated = true;
+            }
+        }
+
+        if (array_key_exists('recorded_at', $data) && !$recordingDateWasGenerated)
+        {
+            $submittedRecordedAt = trim((string) ($data['recorded_at'] ?? ''));
+
+            if ($existingClipId === 0 || $submittedRecordedAt !== (string) $existingRecordedAt)
+            {
+                $data['recorded_date_source'] = $submittedRecordedAt === '' ? null : 'manual';
             }
         }
 

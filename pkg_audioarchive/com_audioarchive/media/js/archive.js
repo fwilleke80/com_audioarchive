@@ -20,17 +20,23 @@ const initialiseAudioArchiveFilters = () =>
 
 		const storageKey = `com_audioarchive.archive.filters.${index}`;
 		const forceOpen = panel.dataset.forceOpen === 'true';
-		let expanded = true;
+		const defaultExpanded = panel.dataset.defaultExpanded !== 'false';
+		let expanded = forceOpen ? true : defaultExpanded;
 
 		if (!forceOpen)
 		{
 			try
 			{
-				expanded = window.sessionStorage.getItem(storageKey) !== 'collapsed';
+				const storedState = window.sessionStorage.getItem(storageKey);
+
+				if (storedState === 'expanded' || storedState === 'collapsed')
+				{
+					expanded = storedState === 'expanded';
+				}
 			}
 			catch (error)
 			{
-				expanded = true;
+				expanded = defaultExpanded;
 			}
 		}
 

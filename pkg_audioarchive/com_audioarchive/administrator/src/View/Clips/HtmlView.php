@@ -31,7 +31,9 @@ class HtmlView extends BaseHtmlView
      */
     public function display($tpl = null)
     {
-        $this->getDocument()->getWebAssetManager()->useStyle('com_audioarchive.admin');
+        $this->getDocument()->getWebAssetManager()
+            ->useStyle('com_audioarchive.admin')
+            ->useScript('com_audioarchive.batch');
         $this->items = $this->get('Items');
         $this->pagination = $this->get('Pagination');
         $this->state = $this->get('State');

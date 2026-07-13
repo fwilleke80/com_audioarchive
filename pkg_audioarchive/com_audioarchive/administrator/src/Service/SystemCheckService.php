@@ -95,7 +95,7 @@ class SystemCheckService
         return [
             'overall' => $overall,
             'sections' => $sections,
-            'checked_at' => gmdate('Y-m-d H:i:s') . ' UTC',
+            'checked_at' => gmdate('Y-m-d H:i:s'),
         ];
     }
 

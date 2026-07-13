@@ -16,6 +16,7 @@ $showUploaded = (int) $this->params->get('archive_show_uploaded_filter', 1) === 
 $itemId = Factory::getApplication()->getInput()->getInt('Itemid', 0);
 $selectedTags = array_map('intval', (array) $this->state->get('filter.tags', []));
 $forceOpen = $this->hasActiveFilters() || $this->filterErrors !== [];
+$defaultExpanded = (string) $this->params->get('archive_filters_initial_state', 'expanded') !== 'collapsed';
 $filterContentId = 'audioarchive-filter-content';
 $tagListId = 'audioarchive-filter-tag-list';
 ?>
@@ -25,6 +26,7 @@ $tagListId = 'audioarchive-filter-tag-list';
 		aria-labelledby="audioarchive-filter-heading"
 		data-audioarchive-filter-panel
 		data-force-open="<?php echo $forceOpen ? 'true' : 'false'; ?>"
+		data-default-expanded="<?php echo $defaultExpanded ? 'true' : 'false'; ?>"
 	>
 		<header class="com-audioarchive-filter-header">
 			<div>

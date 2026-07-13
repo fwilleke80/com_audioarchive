@@ -128,6 +128,10 @@
         <field name="archive_show_pagination" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_PAGINATION_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
         <field name="archive_show_page_size" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_PAGE_SIZE_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
         <field name="archive_show_empty_categories" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_EMPTY_CATEGORIES_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SHOW_EMPTY_CATEGORIES_DESC" default="0"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        <field name="archive_filters_initial_state" type="list" label="COM_AUDIOARCHIVE_CONFIG_FILTERS_INITIAL_STATE_LABEL" description="COM_AUDIOARCHIVE_CONFIG_FILTERS_INITIAL_STATE_DESC" default="expanded" validate="options">
+            <option value="expanded">COM_AUDIOARCHIVE_FILTERS_STATE_EXPANDED</option>
+            <option value="collapsed">COM_AUDIOARCHIVE_FILTERS_STATE_COLLAPSED</option>
+        </field>
         <field name="archive_allowed_page_sizes" type="text" label="COM_AUDIOARCHIVE_CONFIG_ALLOWED_PAGE_SIZES_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ALLOWED_PAGE_SIZES_DESC" default="10,20,50,100" />
         <field name="archive_maximum_page_size" type="number" label="COM_AUDIOARCHIVE_CONFIG_MAXIMUM_PAGE_SIZE_LABEL" description="COM_AUDIOARCHIVE_CONFIG_MAXIMUM_PAGE_SIZE_DESC" default="200" min="1" max="1000" step="1" />
         <field name="archive_column_play" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_PLAY" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>

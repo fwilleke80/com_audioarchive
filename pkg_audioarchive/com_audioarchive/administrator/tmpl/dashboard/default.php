@@ -92,7 +92,7 @@ $translateValue = static function (string $value): string
             <div>
                 <h2 class="h4 mb-1"><?php echo Text::_('COM_AUDIOARCHIVE_SYSTEM_CHECK_TITLE'); ?></h2>
                 <div class="small text-body-secondary">
-                    <?php echo Text::sprintf('COM_AUDIOARCHIVE_SYSTEM_CHECK_LAST_RUN', $this->systemCheck['checked_at']); ?>
+                    <?php echo Text::sprintf('COM_AUDIOARCHIVE_SYSTEM_CHECK_LAST_RUN', $this->systemCheck['checked_at_display']); ?>
                 </div>
             </div>
             <div class="d-flex align-items-center gap-2">

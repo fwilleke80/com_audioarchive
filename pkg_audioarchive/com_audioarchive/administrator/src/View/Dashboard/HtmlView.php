@@ -36,8 +36,44 @@ class HtmlView extends BaseHtmlView
         $this->counts = $this->get('Counts');
         $this->version = $this->get('Version');
         $this->systemCheck = $this->get('SystemCheck');
+        $this->formatSystemCheckTimestamp();
         $this->addToolbar();
         parent::display($tpl);
+    }
+
+    /**
+     * @brief Format the system-check timestamp in the current administrator's time zone.
+     *
+     * @return void
+     */
+    private function formatSystemCheckTimestamp(): void
+    {
+        $checkedAtValue = trim((string) ($this->systemCheck['checked_at'] ?? ''));
+
+        if ($checkedAtValue === '')
+        {
+            $this->systemCheck['checked_at_display'] = '';
+            return;
+        }
+
+        $application = Factory::getApplication();
+        $timezoneName = (string) $application->getIdentity()->getParam(
+            'timezone',
+            $application->get('offset', 'UTC')
+        );
+
+        try
+        {
+            $timezone = new \DateTimeZone($timezoneName !== '' ? $timezoneName : 'UTC');
+        }
+        catch (\Throwable $exception)
+        {
+            $timezone = new \DateTimeZone('UTC');
+        }
+
+        $checkedAt = Factory::getDate($checkedAtValue, 'UTC');
+        $checkedAt->setTimezone($timezone);
+        $this->systemCheck['checked_at_display'] = $checkedAt->format(Text::_('DATE_FORMAT_LC2'), true);
     }
 
     /**
