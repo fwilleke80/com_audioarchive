@@ -67,7 +67,7 @@ $listDirn = $this->escape($this->state->get('list.direction'));
             </tbody>
         </table>
 
-        <?php echo $this->pagination->getListFooter(); ?>
+        <?php echo $this->loadTemplate('pagination'); ?>
     <?php endif; ?>
 
     <?php echo $this->loadTemplate('batch'); ?>

@@ -5,6 +5,7 @@ namespace Willeke\Component\Audioarchive\Administrator\View\Clips;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
+use Joomla\CMS\Router\Route;
 use Joomla\CMS\Toolbar\ToolbarHelper;
 
 \defined('_JEXEC') or die;
@@ -55,6 +56,67 @@ class HtmlView extends BaseHtmlView
 
         $this->addToolbar();
         parent::display($tpl);
+    }
+
+
+    /**
+     * @brief Build a direct administrator URL for a pagination page.
+     *
+     * @param int $page One-based page number.
+     *
+     * @return string Routed administrator URL.
+     */
+    public function getPaginationUrl(int $page): string
+    {
+        $totalPages = max(1, (int) $this->pagination->pagesTotal);
+        $page = max(1, min($page, $totalPages));
+        $limit = max(1, (int) $this->pagination->limit);
+        $query = [
+            'option' => 'com_audioarchive',
+            'view' => 'clips',
+            'list' => [
+                'fullordering' => (string) $this->state->get('list.ordering', 'a.uploaded_at')
+                    . ' ' . strtoupper((string) $this->state->get('list.direction', 'DESC')),
+                'limit' => $limit,
+            ],
+        ];
+
+        $search = trim((string) $this->state->get('filter.search', ''));
+
+        if ($search !== '')
+        {
+            $query['filter_search'] = $search;
+        }
+
+        $state = $this->state->get('filter.state', '');
+
+        if ($state !== '')
+        {
+            $query['filter_state'] = (int) $state;
+        }
+
+        $categoryId = (int) $this->state->get('filter.category_id', 0);
+
+        if ($categoryId > 0)
+        {
+            $query['filter_category_id'] = $categoryId;
+        }
+
+        $access = (int) $this->state->get('filter.access', 0);
+
+        if ($access > 0)
+        {
+            $query['filter_access'] = $access;
+        }
+
+        $limitstart = ($page - 1) * $limit;
+
+        if ($limitstart > 0)
+        {
+            $query['limitstart'] = $limitstart;
+        }
+
+        return Route::_('index.php?' . http_build_query($query, '', '&', PHP_QUERY_RFC3986));
     }
 
     /**

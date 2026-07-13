@@ -1,0 +1,68 @@
+.mod-audioarchive-items {
+	display: grid;
+	gap: 1rem;
+}
+.mod-audioarchive-item {
+	border-block-end: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+	padding-block-end: 1rem;
+}
+.mod-audioarchive-item:last-child {
+	border-block-end: 0;
+	padding-block-end: 0;
+}
+.mod-audioarchive-title {
+	font-size: 1.05rem;
+	margin: 0 0 .55rem;
+}
+.mod-audioarchive-player {
+	display: flex;
+	align-items: center;
+	margin-block: .4rem .7rem;
+}
+.mod-audioarchive-meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: .35rem 1rem;
+	font-size: .9em;
+	margin: .45rem 0;
+}
+.mod-audioarchive-meta > div {
+	display: flex;
+	gap: .3rem;
+}
+.mod-audioarchive-meta dt {
+	font-weight: 600;
+}
+.mod-audioarchive-meta dd {
+	margin: 0;
+}
+.mod-audioarchive-description {
+	margin: .55rem 0;
+}
+.mod-audioarchive-tags {
+	margin-block: .55rem;
+}
+.mod-audioarchive-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: .5rem 1rem;
+	font-size: .92em;
+	margin-block-start: .6rem;
+}
+.mod-audioarchive--compact .mod-audioarchive-item {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	column-gap: .7rem;
+	align-items: center;
+}
+.mod-audioarchive--compact .mod-audioarchive-player {
+	grid-row: 1 / span 2;
+	margin: 0;
+}
+.mod-audioarchive--compact .mod-audioarchive-title,
+.mod-audioarchive--compact .mod-audioarchive-meta {
+	margin: 0;
+}
+.mod-audioarchive--featured .mod-audioarchive-title {
+	font-size: 1.3rem;
+}

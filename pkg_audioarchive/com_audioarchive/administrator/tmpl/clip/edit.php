@@ -9,6 +9,29 @@ use Joomla\CMS\Router\Route;
 
 HTMLHelper::_('behavior.formvalidator');
 HTMLHelper::_('behavior.keepalive');
+
+$renderAudioPreview = function (string $headingId): void
+{
+    if (
+        $this->originalFile === null
+        || (int) ($this->originalFile->is_available ?? 0) !== 1
+        || $this->playbackUrl === ''
+    )
+    {
+        return;
+    }
+    ?>
+    <section class="audioarchive-admin-preview" aria-labelledby="<?php echo htmlspecialchars($headingId, ENT_QUOTES, 'UTF-8'); ?>">
+        <div>
+            <h3 id="<?php echo htmlspecialchars($headingId, ENT_QUOTES, 'UTF-8'); ?>" class="h5"><?php echo Text::_('COM_AUDIOARCHIVE_ADMIN_PREVIEW_TITLE'); ?></h3>
+            <p class="text-muted"><?php echo Text::_('COM_AUDIOARCHIVE_ADMIN_PREVIEW_DESC'); ?></p>
+        </div>
+        <audio controls preload="none">
+            <source src="<?php echo htmlspecialchars($this->playbackUrl, ENT_QUOTES, 'UTF-8'); ?>" type="<?php echo htmlspecialchars((string) $this->originalFile->mime_type, ENT_QUOTES, 'UTF-8'); ?>">
+        </audio>
+    </section>
+    <?php
+};
 ?>
 <form action="<?php echo Route::_('index.php?option=com_audioarchive&view=clip&layout=edit&id=' . (int) $this->item->id); ?>" method="post" enctype="multipart/form-data" name="adminForm" id="clip-form" class="form-validate">
     <?php echo LayoutHelper::render('joomla.edit.title_alias', $this); ?>
@@ -17,6 +40,7 @@ HTMLHelper::_('behavior.keepalive');
         <?php echo HTMLHelper::_('uitab.startTabSet', 'clipTab', ['active' => 'details', 'recall' => true]); ?>
 
         <?php echo HTMLHelper::_('uitab.addTab', 'clipTab', 'details', Text::_('COM_AUDIOARCHIVE_FIELDSET_DETAILS')); ?>
+            <?php $renderAudioPreview('audioarchive-admin-preview-details-heading'); ?>
             <div class="row">
                 <div class="col-lg-9">
                     <?php echo $this->form->renderField('description'); ?>
@@ -49,17 +73,7 @@ HTMLHelper::_('behavior.keepalive');
                 ?>
                 <?php if ((int) $this->originalFile->is_available === 1) : ?>
                     <div class="alert alert-success"><?php echo Text::_('COM_AUDIOARCHIVE_ORIGINAL_STORED'); ?></div>
-                    <?php if ($this->playbackUrl !== '') : ?>
-                        <section class="audioarchive-admin-preview" aria-labelledby="audioarchive-admin-preview-heading">
-                            <div>
-                                <h3 id="audioarchive-admin-preview-heading" class="h5"><?php echo Text::_('COM_AUDIOARCHIVE_ADMIN_PREVIEW_TITLE'); ?></h3>
-                                <p class="text-muted"><?php echo Text::_('COM_AUDIOARCHIVE_ADMIN_PREVIEW_DESC'); ?></p>
-                            </div>
-                            <audio controls preload="none">
-                                <source src="<?php echo htmlspecialchars($this->playbackUrl, ENT_QUOTES, 'UTF-8'); ?>" type="<?php echo htmlspecialchars((string) $this->originalFile->mime_type, ENT_QUOTES, 'UTF-8'); ?>">
-                            </audio>
-                        </section>
-                    <?php endif; ?>
+                    <?php $renderAudioPreview('audioarchive-admin-preview-file-heading'); ?>
                 <?php else : ?>
                     <div class="alert alert-danger">
                         <?php echo Text::_('COM_AUDIOARCHIVE_ORIGINAL_UNAVAILABLE'); ?>
