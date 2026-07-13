@@ -188,20 +188,39 @@ class ArchiveModel extends ListModel
 					->bind(':durationMaximumExclusive', $durationMaximumExclusive, ParameterType::INTEGER);
 			}
 
-			foreach ([
-				['filter.recorded_from_sql', 'a.recorded_at', '>=', ':recordedFrom'],
-				['filter.recorded_to_sql', 'a.recorded_at', '<=', ':recordedTo'],
-				['filter.uploaded_from_sql', 'a.uploaded_at', '>=', ':uploadedFrom'],
-				['filter.uploaded_to_sql', 'a.uploaded_at', '<=', ':uploadedTo'],
-			] as [$stateKey, $column, $operator, $placeholder])
+			// Joomla database bindings are by reference. Keep each date value in a
+			// dedicated variable for the lifetime of the query instead of reusing one
+			// loop variable, which would make all placeholders reference the final value.
+			$recordedFrom = $this->getState('filter.recorded_from_sql');
+			if ($recordedFrom !== null)
 			{
-				$value = $this->getState($stateKey);
-				if ($value !== null)
-				{
-					$value = (string) $value;
-					$query->where($db->quoteName($column) . ' ' . $operator . ' ' . $placeholder)
-						->bind($placeholder, $value, ParameterType::STRING);
-				}
+				$recordedFrom = (string) $recordedFrom;
+				$query->where($db->quoteName('a.recorded_at') . ' >= :recordedFrom')
+					->bind(':recordedFrom', $recordedFrom, ParameterType::STRING);
+			}
+
+			$recordedTo = $this->getState('filter.recorded_to_sql');
+			if ($recordedTo !== null)
+			{
+				$recordedTo = (string) $recordedTo;
+				$query->where($db->quoteName('a.recorded_at') . ' <= :recordedTo')
+					->bind(':recordedTo', $recordedTo, ParameterType::STRING);
+			}
+
+			$uploadedFrom = $this->getState('filter.uploaded_from_sql');
+			if ($uploadedFrom !== null)
+			{
+				$uploadedFrom = (string) $uploadedFrom;
+				$query->where($db->quoteName('a.uploaded_at') . ' >= :uploadedFrom')
+					->bind(':uploadedFrom', $uploadedFrom, ParameterType::STRING);
+			}
+
+			$uploadedTo = $this->getState('filter.uploaded_to_sql');
+			if ($uploadedTo !== null)
+			{
+				$uploadedTo = (string) $uploadedTo;
+				$query->where($db->quoteName('a.uploaded_at') . ' <= :uploadedTo')
+					->bind(':uploadedTo', $uploadedTo, ParameterType::STRING);
 			}
 		}
 

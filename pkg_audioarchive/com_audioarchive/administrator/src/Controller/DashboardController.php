@@ -51,4 +51,58 @@ class DashboardController extends BaseController
 
         $this->setRedirect(Route::_('index.php?option=com_audioarchive&view=dashboard', false));
     }
+    /**
+     * @brief Reset all public playback counters.
+     *
+     * @return void
+     */
+    public function resetPlayCounts(): void
+    {
+        $this->resetCounter('play_count', 'COM_AUDIOARCHIVE_PLAY_COUNTS_RESET');
+    }
+
+    /**
+     * @brief Reset all original-download counters.
+     *
+     * @return void
+     */
+    public function resetDownloadCounts(): void
+    {
+        $this->resetCounter('download_count', 'COM_AUDIOARCHIVE_DOWNLOAD_COUNTS_RESET');
+    }
+
+    /**
+     * @brief Reset one allow-listed aggregate counter.
+     *
+     * @param string $column Database counter column.
+     * @param string $messageKey Success message language key.
+     *
+     * @return void
+     */
+    private function resetCounter(string $column, string $messageKey): void
+    {
+        Session::checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+        $application = Factory::getApplication();
+        $user = $application->getIdentity();
+
+        if (!$user->authorise('core.edit.state', 'com_audioarchive') && !$user->authorise('core.admin', 'com_audioarchive'))
+        {
+            throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+        }
+
+        try
+        {
+            /** @var \Willeke\Component\Audioarchive\Administrator\Model\DashboardModel $model */
+            $model = $this->getModel('Dashboard');
+            $changed = $model->resetCounter($column);
+            $application->enqueueMessage(Text::sprintf($messageKey, $changed), 'success');
+        }
+        catch (\Throwable $exception)
+        {
+            $application->enqueueMessage(Text::sprintf('COM_AUDIOARCHIVE_COUNTER_RESET_FAILED', $exception->getMessage()), 'error');
+        }
+
+        $this->setRedirect(Route::_('index.php?option=com_audioarchive&view=dashboard', false));
+    }
+
 }

@@ -102,13 +102,65 @@ class HtmlView extends BaseHtmlView
 
 		$item = $app->getMenu()->getActive();
 		$this->pageHeading = (string) $this->params->get('page_heading', $item?->title ?? Text::_('COM_AUDIOARCHIVE_ARCHIVE_TITLE'));
-		$this->getDocument()->setTitle($this->pageHeading);
+		$this->prepareDocument($itemId, $item);
 		$this->getDocument()->getWebAssetManager()
 			->useStyle('com_audioarchive.site')
 			->useScript('com_audioarchive.player')
 			->useScript('com_audioarchive.archive');
 
 		parent::display($tpl);
+	}
+
+
+	/**
+	 * @brief Apply archive page title, menu metadata, breadcrumbs, and canonical URL.
+	 *
+	 * @param int $itemId Active Archive menu item identifier.
+	 * @param object|null $menuItem Active menu item.
+	 *
+	 * @return void
+	 */
+	private function prepareDocument(int $itemId, ?object $menuItem): void
+	{
+		$document = $this->getDocument();
+		$pageTitle = trim((string) $this->params->get('page_title', ''));
+		$this->setDocumentTitle($pageTitle !== '' ? $pageTitle : $this->pageHeading);
+
+		$description = trim((string) $this->params->get('menu-meta_description', ''));
+		if ($description !== '')
+		{
+			$document->setDescription($description);
+		}
+
+		$keywords = trim((string) $this->params->get('menu-meta_keywords', ''));
+		if ($keywords !== '')
+		{
+			$document->setMetaData('keywords', $keywords);
+		}
+
+		$robots = trim((string) $this->params->get('robots', ''));
+		if ($robots !== '')
+		{
+			$document->setMetaData('robots', $robots);
+		}
+
+		if ($menuItem === null || (string) ($menuItem->component ?? '') !== 'com_audioarchive')
+		{
+			Factory::getApplication()->getPathway()->addItem($this->pageHeading);
+		}
+
+		$canonical = $itemId > 0
+			? Route::_('index.php?Itemid=' . $itemId, false, Route::TLS_IGNORE, true)
+			: Route::_('index.php?option=com_audioarchive&view=archive', false, Route::TLS_IGNORE, true);
+		$document->addHeadLink($canonical, 'canonical');
+		$document->setMetaData('og:type', 'website', 'property');
+		$document->setMetaData('og:title', $pageTitle !== '' ? $pageTitle : $this->pageHeading, 'property');
+		$document->setMetaData('og:url', $canonical, 'property');
+
+		if ($description !== '')
+		{
+			$document->setMetaData('og:description', $description, 'property');
+		}
 	}
 
 	/**

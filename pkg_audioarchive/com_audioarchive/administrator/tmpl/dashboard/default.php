@@ -54,6 +54,37 @@ $translateValue = static function (string $value): string
         <?php endforeach; ?>
     </div>
 
+    <?php
+    $canResetCounters = Factory::getApplication()->getIdentity()->authorise('core.edit.state', 'com_audioarchive')
+        || Factory::getApplication()->getIdentity()->authorise('core.admin', 'com_audioarchive');
+    ?>
+    <?php if ($canResetCounters) : ?>
+        <div class="d-flex flex-wrap gap-2 mb-4">
+            <form action="<?php echo Route::_('index.php?option=com_audioarchive&task=dashboard.resetPlayCounts'); ?>" method="post">
+                <button
+                    type="submit"
+                    class="btn btn-outline-danger"
+                    onclick="return confirm('<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_RESET_PLAY_COUNTS_CONFIRM')); ?>');"
+                    <?php echo (int) $this->counts['play_count'] <= 0 ? 'disabled' : ''; ?>
+                >
+                    <?php echo Text::_('COM_AUDIOARCHIVE_RESET_PLAY_COUNTS'); ?>
+                </button>
+                <?php echo HTMLHelper::_('form.token'); ?>
+            </form>
+            <form action="<?php echo Route::_('index.php?option=com_audioarchive&task=dashboard.resetDownloadCounts'); ?>" method="post">
+                <button
+                    type="submit"
+                    class="btn btn-outline-danger"
+                    onclick="return confirm('<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_RESET_DOWNLOAD_COUNTS_CONFIRM')); ?>');"
+                    <?php echo (int) $this->counts['download_count'] <= 0 ? 'disabled' : ''; ?>
+                >
+                    <?php echo Text::_('COM_AUDIOARCHIVE_RESET_DOWNLOAD_COUNTS'); ?>
+                </button>
+                <?php echo HTMLHelper::_('form.token'); ?>
+            </form>
+        </div>
+    <?php endif; ?>
+
     <div class="card mb-4">
         <div class="card-body">
             <div class="d-flex flex-wrap align-items-baseline justify-content-between gap-2">

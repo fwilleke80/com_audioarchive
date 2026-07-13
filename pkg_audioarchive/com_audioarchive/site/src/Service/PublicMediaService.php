@@ -78,6 +78,9 @@ class PublicMediaService
 				$database->quoteName('a.publish_down'),
 				$database->quoteName('a.catid'),
 				$database->quoteName('a.access'),
+				$database->quoteName('a.language'),
+				$database->quoteName('a.created_by'),
+				$database->quoteName('u.name', 'author_name'),
 				$database->quoteName('a.play_count'),
 				$database->quoteName('a.download_count'),
 				$database->quoteName('a.technical_metadata'),
@@ -102,6 +105,10 @@ class PublicMediaService
 				. ' ON ' . $database->quoteName('f.clip_id') . ' = ' . $database->quoteName('a.id')
 				. ' AND ' . $database->quoteName('f.file_role') . ' = :fileRole'
 				. ' AND ' . $database->quoteName('f.is_available') . ' = :available'
+			)
+			->leftJoin(
+				$database->quoteName('#__users', 'u')
+					. ' ON ' . $database->quoteName('u.id') . ' = ' . $database->quoteName('a.created_by')
 			)
 			->where($database->quoteName('a.id') . ' = :id')
 			->where($database->quoteName('a.state') . ' = :published')

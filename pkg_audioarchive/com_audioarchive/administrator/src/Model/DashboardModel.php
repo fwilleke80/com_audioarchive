@@ -52,6 +52,30 @@ class DashboardModel extends BaseDatabaseModel
     }
 
     /**
+     * @brief Reset one aggregate usage counter for every clip.
+     *
+     * @param string $column Counter column. Only play_count and download_count are accepted.
+     *
+     * @return int Number of rows changed by the database.
+     */
+    public function resetCounter(string $column): int
+    {
+        if (!in_array($column, ['play_count', 'download_count'], true))
+        {
+            throw new \InvalidArgumentException('Unsupported Audio Archive counter.');
+        }
+
+        $database = $this->getDatabase();
+        $query = $database->getQuery(true)
+            ->update($database->quoteName('#__audioarchive_clips'))
+            ->set($database->quoteName($column) . ' = 0')
+            ->where($database->quoteName($column) . ' <> 0');
+        $database->setQuery($query)->execute();
+
+        return (int) $database->getAffectedRows();
+    }
+
+    /**
      * @brief Return the installed component version from Joomla extension metadata.
      *
      * @return string Installed version.

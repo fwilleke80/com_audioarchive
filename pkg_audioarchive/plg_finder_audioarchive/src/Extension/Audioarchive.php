@@ -14,6 +14,7 @@ use Joomla\Database\QueryInterface;
 use Joomla\Event\SubscriberInterface;
 use Joomla\Registry\Registry;
 use Willeke\Component\Audioarchive\Site\Helper\RouteHelper;
+use Willeke\Component\Audioarchive\Site\Service\ArchiveMenuItemResolver;
 
 \defined('_JEXEC') or die;
 
@@ -48,8 +49,8 @@ final class Audioarchive extends Adapter implements SubscriberInterface
 	/** @var bool Whether the tag-assignment cache has been loaded. */
 	private bool $tagsLoaded = false;
 
-	/** @var array<string, int> Archive menu item identifiers keyed by language. */
-	private array $archiveMenuItems = [];
+	/** @var ArchiveMenuItemResolver|null Archive menu resolver. */
+	private ?ArchiveMenuItemResolver $archiveMenuItemResolver = null;
 
 	/**
 	 * @brief Return Finder events handled by the plugin.
@@ -537,113 +538,18 @@ final class Audioarchive extends Adapter implements SubscriberInterface
 	 */
 	private function getArchiveMenuItemId(string $language, int $categoryId, array $tags): int
 	{
-		$tagIds = array_values(array_unique(array_map(
-			static fn (object $tag): int => (int) $tag->id,
+		$this->archiveMenuItemResolver ??= new ArchiveMenuItemResolver($this->getDatabase());
+		$tagIds = array_map(
+			static fn(object $tag): int => (int) $tag->id,
 			$tags
-		)));
-		sort($tagIds);
-		$cacheKey = implode(':', [
-			$language !== '' ? $language : '*',
-			(string) $categoryId,
-			implode(',', $tagIds),
-		]);
+		);
 
-		if (array_key_exists($cacheKey, $this->archiveMenuItems))
-		{
-			return $this->archiveMenuItems[$cacheKey];
-		}
-
-		$db = $this->getDatabase();
-		$archiveLink = 'index.php?option=com_audioarchive&view=archive';
-		$languages = $language !== '' && $language !== '*'
-			? [$language, '*']
-			: ['*'];
-		$query = $db->getQuery(true)
-			->select([
-				$db->quoteName('id'),
-				$db->quoteName('language'),
-				$db->quoteName('params'),
-			])
-			->from($db->quoteName('#__menu'))
-			->where($db->quoteName('client_id') . ' = 0')
-			->where($db->quoteName('published') . ' = 1')
-			->where($db->quoteName('access') . ' = 1')
-			->where($db->quoteName('link') . ' = :archiveLink')
-			->whereIn($db->quoteName('language'), $languages, ParameterType::STRING)
-			->bind(':archiveLink', $archiveLink, ParameterType::STRING)
-			->order($db->quoteName('id') . ' ASC');
-		$candidates = (array) $db->setQuery($query)->loadObjectList();
-
-		usort($candidates, static function (object $left, object $right) use ($language): int
-		{
-			$leftScore = (string) $left->language === $language ? 0 : 1;
-			$rightScore = (string) $right->language === $language ? 0 : 1;
-
-			return $leftScore <=> $rightScore ?: (int) $left->id <=> (int) $right->id;
-		});
-
-		foreach ($candidates as $candidate)
-		{
-			$params = new Registry((string) $candidate->params);
-			$restrictedCategory = (int) $params->get('archive_category_restriction', 0);
-
-			if ($restrictedCategory > 0 && $restrictedCategory !== $categoryId)
-			{
-				continue;
-			}
-
-			$requiredTags = $this->normaliseMenuTagIds(
-				$params->get('archive_tag_restriction', [])
-			);
-
-			if ($requiredTags && array_diff($requiredTags, $tagIds))
-			{
-				continue;
-			}
-
-			$this->archiveMenuItems[$cacheKey] = (int) $candidate->id;
-
-			return $this->archiveMenuItems[$cacheKey];
-		}
-
-		$this->archiveMenuItems[$cacheKey] = 0;
-
-		return 0;
-	}
-
-	/**
-	 * @brief Normalise a menu item's tag restriction into integer identifiers.
-	 *
-	 * @param mixed $value Registry value stored by Joomla.
-	 *
-	 * @return int[]
-	 */
-	private function normaliseMenuTagIds($value): array
-	{
-		if (is_string($value))
-		{
-			$trimmed = trim($value);
-
-			if ($trimmed === '')
-			{
-				return [];
-			}
-
-			$decoded = json_decode($trimmed, true);
-			$value = is_array($decoded) ? $decoded : preg_split('/\s*,\s*/', $trimmed);
-		}
-
-		if (!is_array($value))
-		{
-			$value = [$value];
-		}
-
-		$ids = array_values(array_unique(array_filter(
-			array_map('intval', $value),
-			static fn (int $id): bool => $id > 0
-		)));
-		sort($ids);
-
-		return $ids;
+		return $this->archiveMenuItemResolver->resolve(
+			$language,
+			$categoryId,
+			$tagIds,
+			0,
+			[1]
+		);
 	}
 }
