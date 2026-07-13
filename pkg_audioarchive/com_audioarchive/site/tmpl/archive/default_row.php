@@ -23,6 +23,7 @@ $mime = trim((string) $item->mime_type) ?: 'application/octet-stream';
 				aria-label="<?php echo Text::sprintf('COM_AUDIOARCHIVE_PLAY_LABEL', $this->escape($item->title)); ?>"
 				title="<?php echo Text::sprintf('COM_AUDIOARCHIVE_PLAY_LABEL', $this->escape($item->title)); ?>"
 				data-audioarchive-play
+				data-clip-id="<?php echo (int) $item->id; ?>"
 				data-clip-title="<?php echo $this->escape((string) $item->title); ?>"
 				data-play-label="<?php echo Text::sprintf('COM_AUDIOARCHIVE_PLAY_LABEL', $this->escape($item->title)); ?>"
 				data-pause-label="<?php echo Text::sprintf('COM_AUDIOARCHIVE_PAUSE_LABEL', $this->escape($item->title)); ?>"

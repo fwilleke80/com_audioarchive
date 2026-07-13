@@ -12,6 +12,8 @@ $cards = [
     ['label' => 'COM_AUDIOARCHIVE_DASHBOARD_PUBLISHED', 'value' => $this->counts['published'], 'link' => 'index.php?option=com_audioarchive&view=clips&filter_state=1'],
     ['label' => 'COM_AUDIOARCHIVE_DASHBOARD_UNPUBLISHED', 'value' => $this->counts['unpublished'], 'link' => 'index.php?option=com_audioarchive&view=clips&filter_state=0'],
     ['label' => 'COM_AUDIOARCHIVE_DASHBOARD_TRASHED', 'value' => $this->counts['trashed'], 'link' => 'index.php?option=com_audioarchive&view=clips&filter_state=-2'],
+    ['label' => 'COM_AUDIOARCHIVE_DASHBOARD_PLAYS', 'value' => $this->counts['play_count'], 'link' => 'index.php?option=com_audioarchive&view=clips&filter_order=a.play_count&filter_order_Dir=DESC'],
+    ['label' => 'COM_AUDIOARCHIVE_DASHBOARD_DOWNLOADS', 'value' => $this->counts['download_count'], 'link' => 'index.php?option=com_audioarchive&view=clips&filter_order=a.download_count&filter_order_Dir=DESC'],
 ];
 
 $statusClasses = [
@@ -41,7 +43,7 @@ $translateValue = static function (string $value): string
 <div class="com-audioarchive-dashboard">
     <div class="row g-3 mb-4">
         <?php foreach ($cards as $card) : ?>
-            <div class="col-12 col-sm-6 col-xl-3">
+            <div class="col-12 col-sm-6 col-xl-4 col-xxl-2">
                 <a class="card h-100 text-decoration-none" href="<?php echo Route::_($card['link']); ?>">
                     <div class="card-body">
                         <div class="display-6"><?php echo (int) $card['value']; ?></div>

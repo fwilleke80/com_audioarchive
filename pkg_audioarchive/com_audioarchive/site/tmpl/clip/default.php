@@ -12,6 +12,10 @@ $hasDescription = trim((string) $this->item->description) !== '';
 	data-audioarchive-status-playing="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_PLAYING')); ?>"
 	data-audioarchive-status-paused="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_PAUSED')); ?>"
 	data-audioarchive-status-error="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_ERROR')); ?>"
+	<?php if ($this->playCountUrl !== '') : ?>
+		data-audioarchive-play-count-url="<?php echo $this->escape($this->playCountUrl); ?>"
+		data-audioarchive-token-name="<?php echo $this->escape($this->playCountToken); ?>"
+	<?php endif; ?>
 >
 	<div class="visually-hidden" aria-live="polite" aria-atomic="true" data-audioarchive-status></div>
 

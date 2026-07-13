@@ -50,6 +50,25 @@ abstract class RouteHelper
 	}
 
 	/**
+	 * @brief Return the endpoint used to record an actual playback start.
+	 *
+	 * @param int $itemId Optional Archive menu item identifier.
+	 *
+	 * @return string Internal Joomla route.
+	 */
+	public static function getPlayCountRoute(int $itemId = 0): string
+	{
+		$link = 'index.php?option=com_audioarchive&task=stream.countPlay&format=json';
+
+		if ($itemId > 0)
+		{
+			$link .= '&Itemid=' . $itemId;
+		}
+
+		return $link;
+	}
+
+	/**
 	 * @brief Return the protected original-download route for one clip.
 	 *
 	 * @param int $id Clip identifier.

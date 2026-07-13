@@ -204,6 +204,57 @@ class PublicMediaService
 	}
 
 	/**
+	 * @brief Increment the aggregate playback counter for one authorised clip.
+	 *
+	 * @param int $id Clip identifier.
+	 *
+	 * @return void
+	 */
+	public function incrementPlayCount(int $id): void
+	{
+		$this->incrementCounter($id, 'play_count');
+	}
+
+	/**
+	 * @brief Increment the aggregate download counter for one authorised clip.
+	 *
+	 * @param int $id Clip identifier.
+	 *
+	 * @return void
+	 */
+	public function incrementDownloadCount(int $id): void
+	{
+		$this->incrementCounter($id, 'download_count');
+	}
+
+	/**
+	 * @brief Increment one allow-listed aggregate counter.
+	 *
+	 * @param int $id Clip identifier.
+	 * @param string $column Counter column.
+	 *
+	 * @return void
+	 */
+	private function incrementCounter(int $id, string $column): void
+	{
+		if ($id <= 0 || !in_array($column, ['play_count', 'download_count'], true))
+		{
+			return;
+		}
+
+		$database = $this->database;
+		$query = $database->getQuery(true)
+			->update($database->quoteName('#__audioarchive_clips'))
+			->set(
+				$database->quoteName($column)
+				. ' = ' . $database->quoteName($column) . ' + 1'
+			)
+			->where($database->quoteName('id') . ' = :counterId')
+			->bind(':counterId', $id, ParameterType::INTEGER);
+		$database->setQuery($query)->execute();
+	}
+
+	/**
 	 * @brief Return the component parameters.
 	 *
 	 * @return Registry

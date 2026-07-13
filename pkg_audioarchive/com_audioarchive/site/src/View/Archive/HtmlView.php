@@ -6,6 +6,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\Session\Session;
 use Joomla\Registry\Registry;
 use Willeke\Component\Audioarchive\Site\Helper\RouteHelper;
 use Willeke\Component\Audioarchive\Site\Model\ArchiveModel;
@@ -43,6 +44,12 @@ class HtmlView extends BaseHtmlView
 
 	/** @var string */
 	public string $pageHeading = '';
+
+	/** @var string */
+	public string $playCountUrl = '';
+
+	/** @var string */
+	public string $playCountToken = '';
 	/** @var object|null */
 	public ?object $item = null;
 
@@ -80,12 +87,19 @@ class HtmlView extends BaseHtmlView
 			$clip->stream_url = Route::_(RouteHelper::getPlaybackRoute((int) $clip->id, $itemId));
 		}
 
+		if ((int) $this->params->get('enable_play_counts', 1) === 1)
+		{
+			$this->playCountUrl = Route::_(RouteHelper::getPlayCountRoute($itemId));
+			$this->playCountToken = Session::getFormToken();
+		}
+
 		$item = $app->getMenu()->getActive();
 		$this->pageHeading = (string) $this->params->get('page_heading', $item?->title ?? Text::_('COM_AUDIOARCHIVE_ARCHIVE_TITLE'));
 		$this->getDocument()->setTitle($this->pageHeading);
 		$this->getDocument()->getWebAssetManager()
 			->useStyle('com_audioarchive.site')
-			->useScript('com_audioarchive.player');
+			->useScript('com_audioarchive.player')
+			->useScript('com_audioarchive.archive');
 
 		parent::display($tpl);
 	}

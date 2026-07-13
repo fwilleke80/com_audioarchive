@@ -6,6 +6,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\Session\Session;
 use Joomla\Registry\Registry;
 use Willeke\Component\Audioarchive\Site\Helper\RouteHelper;
 use Willeke\Component\Audioarchive\Site\Model\ClipModel;
@@ -31,6 +32,12 @@ class HtmlView extends BaseHtmlView
 
 	/** @var string */
 	public string $archiveUrl = '';
+
+	/** @var string */
+	public string $playCountUrl = '';
+
+	/** @var string */
+	public string $playCountToken = '';
 
 	/**
 	 * @brief Display one public clip.
@@ -60,6 +67,12 @@ class HtmlView extends BaseHtmlView
 		$this->archiveUrl = $itemId > 0
 			? Route::_('index.php?Itemid=' . $itemId)
 			: Route::_('index.php?option=com_audioarchive&view=archive');
+
+		if ((int) $this->params->get('enable_play_counts', 1) === 1)
+		{
+			$this->playCountUrl = Route::_(RouteHelper::getPlayCountRoute($itemId));
+			$this->playCountToken = Session::getFormToken();
+		}
 
 		$document = $this->getDocument();
 		$document->setTitle((string) $item->title);

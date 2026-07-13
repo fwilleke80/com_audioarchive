@@ -6,6 +6,7 @@ use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
+use Joomla\CMS\Session\Session;
 use Joomla\Database\DatabaseInterface;
 use Willeke\Component\Audioarchive\Site\Service\PublicMediaService;
 
@@ -34,6 +35,55 @@ class StreamController extends BaseController
 	public function download(): void
 	{
 		$this->deliver(true);
+	}
+
+	/**
+	 * @brief Record the first actual playback start reported by the page.
+	 *
+	 * @return void
+	 */
+	public function countPlay(): void
+	{
+		$application = Factory::getApplication();
+		$method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+
+		if ($method !== 'POST')
+		{
+			$this->sendJson(405, ['success' => false]);
+		}
+
+		if (!Session::checkToken('post'))
+		{
+			$this->sendJson(403, ['success' => false]);
+		}
+
+		$params = ComponentHelper::getParams('com_audioarchive');
+
+		if ((int) $params->get('enable_play_counts', 1) !== 1)
+		{
+			$this->sendJson(200, ['success' => true, 'counted' => false]);
+		}
+
+		$id = $application->getInput()->getInt('id', 0);
+		$service = new PublicMediaService(
+			Factory::getContainer()->get(DatabaseInterface::class),
+			$params,
+			$application->getIdentity()
+		);
+
+		if ($service->getPublicClip($id, false) === null)
+		{
+			$this->sendJson(404, ['success' => false]);
+		}
+
+		$counted = $this->shouldCount('play', $id, 30);
+
+		if ($counted)
+		{
+			$service->incrementPlayCount($id);
+		}
+
+		$this->sendJson(200, ['success' => true, 'counted' => $counted]);
 	}
 
 	/**
@@ -81,6 +131,23 @@ class StreamController extends BaseController
 		catch (\Throwable)
 		{
 			$this->sendError(404, Text::_('COM_AUDIOARCHIVE_STREAM_NOT_FOUND'));
+		}
+
+		if (
+			$download
+			&& $method === 'GET'
+			&& (int) $params->get('enable_download_counts', 1) === 1
+			&& $this->shouldCount('download', $id, 10)
+		)
+		{
+			try
+			{
+				$service->incrementDownloadCount($id);
+			}
+			catch (\Throwable)
+			{
+				// A counter failure must never prevent an authorised download.
+			}
 		}
 
 		$this->sendFile($path, $clip, $download, $method === 'HEAD');
@@ -265,6 +332,56 @@ class StreamController extends BaseController
 		return preg_match('~^[a-z0-9][a-z0-9!#$&^_.+-]*/[a-z0-9][a-z0-9!#$&^_.+-]*$~', $mime)
 			? $mime
 			: 'application/octet-stream';
+	}
+
+	/**
+	 * @brief Apply a short session throttle to aggregate counter requests.
+	 *
+	 * @param string $type Counter type.
+	 * @param int $id Clip identifier.
+	 * @param int $minimumInterval Minimum seconds between counts.
+	 *
+	 * @return bool True when this request should increment the counter.
+	 */
+	private function shouldCount(string $type, int $id, int $minimumInterval): bool
+	{
+		if ($id <= 0 || !in_array($type, ['play', 'download'], true))
+		{
+			return false;
+		}
+
+		$session = Factory::getApplication()->getSession();
+		$key = 'com_audioarchive.counter.' . $type . '.' . $id;
+		$now = time();
+		$last = (int) $session->get($key, 0);
+
+		if ($last > 0 && $now - $last < max(1, $minimumInterval))
+		{
+			return false;
+		}
+
+		$session->set($key, $now);
+
+		return true;
+	}
+
+	/**
+	 * @brief Send a small JSON response for the playback-count endpoint.
+	 *
+	 * @param int $status HTTP status code.
+	 * @param array<string, mixed> $payload Response payload.
+	 *
+	 * @return never
+	 */
+	private function sendJson(int $status, array $payload): never
+	{
+		$this->clearOutputBuffers();
+		http_response_code($status);
+		header('Content-Type: application/json; charset=utf-8');
+		header('Cache-Control: no-store');
+		header('X-Content-Type-Options: nosniff');
+		echo json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+		Factory::getApplication()->close();
 	}
 
 	/**

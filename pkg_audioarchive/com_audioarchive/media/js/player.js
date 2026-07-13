@@ -5,6 +5,7 @@ const initialiseAudioArchivePlayers = () =>
 {
 	let activeAudio = null;
 	let activeButton = null;
+	const countedClipIds = new Set();
 
 	const getArchiveRoot = (element) => element.closest('.com-audioarchive');
 
@@ -20,6 +21,38 @@ const initialiseAudioArchivePlayers = () =>
 
 		const template = root.dataset[`audioarchiveStatus${type}`] || '';
 		status.textContent = template.replace('%s', title);
+	};
+
+	const recordPlay = (element, clipId) =>
+	{
+		const id = Number.parseInt(String(clipId || ''), 10);
+		const root = getArchiveRoot(element);
+		const url = root?.dataset.audioarchivePlayCountUrl || '';
+		const tokenName = root?.dataset.audioarchiveTokenName || '';
+
+		if (!Number.isInteger(id) || id <= 0 || url === '' || tokenName === '' || countedClipIds.has(id))
+		{
+			return;
+		}
+
+		countedClipIds.add(id);
+		const body = new URLSearchParams();
+		body.set('id', String(id));
+		body.set(tokenName, '1');
+
+		fetch(url, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+				'X-Requested-With': 'XMLHttpRequest',
+			},
+			body: body.toString(),
+			credentials: 'same-origin',
+			keepalive: true,
+		}).catch(() =>
+		{
+			// Counting is informational and must never interrupt playback.
+		});
 	};
 
 	const setButtonState = (button, playing) =>
@@ -67,6 +100,7 @@ const initialiseAudioArchivePlayers = () =>
 		const audioId = button.getAttribute('aria-controls');
 		const audio = audioId ? document.getElementById(audioId) : null;
 		const title = button.dataset.clipTitle || '';
+		const clipId = button.dataset.clipId || '';
 
 		if (!(audio instanceof HTMLAudioElement))
 		{
@@ -105,6 +139,7 @@ const initialiseAudioArchivePlayers = () =>
 			activeAudio = audio;
 			activeButton = button;
 			setButtonState(button, true);
+			recordPlay(button, clipId);
 			announce(button, 'Playing', title);
 		});
 
@@ -148,12 +183,14 @@ const initialiseAudioArchivePlayers = () =>
 		}
 
 		const title = audio.dataset.clipTitle || '';
+		const clipId = audio.dataset.clipId || '';
 
 		audio.addEventListener('play', () =>
 		{
 			stopActive(audio);
 			activeAudio = audio;
 			activeButton = null;
+			recordPlay(audio, clipId);
 			announce(audio, 'Playing', title);
 		});
 

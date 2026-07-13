@@ -72,11 +72,59 @@
 	color: var(--audioarchive-muted);
 }
 
+.com-audioarchive-filter-header-actions
+{
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: .8rem;
+	flex: 0 0 auto;
+}
+
 .com-audioarchive-filter-reset-link
 {
-	flex: 0 0 auto;
 	font-size: .9rem;
 	white-space: nowrap;
+}
+
+.com-audioarchive-filter-toggle
+{
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: .38rem;
+	min-height: 2.2rem;
+	padding: .35rem .65rem;
+	border: 1px solid var(--audioarchive-border-strong);
+	border-radius: var(--audioarchive-radius-small);
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-size: .86rem;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.com-audioarchive-filter-toggle:hover
+{
+	background: var(--audioarchive-surface-raised);
+}
+
+.com-audioarchive-filter-toggle:focus-visible
+{
+	outline: .2rem solid color-mix(in srgb, var(--audioarchive-accent) 34%, transparent);
+	outline-offset: .12rem;
+}
+
+.com-audioarchive-filter-toggle-icon
+{
+	font-size: 1rem;
+	line-height: 1;
+}
+
+.com-audioarchive-filter-panel.is-collapsed .com-audioarchive-filter-header
+{
+	border-bottom: 0;
 }
 
 .com-audioarchive-filters
@@ -143,9 +191,63 @@
 	border-radius: var(--audioarchive-radius-small);
 }
 
-.com-audioarchive-filter select[multiple]
+.com-audioarchive-tag-search
 {
-	min-height: 8.5rem;
+	margin-bottom: .55rem;
+}
+
+.com-audioarchive-tag-options
+{
+	display: grid;
+	gap: .12rem;
+	max-height: 10.5rem;
+	padding: .35rem;
+	border: 1px solid var(--audioarchive-border);
+	border-radius: var(--audioarchive-radius-small);
+	background: color-mix(in srgb, currentColor 1.5%, transparent);
+	overflow-y: auto;
+	scrollbar-gutter: stable;
+}
+
+.com-audioarchive-tag-option
+{
+	display: flex !important;
+	align-items: flex-start;
+	gap: .55rem;
+	margin: 0 !important;
+	padding: .42rem .48rem;
+	border-radius: .32rem;
+	font-size: .86rem !important;
+	font-weight: 500 !important;
+	line-height: 1.25 !important;
+	cursor: pointer;
+}
+
+.com-audioarchive-tag-option:hover
+{
+	background: var(--audioarchive-surface-raised);
+}
+
+.com-audioarchive-tag-option input
+{
+	flex: 0 0 auto;
+	width: 1rem;
+	height: 1rem;
+	margin: .03rem 0 0;
+	accent-color: var(--audioarchive-accent);
+}
+
+.com-audioarchive-tag-option:has(input:focus-visible)
+{
+	outline: .2rem solid color-mix(in srgb, var(--audioarchive-accent) 30%, transparent);
+	outline-offset: -.05rem;
+}
+
+.com-audioarchive-tag-no-matches
+{
+	margin: .55rem 0 0;
+	font-size: .82rem;
+	color: var(--audioarchive-muted);
 }
 
 .com-audioarchive-search-control
@@ -248,10 +350,25 @@
 
 .com-audioarchive-result-count
 {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: .3rem .65rem;
 	margin: 0;
 	font-size: .9rem;
-	font-weight: 700;
 	color: var(--audioarchive-muted);
+}
+
+.com-audioarchive-result-count strong
+{
+	color: inherit;
+	font-weight: 800;
+}
+
+.com-audioarchive-result-count span
+{
+	font-size: .82rem;
+	font-weight: 600;
 }
 
 .com-audioarchive-table-wrapper
@@ -738,9 +855,15 @@
 		flex-direction: column;
 	}
 
+	.com-audioarchive-filter-header-actions
+	{
+		justify-content: space-between;
+		width: 100%;
+	}
+
 	.com-audioarchive-filter-reset-link
 	{
-		align-self: flex-start;
+		align-self: center;
 	}
 
 	.com-audioarchive-filter,
