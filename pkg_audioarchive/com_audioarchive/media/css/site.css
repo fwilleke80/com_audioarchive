@@ -683,6 +683,26 @@
 	line-height: 1.15;
 }
 
+.com-audioarchive-tag-list--linked li
+{
+	padding: 0;
+}
+
+.com-audioarchive-tag-list--linked a
+{
+	display: block;
+	padding: .22rem .52rem;
+	border-radius: inherit;
+	color: inherit;
+	text-decoration: none;
+}
+
+.com-audioarchive-tag-list--linked a:hover,
+.com-audioarchive-tag-list--linked a:focus-visible
+{
+	text-decoration: underline;
+}
+
 .com-audioarchive-empty-state
 {
 	display: grid;

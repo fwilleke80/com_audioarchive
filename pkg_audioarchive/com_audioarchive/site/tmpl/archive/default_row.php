@@ -52,8 +52,14 @@ $mime = trim((string) $item->mime_type) ?: 'application/octet-stream';
 	<?php if ($columns['tags']) : ?>
 		<td class="com-audioarchive-tags-cell" data-label="<?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_TAGS'); ?>">
 			<?php if ($item->tags) : ?>
-				<ul class="com-audioarchive-tag-list">
-					<?php foreach ($item->tags as $tag) : ?><li><?php echo $this->escape($tag->title); ?></li><?php endforeach; ?>
+				<ul class="com-audioarchive-tag-list com-audioarchive-tag-list--linked">
+					<?php foreach ($item->tags as $tag) : ?>
+						<li>
+							<a href="<?php echo $this->getTagUrl((int) $tag->id); ?>">
+								<?php echo $this->escape($tag->title); ?>
+							</a>
+						</li>
+					<?php endforeach; ?>
 				</ul>
 			<?php else : ?><span class="com-audioarchive-empty-value">—</span><?php endif; ?>
 		</td>

@@ -9,6 +9,34 @@ namespace Willeke\Component\Audioarchive\Site\Helper;
  */
 abstract class RouteHelper
 {
+
+	/**
+	 * @brief Return the internal route for the public archive.
+	 *
+	 * @param int $itemId Optional Archive menu item identifier.
+	 * @param array<string, mixed> $query Public filter and list query values.
+	 *
+	 * @return string Internal Joomla route.
+	 */
+	public static function getArchiveRoute(int $itemId = 0, array $query = []): string
+	{
+		$link = 'index.php?option=com_audioarchive&view=archive';
+
+		if ($itemId > 0)
+		{
+			$link .= '&Itemid=' . $itemId;
+		}
+
+		if ($query !== [])
+		{
+			$encodedQuery = http_build_query($query, '', '&', PHP_QUERY_RFC3986);
+			$encodedQuery = str_replace(['%2C', '%3A'], [',', ':'], $encodedQuery);
+			$link .= '&' . $encodedQuery;
+		}
+
+		return $link;
+	}
+
 	/**
 	 * @brief Return the internal route for one public clip.
 	 *

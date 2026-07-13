@@ -1,8 +1,6 @@
 <?php
 
-use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
-use Joomla\CMS\Router\Route;
 
 \defined('_JEXEC') or die;
 
@@ -13,7 +11,6 @@ $showTags = (int) $this->params->get('archive_show_tag_filter', 1) === 1;
 $showDuration = (int) $this->params->get('archive_show_duration_filter', 1) === 1;
 $showRecorded = (int) $this->params->get('archive_show_recorded_filter', 1) === 1;
 $showUploaded = (int) $this->params->get('archive_show_uploaded_filter', 1) === 1;
-$itemId = Factory::getApplication()->getInput()->getInt('Itemid', 0);
 $selectedTags = array_map('intval', (array) $this->state->get('filter.tags', []));
 $forceOpen = $this->hasActiveFilters() || $this->filterErrors !== [];
 $defaultExpanded = (string) $this->params->get('archive_filters_initial_state', 'expanded') !== 'collapsed';
@@ -54,10 +51,8 @@ $tagListId = 'audioarchive-filter-tag-list';
 		</header>
 
 		<div id="<?php echo $filterContentId; ?>" data-audioarchive-filter-content>
-			<form class="com-audioarchive-filters" method="get" action="<?php echo Route::_('index.php'); ?>">
-				<input type="hidden" name="option" value="com_audioarchive">
-				<input type="hidden" name="view" value="archive">
-				<?php if ($itemId > 0) : ?><input type="hidden" name="Itemid" value="<?php echo $itemId; ?>"><?php endif; ?>
+			<form class="com-audioarchive-filters" method="get" action="<?php echo $this->getResetUrl(); ?>">
+				<input type="hidden" name="task" value="archive.applyFilters">
 
 				<div class="com-audioarchive-filter-grid">
 					<?php if ($showSearch) : ?>
@@ -121,7 +116,7 @@ $tagListId = 'audioarchive-filter-tag-list';
 										<input
 											type="checkbox"
 											name="tags[]"
-											value="<?php echo (int) $tag->id; ?>"
+											value="<?php echo $this->escape((string) $tag->alias); ?>"
 											<?php echo in_array((int) $tag->id, $selectedTags, true) ? ' checked' : ''; ?>
 										>
 										<span><?php echo $this->escape($tag->title); ?></span>

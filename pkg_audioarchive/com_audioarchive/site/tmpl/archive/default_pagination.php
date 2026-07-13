@@ -1,8 +1,6 @@
 <?php
 
-use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
-use Joomla\CMS\Router\Route;
 
 \defined('_JEXEC') or die;
 
@@ -14,16 +12,13 @@ if (!$showPagination && !$showPageSize)
 	return;
 }
 
-$itemId = Factory::getApplication()->getInput()->getInt('Itemid', 0);
 $queryValues = $this->getQueryValues();
 unset($queryValues['limit']);
 ?>
 <div class="com-audioarchive-pagination-bar">
 	<?php if ($showPageSize) : ?>
-		<form class="com-audioarchive-page-size" method="get" action="<?php echo Route::_('index.php'); ?>">
-			<input type="hidden" name="option" value="com_audioarchive">
-			<input type="hidden" name="view" value="archive">
-			<?php if ($itemId > 0) : ?><input type="hidden" name="Itemid" value="<?php echo $itemId; ?>"><?php endif; ?>
+		<form class="com-audioarchive-page-size" method="get" action="<?php echo $this->getResetUrl(); ?>">
+			<input type="hidden" name="task" value="archive.applyFilters">
 			<?php foreach ($queryValues as $key => $value) : ?>
 				<?php if (is_array($value)) : ?>
 					<?php foreach ($value as $entry) : ?><input type="hidden" name="<?php echo $this->escape($key); ?>[]" value="<?php echo $this->escape((string) $entry); ?>"><?php endforeach; ?>

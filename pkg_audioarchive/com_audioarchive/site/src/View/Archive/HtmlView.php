@@ -59,6 +59,9 @@ class HtmlView extends BaseHtmlView
 	/** @var array<string, bool> */
 	public array $archiveColumns = [];
 
+	/** @var ArchiveModel */
+	private ArchiveModel $archiveModel;
+
 
 	/**
 	 * @brief Display the public archive.
@@ -71,6 +74,7 @@ class HtmlView extends BaseHtmlView
 	{
 		/** @var ArchiveModel $model */
 		$model = $this->getModel();
+		$this->archiveModel = $model;
 		$model->setUseExceptions(true);
 		$this->items = $model->getItems();
 		$this->pagination = $model->getPagination();
@@ -149,9 +153,12 @@ class HtmlView extends BaseHtmlView
 			Factory::getApplication()->getPathway()->addItem($this->pageHeading);
 		}
 
-		$canonical = $itemId > 0
-			? Route::_('index.php?Itemid=' . $itemId, false, Route::TLS_IGNORE, true)
-			: Route::_('index.php?option=com_audioarchive&view=archive', false, Route::TLS_IGNORE, true);
+		$canonical = Route::_(
+			RouteHelper::getArchiveRoute($itemId, $this->getQueryValues()),
+			false,
+			Route::TLS_IGNORE,
+			true
+		);
 		$document->addHeadLink($canonical, 'canonical');
 		$document->setMetaData('og:type', 'website', 'property');
 		$document->setMetaData('og:title', $pageTitle !== '' ? $pageTitle : $this->pageHeading, 'property');
@@ -190,15 +197,36 @@ class HtmlView extends BaseHtmlView
 			}
 		}
 
-		$query['option'] = 'com_audioarchive';
-		$query['view'] = 'archive';
+		$query = $this->removeDefaultListValues($query);
 		$itemId = Factory::getApplication()->getInput()->getInt('Itemid', 0);
-		if ($itemId > 0)
+
+		return Route::_(RouteHelper::getArchiveRoute($itemId, $query));
+	}
+
+	/**
+	 * @brief Build an Archive URL filtered exclusively by one tag.
+	 *
+	 * @param int $tagId Joomla tag identifier.
+	 *
+	 * @return string
+	 */
+	public function getTagUrl(int $tagId): string
+	{
+		$alias = '';
+
+		foreach ($this->tagOptions as $tag)
 		{
-			$query['Itemid'] = $itemId;
+			if ((int) $tag->id === $tagId)
+			{
+				$alias = trim((string) $tag->alias);
+				break;
+			}
 		}
 
-		return Route::_('index.php?' . http_build_query($query));
+		$itemId = Factory::getApplication()->getInput()->getInt('Itemid', 0);
+		$query = $alias !== '' ? ['tags' => $alias] : [];
+
+		return Route::_(RouteHelper::getArchiveRoute($itemId, $query));
 	}
 
 	/**
@@ -209,7 +237,7 @@ class HtmlView extends BaseHtmlView
 	public function getResetUrl(): string
 	{
 		$itemId = Factory::getApplication()->getInput()->getInt('Itemid', 0);
-		return Route::_('index.php?option=com_audioarchive&view=archive' . ($itemId > 0 ? '&Itemid=' . $itemId : ''));
+		return Route::_(RouteHelper::getArchiveRoute($itemId));
 	}
 
 	/**
@@ -237,43 +265,49 @@ class HtmlView extends BaseHtmlView
 	 */
 	public function getQueryValues(): array
 	{
-		$durationMinimum = (string) $this->state->get('filter.duration_min', '');
-		$durationMaximum = (string) $this->state->get('filter.duration_max', '');
-		$durationMinimumMs = $this->state->get('filter.duration_min_ms');
-		$durationMaximumMs = $this->state->get('filter.duration_max_ms');
+		return $this->archiveModel->getCanonicalQueryValues();
+	}
 
-		if ($durationMinimumMs !== null && (int) $durationMinimumMs <= 0)
+	/**
+	 * @brief Remove list values that equal this menu item's defaults.
+	 *
+	 * @param array<string, mixed> $query Candidate public query values.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function removeDefaultListValues(array $query): array
+	{
+		$defaultOrdering = (string) $this->params->get('archive_default_ordering', $this->params->get('default_ordering', 'uploaded_at'));
+		$defaultOrdering = match ($defaultOrdering)
 		{
-			$durationMinimum = '';
+			'uploaded_at' => 'uploaded',
+			'recorded_at' => 'recorded',
+			default => $defaultOrdering,
+		};
+		$defaultDirection = strtolower((string) $this->params->get('archive_default_direction', $this->params->get('default_direction', 'desc')));
+		$maximumLimit = max(1, min(1000, (int) $this->params->get('archive_maximum_page_size', 200)));
+		$defaultLimit = max(1, min($maximumLimit, (int) $this->params->get('archive_default_limit', $this->params->get('default_limit', 20))));
+
+		if (($query['sort'] ?? $defaultOrdering) === $defaultOrdering)
+		{
+			unset($query['sort']);
 		}
 
-		if (
-			$durationMaximumMs !== null
-			&& $this->maximumDurationSeconds > 0
-			&& (int) floor((int) $durationMaximumMs / 1000) >= $this->maximumDurationSeconds
-		)
+		if (strtolower((string) ($query['direction'] ?? $defaultDirection)) === $defaultDirection)
 		{
-			$durationMaximum = '';
+			unset($query['direction']);
 		}
 
-		$values = [
-			'q' => (string) $this->state->get('filter.search', ''),
-			'category' => (int) $this->state->get('filter.category', 0),
-			'tags' => (array) $this->state->get('filter.tags', []),
-			'duration_min' => $durationMinimum,
-			'duration_max' => $durationMaximum,
-			'recorded_from' => (string) $this->state->get('filter.recorded_from', ''),
-			'recorded_to' => (string) $this->state->get('filter.recorded_to', ''),
-			'uploaded_from' => (string) $this->state->get('filter.uploaded_from', ''),
-			'uploaded_to' => (string) $this->state->get('filter.uploaded_to', ''),
-			'sort' => (string) $this->state->get('list.ordering', 'uploaded'),
-			'direction' => strtolower((string) $this->state->get('list.direction', 'DESC')),
-			'limit' => (int) $this->state->get('list.limit', 20),
-		];
+		if ((int) ($query['limit'] ?? $defaultLimit) === $defaultLimit)
+		{
+			unset($query['limit']);
+		}
 
-		return array_filter(
-			$values,
-			static fn(mixed $value): bool => $value !== '' && $value !== [] && $value !== 0
-		);
+		if ((int) ($query['limitstart'] ?? 0) <= 0)
+		{
+			unset($query['limitstart']);
+		}
+
+		return $query;
 	}
 }

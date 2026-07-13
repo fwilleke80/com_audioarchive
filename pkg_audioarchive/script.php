@@ -10,9 +10,6 @@ use Joomla\Database\ParameterType;
 
 return new class () implements InstallerScriptInterface
 {
-	/** @var bool Whether the Finder plugin existed before this package operation. */
-	private bool $finderPluginExisted = false;
-
 	/**
 	 * @brief Complete package installation.
 	 *
@@ -50,7 +47,7 @@ return new class () implements InstallerScriptInterface
 	}
 
 	/**
-	 * @brief Remember whether the Smart Search plugin was already installed.
+	 * @brief Prepare the package operation.
 	 *
 	 * @param string $type Installer operation.
 	 * @param InstallerAdapter $adapter Joomla installer adapter.
@@ -59,22 +56,14 @@ return new class () implements InstallerScriptInterface
 	 */
 	public function preflight(string $type, InstallerAdapter $adapter): bool
 	{
-		if (!in_array($type, ['install', 'update', 'discover_install'], true))
-		{
-			return true;
-		}
-
-		$database = Factory::getContainer()->get(DatabaseInterface::class);
-		$this->finderPluginExisted = $this->findFinderPluginId($database) > 0;
-
 		return true;
 	}
 
 	/**
-	 * @brief Enable the new Finder plugin on its first installation.
+	 * @brief Enable the Finder plugin after a fresh package installation.
 	 *
-	 * Existing installations retain the administrator's enabled/disabled choice
-	 * during later package updates.
+	 * Updating an existing package must not alter the administrator's plugin
+	 * state and must not perform package-level database work.
 	 *
 	 * @param string $type Installer operation.
 	 * @param InstallerAdapter $adapter Joomla installer adapter.
@@ -83,28 +72,32 @@ return new class () implements InstallerScriptInterface
 	 */
 	public function postflight(string $type, InstallerAdapter $adapter): bool
 	{
-		if (
-			!in_array($type, ['install', 'update', 'discover_install'], true)
-			|| $this->finderPluginExisted
-		)
+		if ($type !== 'install')
 		{
 			return true;
 		}
 
-		$database = Factory::getContainer()->get(DatabaseInterface::class);
-		$pluginId = $this->findFinderPluginId($database);
-
-		if ($pluginId <= 0)
+		try
 		{
-			return true;
-		}
+			$database = Factory::getContainer()->get(DatabaseInterface::class);
+			$pluginId = $this->findFinderPluginId($database);
 
-		$query = $database->getQuery(true)
-			->update($database->quoteName('#__extensions'))
-			->set($database->quoteName('enabled') . ' = 1')
-			->where($database->quoteName('extension_id') . ' = :pluginId')
-			->bind(':pluginId', $pluginId, ParameterType::INTEGER);
-		$database->setQuery($query)->execute();
+			if ($pluginId <= 0)
+			{
+				return true;
+			}
+
+			$query = $database->getQuery(true)
+				->update($database->quoteName('#__extensions'))
+				->set($database->quoteName('enabled') . ' = 1')
+				->where($database->quoteName('extension_id') . ' = :pluginId')
+				->bind(':pluginId', $pluginId, ParameterType::INTEGER);
+			$database->setQuery($query)->execute();
+		}
+		catch (\Throwable)
+		{
+			// Plugin activation is convenient but must never make installation fail.
+		}
 
 		return true;
 	}

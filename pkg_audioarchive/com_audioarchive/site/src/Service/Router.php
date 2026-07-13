@@ -53,6 +53,7 @@ class Router extends RouterView
 		$preprocess->setDatabase($this->database);
 		$this->attachRule($preprocess);
 		$this->attachRule(new MenuRules($this));
+		$this->attachRule(new TagFilterRules($this->database));
 		$this->attachRule(new StandardRules($this));
 		$this->attachRule(new NomenuRules($this));
 	}

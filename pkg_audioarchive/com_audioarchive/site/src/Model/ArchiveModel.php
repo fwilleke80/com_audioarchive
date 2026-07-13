@@ -35,6 +35,12 @@ class ArchiveModel extends ListModel
 	/** @var bool */
 	private bool $ignoreVisitorFiltersForMaximum = false;
 
+	/** @var int|null */
+	private ?int $maximumDurationCache = null;
+
+	/** @var array<string, mixed>|null */
+	private ?array $canonicalQueryCache = null;
+
 	/**
 	 * @brief Construct the public list model.
 	 *
@@ -347,6 +353,11 @@ class ArchiveModel extends ListModel
 	 */
 	public function getMaximumDurationMs(): int
 	{
+		if ($this->maximumDurationCache !== null)
+		{
+			return $this->maximumDurationCache;
+		}
+
 		$db = $this->getDatabase();
 		$this->ignoreVisitorFiltersForMaximum = true;
 
@@ -364,7 +375,9 @@ class ArchiveModel extends ListModel
 			->clear('order')
 			->select('MAX(' . $db->quoteName('a.duration_ms') . ')');
 
-		return max(0, (int) $db->setQuery($query)->loadResult());
+		$this->maximumDurationCache = max(0, (int) $db->setQuery($query)->loadResult());
+
+		return $this->maximumDurationCache;
 	}
 
 	/**
@@ -401,6 +414,7 @@ class ArchiveModel extends ListModel
 			->select([
 				$db->quoteName('t.id'),
 				$db->quoteName('t.title'),
+				$db->quoteName('t.alias'),
 				$db->quoteName('t.path'),
 			])
 			->from($db->quoteName('#__tags', 't'))
@@ -414,6 +428,7 @@ class ArchiveModel extends ListModel
 			->group([
 				$db->quoteName('t.id'),
 				$db->quoteName('t.title'),
+				$db->quoteName('t.alias'),
 				$db->quoteName('t.path'),
 			])
 			->order($db->quoteName('t.path') . ' ASC')
@@ -421,6 +436,248 @@ class ArchiveModel extends ListModel
 			->bind(':published', $published, ParameterType::INTEGER);
 
 		return $db->setQuery($query)->loadObjectList();
+	}
+
+
+	/**
+	 * @brief Return the canonical public query values for the current archive state.
+	 *
+	 * Empty fields and values equal to the menu/component defaults are omitted.
+	 * Tag identifiers are converted to stable Joomla tag aliases.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public function getCanonicalQueryValues(): array
+	{
+		if ($this->canonicalQueryCache !== null)
+		{
+			return $this->canonicalQueryCache;
+		}
+
+		$params = $this->getResolvedParams();
+		$values = [];
+		$search = trim((string) $this->getState('filter.search', ''));
+		$category = (int) $this->getState('filter.category', 0);
+		$tagAliases = $this->loadTagAliasesById((array) $this->getState('filter.tags', []));
+		$durationMinimum = trim((string) $this->getState('filter.duration_min', ''));
+		$durationMaximum = trim((string) $this->getState('filter.duration_max', ''));
+		$durationMinimumMs = $this->getState('filter.duration_min_ms');
+		$durationMaximumMs = $this->getState('filter.duration_max_ms');
+		$maximumDurationMs = $this->getMaximumDurationMs();
+
+		if ($search !== '')
+		{
+			$values['q'] = $search;
+		}
+
+		if ($category > 0)
+		{
+			$values['category'] = $category;
+		}
+
+		if ($tagAliases !== [])
+		{
+			sort($tagAliases, SORT_NATURAL | SORT_FLAG_CASE);
+			$values['tags'] = implode(',', $tagAliases);
+		}
+
+		if ($durationMinimum !== '' && $durationMinimumMs !== null && (int) $durationMinimumMs > 0)
+		{
+			$values['duration_min'] = $durationMinimum;
+		}
+
+		if (
+			$durationMaximum !== ''
+			&& $durationMaximumMs !== null
+			&& (int) $durationMaximumMs > 0
+			&& $maximumDurationMs > 0
+			&& (int) $durationMaximumMs < $maximumDurationMs
+		)
+		{
+			$values['duration_max'] = $durationMaximum;
+		}
+
+		foreach (['recorded_from', 'recorded_to', 'uploaded_from', 'uploaded_to'] as $name)
+		{
+			$value = trim((string) $this->getState('filter.' . $name, ''));
+
+			if ($value !== '')
+			{
+				$values[$name] = $value;
+			}
+		}
+
+		$ordering = (string) $this->getState('list.ordering', 'uploaded');
+		$direction = strtolower((string) $this->getState('list.direction', 'DESC'));
+		$limit = (int) $this->getState('list.limit', 20);
+		$defaultOrdering = $this->getDefaultOrdering($params);
+		$defaultDirection = strtolower($this->getDefaultDirection($params));
+		$defaultLimit = $this->getDefaultLimit($params);
+
+		if ($ordering !== $defaultOrdering)
+		{
+			$values['sort'] = $ordering;
+		}
+
+		if ($direction !== $defaultDirection)
+		{
+			$values['direction'] = $direction;
+		}
+
+		if ($limit !== $defaultLimit)
+		{
+			$values['limit'] = $limit;
+		}
+
+		$this->canonicalQueryCache = $values;
+
+		return $this->canonicalQueryCache;
+	}
+
+	/**
+	 * @brief Resolve visitor tag input supplied as aliases, IDs, or comma-separated values.
+	 *
+	 * @param mixed $value Raw request value.
+	 *
+	 * @return int[] Accessible published tag identifiers.
+	 */
+	private function resolveVisitorTagIdentifiers(mixed $value): array
+	{
+		$entries = is_array($value) ? $value : preg_split('/\s*,\s*/', (string) $value);
+		$ids = [];
+		$aliases = [];
+
+		foreach ((array) $entries as $entry)
+		{
+			foreach (preg_split('/\s*,\s*/', trim((string) $entry)) ?: [] as $part)
+			{
+				$part = trim($part);
+
+				if ($part === '')
+				{
+					continue;
+				}
+
+				if (ctype_digit($part) && (int) $part > 0)
+				{
+					$ids[] = (int) $part;
+				}
+				else
+				{
+					$aliases[] = $part;
+				}
+			}
+		}
+
+		$ids = array_values(array_unique($ids));
+		$aliases = array_values(array_unique($aliases));
+
+		if ($ids === [] && $aliases === [])
+		{
+			return [];
+		}
+
+		$db = $this->getDatabase();
+		$published = 1;
+		$levels = $this->getAuthorisedViewLevels();
+		$query = $db->getQuery(true)
+			->select($db->quoteName('id'))
+			->from($db->quoteName('#__tags'))
+			->where($db->quoteName('published') . ' = :visitorTagPublished')
+			->whereIn($db->quoteName('access'), $levels, ParameterType::INTEGER)
+			->bind(':visitorTagPublished', $published, ParameterType::INTEGER);
+		$conditions = [];
+
+		if ($ids !== [])
+		{
+			$conditions[] = $db->quoteName('id') . ' IN (' . implode(',', array_map('intval', $ids)) . ')';
+		}
+
+		if ($aliases !== [])
+		{
+			$conditions[] = $db->quoteName('alias') . ' IN (' . implode(',', array_map([$db, 'quote'], $aliases)) . ')';
+		}
+
+		$query->where('(' . implode(' OR ', $conditions) . ')');
+		$result = array_values(array_unique(array_map('intval', (array) $db->setQuery($query)->loadColumn())));
+		sort($result, SORT_NUMERIC);
+
+		return $result;
+	}
+
+	/**
+	 * @brief Load aliases for the supplied tag identifiers.
+	 *
+	 * @param int[] $tagIds Tag identifiers.
+	 *
+	 * @return string[] Tag aliases.
+	 */
+	private function loadTagAliasesById(array $tagIds): array
+	{
+		$tagIds = $this->normaliseIntegerList($tagIds);
+
+		if ($tagIds === [])
+		{
+			return [];
+		}
+
+		$db = $this->getDatabase();
+		$query = $db->getQuery(true)
+			->select($db->quoteName('alias'))
+			->from($db->quoteName('#__tags'))
+			->whereIn($db->quoteName('id'), $tagIds, ParameterType::INTEGER);
+
+		return array_values(array_unique(array_filter(array_map(
+			static fn(mixed $alias): string => trim((string) $alias),
+			(array) $db->setQuery($query)->loadColumn()
+		))));
+	}
+
+	/**
+	 * @brief Return the resolved default public ordering key.
+	 *
+	 * @param Registry $params Resolved component/menu parameters.
+	 *
+	 * @return string
+	 */
+	private function getDefaultOrdering(Registry $params): string
+	{
+		$ordering = (string) $params->get('archive_default_ordering', $params->get('default_ordering', 'uploaded_at'));
+
+		return match ($ordering)
+		{
+			'uploaded_at' => 'uploaded',
+			'recorded_at' => 'recorded',
+			default => in_array($ordering, ['title', 'duration', 'recorded', 'uploaded'], true) ? $ordering : 'uploaded',
+		};
+	}
+
+	/**
+	 * @brief Return the resolved default public sort direction.
+	 *
+	 * @param Registry $params Resolved component/menu parameters.
+	 *
+	 * @return string ASC or DESC.
+	 */
+	private function getDefaultDirection(Registry $params): string
+	{
+		return strtoupper((string) $params->get('archive_default_direction', $params->get('default_direction', 'desc'))) === 'ASC'
+			? 'ASC'
+			: 'DESC';
+	}
+
+	/**
+	 * @brief Return the resolved default public page size.
+	 *
+	 * @param Registry $params Resolved component/menu parameters.
+	 *
+	 * @return int
+	 */
+	private function getDefaultLimit(Registry $params): int
+	{
+		$maximum = max(1, min(1000, (int) $params->get('archive_maximum_page_size', 200)));
+
+		return max(1, min($maximum, (int) $params->get('archive_default_limit', $params->get('default_limit', 20))));
 	}
 
 	/**
@@ -495,7 +752,7 @@ class ArchiveModel extends ListModel
 		$this->setState('filter.uploaded_from', $uploadedFromInput);
 		$this->setState('filter.uploaded_to', $uploadedToInput);
 
-		$requestedTags = $this->normaliseIntegerList($input->get('tags', [], 'array'));
+		$requestedTags = $this->resolveVisitorTagIdentifiers($input->get('tags', [], 'raw'));
 		$menuTags = $this->normaliseIntegerList($params->get('archive_tag_restriction', []));
 		$this->menuTags = $menuTags;
 		$this->selectedTags = array_values(array_unique(array_merge($requestedTags, $menuTags)));
@@ -516,23 +773,17 @@ class ArchiveModel extends ListModel
 		$this->setState('filter.uploaded_to_sql', $this->parseDate($uploadedToInput, true, 'COM_AUDIOARCHIVE_FILTER_UPLOADED_TO_INVALID'));
 
 		$allowedOrdering = ['title', 'duration', 'recorded', 'uploaded'];
-		$defaultOrdering = (string) $params->get('archive_default_ordering', $params->get('default_ordering', 'uploaded_at'));
-		$defaultOrdering = match ($defaultOrdering)
-		{
-			'uploaded_at' => 'uploaded',
-			'recorded_at' => 'recorded',
-			default => $defaultOrdering,
-		};
+		$defaultOrdering = $this->getDefaultOrdering($params);
 		$requestedOrdering = $input->getCmd('sort', $defaultOrdering);
-		$this->setState('list.ordering', in_array($requestedOrdering, $allowedOrdering, true) ? $requestedOrdering : 'uploaded');
+		$this->setState('list.ordering', in_array($requestedOrdering, $allowedOrdering, true) ? $requestedOrdering : $defaultOrdering);
 
-		$defaultDirection = strtoupper((string) $params->get('archive_default_direction', $params->get('default_direction', 'desc')));
+		$defaultDirection = $this->getDefaultDirection($params);
 		$requestedDirection = strtoupper($input->getCmd('direction', $defaultDirection));
 		$this->setState('list.direction', $requestedDirection === 'ASC' ? 'ASC' : 'DESC');
 
 		$maximumLimit = max(1, min(1000, (int) $params->get('archive_maximum_page_size', 200)));
 		$allowedLimits = $this->getPageSizeOptions();
-		$defaultLimit = max(1, min($maximumLimit, (int) $params->get('archive_default_limit', $params->get('default_limit', 20))));
+		$defaultLimit = $this->getDefaultLimit($params);
 		$requestedLimit = max(1, min($maximumLimit, $input->getInt('limit', $defaultLimit)));
 		$limit = in_array($requestedLimit, $allowedLimits, true) ? $requestedLimit : $defaultLimit;
 		$this->setState('list.limit', $limit);

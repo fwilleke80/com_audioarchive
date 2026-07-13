@@ -125,7 +125,7 @@ $tokenName = Session::getFormToken();
 						<th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_METADATA'); ?></th>
 						<th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_STATUS'); ?></th>
 						<th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_RESULT'); ?></th>
-						<th scope="col" class="text-end"><?php echo Text::_('JGRID_HEADING_ACTIONS'); ?></th>
+						<th scope="col" class="text-end"><?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_ACTIONS'); ?></th>
 					</tr>
 				</thead>
 				<tbody id="audioarchive-import-files"></tbody>
