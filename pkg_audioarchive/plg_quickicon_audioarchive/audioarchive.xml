@@ -8,11 +8,11 @@
 	<license>GNU General Public License version 2 or later</license>
 	<description>PLG_QUICKICON_AUDIOARCHIVE_XML_DESCRIPTION</description>
 	<namespace path="src">Willeke\Plugin\Quickicon\Audioarchive</namespace>
-	<scriptfile>script.php</scriptfile>
+	<scriptfile>install.php</scriptfile>
 	<files>
 		<folder plugin="audioarchive">services</folder>
 		<folder>src</folder>
-		<filename>script.php</filename>
+		<filename>install.php</filename>
 	</files>
 	<languages>
 		<language tag="en-GB">language/en-GB/plg_quickicon_audioarchive.ini</language>

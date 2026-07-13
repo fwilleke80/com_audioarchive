@@ -9,7 +9,7 @@
     <description>COM_AUDIOARCHIVE_XML_DESCRIPTION</description>
     <element>com_audioarchive</element>
     <namespace path="src">Willeke\Component\Audioarchive</namespace>
-    <scriptfile>script.php</scriptfile>
+    <scriptfile>install.php</scriptfile>
 
     <install>
         <sql>
