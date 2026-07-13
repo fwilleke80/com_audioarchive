@@ -25,10 +25,6 @@ if ((int) $this->params->get('detail_show_duration', 1) === 1)
 {
 	$rows[] = [Text::_('COM_AUDIOARCHIVE_FIELD_DURATION'), '<time datetime="PT' . $totalSeconds . 'S">' . $duration . '</time>'];
 }
-if ((int) $this->params->get('detail_show_category', 1) === 1)
-{
-	$rows[] = [Text::_('JCATEGORY'), $this->escape((string) $this->item->category_title)];
-}
 if ((int) $this->params->get('detail_show_recorded', 1) === 1)
 {
 	$rows[] = [Text::_('COM_AUDIOARCHIVE_FIELD_RECORDING_DATE'), $this->item->recorded_at ? HTMLHelper::_('date', $this->item->recorded_at, Text::_('DATE_FORMAT_LC3')) : '—'];
@@ -55,12 +51,15 @@ if ((int) $this->params->get('detail_show_file_size', 0) === 1)
 }
 ?>
 <?php if ($rows) : ?>
-	<dl class="com-audioarchive-metadata">
-		<?php foreach ($rows as [$label, $value]) : ?>
-			<div>
-				<dt><?php echo $label; ?></dt>
-				<dd><?php echo $value; ?></dd>
-			</div>
-		<?php endforeach; ?>
-	</dl>
+	<section class="com-audioarchive-info-card" aria-labelledby="audioarchive-details-heading">
+		<h2 id="audioarchive-details-heading"><?php echo Text::_('COM_AUDIOARCHIVE_DETAILS_HEADING'); ?></h2>
+		<dl class="com-audioarchive-metadata">
+			<?php foreach ($rows as [$label, $value]) : ?>
+				<div>
+					<dt><?php echo $label; ?></dt>
+					<dd><?php echo $value; ?></dd>
+				</div>
+			<?php endforeach; ?>
+		</dl>
+	</section>
 <?php endif; ?>

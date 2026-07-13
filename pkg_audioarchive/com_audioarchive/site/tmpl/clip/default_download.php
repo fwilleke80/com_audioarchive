@@ -9,8 +9,9 @@ if ((int) $this->params->get('allow_original_downloads', 1) !== 1 || (int) $this
 	return;
 }
 ?>
-<p class="com-audioarchive-download">
-	<a class="btn btn-primary" href="<?php echo $this->downloadUrl; ?>">
-		<?php echo Text::_('COM_AUDIOARCHIVE_DOWNLOAD_ORIGINAL'); ?>
+<div class="com-audioarchive-download">
+	<a class="btn btn-primary com-audioarchive-download-button" href="<?php echo $this->downloadUrl; ?>">
+		<span aria-hidden="true">↓</span>
+		<span><?php echo Text::_('COM_AUDIOARCHIVE_DOWNLOAD_ORIGINAL'); ?></span>
 	</a>
-</p>
+</div>

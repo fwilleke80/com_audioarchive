@@ -63,7 +63,9 @@ class HtmlView extends BaseHtmlView
 
 		$document = $this->getDocument();
 		$document->setTitle((string) $item->title);
-		$document->getWebAssetManager()->useStyle('com_audioarchive.site');
+		$document->getWebAssetManager()
+			->useStyle('com_audioarchive.site')
+			->useScript('com_audioarchive.player');
 		$canonical = Route::_(
 			RouteHelper::getClipRoute((int) $item->id, $itemId),
 			false,
