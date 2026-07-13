@@ -82,7 +82,7 @@ class HtmlView extends BaseHtmlView
 		$this->pageSizeOptions = $model->getPageSizeOptions();
 		$maximumDurationMs = $model->getMaximumDurationMs();
 		$this->maximumDurationSeconds = $maximumDurationMs > 0
-			? max(1, (int) ceil($maximumDurationMs / 1000))
+			? max(1, (int) floor($maximumDurationMs / 1000))
 			: 0;
 
 		$app = Factory::getApplication();
@@ -185,12 +185,31 @@ class HtmlView extends BaseHtmlView
 	 */
 	public function getQueryValues(): array
 	{
+		$durationMinimum = (string) $this->state->get('filter.duration_min', '');
+		$durationMaximum = (string) $this->state->get('filter.duration_max', '');
+		$durationMinimumMs = $this->state->get('filter.duration_min_ms');
+		$durationMaximumMs = $this->state->get('filter.duration_max_ms');
+
+		if ($durationMinimumMs !== null && (int) $durationMinimumMs <= 0)
+		{
+			$durationMinimum = '';
+		}
+
+		if (
+			$durationMaximumMs !== null
+			&& $this->maximumDurationSeconds > 0
+			&& (int) floor((int) $durationMaximumMs / 1000) >= $this->maximumDurationSeconds
+		)
+		{
+			$durationMaximum = '';
+		}
+
 		$values = [
 			'q' => (string) $this->state->get('filter.search', ''),
 			'category' => (int) $this->state->get('filter.category', 0),
 			'tags' => (array) $this->state->get('filter.tags', []),
-			'duration_min' => (string) $this->state->get('filter.duration_min', ''),
-			'duration_max' => (string) $this->state->get('filter.duration_max', ''),
+			'duration_min' => $durationMinimum,
+			'duration_max' => $durationMaximum,
 			'recorded_from' => (string) $this->state->get('filter.recorded_from', ''),
 			'recorded_to' => (string) $this->state->get('filter.recorded_to', ''),
 			'uploaded_from' => (string) $this->state->get('filter.uploaded_from', ''),

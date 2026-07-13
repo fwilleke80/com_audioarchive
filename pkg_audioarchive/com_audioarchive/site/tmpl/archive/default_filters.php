@@ -141,8 +141,25 @@ $tagListId = 'audioarchive-filter-tag-list';
 						$sliderMinimumValue = max(0, min($sliderMaximum, (int) floor((int) $this->state->get('filter.duration_min_ms', 0) / 1000)));
 						$durationMaximumMs = $this->state->get('filter.duration_max_ms');
 						$sliderMaximumValue = $durationMaximumMs !== null
-							? max($sliderMinimumValue, min($sliderMaximum, (int) ceil((int) $durationMaximumMs / 1000)))
+							? max($sliderMinimumValue, min($sliderMaximum, (int) floor((int) $durationMaximumMs / 1000)))
 							: $sliderMaximum;
+						$formatDurationValue = static function(int $seconds): string
+						{
+							$seconds = max(0, $seconds);
+							$hours = intdiv($seconds, 3600);
+							$minutes = intdiv($seconds % 3600, 60);
+							$remainder = $seconds % 60;
+
+							return $hours > 0
+								? sprintf('%d:%02d:%02d', $hours, $minutes, $remainder)
+								: sprintf('%d:%02d', $minutes, $remainder);
+						};
+						$durationMinimumValue = trim((string) $this->state->get('filter.duration_min', ''));
+						$durationMaximumValue = trim((string) $this->state->get('filter.duration_max', ''));
+						$durationMinimumValue = $durationMinimumValue !== '' ? $durationMinimumValue : $formatDurationValue(0);
+						$durationMaximumValue = $durationMaximumValue !== ''
+							? $durationMaximumValue
+							: $formatDurationValue($sliderMaximum);
 						?>
 						<fieldset class="com-audioarchive-filter com-audioarchive-filter-range com-audioarchive-filter-duration">
 							<legend><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_DURATION'); ?></legend>
@@ -182,11 +199,11 @@ $tagListId = 'audioarchive-filter-tag-list';
 							<div class="com-audioarchive-range-fields">
 								<div>
 									<label for="audioarchive-filter-duration-min"><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_FROM'); ?></label>
-									<input id="audioarchive-filter-duration-min" class="form-control" type="text" inputmode="numeric" name="duration_min" placeholder="00:30" value="<?php echo $this->escape((string) $this->state->get('filter.duration_min')); ?>" data-audioarchive-duration-min-field>
+									<input id="audioarchive-filter-duration-min" class="form-control" type="text" inputmode="numeric" name="duration_min" placeholder="00:30" value="<?php echo $this->escape($durationMinimumValue); ?>" data-audioarchive-duration-min-field>
 								</div>
 								<div>
 									<label for="audioarchive-filter-duration-max"><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_TO'); ?></label>
-									<input id="audioarchive-filter-duration-max" class="form-control" type="text" inputmode="numeric" name="duration_max" placeholder="05:00" value="<?php echo $this->escape((string) $this->state->get('filter.duration_max')); ?>" data-audioarchive-duration-max-field>
+									<input id="audioarchive-filter-duration-max" class="form-control" type="text" inputmode="numeric" name="duration_max" placeholder="05:00" value="<?php echo $this->escape($durationMaximumValue); ?>" data-audioarchive-duration-max-field>
 								</div>
 							</div>
 						</fieldset>

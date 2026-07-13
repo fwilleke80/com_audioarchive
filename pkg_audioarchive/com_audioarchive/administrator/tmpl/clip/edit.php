@@ -49,6 +49,17 @@ HTMLHelper::_('behavior.keepalive');
                 ?>
                 <?php if ((int) $this->originalFile->is_available === 1) : ?>
                     <div class="alert alert-success"><?php echo Text::_('COM_AUDIOARCHIVE_ORIGINAL_STORED'); ?></div>
+                    <?php if ($this->playbackUrl !== '') : ?>
+                        <section class="audioarchive-admin-preview" aria-labelledby="audioarchive-admin-preview-heading">
+                            <div>
+                                <h3 id="audioarchive-admin-preview-heading" class="h5"><?php echo Text::_('COM_AUDIOARCHIVE_ADMIN_PREVIEW_TITLE'); ?></h3>
+                                <p class="text-muted"><?php echo Text::_('COM_AUDIOARCHIVE_ADMIN_PREVIEW_DESC'); ?></p>
+                            </div>
+                            <audio controls preload="none">
+                                <source src="<?php echo htmlspecialchars($this->playbackUrl, ENT_QUOTES, 'UTF-8'); ?>" type="<?php echo htmlspecialchars((string) $this->originalFile->mime_type, ENT_QUOTES, 'UTF-8'); ?>">
+                            </audio>
+                        </section>
+                    <?php endif; ?>
                 <?php else : ?>
                     <div class="alert alert-danger">
                         <?php echo Text::_('COM_AUDIOARCHIVE_ORIGINAL_UNAVAILABLE'); ?>

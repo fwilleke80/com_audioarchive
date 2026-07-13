@@ -15,6 +15,7 @@ foreach ($this->categoryOptions as $category)
 	$categoryNames[(int) $category->id] = (string) $category->title;
 }
 
+$queryValues = $this->getQueryValues();
 $tagNames = [];
 foreach ($this->tagOptions as $tag)
 {
@@ -36,11 +37,11 @@ foreach ($this->tagOptions as $tag)
 				<li><?php echo Text::sprintf('COM_AUDIOARCHIVE_ACTIVE_TAG', $this->escape($tagNames[(int) $tagId])); ?></li>
 			<?php endif; ?>
 		<?php endforeach; ?>
-		<?php if ((string) $this->state->get('filter.duration_min') !== '') : ?>
-			<li><?php echo Text::sprintf('COM_AUDIOARCHIVE_ACTIVE_DURATION_MIN', $this->escape((string) $this->state->get('filter.duration_min'))); ?></li>
+		<?php if (isset($queryValues['duration_min'])) : ?>
+			<li><?php echo Text::sprintf('COM_AUDIOARCHIVE_ACTIVE_DURATION_MIN', $this->escape((string) $queryValues['duration_min'])); ?></li>
 		<?php endif; ?>
-		<?php if ((string) $this->state->get('filter.duration_max') !== '') : ?>
-			<li><?php echo Text::sprintf('COM_AUDIOARCHIVE_ACTIVE_DURATION_MAX', $this->escape((string) $this->state->get('filter.duration_max'))); ?></li>
+		<?php if (isset($queryValues['duration_max'])) : ?>
+			<li><?php echo Text::sprintf('COM_AUDIOARCHIVE_ACTIVE_DURATION_MAX', $this->escape((string) $queryValues['duration_max'])); ?></li>
 		<?php endif; ?>
 		<?php if ((string) $this->state->get('filter.recorded_from') !== '') : ?>
 			<li><?php echo Text::sprintf('COM_AUDIOARCHIVE_ACTIVE_RECORDED_FROM', $this->escape((string) $this->state->get('filter.recorded_from'))); ?></li>
