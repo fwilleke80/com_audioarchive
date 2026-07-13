@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <extension type="module" client="site" method="upgrade">
 	<name>MOD_AUDIOARCHIVE</name>
-	<version>0.6.3</version>
+	<version>0.6.0-dev3</version>
 	<creationDate>2026-07-13</creationDate>
 	<author>Frank Willeke</author>
 	<copyright>Copyright (C) 2026 Frank Willeke.</copyright>
