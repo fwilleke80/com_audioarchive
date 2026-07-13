@@ -1,125 +1,80 @@
 # Joomla! Audio Archive
 
-A native Joomla! 6 component for managing, publishing, filtering, playing, and downloading large collections of audio clips.
+Audio Archive is a native Joomla! 6 extension package for managing and publishing collections of audio clips.
 
-> **Development status:** active development  
-> **Current version:** `0.4.0-dev8`  
-> **Package:** `pkg_audioarchive`  
-> **Component:** `com_audioarchive`
+It is intended for archives ranging from a small collection to several thousand files. Administrators can upload or import clips, organise them with Joomla categories and tags, edit their metadata, control publication and access, and review playback and download statistics. Visitors can search and filter the archive, play clips in the browser, open clip detail pages, and download the protected original files.
 
-Audio Archive is designed for collections ranging from a few clips to several thousand files. It combines Joomla-native categories, tags, access levels, ACL, publication states, routing, pagination, and template overrides with protected audio storage and browser playback.
+> **Current version:** `0.6.0-dev3`  
+> **Package:** `pkg_audioarchive`
 
-The current development package contains the main component only. Additional modules and plugins described in the roadmap are not included yet.
+## What Audio Archive offers
 
-## Contents
+### Administrator features
 
-- [Features](#features)
-- [Requirements](#requirements)
-- [Installation and upgrades](#installation-and-upgrades)
-- [First setup](#first-setup)
-- [Administrator workflows](#administrator-workflows)
-- [Public Archive](#public-archive)
-- [Clip detail pages](#clip-detail-pages)
-- [Audio formats and metadata](#audio-formats-and-metadata)
-- [Storage and security](#storage-and-security)
-- [Configuration](#configuration)
-- [Template overrides and styling](#template-overrides-and-styling)
-- [Uninstallation](#uninstallation)
-- [Development](#development)
-- [Current limitations](#current-limitations)
-- [Roadmap](#roadmap)
-- [Licence](#licence)
-
-## Features
-
-### Administrator
-
-- Dashboard with clip, publication, playback, download, storage, and system statistics
-- Joomla-style clip manager with filtering, sorting, publication states, access levels, categories, and tags
+- Dashboard with clip, publication, storage, playback, download, and system information
+- Buttons for resetting all play counts or all download counts
+- Joomla-style clip management with publication states, access levels, categories, tags, sorting, and filtering
 - Single-file upload
-- Browser bulk upload with per-file progress and results
-- Server-directory import from a configured inbox
+- Browser-based bulk upload with per-file progress and results
+- Import from a configurable server-side inbox
 - Optional recursive import
 - Optional conversion of inbox folders into nested Joomla categories
-- Automatic metadata extraction using a built-in pure-PHP media inspector
-- Automatic duration, format, codec, file-size, title, and recording-date detection where available
+- Automatic extraction of duration, format, codec, file size, embedded title, and recording date where available
 - SHA-256 duplicate detection with configurable handling
 - Safe replacement of an existing clip's original file
-- Protected audio preview in the Clip editor, including seeking
+- Protected audio preview in the clip editor
 - Batch category assignment
 - Batch tag addition, replacement, and clearing
-- Searchable tag checkboxes in batch editing
+- Searchable tag selection in batch operations
 - Joomla ACL and category-based permission inheritance
 - English and German administrator interfaces
 
-### Public website
+### Public website features
 
 - Searchable and filterable Archive menu-item type
 - Text search across clip metadata
 - Category filtering
-- Multiple tag filtering using logical **AND**
-- Searchable tag checkbox list
+- Multiple-tag filtering using logical **AND**
 - Minimum and maximum duration filtering
-- JavaScript-enhanced two-handle duration slider with a no-JavaScript text-field fallback
 - Recording-date and upload-date ranges
-- Sortable columns
+- Sortable result columns
 - Server-side Joomla pagination
-- Configurable page sizes
-- Configurable Archive columns
-- Optional empty categories in the category filter
-- Collapsible filter panel with an expanded no-JavaScript fallback
+- Configurable page sizes, filters, columns, and detail-page fields
+- Responsive table and card presentation
 - Protected inline playback with HTTP byte-range seeking
 - One-player-at-a-time behaviour
-- Responsive table/card layout
-- SEF Clip detail pages
-- Protected original-file downloads
+- SEF clip detail URLs
+- Breadcrumb integration
+- Page titles, metadata, and canonical routes
+- Correct routing when several Audio Archive menu items exist
+- Protected downloads of original files
 - Aggregate play and download counters
-- Joomla access-level and publication-date enforcement
+- Joomla publication-date, category, language, and access-level enforcement
 - English and German site interfaces
 
-## Requirements
+The component keeps original audio files in managed storage and never exposes their filesystem paths. Browser playback support depends on the container and codec supported by the visitor's browser; authorised original files remain downloadable.
 
-- Joomla! 6.x
-- A PHP and database environment supported by the installed Joomla! 6 version
-- PHP Fileinfo extension strongly recommended
-- Writable configured storage and import directories
-- JavaScript for enhanced controls such as bulk upload, collapsible filters, tag-list searching, compact playback controls, and the duration slider
+## Package contents
 
-Core browsing, ordinary form filtering, pagination, opening Clip pages, native playback, and downloads remain usable without JavaScript where practical.
+The package installs the following Joomla extensions:
 
-### Optional software
+| Extension | Type | Purpose |
+| --------- | ---- | ------- |
+| `com_audioarchive` | Component | Administration, importing, metadata, public archive, clip pages, playback, downloads, routing, and statistics |
+| `mod_audioarchive` | Site module | Displays selected clips using latest, random, daily, popular, downloaded, or specific-clip modes |
+| `plg_finder_audioarchive` | Smart Search plugin | Adds Audio Archive clips to Joomla Smart Search |
+| `plg_quickicon_audioarchive` | Quick Icons plugin | Adds an Audio Archive shortcut to the administrator Home Dashboard |
+| `plg_content_audioarchive` | Content plugin | Embeds random or specified clips in articles and other prepared content |
 
-FFmpeg and FFprobe are detected by the System Check, but they are **not required** for the current component features.
+Install the package ZIP rather than installing its individual extension ZIP files separately.
 
-The present development build uses its bundled pure-PHP inspector for supported metadata extraction. FFmpeg-based preview generation, waveform generation, and queued processing are planned for later releases.
+```text
+pkg_audioarchive-0.6.0-dev3.zip
+```
 
-## Installation and upgrades
+## Using the Audio Archive component
 
-### Install the package
-
-1. Open **System → Install → Extensions** in the Joomla administrator.
-2. Upload the package ZIP:
-
-   ```text
-   pkg_audioarchive-0.4.0-dev8.zip
-   ```
-
-3. Open **Components → Audio Archive**.
-4. Review the dashboard and System Check.
-
-Install the **package ZIP**, not the inner component ZIP, for the supported installation lifecycle.
-
-### Upgrade a development installation
-
-Install the newer package directly over the existing version.
-
-> Do **not** uninstall the existing package before upgrading. Uninstallation removes component database records and is not an upgrade procedure.
-
-Development updates preserve existing clips, file references, categories, tag assignments, settings, and counters unless a release note explicitly states otherwise.
-
-## First setup
-
-### 1. Review component options
+### Initial configuration
 
 Open:
 
@@ -127,165 +82,125 @@ Open:
 Components → Audio Archive → Options
 ```
 
-At minimum, review:
+Review the following settings before importing the archive:
 
 - Default category
 - Default access level
 - Default publication state
-- Storage paths
-- Import inbox path
-- Permitted extensions
+- Original-file storage directory
+- Import inbox directory
+- Permitted extensions and MIME types
 - Maximum file size and duration
 - Duplicate policy
 - Recording-date policy
-- Public Archive filters and columns
-- Playback and download options
-- Detail-page fields
+- Public filters and result columns
+- Playback and download settings
+- Clip detail-page fields
 
-### 2. Verify storage
+The same configuration is also available through Joomla's Global Configuration component settings.
 
-Use the dashboard System Check to verify or create the configured directories:
+### Dashboard and system check
+
+Open:
 
 ```text
-audioarchive/originals
-audioarchive/previews
-audioarchive/waveforms
-audioarchive/import
+Components → Audio Archive
 ```
 
-The paths are configurable. Storage outside the public web root is preferred when the hosting environment permits it.
+The dashboard provides archive statistics and verifies the database, configured directories, PHP capabilities, and optional FFmpeg or FFprobe executables. Where supported, missing managed-storage directories can be created from the system check.
 
-### 3. Add clips
+The dashboard also provides actions for resetting all recorded play counts or all recorded download counts.
 
-Choose one of the available workflows:
+### Adding clips
 
-- **New Clip** for a single item
-- **Upload** for browser-based bulk upload
-- **Import** for files already present in the configured server inbox
+Audio clips can be added in three ways.
 
-### 4. Create a public Archive menu item
+#### Single clip
 
-1. Open the Joomla menu manager.
-2. Create a new menu item.
-3. Choose **Audio Archive → Audio Archive** as its menu-item type.
-4. Configure any category, tag, layout, pagination, filter, column, and detail-page overrides.
-5. Publish the menu item.
+Open **Clips**, select **New**, upload the original file, and enter or adjust its metadata.
 
-## Administrator workflows
+A clip can contain:
 
-### Clip manager
+- Title and alias
+- Description
+- Category
+- Tags
+- Recording date
+- Access level
+- Publication state and dates
+- Original audio file
+- Extracted technical metadata
+- Play and download counts
 
-The Clips view supports Joomla publication states:
+Existing clips include a protected administrator player. Playback from the editor does not increase public play statistics.
+
+#### Browser bulk upload
+
+Open **Upload** to select or drag several files into the browser.
+
+The upload view processes files individually and supports shared settings for:
+
+- Category
+- Tags
+- Access level
+- Publication state
+- Recording-date override
+
+Each file receives its own progress, result, duplicate warning, and edit link.
+
+#### Server inbox import
+
+Place files in the configured import inbox and open **Import**.
+
+The importer can:
+
+- Scan the inbox recursively
+- Inspect files before importing them
+- Exclude hidden files and symbolic links
+- Select individual files
+- Apply shared category, tag, access, and publication settings
+- Derive nested Joomla categories from the inbox folder structure
+- Remove an inbox file after a successful transfer into managed storage
+
+The importer only works inside the configured inbox and does not provide arbitrary filesystem browsing.
+
+### Managing clips
+
+The Clips view uses Joomla's standard publication states:
 
 - Published
 - Unpublished
 - Archived
 - Trashed
 
-Ordinary list views show the **Trash** action. Permanent **Delete** is available only while viewing Trashed clips.
+Select clips and use **Batch** to move them to another category or add, replace, or clear tags. Permanent deletion is available only while viewing trashed clips.
 
-### Single Clip editing
+### Publishing the public archive
 
-A Clip record includes:
+Create a Joomla menu item:
 
-- Title and alias
-- Description
-- Joomla category
-- Joomla tags
-- Recording date
-- Access level
-- Publication state and dates
-- Original audio file
-- Extracted technical metadata
-- Created and modified information
-- Play and download counts
+1. Open the Joomla menu manager.
+2. Create a new menu item.
+3. Choose **Audio Archive → Audio Archive** as the menu-item type.
+4. Configure its category or tag restrictions, filters, columns, ordering, pagination, and clip-detail settings.
+5. Publish the menu item.
 
-For existing Clips with an available original file, the **Audio file** tab contains a protected administrator player. This allows clips to be auditioned while editing metadata and tags. Administrator preview playback does not increase public playback statistics.
+Each Archive menu item can override the component defaults. When several Archive menu items exist, clip links retain the appropriate menu context.
 
-### Browser bulk upload
+### Public filtering
 
-The Upload view provides:
+The public filter form uses HTTP GET, so filtered archive URLs can be bookmarked or shared.
 
-- Drag-and-drop and multi-file selection
-- One controlled request per file
-- Per-file progress and status
-- Retry and stop controls
-- Batch category, tags, access, state, and optional recording-date override
-- Duplicate warnings and direct edit links
-
-### Server-directory import
-
-The Import view scans only the configured inbox. It does not provide arbitrary filesystem browsing.
-
-Import supports:
-
-- Recursive scanning
-- Hidden-file exclusion
-- Symbolic-link rejection by default
-- Pre-import metadata inspection
-- Per-file eligibility and warning display
-- Selection of individual files
-- Incremental per-file import
-- Optional inbox-file deletion after a successful managed-storage transfer
-
-#### Folder-derived categories
-
-The importer can use the inbox folder structure as the category hierarchy.
-
-Example:
-
-```text
-import/
-├── Weather/
-│   ├── rain.m4a
-│   └── City/
-│       └── traffic.m4a
-└── Animals/
-    └── birds.m4a
-```
-
-This can create or reuse:
-
-```text
-Weather
-└── City
-Animals
-```
-
-An existing category may be selected as the base. Categories are created only when import begins, never during the scan preview.
-
-### Batch editing
-
-Select Clips in the administrator list and choose **Batch** from the toolbar.
-
-The dialog can:
-
-- Move selected Clips to a category
-- Add selected tags
-- Replace all existing tags
-- Clear all tags by replacing them with an empty selection
-
-Tag selection uses searchable checkboxes; Ctrl or Command is not required.
-
-## Public Archive
-
-The Archive performs filtering, access checks, ordering, and pagination in the database. It never loads the complete collection into JavaScript.
-
-### Available filters
+Available filters include:
 
 - Text search
 - Category
 - Multiple tags using logical AND
-- Minimum duration
-- Maximum duration
-- Recording date from/to
-- Upload date from/to
+- Minimum and maximum duration
+- Recording date from and to
+- Upload date from and to
 
-Filter forms use HTTP GET, making filtered URLs bookmarkable and shareable.
-
-### Duration input
-
-Duration values may be entered as:
+Duration values can be entered as seconds or as formatted times:
 
 ```text
 90
@@ -293,355 +208,198 @@ Duration values may be entered as:
 1:02:30
 ```
 
-These represent 90 seconds, 1 minute 30 seconds, and 1 hour 2 minutes 30 seconds.
-
-With JavaScript enabled, a two-handle slider appears above the text inputs. Its upper boundary is derived from the longest publicly eligible Clip for the current Archive menu item. The text fields remain the canonical submitted values and continue to work without JavaScript.
-
-Duration filtering follows the whole-second values displayed in the Archive. A maximum of `20`, for example, includes exact durations from `20.000` through `20.999` seconds.
-
-### Tags
-
-Visitors select tags using checkboxes. Selecting several tags returns only Clips containing **every** selected tag.
-
-The search box above the tag list narrows only the visible tag choices. It does not submit the Archive form, and checked tags remain checked when temporarily hidden by the local search.
-
-### Columns
-
-The following result columns can be shown or hidden independently:
-
-- Play
-- Title
-- Category
-- Duration
-- Recording date
-- Upload date
-- Tags
-
-Column visibility does not affect filtering. Tags may be hidden from the table while the tag filter remains available, for example.
-
-### Pagination
-
-Global and menu-item settings control:
-
-- Default items per page
-- Allowed page-size choices
-- Maximum page size
-- Pagination visibility
-- Result-count visibility
-- Page-size selector visibility
-
-The result summary shows both the current page and the complete filtered result count.
-
-### Empty categories
-
-The category filter can optionally include categories without currently visible public Clips. The calculation respects publication state, dates, access levels, category restrictions, and menu-item restrictions.
-
-## Clip detail pages
-
-Each public Clip has a routed detail page containing configurable combinations of:
-
-- Title
-- Player
-- Description
-- Duration
-- Category
-- Tags
-- Recording date
-- Upload date
-- Original filename
-- File format
-- Codec
-- File size
-- Play count
-- Download count
-- Original download action
-
-Global detail settings can be overridden by the Archive menu item.
-
-## Audio formats and metadata
-
-The default accepted extensions are:
-
-```text
-m4a, mp4, aac, mp3, ogg, oga, opus, wav, flac, webm
-```
-
-The list is configurable.
-
-The built-in inspector currently recognises audio structures including:
-
-- M4A/MP4 audio, including common AAC and ALAC metadata
-- AAC ADTS
-- MP3
-- Ogg Vorbis
-- Ogg Opus
-- WAV
-- FLAC
-- WebM audio
-
-Depending on the format, the component may extract:
-
-- Duration
-- MIME type
-- Container format
-- Audio codec
-- Sample rate
-- Channel count
-- Bitrate
-- Embedded title
-- Embedded or container date metadata
-
-Browser playback support depends on the visitor's browser and the codec stored in the original container. Unsupported originals remain downloadable.
-
-## Storage and security
-
-Original client filenames are stored as metadata but are not used as managed filenames.
-
-Managed files use generated identifiers and sharded paths, for example:
-
-```text
-originals/4f/91/4f91d8e6-9a30-4e32-97ce-50de256f7f23.m4a
-```
-
-Public requests never receive the managed filesystem path.
-
-### Upload and import safeguards
-
-- Extension validation
-- Fileinfo MIME inspection where available
-- Binary media-structure inspection
-- Configurable size and duration limits
-- SHA-256 checksums
-- Directory-traversal prevention
-- Storage-root containment checks
-- Symbolic-link rejection by default
-- Generated internal filenames
-- Cleanup of incomplete managed files after failed operations
+Tags shown on clips link back to the Archive with the corresponding tag filter applied.
 
 ### Playback and downloads
 
-Public audio is delivered through component controllers that:
+Playback and download requests pass through component controllers that verify:
 
-- Enforce Clip and category publication state
-- Enforce publication dates
-- Enforce Joomla access levels
-- Validate file availability and managed-path containment
-- Support `HEAD` requests
-- Support single HTTP byte ranges for seeking
-- Stream in bounded chunks instead of loading the complete file into PHP memory
-- Avoid exposing server paths
+- Clip publication state and dates
+- Category publication and access
+- Joomla access levels
+- Language eligibility
+- Managed-file availability and path containment
 
-Playback streams do not count as downloads. Download counts apply only to authorised original-file download requests. Playback counts are reported when playback actually begins and are intended as aggregate, non-personal statistics.
+Playback supports byte-range requests for seeking. Downloads use the original filename while keeping the internal managed filename and filesystem path private.
 
-## Configuration
+## Using the Audio Archive module
 
-Configuration is split into logical panels.
+The package contains one configurable site module:
 
-### General
+```text
+mod_audioarchive
+```
 
-- Default category
-- Default access level
-- Default publication state
-- Default Archive ordering and direction
-- Default items per page
-- Enable play counts
-- Enable download counts
+Create an instance through:
 
-### Storage
+```text
+Content → Site Modules → New → Audio Archive
+```
 
-- Original directory
-- Preview directory
-- Waveform directory
-- Import inbox
-- Recursive scanning
-- Symbolic-link policy
+Depending on the Joomla administrator menu configuration, modules may also be available under **System → Manage → Site Modules**.
 
-### Upload and import
+### Selection modes
 
-- Permitted extensions
-- Permitted MIME types
-- Maximum file size
-- Maximum duration
-- Duplicate policy
-- Title-generation policy
-- Recording-date policy
-- Inbox-file deletion after successful import
+The module can display:
 
-### Archive
+- Latest clips
+- Random clips
+- A stable clip of the day
+- Most-played clips
+- Most-downloaded clips
+- A specific clip
 
-- Visible filters
-- Active-filter summary
-- Result count
-- Pagination and page-size selector
-- Empty-category visibility
-- Initial expanded/collapsed filter state
-- Allowed and maximum page sizes
+The result can be restricted by category and tags, and the number of displayed clips is configurable where the selected mode permits several results.
 
-### Archive columns
+### Layouts
 
-- Play
+The module provides three layouts:
+
+```text
+default
+compact
+featured
+```
+
+### Display options
+
+The module can independently show or hide:
+
 - Title
-- Category
+- Player
 - Duration
+- Date
+- Category
+- Tags
+- Description
+- Play and download counters
+- Clip detail link
+- Original download link
+
+The module uses the component's protected playback and download endpoints, access and publication checks, playback counting, player JavaScript, styling, and menu-aware SEF routing. Category and tag links lead back to the appropriate Archive menu item.
+
+Random mode should normally be used without module caching when a new random selection is expected on each request. Clip-of-the-day mode produces a stable daily selection.
+
+## Using the Smart Search plugin
+
+The package includes:
+
+```text
+plg_finder_audioarchive
+```
+
+Enable it under:
+
+```text
+System → Manage → Plugins
+```
+
+Search for **Audio Archive** and enable the **Smart Search - Audio Archive** plugin.
+
+For the initial index:
+
+1. Open **Components → Smart Search**.
+2. Select **Index**.
+3. Wait for Joomla to finish indexing the available clips.
+
+The plugin indexes clip information including:
+
+- Title
+- Description
+- Original filename
+- Category
+- Tags
 - Recording date
 - Upload date
-- Tags
+- Author
+- Language
 
-### Playback and detail
+The index is kept in sync when clips are saved, uploaded, imported, replaced, unpublished, trashed, or deleted. Search results use the component's protected clip detail pages and menu-aware SEF routes, and Joomla applies the clip's publication and access rules.
 
-- Original downloads
-- Detail metadata fields
-- Play and download counts
-- Download action
+## Using the Quick Icons plugin
 
-### Processing
-
-- Automatic executable detection
-- FFmpeg path
-- FFprobe path
-- Process timeout
-- Maximum processing attempts
-
-Some processing options are present in preparation for later preview, waveform, and job-queue phases.
-
-## Template overrides and styling
-
-Public output is separated into Joomla layout files. A site template can override individual parts without replacing the filtering, access-control, routing, pagination, or streaming logic.
-
-Archive overrides:
+The package includes:
 
 ```text
-templates/YOUR_TEMPLATE/html/com_audioarchive/archive/default.php
-templates/YOUR_TEMPLATE/html/com_audioarchive/archive/default_filters.php
-templates/YOUR_TEMPLATE/html/com_audioarchive/archive/default_active_filters.php
-templates/YOUR_TEMPLATE/html/com_audioarchive/archive/default_table.php
-templates/YOUR_TEMPLATE/html/com_audioarchive/archive/default_row.php
-templates/YOUR_TEMPLATE/html/com_audioarchive/archive/default_pagination.php
+plg_quickicon_audioarchive
 ```
 
-Clip overrides:
+On the first package installation, the plugin is enabled automatically. Its enabled or disabled state is preserved during package updates.
+
+The plugin adds an **Audio Archive** music-icon shortcut to the **Site** group on Joomla's administrator Home Dashboard. The shortcut opens the Audio Archive dashboard.
+
+The icon is only shown to users authorised to manage `com_audioarchive`.
+
+The plugin can be enabled or disabled under:
 
 ```text
-templates/YOUR_TEMPLATE/html/com_audioarchive/clip/default.php
-templates/YOUR_TEMPLATE/html/com_audioarchive/clip/default_player.php
-templates/YOUR_TEMPLATE/html/com_audioarchive/clip/default_metadata.php
-templates/YOUR_TEMPLATE/html/com_audioarchive/clip/default_tags.php
-templates/YOUR_TEMPLATE/html/com_audioarchive/clip/default_download.php
+System → Manage → Plugins
 ```
 
-The source distribution includes an example under:
+## Using the Content plugin
+
+The package includes:
 
 ```text
-docs/template-override-example/
+plg_content_audioarchive
 ```
 
-The default stylesheet also exposes CSS custom properties such as:
+On the first package installation, the plugin is enabled automatically. It processes placeholders in Joomla articles and other frontend content handled by Joomla's content preparation event.
 
-```css
---audioarchive-accent
---audioarchive-border
---audioarchive-surface
---audioarchive-radius
---audioarchive-shadow
-```
-
-These can be overridden by the active Joomla template without copying component layouts.
-
-## Uninstallation
-
-Uninstallation removes the component's database records and Joomla integration metadata.
-
-Managed original, preview, and waveform files are **preserved by default**. Component Options contains an explicit opt-in setting to remove database-recorded managed media during uninstall.
-
-Even when media removal is enabled:
-
-- Only known database-recorded files beneath validated storage roots are considered
-- The import inbox is preserved
-- Untracked files are preserved
-- Global Joomla tag definitions are preserved
-
-Back up the database and storage directories before uninstalling a site containing valuable audio.
-
-## Development
-
-### Source layout
+### Embed a random clip
 
 ```text
-extensions/
-├── com_audioarchive/
-│   ├── administrator/
-│   ├── media/
-│   ├── site/
-│   ├── audioarchive.xml
-│   └── script.php
-└── pkg_audioarchive/
-    └── pkg_audioarchive.xml
+{audioarchive random}
 ```
 
-### Build
+A layout can be selected explicitly:
 
-From the repository root:
-
-```bash
-python3 build.py
+```text
+{audioarchive random layout=compact}
 ```
 
-This creates the component and package archives in `dist/`.
+### Embed a specific clip by alias
 
-### Validate
-
-The validation script requires a command-line PHP executable for PHP syntax checks.
-
-```bash
-python3 validate.py
+```text
+{audioarchive clip=some-clip-alias}
 ```
 
-Validation covers PHP syntax, XML and JSON parsing, language keys, manifest paths, package structure, Joomla service contracts, database schema contracts, upload/import behavior, storage containment, routing, Archive filtering, duration boundaries, protected streaming, HTTP ranges, administrator preview, and frontend presentation contracts.
+### Embed a specific clip by ID
 
-### Documentation
+```text
+{audioarchive clip=123}
+```
 
-- `PROJECT_SPECIFICATION.md` — complete project scope and architecture
-- `CHANGELOG.md` — development release history
-- `docs/template-override-example/` — example frontend override
+### Embed a routed ID and alias
 
-## Current limitations
+```text
+{audioarchive clip=123-some-clip-alias}
+```
 
-The current `0.4.0-dev8` package is a development build, not a stable production release.
+### Select a layout
 
-Not yet included:
+The content plugin uses the same layouts as the Audio Archive module:
 
-- Generated compatibility previews
-- FFmpeg/FFprobe processing jobs
-- Waveform generation and rendering
-- Joomla Scheduled Tasks plugin
-- Smart Search plugin
-- Joomla Custom Fields integration
-- Latest Clips module
-- Random/Clip-of-the-Day module
-- Public API
-- User playlists, favourites, ratings, or comments
+```text
+{audioarchive clip=some-clip-alias layout=default}
+{audioarchive clip=some-clip-alias layout=compact}
+{audioarchive clip=some-clip-alias layout=featured}
+```
 
-The database and configuration already contain some fields and options reserved for later phases. Their presence does not imply that the corresponding feature is complete.
+Supported layout values are:
 
-## Roadmap
+```text
+default
+compact
+featured
+```
 
-Planned major work includes:
+The plugin reuses the module's presentation and the component's publication, category, access-level, language, file-availability, routing, playback, download, and counting logic.
 
-1. Complete playback-source and compatibility-preview handling
-2. Processing jobs and Joomla Scheduled Tasks
-3. FFmpeg/FFprobe preview and waveform generation
-4. Joomla Custom Fields integration
-5. Smart Search integration
-6. Latest Clips module
-7. Random and Clip-of-the-Day module
-8. Performance, accessibility, security, migration, and release hardening
+Malformed Audio Archive placeholders are left visible so that syntax mistakes can be found. When a referenced clip is unavailable, the plugin can either display a translated unavailable message or remove the placeholder silently, according to its plugin settings.
 
-See `PROJECT_SPECIFICATION.md` for the complete implementation plan.
+The plugin can be configured under:
 
-## Licence
-
-Copyright © 2026 Frank Willeke.
-
-This project is licensed under the **GNU General Public License, version 2 or later**.
-
-See `LICENSE.txt` for details.
+```text
+System → Manage → Plugins → Content - Audio Archive
+```
