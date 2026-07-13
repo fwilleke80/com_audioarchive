@@ -2,14 +2,14 @@
 <extension type="package" method="upgrade">
     <name>Joomla! Audio Archive Package</name>
     <packagename>audioarchive</packagename>
-    <version>0.6.0-dev3</version>
+    <version>0.6.3</version>
     <creationDate>2026-07-13</creationDate>
     <author>Frank Willeke</author>
     <authorEmail></authorEmail>
     <authorUrl></authorUrl>
     <copyright>Copyright (C) 2026 Frank Willeke.</copyright>
     <license>GNU General Public License version 2 or later</license>
-    <description>Audio Archive is a Joomla! 6 package for managing and publishing large searchable collections of audio clips. It installs the Audio Archive component for administrator upload, directory import, metadata, categories, tags, protected playback, filtering, clip detail pages and original-file downloads, plus the Audio Archive Smart Search plugin for indexing eligible clips in Joomla Finder. The package also includes one configurable Audio Archive site module with latest, random, clip-of-the-day, popularity and specific-clip selection modes, plus an administrator Quick Icon plugin linking to the Audio Archive dashboard and a content plugin for embedding random or selected clips in articles and other prepared content. Processing-task plugins, preview generation and waveform support are planned for later development phases.</description>
+    <description>Audio Archive is a Joomla! 6 package for managing and publishing large searchable collections of audio clips. It installs the Audio Archive component for administrator upload, directory import, metadata, categories, tags, protected playback, filtering, clip detail pages and original-file downloads, plus the Audio Archive Smart Search plugin for indexing eligible clips in Joomla Finder. The package also includes one configurable Audio Archive site module with latest, random, clip-of-the-day, popularity and specific-clip selection modes, plus an administrator Quick Icon plugin linking to the Audio Archive dashboard and a content plugin for embedding random or selected clips in articles and other prepared content.</description>
     <scriptfile>script.php</scriptfile>
     <blockChildUninstall>true</blockChildUninstall>
     <files>
