@@ -1,4 +1,9 @@
 Audio Archive - To Do
+=====================
+
+Frontend
+- Clicking on a tag in a row in the clips list table should list all clips that have that tag
+- Waveform display
 
 Modules
 - Add mod_audioarchive module
@@ -7,11 +12,28 @@ Modules
 - Add content plugin
   - Embeds a single clip in an article (by clip id)
 
+Build script
+- Add Python script that creates the final package .zip from the development folder tree:
+  - folder pkg_audioarchive -> pkg_audioarchive.zip
+  - subfolders: com_audioarchive et cetera: com_audioarchive.zip
+  - pkg_audioarchive.zip should contain pkg_audioarchive.xml, and the subfolders as .zip files (not as folders)
+  - pkg_audioarchive.zip should contain README.md, LICENSE. No GIT repo, no other files
+
+---
+
+Filtering by recording date doesn't work
+- No clips found, regardless of date(s)
+
 Page titles and metadata
 - Breadcrumbs integration
 - Page titles and metadata
 - Proper routes when several Archive menu items exist
 - Better handling when aliases change
+
+Backend
+- Component settings cleanup
+  - "Public Archive" and "Archive Columns" should be merged into one tab "Public Archive". The settings from "Archive Columns" could be grouped, if possible.
+- Dashbard: Add buttons for resetting play and download counts
 
 ---
 
