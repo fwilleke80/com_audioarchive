@@ -2,9 +2,9 @@
 
 Audio Archive is a native Joomla! 6 extension package for managing and publishing collections of audio clips.
 
-It is intended for archives ranging from a small collection to several thousand files. Administrators can upload or import clips, organise them with Joomla categories and tags, edit their metadata, control publication and access, and review playback and download statistics. Visitors can search and filter the archive, play clips in the browser, open clip detail pages, and—where permitted—download the protected original files.
+It is intended for archives ranging from a small collection to several thousand files. Administrators can upload or import clips, organise them with Joomla categories and tags, edit metadata, replace source files in bulk, inspect archive integrity, control publication and access, and review playback and download statistics. Visitors can search and filter the archive, browse a tag directory, play clips in the browser, open clip detail pages, and—where permitted—download the protected original files.
 
-> **Current version:** `0.6.14`  
+> **Current version:** `0.6.19`  
 > **Package:** `pkg_audioarchive`
 
 ## Table of contents
@@ -18,8 +18,15 @@ It is intended for archives ranging from a small collection to several thousand 
   - [Initial configuration](#initial-configuration)
   - [Dashboard and system check](#dashboard-and-system-check)
   - [Adding clips](#adding-clips)
+    - [Single clip](#single-clip)
+    - [Browser bulk upload](#browser-bulk-upload)
+    - [Server inbox import](#server-inbox-import)
+    - [Bulk replacement of existing files](#bulk-replacement-of-existing-files)
   - [Managing clips](#managing-clips)
+  - [Integrity and maintenance](#integrity-and-maintenance)
   - [Publishing the public archive](#publishing-the-public-archive)
+  - [Publishing a tag directory](#publishing-a-tag-directory)
+  - [Frontend access control](#frontend-access-control)
   - [Public filtering](#public-filtering)
   - [Tags and tag descriptions](#tags-and-tag-descriptions)
   - [Playback and downloads](#playback-and-downloads)
@@ -27,6 +34,9 @@ It is intended for archives ranging from a small collection to several thousand 
   - [Selection modes](#selection-modes)
   - [Layouts](#layouts)
   - [Display options](#display-options)
+- [Using the Audio Archive Tags module](#using-the-audio-archive-tags-module)
+  - [Tag selection and archive linking](#tag-selection-and-archive-linking)
+  - [Tag-module presentation](#tag-module-presentation)
 - [Using the Smart Search plugin](#using-the-smart-search-plugin)
 - [Using the Quick Icons plugin](#using-the-quick-icons-plugin)
 - [Using the Content plugin](#using-the-content-plugin)
@@ -46,21 +56,31 @@ It is intended for archives ranging from a small collection to several thousand 
 - Single-file upload
 - Browser-based bulk upload with per-file progress and results
 - Import from a configurable server-side inbox
-- Optional recursive import
+- Separate inbox modes for importing new clips and replacing files of existing clips
+- Optional recursive inbox scanning
 - Optional conversion of inbox folders into nested Joomla categories
 - Automatic extraction of duration, format, codec, file size, embedded title, and recording date where available
 - SHA-256 duplicate detection with configurable handling
-- Safe replacement of an existing clip's original file
+- Safe replacement of an individual clip's original file
+- Bulk replacement matching based on normalised original filenames
+- Optional retention of previous original files for later review and cleanup
 - Protected, styled audio preview in the clip editor
 - Batch category assignment
 - Batch tag addition, replacement, and clearing
 - Searchable tag selection in batch operations
+- Integrity report with repair and verification actions
+- Original-file codec, container, extension, clip-count, and storage-size inventory
+- Filtering of maintenance results by audio codec
+- Review and removal of stale derivatives, abandoned temporary files, and unreferenced managed files
+- Automatic batched stale-file cleanup for large selections
+- CSV export of integrity findings
 - Joomla ACL and category-based permission inheritance
 - English and German administrator interfaces
 
 ### Public website features
 
 - Searchable and filterable Archive menu-item type
+- Configurable Tag Directory menu-item type
 - Text search across clip metadata
 - Category filtering
 - Multiple-tag filtering using logical **AND**
@@ -80,6 +100,8 @@ It is intended for archives ranging from a small collection to several thousand 
 - Breadcrumb integration
 - Page titles, metadata, canonical routes, and redirects from stale aliases or legacy URLs
 - Correct routing when several Audio Archive menu items exist
+- Component-wide frontend access control independent of menu-item access
+- Login redirection for guests when the archive requires authentication
 - Configurable protected downloads of original files
 - Optional restriction of detail-page downloads to selected Joomla user groups
 - Aggregate play and download counters
@@ -96,8 +118,9 @@ The package installs the following Joomla extensions:
 
 | Extension | Type | Purpose |
 | --- | --- | --- |
-| `com_audioarchive` | Component | Administration, importing, metadata, public archive, clip pages, playback, downloads, routing, access control, and statistics |
+| `com_audioarchive` | Component | Administration, importing, replacement, integrity maintenance, metadata, public archive, tag directory, clip pages, playback, downloads, routing, access control, and statistics |
 | `mod_audioarchive` | Site module | Displays selected clips using latest, random, daily, popular, downloaded, or specific-clip modes |
+| `mod_audioarchive_tags` | Site module | Displays Audio Archive tags with descriptions, optional clip counts, and links to a filtered Archive |
 | `plg_finder_audioarchive` | Smart Search plugin | Adds eligible Audio Archive clips to Joomla Smart Search |
 | `plg_quickicon_audioarchive` | Quick Icons plugin | Adds an Audio Archive shortcut to the administrator Home Dashboard |
 | `plg_content_audioarchive` | Content plugin | Embeds clips and inserts aggregate clip counts or playtime into prepared content |
@@ -105,7 +128,7 @@ The package installs the following Joomla extensions:
 Install the package ZIP rather than installing its individual extension ZIP files separately.
 
 ```text
-pkg_audioarchive_v0-6-14.zip
+pkg_audioarchive_v0-6-19.zip
 ```
 
 ## Installing and updating the package
@@ -113,11 +136,13 @@ pkg_audioarchive_v0-6-14.zip
 To install Audio Archive:
 
 1. Open **System → Install → Extensions** in the Joomla administrator.
-2. Upload `pkg_audioarchive_v0-6-14.zip`.
+2. Upload `pkg_audioarchive_v0-6-19.zip`.
 3. Open **Components → Audio Archive**.
 4. Review the dashboard and component options before importing files.
 
 Install newer package versions directly over the existing installation. Do not uninstall the existing package as an update procedure, because uninstallation removes component database records.
+
+After an update, Joomla may retain cached administrator forms. If a newly added option is not visible, clear the Joomla administrator cache and reopen the component options.
 
 ## Using the Audio Archive component
 
@@ -131,10 +156,13 @@ Components → Audio Archive → Options
 
 Review the following settings before importing the archive:
 
+- Frontend archive access level
 - Default category
-- Default access level
+- Default access level for new clips
 - Default publication state
 - Original-file storage directory
+- Preview-file storage directory
+- Waveform storage directory
 - Import inbox directory
 - Permitted extensions and MIME types
 - Maximum file size and duration
@@ -162,7 +190,7 @@ The dashboard also displays the installed Audio Archive version and provides act
 
 ### Adding clips
 
-Audio clips can be added in three ways.
+Audio clips can be added or updated in several ways.
 
 #### Single clip
 
@@ -183,6 +211,8 @@ A clip can contain:
 
 Existing clips include a protected, styled administrator player. Playback from the editor does not increase public play statistics.
 
+An existing clip can also receive a replacement original file from its edit form. The replacement preserves the clip ID, title, alias, category, tags, counters, access level, and public route. Technical metadata is recalculated, and existing previews or waveforms are marked stale where applicable.
+
 #### Browser bulk upload
 
 Open **Upload** to select or drag several files into the browser.
@@ -195,13 +225,13 @@ The upload view processes files individually and supports shared settings for:
 - Publication state
 - Recording-date override
 
-Each file receives its own progress, result, duplicate warning, and edit link.
+Each file receives its own progress, result, duplicate warning, and edit link. One failed upload does not stop the remaining queue.
 
 #### Server inbox import
 
 Place files in the configured import inbox and open **Import**.
 
-The importer can:
+In **Import new clips** mode, the importer can:
 
 - Scan the inbox recursively
 - Inspect files before importing them
@@ -209,9 +239,37 @@ The importer can:
 - Select individual files
 - Apply shared category, tag, access, and publication settings
 - Derive nested Joomla categories from the inbox folder structure
+- Create missing categories where permitted
+- Override the component duplicate policy for the current import
 - Remove an inbox file after a successful transfer into managed storage
 
 The importer only works inside the configured inbox and does not provide arbitrary filesystem browsing.
+
+#### Bulk replacement of existing files
+
+The Import page also provides a distinct **Replace existing clip files** mode. It is intended for migrations such as replacing ALAC `.m4a` originals with externally converted browser-compatible files while preserving all clip records and URLs.
+
+Replacement files are matched against the stored original filenames without their extensions. Matching:
+
+- Is case-insensitive
+- Treats spaces, hyphens, underscores, repeated separators, and Unicode dash characters as equivalent
+- Requires exactly one existing clip to match
+- Blocks ambiguous matches
+- Detects byte-for-byte identical files
+- Warns when the replacement duration differs from the current duration
+
+A successful bulk replacement preserves:
+
+- Clip ID
+- Title and alias
+- Category and tags
+- Access and publication state
+- Play and download counters
+- Public URL
+
+The old original can either be deleted immediately or retained. Retention is enabled by default because it is safer for large migration runs. Retained originals become unreferenced cleanup candidates on the **Integrity & Maintenance** page.
+
+Audio Archive does not transcode files itself in this workflow. Conversion is performed externally; the resulting files are then placed in the import inbox and assigned through replacement mode.
 
 ### Managing clips
 
@@ -224,6 +282,64 @@ The Clips view uses Joomla's standard publication states:
 
 Select clips and use **Batch** to move them to another category or add, replace, or clear tags. Permanent deletion is available only while viewing trashed clips.
 
+The list supports Joomla access levels and category permissions. Individual clip access is also enforced by archive queries, clip detail pages, playback, downloads, modules, content placeholders, tag counts, and Smart Search.
+
+### Integrity and maintenance
+
+Open:
+
+```text
+Components → Audio Archive → Integrity & Maintenance
+```
+
+The integrity scan is non-destructive. It inspects database relationships, managed paths, file records, lightweight file properties, metadata state, and storage consistency without deleting or moving files.
+
+The report can identify issues such as:
+
+- Missing categories
+- Missing or orphaned original-file records
+- Invalid or unsafe storage keys
+- Missing, unreadable, or unexpected managed files
+- Stored file-size inconsistencies
+- Missing or invalid SHA-256 checksums
+- Duration inconsistencies
+- Availability-flag inconsistencies
+- Invalid technical metadata
+- Exact duplicates
+- Unreferenced managed files
+- Abandoned temporary files
+
+The report can be exported as UTF-8 CSV.
+
+For selected clips, the maintenance page provides:
+
+- **Verify selected** — checks existence, file size, and SHA-256
+- **Reanalyse selected** — refreshes technical media metadata
+- **Recalculate checksum & size** — updates the stored checksum and size and marks changed content for reanalysis
+
+Clip repair operations process at most 50 selected clips per request.
+
+The **Original-file codec inventory** groups current originals by:
+
+- Audio codec
+- Container format
+- File extension
+- Number of clips
+- Total storage size
+
+Selecting a codec displays every matching clip. This is useful for locating formats such as ALAC before preparing a bulk replacement run.
+
+The stale-file section lists only cleanup candidates, including:
+
+- Stale compatibility previews
+- Stale waveforms
+- Unreferenced managed files
+- Abandoned temporary files
+
+Current referenced originals are never eligible for stale-file cleanup. Every selected candidate is regenerated and revalidated immediately before deletion so that files which changed after the page was loaded are not removed.
+
+Large cleanup selections are processed automatically in sequential AJAX batches of at most 200 files. This avoids PHP input limits and oversized single requests while still preserving the server-side safety limit and per-batch validation.
+
 ### Publishing the public archive
 
 Create a Joomla menu item:
@@ -232,9 +348,61 @@ Create a Joomla menu item:
 2. Create a new menu item.
 3. Choose **Audio Archive → Audio Archive** as the menu-item type.
 4. Configure its category or tag restrictions, filters, columns, ordering, pagination, clip-detail settings, and download policy.
-5. Publish the menu item.
+5. Set the menu item's Joomla access level as required.
+6. Publish the menu item.
 
 Each Archive menu item can override the component defaults. When several Archive menu items exist, clip links retain the appropriate menu context.
+
+### Publishing a tag directory
+
+Audio Archive provides a separate **Tag Directory** menu-item type.
+
+Create one through the Joomla menu manager and choose:
+
+```text
+Audio Archive → Tag Directory
+```
+
+The Tag Directory can:
+
+- Display all accessible Audio Archive tags or only selected tags
+- Link each tag to a chosen Archive menu item
+- Choose a suitable Archive menu item automatically
+- Hide tags without accessible clips
+- Order tags alphabetically, by clip count, or in the backend selection order
+- Use card, list, or compact presentation
+- Show or hide tag descriptions
+- Show or hide accessible clip counts
+
+Clip counts respect the current visitor's access and the category or tag restrictions of the target Archive menu item.
+
+### Frontend access control
+
+A Joomla menu item's access level only protects that menu item. Joomla components may also be reached directly through routes such as:
+
+```text
+/component/audioarchive
+```
+
+Audio Archive therefore has a component-wide **Frontend archive access** option under:
+
+```text
+Components → Audio Archive → Options → General
+```
+
+The selected Joomla access level is checked before any frontend Audio Archive controller or view is dispatched. It protects:
+
+- Archive views
+- Tag Directory views
+- Clip detail pages
+- Playback streams
+- Original-file downloads
+- Play-count requests
+- Direct non-menu component URLs
+
+Guests who do not satisfy the configured access level are redirected to Joomla's login page and returned to the originally requested URL after login. Logged-in users without the required access receive HTTP 403.
+
+Menu-item access levels, category access, and individual clip access remain additional restrictions. The visitor must satisfy all applicable rules.
 
 ### Public filtering
 
@@ -261,7 +429,7 @@ With JavaScript enabled, the duration fields are accompanied by a two-handle sli
 
 ### Tags and tag descriptions
 
-Tags displayed in the Archive, modules, embedded clips, and clip detail pages link back to the appropriate Archive menu item with the corresponding tag filter applied.
+Tags displayed in the Archive, Tag Directory, modules, embedded clips, and clip detail pages link back to the appropriate Archive menu item with the corresponding tag filter applied.
 
 When a Joomla tag has a description, Audio Archive adds that description as the tag link's standard HTML `title` attribute. Browsers therefore display the description as a native tooltip when the pointer hovers over the tag.
 
@@ -269,6 +437,7 @@ When a Joomla tag has a description, Audio Archive adds that description as the 
 
 Playback and download requests pass through component controllers that verify:
 
+- Component-wide frontend access
 - Clip publication state and dates
 - Category publication and access
 - Joomla access levels
@@ -282,7 +451,7 @@ The detail-page download button can be configured globally and overridden by an 
 
 ## Using the Audio Archive module
 
-The package contains one configurable site module:
+The package contains one configurable clip module:
 
 ```text
 mod_audioarchive
@@ -334,9 +503,55 @@ The module can independently show or hide:
 - Clip detail link
 - Original download link
 
-The module uses the component's protected playback and download endpoints, access and publication checks, playback counting, player JavaScript, styling, and menu-aware SEF routing. Category and tag links lead back to the appropriate Archive menu item, and tag descriptions are available as native hover tooltips.
+The module uses the component's protected playback and download endpoints, clip access and publication checks, playback counting, player JavaScript, styling, and menu-aware SEF routing. Access to links and media endpoints is additionally governed by the component-wide frontend access setting. Category and tag links lead back to the appropriate Archive menu item, and tag descriptions are available as native hover tooltips.
 
 Random mode should normally be used without module caching when a new random selection is expected on each request. Clip-of-the-day mode produces a stable daily selection.
+
+## Using the Audio Archive Tags module
+
+The package also contains:
+
+```text
+mod_audioarchive_tags
+```
+
+Create an instance through:
+
+```text
+Content → Site Modules → New → Audio Archive Tags
+```
+
+The module displays Audio Archive tags and links each one to a filtered Archive view.
+
+### Tag selection and archive linking
+
+The module can:
+
+- Display every accessible tag used by Audio Archive clips
+- Display only a selected subset of tags
+- Choose the target Archive menu item automatically
+- Link to a specifically selected Archive menu item
+- Hide tags that have no accessible clips in the target Archive
+- Order by title, accessible clip count, or backend selection order
+
+Automatic target selection prefers the current Archive context where possible, then an accessible Archive menu item in the current language.
+
+### Tag-module presentation
+
+Available presentations are:
+
+```text
+cards
+list
+compact
+```
+
+The module can show or hide:
+
+- Tag descriptions
+- Accessible clip counts
+
+Counts include only clips the current visitor can access and respect the restrictions of the target Archive menu item. The module is uncached by default so access-sensitive counts and links remain current.
 
 ## Using the Smart Search plugin
 
@@ -372,7 +587,7 @@ The plugin indexes clip information including:
 - Author
 - Language
 
-The index is kept in sync when clips are saved, uploaded, imported, replaced, unpublished, trashed, or deleted. Search results use the component's protected clip detail pages and menu-aware SEF routes, and Joomla applies the clip's publication and access rules.
+The index is kept in sync when clips are saved, uploaded, imported, replaced, unpublished, trashed, or deleted. Search results use the component's protected clip detail pages and menu-aware SEF routes. Clip, category, publication, language, and access rules determine index eligibility, while opening a result is additionally subject to the component-wide frontend access setting.
 
 ## Using the Quick Icons plugin
 
@@ -486,7 +701,7 @@ The durations of clips in the selected categories are summed and inserted as one
 
 ### Content-plugin behaviour
 
-Embedded clips reuse the module presentation and the component's publication, category, access-level, language, file-availability, routing, playback, download, and counting logic. Category and tag links retain the appropriate Archive menu context, and tag descriptions are available through standard browser tooltips.
+Embedded clips reuse the module presentation and the component's publication, category, clip-access, language, file-availability, routing, playback, download, and counting logic. Links and protected media endpoints are additionally subject to the component-wide frontend access setting. Category and tag links retain the appropriate Archive menu context, and tag descriptions are available through standard browser tooltips.
 
 Count and playtime placeholders use the same public eligibility rules so that unpublished, inaccessible, or otherwise unavailable clips are not exposed through aggregate values.
 
