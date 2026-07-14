@@ -1,0 +1,79 @@
+{
+    "$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
+    "name": "com_audioarchive",
+    "version": "0.6.13",
+    "description": "Joomla Audio Archive assets",
+    "license": "GPL-2.0-or-later",
+    "assets": [
+        {
+            "name": "com_audioarchive.site",
+            "type": "style",
+            "uri": "com_audioarchive/site.css"
+        },
+        {
+            "name": "com_audioarchive.admin",
+            "type": "style",
+            "uri": "com_audioarchive/admin.css"
+        },
+        {
+            "name": "com_audioarchive.player-style",
+            "type": "style",
+            "uri": "com_audioarchive/player.css"
+        },
+        {
+            "name": "com_audioarchive.bulk-upload",
+            "type": "script",
+            "uri": "com_audioarchive/bulk-upload.js",
+            "attributes": {
+                "type": "module"
+            },
+            "dependencies": [
+                "core"
+            ]
+        },
+        {
+            "name": "com_audioarchive.directory-import",
+            "type": "script",
+            "uri": "com_audioarchive/directory-import.js",
+            "attributes": {
+                "type": "module"
+            },
+            "dependencies": [
+                "core"
+            ]
+        },
+        {
+            "name": "com_audioarchive.player",
+            "type": "script",
+            "uri": "com_audioarchive/player.js",
+            "attributes": {
+                "type": "module"
+            },
+            "dependencies": [
+                "core"
+            ]
+        },
+        {
+            "name": "com_audioarchive.archive",
+            "type": "script",
+            "uri": "com_audioarchive/archive.js",
+            "attributes": {
+                "type": "module"
+            },
+            "dependencies": [
+                "core"
+            ]
+        },
+        {
+            "name": "com_audioarchive.batch",
+            "type": "script",
+            "uri": "com_audioarchive/batch.js",
+            "attributes": {
+                "type": "module"
+            },
+            "dependencies": [
+                "core"
+            ]
+        }
+    ]
+}

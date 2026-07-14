@@ -1,0 +1,2 @@
+-- Version 0.1.2 adds installer-managed defaults and uninstall cleanup.
+-- No component table changes are required for this version.

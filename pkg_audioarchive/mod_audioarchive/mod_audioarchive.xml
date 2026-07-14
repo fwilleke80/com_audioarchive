@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="module" client="site" method="upgrade">
+	<name>MOD_AUDIOARCHIVE</name>
+	<version>0.3.7</version>
+	<creationDate>2026-07-14</creationDate>
+	<author>Frank Willeke</author>
+	<copyright>Copyright (C) 2026 Frank Willeke.</copyright>
+	<license>GNU General Public License version 2 or later</license>
+	<description>MOD_AUDIOARCHIVE_XML_DESCRIPTION</description>
+	<namespace path="src">Willeke\Module\Audioarchive</namespace>
+	<files>
+		<filename module="mod_audioarchive">mod_audioarchive.php</filename>
+		<folder>src</folder>
+		<folder>tmpl</folder>
+		<folder>language</folder>
+	</files>
+	<languages>
+		<language tag="en-GB">language/en-GB/mod_audioarchive.ini</language>
+		<language tag="en-GB">language/en-GB/mod_audioarchive.sys.ini</language>
+		<language tag="de-DE">language/de-DE/mod_audioarchive.ini</language>
+		<language tag="de-DE">language/de-DE/mod_audioarchive.sys.ini</language>
+	</languages>
+	<media destination="mod_audioarchive" folder="media">
+		<folder>css</folder>
+	</media>
+	<config>
+		<fields name="params">
+			<fieldset name="basic" label="MOD_AUDIOARCHIVE_FIELDSET_SELECTION">
+				<field name="selection_mode" type="list" default="latest" label="MOD_AUDIOARCHIVE_FIELD_SELECTION_MODE_LABEL">
+					<option value="latest">MOD_AUDIOARCHIVE_MODE_LATEST</option>
+					<option value="random">MOD_AUDIOARCHIVE_MODE_RANDOM</option>
+					<option value="daily">MOD_AUDIOARCHIVE_MODE_DAILY</option>
+					<option value="most_played">MOD_AUDIOARCHIVE_MODE_MOST_PLAYED</option>
+					<option value="most_downloaded">MOD_AUDIOARCHIVE_MODE_MOST_DOWNLOADED</option>
+					<option value="specific">MOD_AUDIOARCHIVE_MODE_SPECIFIC</option>
+				</field>
+				<field name="count" type="number" default="5" min="1" max="50" label="MOD_AUDIOARCHIVE_FIELD_COUNT_LABEL" showon="selection_mode!:specific" />
+				<field name="latest_date" type="list" default="uploaded" label="MOD_AUDIOARCHIVE_FIELD_LATEST_DATE_LABEL" showon="selection_mode:latest">
+					<option value="uploaded">MOD_AUDIOARCHIVE_DATE_UPLOADED</option>
+					<option value="recorded">MOD_AUDIOARCHIVE_DATE_RECORDED</option>
+					<option value="published">MOD_AUDIOARCHIVE_DATE_PUBLISHED</option>
+				</field>
+				<field name="specific_clip" type="sql" query="SELECT id AS value, title AS text FROM #__audioarchive_clips WHERE state = 1 ORDER BY title" key_field="value" value_field="text" default="0" label="MOD_AUDIOARCHIVE_FIELD_SPECIFIC_CLIP_LABEL" showon="selection_mode:specific" />
+				<field name="categories" type="category" extension="com_audioarchive" multiple="true" layout="joomla.form.field.list-fancy-select" label="MOD_AUDIOARCHIVE_FIELD_CATEGORIES_LABEL" />
+				<field name="tags" type="tag" multiple="true" mode="nested" custom="false" layout="joomla.form.field.list-fancy-select" label="MOD_AUDIOARCHIVE_FIELD_TAGS_LABEL" />
+				<field name="tag_mode" type="radio" layout="joomla.form.field.radio.switcher" default="all" label="MOD_AUDIOARCHIVE_FIELD_TAG_MODE_LABEL" showon="tags!:" validate="options">
+					<option value="all">MOD_AUDIOARCHIVE_TAG_MODE_ALL</option>
+					<option value="any">MOD_AUDIOARCHIVE_TAG_MODE_ANY</option>
+				</field>
+			</fieldset>
+			<fieldset name="display" label="MOD_AUDIOARCHIVE_FIELDSET_DISPLAY">
+				<field name="presentation" type="list" default="inherit" label="MOD_AUDIOARCHIVE_FIELD_PRESENTATION_LABEL" description="MOD_AUDIOARCHIVE_FIELD_PRESENTATION_DESC">
+					<option value="inherit">MOD_AUDIOARCHIVE_PRESENTATION_INHERIT</option>
+					<option value="default">MOD_AUDIOARCHIVE_PRESENTATION_DEFAULT</option>
+					<option value="compact">MOD_AUDIOARCHIVE_PRESENTATION_COMPACT</option>
+					<option value="featured">MOD_AUDIOARCHIVE_PRESENTATION_FEATURED</option>
+				</field>
+				<field name="show_title" type="radio" layout="joomla.form.field.radio.switcher" default="1" label="MOD_AUDIOARCHIVE_FIELD_SHOW_TITLE_LABEL"><option value="1">JYES</option><option value="0">JNO</option></field>
+				<field name="link_title" type="radio" layout="joomla.form.field.radio.switcher" default="1" label="MOD_AUDIOARCHIVE_FIELD_LINK_TITLE_LABEL" showon="show_title:1"><option value="1">JYES</option><option value="0">JNO</option></field>
+				<field name="show_player" type="radio" layout="joomla.form.field.radio.switcher" default="1" label="MOD_AUDIOARCHIVE_FIELD_SHOW_PLAYER_LABEL"><option value="1">JYES</option><option value="0">JNO</option></field>
+				<field name="show_duration" type="radio" layout="joomla.form.field.radio.switcher" default="1" label="MOD_AUDIOARCHIVE_FIELD_SHOW_DURATION_LABEL"><option value="1">JYES</option><option value="0">JNO</option></field>
+				<field name="show_date" type="radio" layout="joomla.form.field.radio.switcher" default="1" label="MOD_AUDIOARCHIVE_FIELD_SHOW_DATE_LABEL"><option value="1">JYES</option><option value="0">JNO</option></field>
+				<field name="display_date" type="list" default="uploaded" label="MOD_AUDIOARCHIVE_FIELD_DISPLAY_DATE_LABEL" showon="show_date:1"><option value="uploaded">MOD_AUDIOARCHIVE_DATE_UPLOADED</option><option value="recorded">MOD_AUDIOARCHIVE_DATE_RECORDED</option><option value="published">MOD_AUDIOARCHIVE_DATE_PUBLISHED</option></field>
+				<field name="show_category" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="MOD_AUDIOARCHIVE_FIELD_SHOW_CATEGORY_LABEL"><option value="1">JYES</option><option value="0">JNO</option></field>
+				<field name="show_tags" type="radio" layout="joomla.form.field.radio.switcher" default="1" label="MOD_AUDIOARCHIVE_FIELD_SHOW_TAGS_LABEL"><option value="1">JYES</option><option value="0">JNO</option></field>
+				<field name="show_description" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="MOD_AUDIOARCHIVE_FIELD_SHOW_DESCRIPTION_LABEL"><option value="1">JYES</option><option value="0">JNO</option></field>
+				<field name="description_length" type="number" default="160" min="20" max="1000" label="MOD_AUDIOARCHIVE_FIELD_DESCRIPTION_LENGTH_LABEL" showon="show_description:1" />
+				<field name="show_detail_link" type="radio" layout="joomla.form.field.radio.switcher" default="1" label="MOD_AUDIOARCHIVE_FIELD_SHOW_DETAIL_LINK_LABEL"><option value="1">JYES</option><option value="0">JNO</option></field>
+				<field name="show_download" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="MOD_AUDIOARCHIVE_FIELD_SHOW_DOWNLOAD_LABEL"><option value="1">JYES</option><option value="0">JNO</option></field>
+				<field name="show_counts" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="MOD_AUDIOARCHIVE_FIELD_SHOW_COUNTS_LABEL"><option value="1">JYES</option><option value="0">JNO</option></field>
+			</fieldset>
+			<fieldset name="advanced">
+				<field name="moduleclass_sfx" type="textarea" rows="3" label="COM_MODULES_FIELD_MODULECLASS_SFX_LABEL" />
+				<field name="cache" type="list" default="0" label="COM_MODULES_FIELD_CACHING_LABEL"><option value="1">JGLOBAL_USE_GLOBAL</option><option value="0">COM_MODULES_FIELD_VALUE_NOCACHING</option></field>
+				<field name="cache_time" type="number" default="900" label="COM_MODULES_FIELD_CACHE_TIME_LABEL" />
+				<field name="cachemode" type="hidden" default="id" />
+			</fieldset>
+		</fields>
+	</config>
+</extension>

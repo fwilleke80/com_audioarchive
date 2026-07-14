@@ -1,0 +1,306 @@
+.audioarchive-custom-player
+{
+	--audioarchive-player-accent: var(--audioarchive-accent, var(--template-link-color, var(--link-color, #0d6efd)));
+	--audioarchive-player-border: var(--audioarchive-border, color-mix(in srgb, currentColor 18%, transparent));
+	--audioarchive-player-muted: var(--audioarchive-muted, color-mix(in srgb, currentColor 65%, transparent));
+	--audioarchive-player-surface: var(--audioarchive-surface-raised, color-mix(in srgb, currentColor 5%, transparent));
+	--audioarchive-player-progress: 0%;
+	display: grid;
+	grid-template-columns: 3.4rem minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 1rem;
+	width: 100%;
+	min-width: 0;
+	padding: .9rem 1rem;
+	border: 1px solid var(--audioarchive-player-border);
+	border-radius: .8rem;
+	background: var(--audioarchive-player-surface);
+	box-shadow: 0 .3rem 1.2rem color-mix(in srgb, #000 9%, transparent);
+}
+
+.audioarchive-custom-player *,
+.audioarchive-custom-player *::before,
+.audioarchive-custom-player *::after
+{
+	box-sizing: border-box;
+}
+
+.audioarchive-custom-player-toggle
+{
+	display: inline-grid;
+	place-items: center;
+	width: 3.4rem;
+	height: 3.4rem;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: var(--audioarchive-player-accent);
+	box-shadow: 0 .28rem .8rem color-mix(in srgb, var(--audioarchive-player-accent) 36%, transparent);
+	color: #fff;
+	cursor: pointer;
+	transition: transform .16s ease, box-shadow .16s ease, filter .16s ease;
+}
+
+.audioarchive-custom-player-toggle:hover
+{
+	filter: brightness(1.08);
+	transform: translateY(-1px);
+}
+
+.audioarchive-custom-player-toggle:active
+{
+	transform: translateY(0) scale(.97);
+}
+
+.audioarchive-custom-player-toggle:focus-visible,
+.audioarchive-custom-player-mute:focus-visible,
+.audioarchive-custom-player input[type="range"]:focus-visible
+{
+	outline: .2rem solid color-mix(in srgb, var(--audioarchive-player-accent) 38%, transparent);
+	outline-offset: .18rem;
+}
+
+.audioarchive-custom-player-toggle svg
+{
+	width: 1.35rem;
+	height: 1.35rem;
+	fill: currentColor;
+}
+
+.audioarchive-custom-player-toggle [data-audioarchive-icon-play]
+{
+	transform: translateX(.08rem);
+}
+
+.audioarchive-custom-player-main
+{
+	display: grid;
+	gap: .42rem;
+	min-width: 0;
+}
+
+.audioarchive-custom-player-times
+{
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	font-size: .78rem;
+	font-variant-numeric: tabular-nums;
+	font-weight: 700;
+	line-height: 1;
+	color: var(--audioarchive-player-muted);
+}
+
+.audioarchive-custom-player-seek,
+.audioarchive-custom-player-volume
+{
+	-webkit-appearance: none;
+	appearance: none;
+	margin: 0;
+	border: 0;
+	background: transparent;
+	cursor: pointer;
+}
+
+.audioarchive-custom-player-seek
+{
+	width: 100%;
+	height: 1.35rem;
+}
+
+.audioarchive-custom-player-seek::-webkit-slider-runnable-track
+{
+	height: .42rem;
+	border-radius: 999px;
+	background: linear-gradient(
+		to right,
+		var(--audioarchive-player-accent) 0 var(--audioarchive-player-progress),
+		var(--audioarchive-player-border) var(--audioarchive-player-progress) 100%
+	);
+}
+
+.audioarchive-custom-player-seek::-moz-range-track
+{
+	height: .42rem;
+	border-radius: 999px;
+	background: var(--audioarchive-player-border);
+}
+
+.audioarchive-custom-player-seek::-moz-range-progress
+{
+	height: .42rem;
+	border-radius: 999px;
+	background: var(--audioarchive-player-accent);
+}
+
+.audioarchive-custom-player-seek::-webkit-slider-thumb
+{
+	-webkit-appearance: none;
+	appearance: none;
+	width: 1.05rem;
+	height: 1.05rem;
+	margin-top: -.315rem;
+	border: .19rem solid #fff;
+	border-radius: 50%;
+	background: var(--audioarchive-player-accent);
+	box-shadow: 0 .12rem .4rem color-mix(in srgb, #000 24%, transparent);
+}
+
+.audioarchive-custom-player-seek::-moz-range-thumb
+{
+	width: .72rem;
+	height: .72rem;
+	border: .19rem solid #fff;
+	border-radius: 50%;
+	background: var(--audioarchive-player-accent);
+	box-shadow: 0 .12rem .4rem color-mix(in srgb, #000 24%, transparent);
+}
+
+.audioarchive-custom-player-seek:disabled
+{
+	cursor: wait;
+	opacity: .58;
+}
+
+.audioarchive-custom-player-volume-controls
+{
+	display: flex;
+	align-items: center;
+	gap: .48rem;
+}
+
+.audioarchive-custom-player-mute
+{
+	display: inline-grid;
+	place-items: center;
+	width: 2.35rem;
+	height: 2.35rem;
+	padding: 0;
+	border: 1px solid var(--audioarchive-player-border);
+	border-radius: 50%;
+	background: color-mix(in srgb, currentColor 3%, transparent);
+	color: inherit;
+	cursor: pointer;
+	transition: background-color .16s ease, border-color .16s ease;
+}
+
+.audioarchive-custom-player-mute:hover
+{
+	border-color: color-mix(in srgb, var(--audioarchive-player-accent) 55%, var(--audioarchive-player-border));
+	background: color-mix(in srgb, var(--audioarchive-player-accent) 9%, transparent);
+}
+
+.audioarchive-custom-player-mute svg
+{
+	width: 1.15rem;
+	height: 1.15rem;
+	fill: currentColor;
+}
+
+.audioarchive-custom-player-volume
+{
+	width: 5.2rem;
+	height: 1.2rem;
+}
+
+.audioarchive-custom-player-volume::-webkit-slider-runnable-track
+{
+	height: .32rem;
+	border-radius: 999px;
+	background: var(--audioarchive-player-border);
+}
+
+.audioarchive-custom-player-volume::-moz-range-track
+{
+	height: .32rem;
+	border-radius: 999px;
+	background: var(--audioarchive-player-border);
+}
+
+.audioarchive-custom-player-volume::-webkit-slider-thumb
+{
+	-webkit-appearance: none;
+	appearance: none;
+	width: .82rem;
+	height: .82rem;
+	margin-top: -.25rem;
+	border: 0;
+	border-radius: 50%;
+	background: var(--audioarchive-player-accent);
+}
+
+.audioarchive-custom-player-volume::-moz-range-thumb
+{
+	width: .82rem;
+	height: .82rem;
+	border: 0;
+	border-radius: 50%;
+	background: var(--audioarchive-player-accent);
+}
+
+.audioarchive-custom-player.is-playing .audioarchive-custom-player-toggle
+{
+	box-shadow: 0 .3rem 1rem color-mix(in srgb, var(--audioarchive-player-accent) 52%, transparent);
+}
+
+.audioarchive-custom-player.has-error
+{
+	border-color: color-mix(in srgb, #b3261e 58%, var(--audioarchive-player-border));
+}
+
+.audioarchive-custom-player.has-error .audioarchive-custom-player-toggle
+{
+	background: #b3261e;
+}
+
+.audioarchive-custom-player [data-audioarchive-custom-audio]
+{
+	display: none;
+}
+
+.audioarchive-custom-player-noscript
+{
+	display: block;
+	width: 100%;
+	margin-top: .75rem;
+}
+
+.com-audioarchive-detail-player .audioarchive-custom-player
+{
+	padding: .2rem 0 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
+}
+
+@media (max-width: 42rem)
+{
+	.audioarchive-custom-player
+	{
+		grid-template-columns: 3.15rem minmax(0, 1fr);
+		gap: .8rem;
+		padding: .8rem;
+	}
+
+	.audioarchive-custom-player-toggle
+	{
+		width: 3.15rem;
+		height: 3.15rem;
+	}
+
+	.audioarchive-custom-player-volume-controls
+	{
+		grid-column: 2;
+		justify-self: end;
+	}
+}
+
+@media (max-width: 28rem)
+{
+	.audioarchive-custom-player-volume
+	{
+		display: none;
+	}
+}

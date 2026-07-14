@@ -1,0 +1,2 @@
+-- Version 0.1.3 adds dashboard diagnostics and corrects schema-check compatibility.
+-- The checkout-column migration itself remains in 0.1.1.sql as separate statements.

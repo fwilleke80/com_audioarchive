@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form>
+    <fieldset name="details" label="COM_AUDIOARCHIVE_FIELDSET_DETAILS">
+        <field name="id" type="hidden" />
+        <field name="asset_id" type="hidden" filter="unset" />
+        <field name="checked_out" type="hidden" filter="unset" />
+        <field name="checked_out_time" type="hidden" filter="unset" />
+        <field name="title" type="text" label="JGLOBAL_TITLE" required="false" description="COM_AUDIOARCHIVE_FIELD_TITLE_UPLOAD_DESC" maxlength="255" />
+        <field name="alias" type="text" label="JFIELD_ALIAS_LABEL" maxlength="400" hint="JFIELD_ALIAS_PLACEHOLDER" />
+        <field
+            name="catid"
+            type="category"
+            extension="com_audioarchive"
+            published="0,1"
+            label="JCATEGORY"
+            required="true"
+            default=""
+        >
+            <option value="">JOPTION_SELECT_CATEGORY</option>
+        </field>
+        <field name="tags" type="tag" label="JTAG" multiple="true" mode="ajax" custom="allow" />
+        <field name="description" type="editor" label="JGLOBAL_DESCRIPTION" buttons="true" filter="\Joomla\CMS\Component\ComponentHelper::filterText" />
+        <field name="recorded_at" type="calendar" label="COM_AUDIOARCHIVE_FIELD_RECORDING_DATE" translateformat="true" showtime="true" filter="user_utc" />
+    </fieldset>
+
+    <fieldset name="publishing" label="JGLOBAL_FIELDSET_PUBLISHING">
+        <field name="state" type="list" label="JSTATUS" default="0" validate="options">
+            <option value="1">JPUBLISHED</option>
+            <option value="0">JUNPUBLISHED</option>
+            <option value="2">JARCHIVED</option>
+            <option value="-2">JTRASHED</option>
+        </field>
+        <field name="access" type="accesslevel" label="JFIELD_ACCESS_LABEL" default="1" />
+        <field name="publish_up" type="calendar" label="JGLOBAL_FIELD_PUBLISH_UP_LABEL" translateformat="true" showtime="true" filter="user_utc" />
+        <field name="publish_down" type="calendar" label="JGLOBAL_FIELD_PUBLISH_DOWN_LABEL" translateformat="true" showtime="true" filter="user_utc" />
+        <field name="created" type="calendar" label="JGLOBAL_FIELD_CREATED_LABEL" translateformat="true" showtime="true" filter="user_utc" />
+        <field name="created_by" type="user" label="JGLOBAL_FIELD_CREATED_BY_LABEL" />
+        <field name="modified" type="calendar" label="JGLOBAL_FIELD_MODIFIED_LABEL" translateformat="true" showtime="true" readonly="true" filter="user_utc" />
+        <field name="version" type="text" label="COM_AUDIOARCHIVE_FIELD_VERSION_LABEL" readonly="true" />
+    </fieldset>
+
+    <fieldset name="file" label="COM_AUDIOARCHIVE_FIELDSET_FILE_INFORMATION">
+        <field
+            name="audio_file"
+            type="file"
+            label="COM_AUDIOARCHIVE_FIELD_AUDIO_FILE"
+            description="COM_AUDIOARCHIVE_FIELD_AUDIO_FILE_DESC"
+            accept="audio/*,.m4a,.mp4,.aac,.mp3,.ogg,.oga,.opus,.wav,.flac,.webm"
+            filter="raw"
+        />
+        <field name="original_filename" type="text" label="COM_AUDIOARCHIVE_FIELD_ORIGINAL_FILENAME" readonly="true" />
+        <field name="duration_ms" type="number" label="COM_AUDIOARCHIVE_FIELD_DURATION_MS" readonly="true" />
+        <field name="uploaded_at" type="calendar" label="COM_AUDIOARCHIVE_FIELD_UPLOAD_DATE" translateformat="true" showtime="true" readonly="true" filter="user_utc" />
+        <field name="metadata_status" type="text" label="COM_AUDIOARCHIVE_FIELD_METADATA_STATUS" readonly="true" />
+        <field name="preview_status" type="text" label="COM_AUDIOARCHIVE_FIELD_PREVIEW_STATUS" readonly="true" />
+        <field name="waveform_status" type="text" label="COM_AUDIOARCHIVE_FIELD_WAVEFORM_STATUS" readonly="true" />
+        <field name="play_count" type="number" label="COM_AUDIOARCHIVE_FIELD_PLAY_COUNT" readonly="true" />
+        <field name="download_count" type="number" label="COM_AUDIOARCHIVE_FIELD_DOWNLOAD_COUNT" readonly="true" />
+    </fieldset>
+</form>
