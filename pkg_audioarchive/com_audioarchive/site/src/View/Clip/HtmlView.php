@@ -46,6 +46,9 @@ class HtmlView extends BaseHtmlView
 	/** @var bool */
 	public bool $canDownload = false;
 
+	/** @var int */
+	public int $archiveItemId = 0;
+
 	/**
 	 * @brief Display one public clip.
 	 *
@@ -85,6 +88,7 @@ class HtmlView extends BaseHtmlView
 			$currentItemId,
 			(array) $application->getIdentity()->getAuthorisedViewLevels()
 		);
+		$this->archiveItemId = $routeItemId;
 
 		$this->streamUrl = Route::_(RouteHelper::getPlaybackRoute((int) $item->id, $routeItemId));
 		$this->downloadUrl = $this->canDownload
@@ -112,6 +116,25 @@ class HtmlView extends BaseHtmlView
 			->useScript('com_audioarchive.player');
 
 		parent::display($tpl);
+	}
+
+
+	/**
+	 * @brief Build an Archive URL filtered exclusively by one tag.
+	 *
+	 * @param object $tag Joomla tag record.
+	 *
+	 * @return string Routed Archive URL.
+	 */
+	public function getTagUrl(object $tag): string
+	{
+		$alias = trim((string) ($tag->alias ?? ''));
+		$tagValue = $alias !== '' ? $alias : (string) (int) ($tag->id ?? 0);
+		$query = $tagValue !== '' && $tagValue !== '0'
+			? ['tags' => $tagValue]
+			: [];
+
+		return Route::_(RouteHelper::getArchiveRoute($this->archiveItemId, $query));
 	}
 
 	/**
