@@ -2,17 +2,46 @@
 
 Audio Archive is a native Joomla! 6 extension package for managing and publishing collections of audio clips.
 
-It is intended for archives ranging from a small collection to several thousand files. Administrators can upload or import clips, organise them with Joomla categories and tags, edit their metadata, control publication and access, and review playback and download statistics. Visitors can search and filter the archive, play clips in the browser, open clip detail pages, and download the protected original files.
+It is intended for archives ranging from a small collection to several thousand files. Administrators can upload or import clips, organise them with Joomla categories and tags, edit their metadata, control publication and access, and review playback and download statistics. Visitors can search and filter the archive, play clips in the browser, open clip detail pages, and—where permitted—download the protected original files.
 
-> **Current version:** `0.6.0-dev3`  
+> **Current version:** `0.6.14`  
 > **Package:** `pkg_audioarchive`
+
+## Table of contents
+
+- [What Audio Archive offers](#what-audio-archive-offers)
+  - [Administrator features](#administrator-features)
+  - [Public website features](#public-website-features)
+- [Package contents](#package-contents)
+- [Installing and updating the package](#installing-and-updating-the-package)
+- [Using the Audio Archive component](#using-the-audio-archive-component)
+  - [Initial configuration](#initial-configuration)
+  - [Dashboard and system check](#dashboard-and-system-check)
+  - [Adding clips](#adding-clips)
+  - [Managing clips](#managing-clips)
+  - [Publishing the public archive](#publishing-the-public-archive)
+  - [Public filtering](#public-filtering)
+  - [Tags and tag descriptions](#tags-and-tag-descriptions)
+  - [Playback and downloads](#playback-and-downloads)
+- [Using the Audio Archive module](#using-the-audio-archive-module)
+  - [Selection modes](#selection-modes)
+  - [Layouts](#layouts)
+  - [Display options](#display-options)
+- [Using the Smart Search plugin](#using-the-smart-search-plugin)
+- [Using the Quick Icons plugin](#using-the-quick-icons-plugin)
+- [Using the Content plugin](#using-the-content-plugin)
+  - [Embedding clips](#embedding-clips)
+  - [Archive clip counts](#archive-clip-counts)
+  - [Archive playtime](#archive-playtime)
+  - [Content-plugin behaviour](#content-plugin-behaviour)
 
 ## What Audio Archive offers
 
 ### Administrator features
 
 - Dashboard with clip, publication, storage, playback, download, and system information
-- Buttons for resetting all play counts or all download counts
+- Dashboard display of the installed component version
+- ACL-protected buttons for resetting all play counts or all download counts
 - Joomla-style clip management with publication states, access levels, categories, tags, sorting, and filtering
 - Single-file upload
 - Browser-based bulk upload with per-file progress and results
@@ -22,7 +51,7 @@ It is intended for archives ranging from a small collection to several thousand 
 - Automatic extraction of duration, format, codec, file size, embedded title, and recording date where available
 - SHA-256 duplicate detection with configurable handling
 - Safe replacement of an existing clip's original file
-- Protected audio preview in the clip editor
+- Protected, styled audio preview in the clip editor
 - Batch category assignment
 - Batch tag addition, replacement, and clearing
 - Searchable tag selection in batch operations
@@ -35,42 +64,60 @@ It is intended for archives ranging from a small collection to several thousand 
 - Text search across clip metadata
 - Category filtering
 - Multiple-tag filtering using logical **AND**
+- Searchable tag checkbox list
 - Minimum and maximum duration filtering
+- JavaScript-enhanced duration slider with text-field fallback
 - Recording-date and upload-date ranges
 - Sortable result columns
 - Server-side Joomla pagination
 - Configurable page sizes, filters, columns, and detail-page fields
-- Responsive table and card presentation
+- Responsive desktop table and mobile card presentation
+- Mobile cards that preserve readable tag and duration layouts on narrow screens
 - Protected inline playback with HTTP byte-range seeking
+- Styled players on clip detail pages
 - One-player-at-a-time behaviour
-- SEF clip detail URLs
+- Clean, menu-aware SEF clip detail URLs
 - Breadcrumb integration
-- Page titles, metadata, and canonical routes
+- Page titles, metadata, canonical routes, and redirects from stale aliases or legacy URLs
 - Correct routing when several Audio Archive menu items exist
-- Protected downloads of original files
+- Configurable protected downloads of original files
+- Optional restriction of detail-page downloads to selected Joomla user groups
 - Aggregate play and download counters
+- Clickable category and tag links
+- Tag descriptions exposed through standard browser hover tooltips
 - Joomla publication-date, category, language, and access-level enforcement
 - English and German site interfaces
 
-The component keeps original audio files in managed storage and never exposes their filesystem paths. Browser playback support depends on the container and codec supported by the visitor's browser; authorised original files remain downloadable.
+The component keeps original audio files in managed storage and never exposes their filesystem paths. Browser playback support depends on the container and codec supported by the visitor's browser; authorised original files remain downloadable when downloads are enabled for that visitor.
 
 ## Package contents
 
 The package installs the following Joomla extensions:
 
 | Extension | Type | Purpose |
-| --------- | ---- | ------- |
-| `com_audioarchive` | Component | Administration, importing, metadata, public archive, clip pages, playback, downloads, routing, and statistics |
+| --- | --- | --- |
+| `com_audioarchive` | Component | Administration, importing, metadata, public archive, clip pages, playback, downloads, routing, access control, and statistics |
 | `mod_audioarchive` | Site module | Displays selected clips using latest, random, daily, popular, downloaded, or specific-clip modes |
-| `plg_finder_audioarchive` | Smart Search plugin | Adds Audio Archive clips to Joomla Smart Search |
+| `plg_finder_audioarchive` | Smart Search plugin | Adds eligible Audio Archive clips to Joomla Smart Search |
 | `plg_quickicon_audioarchive` | Quick Icons plugin | Adds an Audio Archive shortcut to the administrator Home Dashboard |
-| `plg_content_audioarchive` | Content plugin | Embeds random or specified clips in articles and other prepared content |
+| `plg_content_audioarchive` | Content plugin | Embeds clips and inserts aggregate clip counts or playtime into prepared content |
 
 Install the package ZIP rather than installing its individual extension ZIP files separately.
 
 ```text
-pkg_audioarchive-0.6.0-dev3.zip
+pkg_audioarchive_v0-6-14.zip
 ```
+
+## Installing and updating the package
+
+To install Audio Archive:
+
+1. Open **System → Install → Extensions** in the Joomla administrator.
+2. Upload `pkg_audioarchive_v0-6-14.zip`.
+3. Open **Components → Audio Archive**.
+4. Review the dashboard and component options before importing files.
+
+Install newer package versions directly over the existing installation. Do not uninstall the existing package as an update procedure, because uninstallation removes component database records.
 
 ## Using the Audio Archive component
 
@@ -96,8 +143,10 @@ Review the following settings before importing the archive:
 - Public filters and result columns
 - Playback and download settings
 - Clip detail-page fields
+- Detail-page download visibility
+- Joomla user groups allowed to use detail-page downloads
 
-The same configuration is also available through Joomla's Global Configuration component settings.
+The same component configuration is also available through Joomla's Global Configuration.
 
 ### Dashboard and system check
 
@@ -109,7 +158,7 @@ Components → Audio Archive
 
 The dashboard provides archive statistics and verifies the database, configured directories, PHP capabilities, and optional FFmpeg or FFprobe executables. Where supported, missing managed-storage directories can be created from the system check.
 
-The dashboard also provides actions for resetting all recorded play counts or all recorded download counts.
+The dashboard also displays the installed Audio Archive version and provides actions for resetting all recorded play counts or all recorded download counts.
 
 ### Adding clips
 
@@ -132,7 +181,7 @@ A clip can contain:
 - Extracted technical metadata
 - Play and download counts
 
-Existing clips include a protected administrator player. Playback from the editor does not increase public play statistics.
+Existing clips include a protected, styled administrator player. Playback from the editor does not increase public play statistics.
 
 #### Browser bulk upload
 
@@ -182,7 +231,7 @@ Create a Joomla menu item:
 1. Open the Joomla menu manager.
 2. Create a new menu item.
 3. Choose **Audio Archive → Audio Archive** as the menu-item type.
-4. Configure its category or tag restrictions, filters, columns, ordering, pagination, and clip-detail settings.
+4. Configure its category or tag restrictions, filters, columns, ordering, pagination, clip-detail settings, and download policy.
 5. Publish the menu item.
 
 Each Archive menu item can override the component defaults. When several Archive menu items exist, clip links retain the appropriate menu context.
@@ -208,7 +257,13 @@ Duration values can be entered as seconds or as formatted times:
 1:02:30
 ```
 
-Tags shown on clips link back to the Archive with the corresponding tag filter applied.
+With JavaScript enabled, the duration fields are accompanied by a two-handle slider. The text fields remain the submitted values and continue to work without JavaScript.
+
+### Tags and tag descriptions
+
+Tags displayed in the Archive, modules, embedded clips, and clip detail pages link back to the appropriate Archive menu item with the corresponding tag filter applied.
+
+When a Joomla tag has a description, Audio Archive adds that description as the tag link's standard HTML `title` attribute. Browsers therefore display the description as a native tooltip when the pointer hovers over the tag.
 
 ### Playback and downloads
 
@@ -219,8 +274,11 @@ Playback and download requests pass through component controllers that verify:
 - Joomla access levels
 - Language eligibility
 - Managed-file availability and path containment
+- Download configuration and permitted Joomla user groups where applicable
 
 Playback supports byte-range requests for seeking. Downloads use the original filename while keeping the internal managed filename and filesystem path private.
+
+The detail-page download button can be configured globally and overridden by an Archive menu item. It can be hidden completely or limited to selected Joomla user groups.
 
 ## Using the Audio Archive module
 
@@ -276,7 +334,7 @@ The module can independently show or hide:
 - Clip detail link
 - Original download link
 
-The module uses the component's protected playback and download endpoints, access and publication checks, playback counting, player JavaScript, styling, and menu-aware SEF routing. Category and tag links lead back to the appropriate Archive menu item.
+The module uses the component's protected playback and download endpoints, access and publication checks, playback counting, player JavaScript, styling, and menu-aware SEF routing. Category and tag links lead back to the appropriate Archive menu item, and tag descriptions are available as native hover tooltips.
 
 Random mode should normally be used without module caching when a new random selection is expected on each request. Clip-of-the-day mode produces a stable daily selection.
 
@@ -346,37 +404,37 @@ plg_content_audioarchive
 
 On the first package installation, the plugin is enabled automatically. It processes placeholders in Joomla articles and other frontend content handled by Joomla's content preparation event.
 
-### Embed a random clip
+### Embedding clips
+
+Embed a random clip:
 
 ```text
 {audioarchive random}
 ```
 
-A layout can be selected explicitly:
+Select a layout explicitly:
 
 ```text
 {audioarchive random layout=compact}
 ```
 
-### Embed a specific clip by alias
+Embed a specific clip by alias:
 
 ```text
 {audioarchive clip=some-clip-alias}
 ```
 
-### Embed a specific clip by ID
+Embed a specific clip by ID:
 
 ```text
 {audioarchive clip=123}
 ```
 
-### Embed a routed ID and alias
+Embed a routed ID and alias:
 
 ```text
 {audioarchive clip=123-some-clip-alias}
 ```
-
-### Select a layout
 
 The content plugin uses the same layouts as the Audio Archive module:
 
@@ -394,7 +452,43 @@ compact
 featured
 ```
 
-The plugin reuses the module's presentation and the component's publication, category, access-level, language, file-availability, routing, playback, download, and counting logic.
+### Archive clip counts
+
+Insert the total number of eligible clips in the archive:
+
+```text
+{audioarchive count}
+```
+
+Restrict the count to one or more categories by supplying a comma-separated list of category aliases:
+
+```text
+{audioarchive count category=music,soundfx}
+```
+
+The values for all selected categories are combined into one total.
+
+### Archive playtime
+
+Insert the combined formatted duration of all eligible clips:
+
+```text
+{audioarchive playtime}
+```
+
+Restrict the total playtime to one or more categories:
+
+```text
+{audioarchive playtime category=music,soundfx}
+```
+
+The durations of clips in the selected categories are summed and inserted as one formatted playtime value.
+
+### Content-plugin behaviour
+
+Embedded clips reuse the module presentation and the component's publication, category, access-level, language, file-availability, routing, playback, download, and counting logic. Category and tag links retain the appropriate Archive menu context, and tag descriptions are available through standard browser tooltips.
+
+Count and playtime placeholders use the same public eligibility rules so that unpublished, inaccessible, or otherwise unavailable clips are not exposed through aggregate values.
 
 Malformed Audio Archive placeholders are left visible so that syntax mistakes can be found. When a referenced clip is unavailable, the plugin can either display a translated unavailable message or remove the placeholder silently, according to its plugin settings.
 
