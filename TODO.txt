@@ -1,10 +1,14 @@
 Audio Archive - To Do
 =====================
 
-Frontend
+Component frontend layout/style
 - CSS fixes for main archive list
 - main archive list table header (with column titles and sorting functionality) does not appear on mobile phone
 - main archive list elements have bad layout when viewed on a narrow screen (e.g. mobile): The horizontal distance between play button and clip title becomes so large that clip title and date are pushed out of the surrounding box. the distance is different for every table row.
+
+Module / content plugin style
+- Module and content plugin offer styles "Default", "Compact", "Featured". But "Default" and "Featured" look exactly the same. And where do we even set what the default should be? If there really is no option yet to set the default style, we need one in the component settings.
+- the styles should look different: they should look like a nice player box, with a border.
 
 Frontend
 - Waveform display
