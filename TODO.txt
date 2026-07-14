@@ -2,7 +2,14 @@ Audio Archive - To Do
 =====================
 
 Frontend
+- CSS fixes for main archive list
+- main archive list table header (with column titles and sorting functionality) does not appear on mobile phone
+- main archive list elements have bad layout when viewed on a narrow screen (e.g. mobile): The horizontal distance between play button and clip title becomes so large that clip title and date are pushed out of the surrounding box. the distance is different for every table row.
+
+Frontend
 - Waveform display
+
+---
 
 Modules
 - Add mod_audioarchive module
