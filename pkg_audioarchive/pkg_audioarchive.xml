@@ -2,7 +2,7 @@
 <extension type="package" method="upgrade">
     <name>Joomla! Audio Archive Package</name>
     <packagename>audioarchive</packagename>
-    <version>0.6.14</version>
+    <version>0.6.15</version>
     <creationDate>2026-07-14</creationDate>
     <author>Frank Willeke</author>
     <authorEmail></authorEmail>
@@ -16,6 +16,7 @@
         <file type="component" id="com_audioarchive">com_audioarchive.zip</file>
         <file type="plugin" id="audioarchive" group="finder">plg_finder_audioarchive.zip</file>
         <file type="module" id="mod_audioarchive" client="site">mod_audioarchive.zip</file>
+        <file type="module" id="mod_audioarchive_tags" client="site">mod_audioarchive_tags.zip</file>
         <file type="plugin" id="audioarchive" group="quickicon">plg_quickicon_audioarchive.zip</file>
         <file type="plugin" id="audioarchive" group="content">plg_content_audioarchive.zip</file>
     </files>

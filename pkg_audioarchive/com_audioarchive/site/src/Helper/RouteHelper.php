@@ -38,6 +38,25 @@ abstract class RouteHelper
 	}
 
 	/**
+	 * @brief Return the internal route for the public tag directory.
+	 *
+	 * @param int $itemId Optional Tag Directory menu item identifier.
+	 *
+	 * @return string Internal Joomla route.
+	 */
+	public static function getTagDirectoryRoute(int $itemId = 0): string
+	{
+		$link = 'index.php?option=com_audioarchive&view=tagdirectory';
+
+		if ($itemId > 0)
+		{
+			$link .= '&Itemid=' . $itemId;
+		}
+
+		return $link;
+	}
+
+	/**
 	 * @brief Return the internal route for one public clip.
 	 *
 	 * @param int $id Clip identifier.

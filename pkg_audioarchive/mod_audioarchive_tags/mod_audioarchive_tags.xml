@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="module" client="site" method="upgrade">
+	<name>MOD_AUDIOARCHIVE_TAGS</name>
+	<version>1.0.0</version>
+	<creationDate>2026-07-14</creationDate>
+	<author>Frank Willeke</author>
+	<copyright>Copyright (C) 2026 Frank Willeke.</copyright>
+	<license>GNU General Public License version 2 or later</license>
+	<description>MOD_AUDIOARCHIVE_TAGS_XML_DESCRIPTION</description>
+	<namespace path="src">Willeke\Module\AudioarchiveTags</namespace>
+	<files>
+		<filename module="mod_audioarchive_tags">mod_audioarchive_tags.php</filename>
+		<folder>src</folder>
+		<folder>tmpl</folder>
+		<folder>language</folder>
+	</files>
+	<languages>
+		<language tag="en-GB">language/en-GB/mod_audioarchive_tags.ini</language>
+		<language tag="en-GB">language/en-GB/mod_audioarchive_tags.sys.ini</language>
+		<language tag="de-DE">language/de-DE/mod_audioarchive_tags.ini</language>
+		<language tag="de-DE">language/de-DE/mod_audioarchive_tags.sys.ini</language>
+	</languages>
+	<config>
+		<fields name="params">
+			<fieldset name="basic" label="MOD_AUDIOARCHIVE_TAGS_FIELDSET_SELECTION">
+				<field
+					name="tag_directory_tags"
+					type="tag"
+					multiple="true"
+					mode="nested"
+					custom="false"
+					layout="joomla.form.field.list-fancy-select"
+					label="MOD_AUDIOARCHIVE_TAGS_FIELD_TAGS_LABEL"
+					description="MOD_AUDIOARCHIVE_TAGS_FIELD_TAGS_DESC"
+				/>
+				<field
+					name="tag_directory_archive_itemid"
+					type="sql"
+					query="SELECT m.id AS value, CONCAT(m.title, ' [', m.id, ']') AS text FROM #__menu AS m INNER JOIN #__extensions AS e ON e.extension_id = m.component_id WHERE m.client_id = 0 AND m.published = 1 AND e.type = 'component' AND e.element = 'com_audioarchive' AND m.link LIKE 'index.php?option=com_audioarchive&amp;view=archive%' ORDER BY m.title"
+					key_field="value"
+					value_field="text"
+					default="0"
+					label="MOD_AUDIOARCHIVE_TAGS_FIELD_ARCHIVE_ITEM_LABEL"
+					description="MOD_AUDIOARCHIVE_TAGS_FIELD_ARCHIVE_ITEM_DESC"
+				>
+					<option value="0">MOD_AUDIOARCHIVE_TAGS_FIELD_ARCHIVE_ITEM_AUTO</option>
+				</field>
+				<field
+					name="tag_directory_hide_empty"
+					type="radio"
+					layout="joomla.form.field.radio.switcher"
+					default="1"
+					label="MOD_AUDIOARCHIVE_TAGS_FIELD_HIDE_EMPTY_LABEL"
+					description="MOD_AUDIOARCHIVE_TAGS_FIELD_HIDE_EMPTY_DESC"
+				>
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+				<field
+					name="tag_directory_ordering"
+					type="list"
+					default="title"
+					label="MOD_AUDIOARCHIVE_TAGS_FIELD_ORDERING_LABEL"
+				>
+					<option value="title">MOD_AUDIOARCHIVE_TAGS_ORDER_TITLE</option>
+					<option value="count">MOD_AUDIOARCHIVE_TAGS_ORDER_COUNT</option>
+					<option value="selected">MOD_AUDIOARCHIVE_TAGS_ORDER_SELECTED</option>
+				</field>
+			</fieldset>
+			<fieldset name="display" label="MOD_AUDIOARCHIVE_TAGS_FIELDSET_DISPLAY">
+				<field
+					name="tag_directory_presentation"
+					type="list"
+					default="list"
+					label="MOD_AUDIOARCHIVE_TAGS_FIELD_PRESENTATION_LABEL"
+				>
+					<option value="cards">MOD_AUDIOARCHIVE_TAGS_PRESENTATION_CARDS</option>
+					<option value="list">MOD_AUDIOARCHIVE_TAGS_PRESENTATION_LIST</option>
+					<option value="compact">MOD_AUDIOARCHIVE_TAGS_PRESENTATION_COMPACT</option>
+				</field>
+				<field
+					name="tag_directory_show_descriptions"
+					type="radio"
+					layout="joomla.form.field.radio.switcher"
+					default="1"
+					label="MOD_AUDIOARCHIVE_TAGS_FIELD_SHOW_DESCRIPTIONS_LABEL"
+				>
+					<option value="1">JSHOW</option>
+					<option value="0">JHIDE</option>
+				</field>
+				<field
+					name="tag_directory_show_counts"
+					type="radio"
+					layout="joomla.form.field.radio.switcher"
+					default="0"
+					label="MOD_AUDIOARCHIVE_TAGS_FIELD_SHOW_COUNTS_LABEL"
+					description="MOD_AUDIOARCHIVE_TAGS_FIELD_SHOW_COUNTS_DESC"
+				>
+					<option value="1">JSHOW</option>
+					<option value="0">JHIDE</option>
+				</field>
+			</fieldset>
+			<fieldset name="advanced">
+				<field name="moduleclass_sfx" type="textarea" rows="3" label="COM_MODULES_FIELD_MODULECLASS_SFX_LABEL" />
+				<field name="cache" type="list" default="0" label="COM_MODULES_FIELD_CACHING_LABEL">
+					<option value="1">JGLOBAL_USE_GLOBAL</option>
+					<option value="0">COM_MODULES_FIELD_VALUE_NOCACHING</option>
+				</field>
+				<field name="cache_time" type="number" default="900" label="COM_MODULES_FIELD_CACHE_TIME_LABEL" />
+				<field name="cachemode" type="hidden" default="id" />
+			</fieldset>
+		</fields>
+	</config>
+</extension>

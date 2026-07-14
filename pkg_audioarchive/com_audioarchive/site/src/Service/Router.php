@@ -16,7 +16,7 @@ use Joomla\Database\ParameterType;
 \defined('_JEXEC') or die;
 
 /**
- * @brief Site router for Audio Archive archive and clip views.
+ * @brief Site router for Audio Archive archive, tag-directory, and clip views.
  */
 class Router extends RouterView
 {
@@ -42,6 +42,9 @@ class Router extends RouterView
 
 		$archive = new RouterViewConfiguration('archive');
 		$this->registerView($archive);
+
+		$tagDirectory = new RouterViewConfiguration('tagdirectory');
+		$this->registerView($tagDirectory);
 
 		$clip = new RouterViewConfiguration('clip');
 		$clip->setKey('id')->setParent($archive);
