@@ -480,8 +480,19 @@
 	font-weight: 600;
 }
 
+.com-audioarchive-mobile-sort
+{
+	display: none;
+}
+
+.com-audioarchive-mobile-card-list
+{
+	display: none;
+}
+
 .com-audioarchive-table-wrapper
 {
+	min-width: 0;
 	border: 1px solid var(--audioarchive-border);
 	border-radius: var(--audioarchive-radius);
 	background: var(--audioarchive-surface);
@@ -492,6 +503,7 @@
 .com-audioarchive-table
 {
 	width: 100%;
+	min-width: 0;
 	margin: 0;
 	border-collapse: separate;
 	border-spacing: 0;
@@ -559,6 +571,8 @@
 .com-audioarchive-title-cell
 {
 	min-width: 13rem;
+	max-width: 32rem;
+	overflow-wrap: anywhere;
 }
 
 .com-audioarchive-title-link
@@ -1003,43 +1017,79 @@
 		grid-column: 1 / -1;
 	}
 
-	.com-audioarchive-table-wrapper
-	{
-		border: 0;
-		border-radius: 0;
-		background: transparent;
-		box-shadow: none;
-		overflow: visible;
-	}
-
-	.com-audioarchive-table thead
-	{
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		overflow: hidden;
-		clip: rect(0 0 0 0);
-		clip-path: inset(50%);
-		white-space: nowrap;
-	}
-
-	.com-audioarchive-table,
-	.com-audioarchive-table tbody
-	{
-		display: block;
-		width: 100%;
-	}
-
-	.com-audioarchive-table tr
+	.com-audioarchive-mobile-sort
 	{
 		display: grid;
-		grid-template-columns: auto minmax(0, 1fr);
-		grid-template-areas:
-			"play title"
-			"meta meta";
-		gap: .25rem .8rem;
-		width: 100%;
-		margin-bottom: .85rem;
+		gap: .5rem;
+		margin-bottom: .75rem;
+		padding: .75rem;
+		border: 1px solid var(--audioarchive-border);
+		border-radius: var(--audioarchive-radius);
+		background: var(--audioarchive-surface-raised);
+	}
+
+	.com-audioarchive-mobile-sort-label
+	{
+		font-size: .75rem;
+		font-weight: 800;
+		letter-spacing: .035em;
+		text-transform: uppercase;
+		color: var(--audioarchive-muted);
+	}
+
+	.com-audioarchive-mobile-sort-options
+	{
+		display: flex;
+		flex-wrap: wrap;
+		gap: .45rem;
+	}
+
+	.com-audioarchive-mobile-sort-link
+	{
+		display: inline-flex;
+		align-items: center;
+		gap: .35rem;
+		min-height: 2.15rem;
+		padding: .35rem .62rem;
+		border: 1px solid var(--audioarchive-border-strong);
+		border-radius: 999px;
+		background: var(--audioarchive-surface);
+		color: inherit;
+		font-size: .8rem;
+		font-weight: 700;
+		line-height: 1.15;
+		text-decoration: none;
+	}
+
+	.com-audioarchive-mobile-sort-link:hover,
+	.com-audioarchive-mobile-sort-link:focus-visible,
+	.com-audioarchive-mobile-sort-link.is-active
+	{
+		border-color: color-mix(in srgb, var(--audioarchive-accent) 58%, var(--audioarchive-border-strong));
+		background: color-mix(in srgb, var(--audioarchive-accent) 10%, var(--audioarchive-surface));
+		color: inherit;
+	}
+
+	.com-audioarchive-mobile-sort-link:focus-visible
+	{
+		outline: .18rem solid color-mix(in srgb, var(--audioarchive-accent) 42%, transparent);
+		outline-offset: .12rem;
+	}
+
+	.com-audioarchive-table-wrapper
+	{
+		display: none;
+	}
+
+	.com-audioarchive-mobile-card-list
+	{
+		display: grid;
+		gap: .85rem;
+	}
+
+	.com-audioarchive-mobile-card
+	{
+		min-width: 0;
 		padding: .9rem;
 		border: 1px solid var(--audioarchive-border);
 		border-radius: var(--audioarchive-radius);
@@ -1047,74 +1097,122 @@
 		box-shadow: 0 .18rem .75rem color-mix(in srgb, #000 7%, transparent);
 	}
 
-	.com-audioarchive-table tr.no-player
-	{
-		grid-template-columns: minmax(0, 1fr);
-		grid-template-areas: "title";
-	}
-
-	.com-audioarchive-table th,
-	.com-audioarchive-table td
+	.com-audioarchive-mobile-card-header
 	{
 		display: grid;
-		grid-template-columns: minmax(7rem, .7fr) minmax(0, 1fr);
+		grid-template-columns: 2.65rem minmax(0, 1fr);
+		align-items: center;
 		gap: .75rem;
-		width: 100%;
-		padding: .48rem 0;
-		border-bottom: 1px solid var(--audioarchive-border);
-		text-align: start !important;
+		min-width: 0;
 	}
 
-	.com-audioarchive-table th::before,
-	.com-audioarchive-table td::before
+	.com-audioarchive-mobile-card.no-player .com-audioarchive-mobile-card-header
 	{
-		content: attr(data-label);
-		font-size: .72rem;
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.com-audioarchive-mobile-card-player
+	{
+		align-self: start;
+		width: 2.65rem;
+		min-width: 2.65rem;
+	}
+
+	.com-audioarchive-mobile-card-heading
+	{
+		min-width: 0;
+	}
+
+	.com-audioarchive-mobile-card-title
+	{
+		display: block;
+		max-width: 100%;
+		font-size: 1.02rem;
 		font-weight: 750;
+		line-height: 1.25;
+		text-decoration-thickness: .08em;
+		text-underline-offset: .16em;
+		overflow-wrap: break-word;
+		word-break: normal;
+	}
+
+	.com-audioarchive-mobile-card-category
+	{
+		display: block;
+		margin-top: .2rem;
+		font-size: .78rem;
+		font-weight: 500;
+		color: var(--audioarchive-muted);
+		overflow-wrap: break-word;
+	}
+
+	.com-audioarchive-mobile-card-metadata
+	{
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: .65rem 1rem;
+		margin: .85rem 0 0;
+		padding: .8rem 0 0;
+		border-top: 1px solid var(--audioarchive-border);
+	}
+
+	.com-audioarchive-mobile-card-metadata-item
+	{
+		min-width: 0;
+	}
+
+	.com-audioarchive-mobile-card-metadata dt,
+	.com-audioarchive-mobile-card-section-label
+	{
+		display: block;
+		margin: 0 0 .14rem;
+		font-size: .7rem;
+		font-weight: 800;
+		letter-spacing: .035em;
+		line-height: 1.2;
+		text-transform: uppercase;
 		color: var(--audioarchive-muted);
 	}
 
-	.com-audioarchive-play-cell
+	.com-audioarchive-mobile-card-metadata dd
 	{
-		grid-area: play;
-		display: block !important;
-		width: auto;
-		padding: 0 !important;
-		border: 0 !important;
-	}
-
-	.com-audioarchive-play-cell::before,
-	.com-audioarchive-title-cell::before
-	{
-		display: none;
-	}
-
-	.com-audioarchive-title-cell
-	{
-		grid-area: title;
-		display: block !important;
 		min-width: 0;
-		padding: .15rem 0 .7rem !important;
-		border-bottom: 1px solid var(--audioarchive-border) !important;
+		margin: 0;
+		font-variant-numeric: tabular-nums;
+		line-height: 1.3;
+		overflow-wrap: break-word;
 	}
 
-	.com-audioarchive-title-link
+	.com-audioarchive-mobile-card-metadata time
 	{
-		font-size: 1.02rem;
+		white-space: nowrap;
 	}
 
-	.com-audioarchive-category-cell,
-	.com-audioarchive-duration-cell,
-	.com-audioarchive-date-cell,
-	.com-audioarchive-tags-cell
+	.com-audioarchive-mobile-card-tags
 	{
-		grid-column: 1 / -1;
-		grid-area: auto;
+		min-width: 0;
+		margin-top: .8rem;
+		padding-top: .75rem;
+		border-top: 1px solid var(--audioarchive-border);
 	}
 
-	.com-audioarchive-tags-cell
+	.com-audioarchive-mobile-card-tags .com-audioarchive-tag-list
 	{
-		border-bottom: 0 !important;
+		width: 100%;
+		min-width: 0;
+	}
+
+	.com-audioarchive-mobile-card-tags .com-audioarchive-tag-list li
+	{
+		max-width: 100%;
+	}
+
+	.com-audioarchive-mobile-card-tags .com-audioarchive-tag-list a
+	{
+		max-width: 100%;
+		white-space: normal;
+		word-break: normal;
+		overflow-wrap: break-word;
 	}
 
 	.com-audioarchive-pagination-bar,
@@ -1147,6 +1245,11 @@
 
 @media (max-width: 32rem)
 {
+	.com-audioarchive-mobile-card-metadata
+	{
+		grid-template-columns: minmax(0, 1fr);
+	}
+
 	.com-audioarchive-range-fields
 	{
 		grid-template-columns: 1fr;

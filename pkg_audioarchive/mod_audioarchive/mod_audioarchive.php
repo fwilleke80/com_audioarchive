@@ -44,8 +44,18 @@ if ((int) Joomla\CMS\Component\ComponentHelper::getParams('com_audioarchive')->g
 	$playCountToken = Session::getFormToken();
 }
 
-$layout = in_array((string) $params->get('presentation', 'default'), ['default', 'compact', 'featured'], true)
-	? (string) $params->get('presentation', 'default')
+$componentParams = Joomla\CMS\Component\ComponentHelper::getParams('com_audioarchive');
+$presentation = (string) $params->get('presentation', 'inherit');
+
+if ($presentation === 'inherit')
+{
+	$presentation = (string) $componentParams->get('default_embed_presentation', 'default');
+}
+
+$layout = in_array($presentation, ['default', 'compact', 'featured'], true)
+	? $presentation
 	: 'default';
+
+$params->set('presentation', $layout);
 
 require ModuleHelper::getLayoutPath('mod_audioarchive', $layout);

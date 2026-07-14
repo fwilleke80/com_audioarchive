@@ -203,7 +203,22 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 			return null;
 		}
 
-		$layout = strtolower(trim((string) ($attributes['layout'] ?? $this->params->get('presentation', 'default'))));
+		$configuredPresentation = strtolower(trim((string) $this->params->get('presentation', 'inherit')));
+
+		if ($configuredPresentation === 'inherit')
+		{
+			$configuredPresentation = strtolower(trim((string) ComponentHelper::getParams('com_audioarchive')->get(
+				'default_embed_presentation',
+				'default'
+			)));
+		}
+
+		if (!in_array($configuredPresentation, ['default', 'compact', 'featured'], true))
+		{
+			$configuredPresentation = 'default';
+		}
+
+		$layout = strtolower(trim((string) ($attributes['layout'] ?? $configuredPresentation)));
 
 		if (!in_array($layout, ['default', 'compact', 'featured'], true))
 		{

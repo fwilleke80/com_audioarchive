@@ -53,7 +53,38 @@ $sortIndicator = static function(string $field) use ($currentSort, $currentDirec
 
 	return $currentDirection === 'ASC' ? '↑' : '↓';
 };
+$mobileSortFields = [
+	'title' => $columns['title'] ? Text::_('COM_AUDIOARCHIVE_COLUMN_TITLE') : null,
+	'duration' => $columns['duration'] ? Text::_('COM_AUDIOARCHIVE_COLUMN_DURATION') : null,
+	'recorded' => $columns['recorded'] ? Text::_('COM_AUDIOARCHIVE_COLUMN_RECORDED') : null,
+	'uploaded' => $columns['uploaded'] ? Text::_('COM_AUDIOARCHIVE_COLUMN_UPLOADED') : null,
+];
+$mobileSortFields = array_filter($mobileSortFields);
 ?>
+<?php if ($mobileSortFields !== []) : ?>
+	<nav class="com-audioarchive-mobile-sort" aria-label="<?php echo Text::_('COM_AUDIOARCHIVE_SORT_RESULTS'); ?>">
+		<span class="com-audioarchive-mobile-sort-label"><?php echo Text::_('COM_AUDIOARCHIVE_SORT_BY'); ?></span>
+		<div class="com-audioarchive-mobile-sort-options">
+			<?php foreach ($mobileSortFields as $field => $label) : ?>
+				<a
+					class="com-audioarchive-mobile-sort-link<?php echo $currentSort === $field ? ' is-active' : ''; ?>"
+					href="<?php echo $sortLink($field); ?>"
+					<?php echo $currentSort === $field ? 'aria-current="true"' : ''; ?>
+				>
+					<span><?php echo $label; ?></span>
+					<span aria-hidden="true"><?php echo $sortIndicator($field); ?></span>
+				</a>
+			<?php endforeach; ?>
+		</div>
+	</nav>
+<?php endif; ?>
+<div class="com-audioarchive-mobile-card-list">
+	<?php foreach ($this->items as $item) : ?>
+		<?php $this->item = $item; $this->archiveColumns = $columns; ?>
+		<?php echo $this->loadTemplate('card'); ?>
+	<?php endforeach; ?>
+	<?php $this->item = null; $this->archiveColumns = []; ?>
+</div>
 <div class="com-audioarchive-table-wrapper">
 	<table class="com-audioarchive-table">
 		<thead>

@@ -8,7 +8,13 @@ use Joomla\String\StringHelper;
 
 \defined('_JEXEC') or die;
 
-$moduleClass = trim('mod-audioarchive ' . htmlspecialchars((string) $params->get('moduleclass_sfx', ''), ENT_QUOTES, 'UTF-8'));
+$presentation = in_array((string) $params->get('presentation', 'default'), ['default', 'compact', 'featured'], true)
+	? (string) $params->get('presentation', 'default')
+	: 'default';
+$moduleClass = trim(
+	'mod-audioarchive mod-audioarchive--' . $presentation . ' '
+	. htmlspecialchars((string) $params->get('moduleclass_sfx', ''), ENT_QUOTES, 'UTF-8')
+);
 $showTitle = (int) $params->get('show_title', 1) === 1;
 $linkTitle = (int) $params->get('link_title', 1) === 1;
 $showPlayer = (int) $params->get('show_player', 1) === 1;
@@ -50,7 +56,7 @@ $displayDate = (string) $params->get('display_date', 'uploaded');
 				$plainDescription = rtrim(StringHelper::substr($plainDescription, 0, $descriptionLength - 1)) . '…';
 			}
 			?>
-			<article class="mod-audioarchive-item">
+			<article class="mod-audioarchive-item <?php echo $showPlayer ? 'has-player' : 'no-player'; ?>">
 				<?php if ($showTitle) : ?>
 					<h3 class="mod-audioarchive-title">
 						<?php if ($linkTitle) : ?><a href="<?php echo $item->detail_url; ?>"><?php endif; ?>
