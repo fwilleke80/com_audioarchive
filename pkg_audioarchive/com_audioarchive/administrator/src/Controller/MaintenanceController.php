@@ -6,6 +6,7 @@ use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
+use Joomla\CMS\Response\JsonResponse;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
 use Joomla\Database\DatabaseInterface;
@@ -138,6 +139,45 @@ class MaintenanceController extends BaseController
             $failed > 0 ? 'warning' : 'success'
         );
         $this->setRedirect($this->maintenanceUrl());
+    }
+
+    /**
+     * @brief Delete one AJAX batch of selected stale files.
+     *
+     * @return void
+     */
+    public function deleteStaleBatch(): void
+    {
+        Session::checkToken('post') or jexit(Text::_('JINVALID_TOKEN'));
+        $this->assertProcessPermission();
+        $application = Factory::getApplication();
+
+        if (!$application->getIdentity()->authorise('audioarchive.managefiles', 'com_audioarchive'))
+        {
+            throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+        }
+
+        $tokens = $application->getInput()->post->get('stale', [], 'array');
+        $tokens = array_values(array_unique(array_filter(array_map('strval', is_array($tokens) ? $tokens : []))));
+
+        if ($tokens === [] || count($tokens) > 200)
+        {
+            $application->setHeader('Content-Type', 'application/json; charset=utf-8', true);
+            echo new JsonResponse(null, Text::sprintf('COM_AUDIOARCHIVE_MAINTENANCE_STALE_BATCH_LIMIT', 200), true);
+            $application->close();
+        }
+
+        $model = $this->getModel('Maintenance');
+
+        if (!$model instanceof MaintenanceModel)
+        {
+            throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_MAINTENANCE_ERROR_MODEL'), 500);
+        }
+
+        $result = $model->deleteStaleItems($tokens);
+        $application->setHeader('Content-Type', 'application/json; charset=utf-8', true);
+        echo new JsonResponse($result);
+        $application->close();
     }
 
     /**

@@ -221,16 +221,15 @@ $severityKeys = [
                 </div>
                 <?php if ($staleItems !== []) : ?>
                     <button
-                        type="submit"
-                        name="task"
-                        value="maintenance.deleteStale"
+                        type="button"
+                        id="audioarchive-delete-stale"
                         class="btn btn-danger"
-                        onclick="return confirm('<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_MAINTENANCE_STALE_CONFIRM')); ?>');"
                     >
                         <?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_STALE_DELETE_SELECTED'); ?>
                     </button>
                 <?php endif; ?>
             </div>
+            <div id="audioarchive-stale-progress" class="alert alert-info m-3 d-none" role="status" aria-live="polite"></div>
             <?php if ($staleItems === []) : ?>
                 <div class="card-body">
                     <div class="alert alert-success mb-0"><?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_STALE_EMPTY'); ?></div>
@@ -441,3 +440,88 @@ $severityKeys = [
         <?php echo HTMLHelper::_('form.token'); ?>
     </form>
 </div>
+
+<script>
+(() =>
+{
+    const button = document.getElementById('audioarchive-delete-stale');
+
+    if (!button)
+    {
+        return;
+    }
+
+    const progress = document.getElementById('audioarchive-stale-progress');
+    const endpoint = <?php echo json_encode(Route::_('index.php?option=com_audioarchive&task=maintenance.deleteStaleBatch&format=json', false)); ?>;
+    const confirmText = <?php echo json_encode(Text::_('COM_AUDIOARCHIVE_MAINTENANCE_STALE_CONFIRM')); ?>;
+    const progressText = <?php echo json_encode(Text::_('COM_AUDIOARCHIVE_MAINTENANCE_STALE_PROGRESS')); ?>;
+    const failedText = <?php echo json_encode(Text::_('COM_AUDIOARCHIVE_MAINTENANCE_STALE_AJAX_FAILED')); ?>;
+
+    button.addEventListener('click', async () =>
+    {
+        const selected = Array.from(document.querySelectorAll('input[name="stale[]"]:checked'));
+
+        if (selected.length === 0)
+        {
+            Joomla.renderMessages({warning: [<?php echo json_encode(Text::_('COM_AUDIOARCHIVE_MAINTENANCE_STALE_NO_SELECTION')); ?>]});
+            return;
+        }
+
+        if (!window.confirm(confirmText))
+        {
+            return;
+        }
+
+        const token = document.querySelector('#adminForm input[type="hidden"][value="1"]');
+        let deleted = 0;
+        let failed = 0;
+        button.disabled = true;
+        progress.classList.remove('d-none');
+
+        try
+        {
+            for (let offset = 0; offset < selected.length; offset += 200)
+            {
+                const batch = selected.slice(offset, offset + 200);
+                const formData = new FormData();
+
+                if (token)
+                {
+                    formData.append(token.name, '1');
+                }
+
+                batch.forEach((checkbox) => formData.append('stale[]', checkbox.value));
+                progress.textContent = progressText
+                    .replace('%1$d', String(Math.min(offset + batch.length, selected.length)))
+                    .replace('%2$d', String(selected.length));
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin',
+                    headers: {'X-Requested-With': 'XMLHttpRequest'}
+                });
+                const payload = await response.json();
+
+                if (!response.ok || payload.success === false)
+                {
+                    throw new Error(payload.message || failedText);
+                }
+
+                const result = payload.data || {};
+                deleted += Number(result.succeeded || 0);
+                failed += Number(result.failed || 0);
+                batch.forEach((checkbox) => checkbox.closest('tr')?.remove());
+            }
+
+            window.location.reload();
+        }
+        catch (error)
+        {
+            button.disabled = false;
+            progress.classList.add('d-none');
+            Joomla.renderMessages({error: [error instanceof Error ? error.message : failedText]});
+        }
+    });
+})();
+</script>
