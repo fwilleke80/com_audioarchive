@@ -2,6 +2,13 @@
 <config>
     <fieldset name="general" label="COM_AUDIOARCHIVE_CONFIG_GENERAL_LABEL">
         <field
+            name="frontend_access_level"
+            type="accesslevel"
+            label="COM_AUDIOARCHIVE_CONFIG_FRONTEND_ACCESS_LEVEL_LABEL"
+            description="COM_AUDIOARCHIVE_CONFIG_FRONTEND_ACCESS_LEVEL_DESC"
+            default="1"
+        />
+        <field
             name="default_category"
             type="category"
             extension="com_audioarchive"
