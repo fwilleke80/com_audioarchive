@@ -95,6 +95,11 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 			return $placeholder;
 		}
 
+		if (in_array($options['mode'], ['count', 'playtime'], true))
+		{
+			return $this->renderAggregate($options);
+		}
+
 		if (!class_exists(AudioarchiveHelper::class))
 		{
 			return $this->renderUnavailableMessage(Text::_('PLG_CONTENT_AUDIOARCHIVE_DEPENDENCY_MISSING'));
@@ -140,10 +145,14 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 	 * {audioarchive random layout=compact}
 	 * {audioarchive clip=some-alias}
 	 * {audioarchive clip=123 layout=featured}
+	 * {audioarchive count}
+	 * {audioarchive count category=music,soundfx}
+	 * {audioarchive playtime}
+	 * {audioarchive playtime category=music,soundfx}
 	 *
 	 * @param string $arguments Placeholder arguments.
 	 *
-	 * @return array{mode:string, clip:string, layout:string}|null Parsed options or null.
+	 * @return array{mode:string, clip:string, layout:string, categories:string[]}|null Parsed options or null.
 	 */
 	private function parseArguments(string $arguments): ?array
 	{
@@ -164,11 +173,18 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 		);
 
 		$mode = '';
+		$modeMatches = [];
+		preg_match_all('/\b(random|count|playtime)\b/i', $remaining, $modeMatches);
 
-		if (preg_match('/\brandom\b/i', $remaining) === 1)
+		if (count($modeMatches[1] ?? []) > 1)
 		{
-			$mode = 'random';
-			$remaining = (string) preg_replace('/\brandom\b/i', ' ', $remaining, 1);
+			return null;
+		}
+
+		if (($modeMatches[1] ?? []) !== [])
+		{
+			$mode = strtolower((string) $modeMatches[1][0]);
+			$remaining = (string) preg_replace('/\b' . preg_quote($mode, '/') . '\b/i', ' ', $remaining, 1);
 		}
 
 		if (trim($remaining) !== '')
@@ -176,7 +192,8 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 			return null;
 		}
 
-		$allowed = ['clip', 'layout'];
+		$aggregateMode = in_array($mode, ['count', 'playtime'], true);
+		$allowed = $aggregateMode ? ['category'] : ['clip', 'layout'];
 
 		foreach (array_keys($attributes) as $key)
 		{
@@ -187,6 +204,17 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 		}
 
 		$clip = trim((string) ($attributes['clip'] ?? ''));
+		$categories = $this->parseCategoryReferences((string) ($attributes['category'] ?? ''));
+
+		if ($aggregateMode)
+		{
+			return [
+				'mode' => $mode,
+				'clip' => '',
+				'layout' => '',
+				'categories' => $categories,
+			];
+		}
 
 		if ($clip !== '')
 		{
@@ -229,13 +257,269 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 			'mode' => $mode,
 			'clip' => $clip,
 			'layout' => $layout,
+			'categories' => [],
 		];
+	}
+
+	/**
+	 * @brief Parse a comma-separated category restriction.
+	 *
+	 * Category references may be numeric identifiers, aliases, or exact titles.
+	 * Empty entries are ignored and duplicate entries are removed.
+	 *
+	 * @param string $value Raw category attribute value.
+	 *
+	 * @return string[] Normalised category references.
+	 */
+	private function parseCategoryReferences(string $value): array
+	{
+		$references = preg_split('/\s*,\s*/u', trim($value)) ?: [];
+		$references = array_values(array_filter(
+			array_map(static fn(string $reference): string => trim($reference), $references),
+			static fn(string $reference): bool => $reference !== ''
+		));
+
+		return array_values(array_unique($references));
+	}
+
+	/**
+	 * @brief Render an archive count or total playtime placeholder.
+	 *
+	 * @param array{mode:string, clip:string, layout:string, categories:string[]} $options Parsed placeholder options.
+	 *
+	 * @return string Aggregate value formatted for inline content.
+	 */
+	private function renderAggregate(array $options): string
+	{
+		$totals = $this->getPublicAggregate($options['categories']);
+
+		if ($options['mode'] === 'count')
+		{
+			return (string) $totals['count'];
+		}
+
+		return $this->formatPlaytime($totals['duration_ms']);
+	}
+
+	/**
+	 * @brief Return aggregate data for clips visible to the current visitor.
+	 *
+	 * The query mirrors the public module eligibility rules: clips and their
+	 * categories must be published, accessible, within publication dates, in
+	 * the current language, and backed by an available original file.
+	 *
+	 * @param string[] $categoryReferences Optional category IDs, aliases, or titles.
+	 *
+	 * @return array{count:int, duration_ms:int} Public clip count and summed duration.
+	 */
+	private function getPublicAggregate(array $categoryReferences): array
+	{
+		$database = Factory::getContainer()->get(DatabaseInterface::class);
+		$application = $this->getApplication();
+		$levels = array_values(array_unique(array_map(
+			'intval',
+			$application->getIdentity()->getAuthorisedViewLevels()
+		)));
+		$levels = $levels !== [] ? $levels : [1];
+		$categoryIds = $this->resolveCategoryIds($database, $categoryReferences);
+
+		if ($categoryReferences !== [] && $categoryIds === [])
+		{
+			return ['count' => 0, 'duration_ms' => 0];
+		}
+
+		$published = 1;
+		$available = 1;
+		$original = 'original';
+		$extension = 'com_audioarchive';
+		$now = Factory::getDate()->toSql();
+		$language = $application->getLanguage()->getTag();
+		$query = $database->getQuery(true)
+			->select([
+				'COUNT(DISTINCT ' . $database->quoteName('a.id') . ') AS ' . $database->quoteName('clip_count'),
+				'COALESCE(SUM(' . $database->quoteName('a.duration_ms') . '), 0) AS ' . $database->quoteName('total_duration_ms'),
+			])
+			->from($database->quoteName('#__audioarchive_clips', 'a'))
+			->innerJoin(
+				$database->quoteName('#__categories', 'c')
+				. ' ON ' . $database->quoteName('c.id') . ' = ' . $database->quoteName('a.catid')
+			)
+			->where($database->quoteName('a.state') . ' = :aggregateClipPublished')
+			->where($database->quoteName('c.published') . ' = :aggregateCategoryPublished')
+			->where($database->quoteName('c.extension') . ' = :aggregateCategoryExtension')
+			->whereIn($database->quoteName('a.access'), $levels, ParameterType::INTEGER)
+			->whereIn($database->quoteName('c.access'), $levels, ParameterType::INTEGER)
+			->whereIn($database->quoteName('a.language'), ['*', $language], ParameterType::STRING)
+			->extendWhere(
+				'AND',
+				[
+					$database->quoteName('a.publish_up') . ' IS NULL',
+					$database->quoteName('a.publish_up') . ' <= :aggregatePublishNow',
+				],
+				'OR'
+			)
+			->extendWhere(
+				'AND',
+				[
+					$database->quoteName('a.publish_down') . ' IS NULL',
+					$database->quoteName('a.publish_down') . ' >= :aggregateUnpublishNow',
+				],
+				'OR'
+			)
+			->bind(':aggregateClipPublished', $published, ParameterType::INTEGER)
+			->bind(':aggregateCategoryPublished', $published, ParameterType::INTEGER)
+			->bind(':aggregateCategoryExtension', $extension, ParameterType::STRING)
+			->bind(':aggregatePublishNow', $now, ParameterType::STRING)
+			->bind(':aggregateUnpublishNow', $now, ParameterType::STRING);
+
+		$originalFile = $database->getQuery(true)
+			->select('1')
+			->from($database->quoteName('#__audioarchive_files', 'aggregateFile'))
+			->where($database->quoteName('aggregateFile.clip_id') . ' = ' . $database->quoteName('a.id'))
+			->where($database->quoteName('aggregateFile.file_role') . ' = :aggregateFileRole')
+			->where($database->quoteName('aggregateFile.is_available') . ' = :aggregateFileAvailable');
+		$query->where('EXISTS (' . $originalFile . ')')
+			->bind(':aggregateFileRole', $original, ParameterType::STRING)
+			->bind(':aggregateFileAvailable', $available, ParameterType::INTEGER);
+
+		$ancestor = $database->getQuery(true)
+			->select('1')
+			->from($database->quoteName('#__categories', 'aggregateAncestor'))
+			->where($database->quoteName('aggregateAncestor.extension') . ' = :aggregateAncestorExtension')
+			->where($database->quoteName('aggregateAncestor.lft') . ' < ' . $database->quoteName('c.lft'))
+			->where($database->quoteName('aggregateAncestor.rgt') . ' > ' . $database->quoteName('c.rgt'))
+			->where(
+				'(' . $database->quoteName('aggregateAncestor.published') . ' <> :aggregateAncestorPublished'
+				. ' OR ' . $database->quoteName('aggregateAncestor.access') . ' NOT IN (' . implode(',', $levels) . '))'
+			);
+		$query->where('NOT EXISTS (' . $ancestor . ')')
+			->bind(':aggregateAncestorExtension', $extension, ParameterType::STRING)
+			->bind(':aggregateAncestorPublished', $published, ParameterType::INTEGER);
+
+		if ($categoryIds !== [])
+		{
+			$query->whereIn($database->quoteName('a.catid'), $categoryIds, ParameterType::INTEGER);
+		}
+
+		$result = $database->setQuery($query)->loadObject();
+
+		return [
+			'count' => max(0, (int) ($result->clip_count ?? 0)),
+			'duration_ms' => max(0, (int) ($result->total_duration_ms ?? 0)),
+		];
+	}
+
+	/**
+	 * @brief Resolve category references to Audio Archive category identifiers.
+	 *
+	 * @param DatabaseInterface $database Joomla database connection.
+	 * @param string[] $references Numeric identifiers, aliases, or exact titles.
+	 *
+	 * @return int[] Matching category identifiers.
+	 */
+	private function resolveCategoryIds(DatabaseInterface $database, array $references): array
+	{
+		if ($references === [])
+		{
+			return [];
+		}
+
+		$numericIds = [];
+		$names = [];
+
+		foreach ($references as $reference)
+		{
+			if (ctype_digit($reference) && (int) $reference > 0)
+			{
+				$numericIds[] = (int) $reference;
+			}
+			else
+			{
+				$names[] = strtolower($reference);
+			}
+		}
+
+		$extension = 'com_audioarchive';
+		$query = $database->getQuery(true)
+			->select($database->quoteName('id'))
+			->from($database->quoteName('#__categories'))
+			->where($database->quoteName('extension') . ' = :aggregateResolveExtension')
+			->bind(':aggregateResolveExtension', $extension, ParameterType::STRING);
+
+		$conditions = [];
+
+		if ($numericIds !== [])
+		{
+			$conditions[] = $database->quoteName('id') . ' IN (' . implode(',', array_unique($numericIds)) . ')';
+		}
+
+		if ($names !== [])
+		{
+			$names = array_values(array_unique($names));
+			$aliasPlaceholders = [];
+			$titlePlaceholders = [];
+			$aliasBindings = [];
+			$titleBindings = [];
+
+			foreach ($names as $index => $name)
+			{
+				$aliasPlaceholders[] = ':aggregateCategoryAlias' . $index;
+				$titlePlaceholders[] = ':aggregateCategoryTitle' . $index;
+				$aliasBindings[$index] = $name;
+				$titleBindings[$index] = $name;
+			}
+
+			$conditions[] = 'LOWER(' . $database->quoteName('alias') . ') IN ('
+				. implode(',', $aliasPlaceholders) . ')';
+			$conditions[] = 'LOWER(' . $database->quoteName('title') . ') IN ('
+				. implode(',', $titlePlaceholders) . ')';
+
+			foreach ($names as $index => $name)
+			{
+				$query->bind($aliasPlaceholders[$index], $aliasBindings[$index], ParameterType::STRING)
+					->bind($titlePlaceholders[$index], $titleBindings[$index], ParameterType::STRING);
+			}
+		}
+
+		if ($conditions === [])
+		{
+			return [];
+		}
+
+		$query->where('(' . implode(' OR ', $conditions) . ')');
+
+		return array_values(array_unique(array_filter(
+			array_map('intval', (array) $database->setQuery($query)->loadColumn()),
+			static fn(int $categoryId): bool => $categoryId > 0
+		)));
+	}
+
+	/**
+	 * @brief Format a summed duration without wrapping after 24 hours.
+	 *
+	 * @param int $milliseconds Duration in milliseconds.
+	 *
+	 * @return string Duration as MM:SS or H:MM:SS.
+	 */
+	private function formatPlaytime(int $milliseconds): string
+	{
+		$totalSeconds = max(0, (int) floor($milliseconds / 1000));
+		$hours = intdiv($totalSeconds, 3600);
+		$minutes = intdiv($totalSeconds % 3600, 60);
+		$seconds = $totalSeconds % 60;
+
+		if ($hours > 0)
+		{
+			return sprintf('%d:%02d:%02d', $hours, $minutes, $seconds);
+		}
+
+		return sprintf('%02d:%02d', $minutes, $seconds);
 	}
 
 	/**
 	 * @brief Create module-compatible rendering parameters.
 	 *
-	 * @param array{mode:string, clip:string, layout:string} $options Parsed placeholder options.
+	 * @param array{mode:string, clip:string, layout:string, categories:string[]} $options Parsed placeholder options.
 	 *
 	 * @return Registry Module-compatible parameters.
 	 */
