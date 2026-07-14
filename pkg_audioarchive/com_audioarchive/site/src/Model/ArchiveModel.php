@@ -9,6 +9,7 @@ use Joomla\CMS\MVC\Model\ListModel;
 use Joomla\Database\ParameterType;
 use Joomla\Database\QueryInterface;
 use Joomla\Registry\Registry;
+use Willeke\Component\Audioarchive\Site\Helper\TagDescriptionHelper;
 
 \defined('_JEXEC') or die;
 
@@ -274,6 +275,7 @@ class ArchiveModel extends ListModel
 		$items = parent::getItems();
 		$ids = array_map(static fn(object $item): int => (int) $item->id, $items);
 		$tagData = $ids ? (new TagsHelper())->getMultipleItemTags('com_audioarchive.clip', $ids, true) : [];
+		$tagData = TagDescriptionHelper::enrichGroups($this->getDatabase(), $tagData);
 
 		foreach ($items as $item)
 		{
@@ -339,7 +341,7 @@ class ArchiveModel extends ListModel
 			$query->whereIn($db->quoteName('c.id'), $visibleCategoryIds, ParameterType::INTEGER);
 		}
 
-		return $db->setQuery($query)->loadObjectList();
+		return TagDescriptionHelper::enrich($db, (array) $db->setQuery($query)->loadObjectList());
 	}
 
 

@@ -90,8 +90,9 @@ $hasMetadata = $columns['category'] || $columns['duration'] || $columns['recorde
 			<?php if ($item->tags) : ?>
 				<ul class="com-audioarchive-tag-list com-audioarchive-tag-list--linked">
 					<?php foreach ($item->tags as $tag) : ?>
+						<?php $tagDescription = trim((string) ($tag->description_text ?? '')); ?>
 						<li>
-							<a href="<?php echo $this->getTagUrl((int) $tag->id); ?>">
+							<a href="<?php echo $this->getTagUrl((int) $tag->id); ?>"<?php if ($tagDescription !== '') : ?> title="<?php echo $this->escape($tagDescription); ?>"<?php endif; ?>>
 								<?php echo $this->escape($tag->title); ?>
 							</a>
 						</li>

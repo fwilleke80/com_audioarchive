@@ -13,7 +13,8 @@ if ((int) $this->params->get('detail_show_tags', 1) !== 1 || !$this->item->tags)
 	<h2 id="audioarchive-tags-heading"><?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_TAGS'); ?></h2>
 	<ul class="com-audioarchive-tag-list">
 		<?php foreach ($this->item->tags as $tag) : ?>
-			<li><?php echo $this->escape((string) $tag->title); ?></li>
+			<?php $tagDescription = trim((string) ($tag->description_text ?? '')); ?>
+			<li<?php if ($tagDescription !== '') : ?> title="<?php echo $this->escape($tagDescription); ?>"<?php endif; ?>><?php echo $this->escape((string) $tag->title); ?></li>
 		<?php endforeach; ?>
 	</ul>
 </section>

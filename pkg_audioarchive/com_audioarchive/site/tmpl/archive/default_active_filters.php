@@ -17,9 +17,11 @@ foreach ($this->categoryOptions as $category)
 
 $queryValues = $this->getQueryValues();
 $tagNames = [];
+$tagDescriptions = [];
 foreach ($this->tagOptions as $tag)
 {
 	$tagNames[(int) $tag->id] = (string) $tag->title;
+	$tagDescriptions[(int) $tag->id] = trim((string) ($tag->description_text ?? ''));
 }
 ?>
 <section class="com-audioarchive-active-filters" aria-labelledby="audioarchive-active-filter-heading">
@@ -34,7 +36,8 @@ foreach ($this->tagOptions as $tag)
 		<?php endif; ?>
 		<?php foreach ((array) $this->state->get('filter.tags', []) as $tagId) : ?>
 			<?php if (isset($tagNames[(int) $tagId])) : ?>
-				<li><?php echo Text::sprintf('COM_AUDIOARCHIVE_ACTIVE_TAG', $this->escape($tagNames[(int) $tagId])); ?></li>
+				<?php $tagDescription = $tagDescriptions[(int) $tagId] ?? ''; ?>
+				<li<?php if ($tagDescription !== '') : ?> title="<?php echo $this->escape($tagDescription); ?>"<?php endif; ?>><?php echo Text::sprintf('COM_AUDIOARCHIVE_ACTIVE_TAG', $this->escape($tagNames[(int) $tagId])); ?></li>
 			<?php endif; ?>
 		<?php endforeach; ?>
 		<?php if (isset($queryValues['duration_min'])) : ?>

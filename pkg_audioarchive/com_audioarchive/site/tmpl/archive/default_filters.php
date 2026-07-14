@@ -112,7 +112,8 @@ $tagListId = 'audioarchive-filter-tag-list';
 								data-audioarchive-tag-options
 							>
 								<?php foreach ($this->tagOptions as $tag) : ?>
-									<label class="com-audioarchive-tag-option" data-audioarchive-tag-option>
+									<?php $tagDescription = trim((string) ($tag->description_text ?? '')); ?>
+									<label class="com-audioarchive-tag-option" data-audioarchive-tag-option<?php if ($tagDescription !== '') : ?> title="<?php echo $this->escape($tagDescription); ?>"<?php endif; ?>>
 										<input
 											type="checkbox"
 											name="tags[]"

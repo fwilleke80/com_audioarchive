@@ -9,6 +9,7 @@ use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
 use Joomla\Filesystem\Path;
 use Joomla\Registry\Registry;
+use Willeke\Component\Audioarchive\Site\Helper\TagDescriptionHelper;
 
 \defined('_JEXEC') or die;
 
@@ -151,7 +152,10 @@ class PublicMediaService
 		}
 
 		$item->tags = $withTags
-			? (new TagsHelper())->getItemTags('com_audioarchive.clip', (int) $item->id, true)
+			? TagDescriptionHelper::enrich(
+				$database,
+				(new TagsHelper())->getItemTags('com_audioarchive.clip', (int) $item->id, true)
+			)
 			: [];
 
 		return $item;

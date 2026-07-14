@@ -10,6 +10,7 @@ use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
 use Joomla\Registry\Registry;
 use Willeke\Component\Audioarchive\Site\Helper\RouteHelper;
+use Willeke\Component\Audioarchive\Site\Helper\TagDescriptionHelper;
 use Willeke\Component\Audioarchive\Site\Service\ArchiveMenuItemResolver;
 use Willeke\Component\Audioarchive\Site\Service\DownloadAccessService;
 
@@ -195,6 +196,7 @@ abstract class AudioarchiveHelper
 		}
 		$ids = array_map(static fn(object $item): int => (int) $item->id, $items);
 		$tagData = (new TagsHelper())->getMultipleItemTags('com_audioarchive.clip', $ids, true);
+		$tagData = TagDescriptionHelper::enrichGroups($database, $tagData);
 		$resolver = new ArchiveMenuItemResolver($database);
 		$app = Factory::getApplication();
 		$levels = $app->getIdentity()->getAuthorisedViewLevels();

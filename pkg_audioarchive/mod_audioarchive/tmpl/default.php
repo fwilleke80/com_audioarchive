@@ -103,7 +103,8 @@ $displayDate = (string) $params->get('display_date', 'uploaded');
 					<ul class="com-audioarchive-tag-list mod-audioarchive-tags">
 						<?php foreach ($item->tags as $tag) : ?>
 							<?php $tagUrl = Route::_(RouteHelper::getArchiveRoute((int) $item->itemid, ['tags' => (string) $tag->alias])); ?>
-							<li><a href="<?php echo $tagUrl; ?>"><?php echo htmlspecialchars((string) $tag->title, ENT_QUOTES, 'UTF-8'); ?></a></li>
+							<?php $tagDescription = trim((string) ($tag->description_text ?? '')); ?>
+							<li><a href="<?php echo $tagUrl; ?>"<?php if ($tagDescription !== '') : ?> title="<?php echo htmlspecialchars($tagDescription, ENT_QUOTES, 'UTF-8'); ?>"<?php endif; ?>><?php echo htmlspecialchars((string) $tag->title, ENT_QUOTES, 'UTF-8'); ?></a></li>
 						<?php endforeach; ?>
 					</ul>
 				<?php endif; ?>
