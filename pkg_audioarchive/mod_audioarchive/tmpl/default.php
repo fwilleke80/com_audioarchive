@@ -50,6 +50,7 @@ $displayDate = (string) $params->get('display_date', 'uploaded');
 				'published' => $item->publish_up,
 				default => $item->uploaded_at,
 			};
+			$itemShowDownload = $showDownload && !empty($item->can_download) && (string) $item->download_url !== '';
 			$plainDescription = trim(strip_tags((string) $item->description));
 			if (StringHelper::strlen($plainDescription) > $descriptionLength)
 			{
@@ -107,10 +108,10 @@ $displayDate = (string) $params->get('display_date', 'uploaded');
 					</ul>
 				<?php endif; ?>
 
-				<?php if ($showDetailLink || $showDownload) : ?>
+				<?php if ($showDetailLink || $itemShowDownload) : ?>
 					<div class="mod-audioarchive-actions">
 						<?php if ($showDetailLink) : ?><a href="<?php echo $item->detail_url; ?>"><?php echo Text::_('MOD_AUDIOARCHIVE_OPEN_CLIP'); ?></a><?php endif; ?>
-						<?php if ($showDownload) : ?><a href="<?php echo $item->download_url; ?>"><?php echo Text::_('MOD_AUDIOARCHIVE_DOWNLOAD'); ?></a><?php endif; ?>
+						<?php if ($itemShowDownload) : ?><a href="<?php echo $item->download_url; ?>"><?php echo Text::_('MOD_AUDIOARCHIVE_DOWNLOAD'); ?></a><?php endif; ?>
 					</div>
 				<?php endif; ?>
 			</article>

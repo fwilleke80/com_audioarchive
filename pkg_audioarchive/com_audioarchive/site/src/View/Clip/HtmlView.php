@@ -13,6 +13,7 @@ use Joomla\Database\DatabaseInterface;
 use Willeke\Component\Audioarchive\Site\Helper\RouteHelper;
 use Willeke\Component\Audioarchive\Site\Model\ClipModel;
 use Willeke\Component\Audioarchive\Site\Service\ArchiveMenuItemResolver;
+use Willeke\Component\Audioarchive\Site\Service\DownloadAccessService;
 
 \defined('_JEXEC') or die;
 
@@ -42,6 +43,9 @@ class HtmlView extends BaseHtmlView
 	/** @var string */
 	public string $playCountToken = '';
 
+	/** @var bool */
+	public bool $canDownload = false;
+
 	/**
 	 * @brief Display one public clip.
 	 *
@@ -64,6 +68,10 @@ class HtmlView extends BaseHtmlView
 		$this->item = $item;
 		$this->params = $model->getResolvedParams();
 		$application = Factory::getApplication();
+		$this->canDownload = DownloadAccessService::canDownload(
+			$this->params,
+			$application->getIdentity()
+		);
 		$currentItemId = $application->getInput()->getInt('Itemid', 0);
 		$tagIds = array_map(
 			static fn(object $tag): int => (int) $tag->id,
@@ -79,7 +87,9 @@ class HtmlView extends BaseHtmlView
 		);
 
 		$this->streamUrl = Route::_(RouteHelper::getPlaybackRoute((int) $item->id, $routeItemId));
-		$this->downloadUrl = Route::_(RouteHelper::getDownloadRoute((int) $item->id, $routeItemId));
+		$this->downloadUrl = $this->canDownload
+			? Route::_(RouteHelper::getDownloadRoute((int) $item->id, $routeItemId))
+			: '';
 		$this->archiveUrl = $routeItemId > 0
 			? Route::_('index.php?Itemid=' . $routeItemId)
 			: Route::_('index.php?option=com_audioarchive&view=archive');
@@ -98,6 +108,7 @@ class HtmlView extends BaseHtmlView
 
 		$this->getDocument()->getWebAssetManager()
 			->useStyle('com_audioarchive.site')
+			->useStyle('com_audioarchive.player-style')
 			->useScript('com_audioarchive.player');
 
 		parent::display($tpl);

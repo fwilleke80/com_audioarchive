@@ -4,7 +4,7 @@ use Joomla\CMS\Language\Text;
 
 \defined('_JEXEC') or die;
 
-if ((int) $this->params->get('allow_original_downloads', 1) !== 1 || (int) $this->params->get('detail_show_download', 1) !== 1)
+if (!$this->canDownload || (int) $this->params->get('detail_show_download', 1) !== 1 || $this->downloadUrl === '')
 {
 	return;
 }

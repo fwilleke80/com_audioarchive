@@ -20,15 +20,108 @@ $renderAudioPreview = function (string $headingId): void
     {
         return;
     }
+    $escape = static fn(string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+    $playerId = $headingId . '-audio';
+    $seekId = $playerId . '-seek';
+    $volumeId = $playerId . '-volume';
+    $title = trim((string) ($this->item->title ?? '')) ?: Text::_('COM_AUDIOARCHIVE_ADMIN_PREVIEW_TITLE');
+    $mime = trim((string) ($this->originalFile->mime_type ?? '')) ?: 'application/octet-stream';
+    $playLabel = Text::sprintf('COM_AUDIOARCHIVE_ADMIN_PLAYER_PLAY', $title);
+    $pauseLabel = Text::sprintf('COM_AUDIOARCHIVE_ADMIN_PLAYER_PAUSE', $title);
     ?>
-    <section class="audioarchive-admin-preview" aria-labelledby="<?php echo htmlspecialchars($headingId, ENT_QUOTES, 'UTF-8'); ?>">
-        <div>
-            <h3 id="<?php echo htmlspecialchars($headingId, ENT_QUOTES, 'UTF-8'); ?>" class="h5"><?php echo Text::_('COM_AUDIOARCHIVE_ADMIN_PREVIEW_TITLE'); ?></h3>
+    <section class="audioarchive-admin-preview" aria-labelledby="<?php echo $escape($headingId); ?>">
+        <div class="audioarchive-admin-preview-copy">
+            <h3 id="<?php echo $escape($headingId); ?>" class="h5"><?php echo Text::_('COM_AUDIOARCHIVE_ADMIN_PREVIEW_TITLE'); ?></h3>
             <p class="text-muted"><?php echo Text::_('COM_AUDIOARCHIVE_ADMIN_PREVIEW_DESC'); ?></p>
         </div>
-        <audio controls preload="none">
-            <source src="<?php echo htmlspecialchars($this->playbackUrl, ENT_QUOTES, 'UTF-8'); ?>" type="<?php echo htmlspecialchars((string) $this->originalFile->mime_type, ENT_QUOTES, 'UTF-8'); ?>">
-        </audio>
+
+        <div class="audioarchive-custom-player" data-audioarchive-custom-player>
+            <button
+                type="button"
+                class="audioarchive-custom-player-toggle"
+                aria-controls="<?php echo $escape($playerId); ?>"
+                aria-label="<?php echo $escape($playLabel); ?>"
+                aria-pressed="false"
+                title="<?php echo $escape($playLabel); ?>"
+                data-audioarchive-custom-toggle
+                data-play-label="<?php echo $escape($playLabel); ?>"
+                data-pause-label="<?php echo $escape($pauseLabel); ?>"
+            >
+                <span data-audioarchive-icon-play aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M8 5.5v13l10-6.5z"/></svg>
+                </span>
+                <span data-audioarchive-icon-pause aria-hidden="true" hidden>
+                    <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M6.5 5h4v14h-4zm7 0h4v14h-4z"/></svg>
+                </span>
+            </button>
+
+            <div class="audioarchive-custom-player-main">
+                <label class="visually-hidden" for="<?php echo $escape($seekId); ?>"><?php echo Text::_('COM_AUDIOARCHIVE_ADMIN_PLAYER_SEEK'); ?></label>
+                <input
+                    id="<?php echo $escape($seekId); ?>"
+                    class="audioarchive-custom-player-seek"
+                    type="range"
+                    min="0"
+                    max="1000"
+                    step="1"
+                    value="0"
+                    disabled
+                    data-audioarchive-custom-seek
+                >
+                <div class="audioarchive-custom-player-times" aria-hidden="true">
+                    <span data-audioarchive-current-time>0:00</span>
+                    <span data-audioarchive-duration>0:00</span>
+                </div>
+            </div>
+
+            <div class="audioarchive-custom-player-volume-controls">
+                <button
+                    type="button"
+                    class="audioarchive-custom-player-mute"
+                    aria-label="<?php echo $escape(Text::_('COM_AUDIOARCHIVE_ADMIN_PLAYER_MUTE')); ?>"
+                    aria-pressed="false"
+                    title="<?php echo $escape(Text::_('COM_AUDIOARCHIVE_ADMIN_PLAYER_MUTE')); ?>"
+                    data-audioarchive-custom-mute
+                    data-mute-label="<?php echo $escape(Text::_('COM_AUDIOARCHIVE_ADMIN_PLAYER_MUTE')); ?>"
+                    data-unmute-label="<?php echo $escape(Text::_('COM_AUDIOARCHIVE_ADMIN_PLAYER_UNMUTE')); ?>"
+                >
+                    <span data-audioarchive-icon-volume aria-hidden="true">
+                        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9zm11.5-.8v2.1c1.2.6 2 1.8 2 3.2s-.8 2.6-2 3.2v2.1c2.3-.7 4-2.8 4-5.3s-1.7-4.6-4-5.3z"/></svg>
+                    </span>
+                    <span data-audioarchive-icon-muted aria-hidden="true" hidden>
+                        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9zm11.7 1.3-1.4 1.4 1.8 1.8-1.8 1.8 1.4 1.4 1.8-1.8 1.8 1.8 1.4-1.4-1.8-1.8 1.8-1.8-1.4-1.4-1.8 1.8z"/></svg>
+                    </span>
+                </button>
+                <label class="visually-hidden" for="<?php echo $escape($volumeId); ?>"><?php echo Text::_('COM_AUDIOARCHIVE_ADMIN_PLAYER_VOLUME'); ?></label>
+                <input
+                    id="<?php echo $escape($volumeId); ?>"
+                    class="audioarchive-custom-player-volume"
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value="1"
+                    data-audioarchive-custom-volume
+                >
+            </div>
+
+            <audio
+                id="<?php echo $escape($playerId); ?>"
+                preload="metadata"
+                data-audioarchive-custom-audio
+                data-clip-title="<?php echo $escape($title); ?>"
+            >
+                <source src="<?php echo $escape($this->playbackUrl); ?>" type="<?php echo $escape($mime); ?>">
+                <?php echo Text::_('COM_AUDIOARCHIVE_ADMIN_PLAYER_FALLBACK'); ?>
+            </audio>
+        </div>
+
+        <noscript>
+            <audio class="audioarchive-custom-player-noscript" controls preload="metadata">
+                <source src="<?php echo $escape($this->playbackUrl); ?>" type="<?php echo $escape($mime); ?>">
+                <?php echo Text::_('COM_AUDIOARCHIVE_ADMIN_PLAYER_FALLBACK'); ?>
+            </audio>
+        </noscript>
     </section>
     <?php
 };

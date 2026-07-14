@@ -8,6 +8,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Session\Session;
 use Joomla\Database\DatabaseInterface;
+use Willeke\Component\Audioarchive\Site\Service\DownloadAccessService;
 use Willeke\Component\Audioarchive\Site\Service\PublicMediaService;
 
 \defined('_JEXEC') or die;
@@ -107,7 +108,7 @@ class StreamController extends BaseController
 		$id = $application->getInput()->getInt('id', 0);
 		$params = ComponentHelper::getParams('com_audioarchive');
 
-		if ($download && (int) $params->get('allow_original_downloads', 1) !== 1)
+		if ($download && !DownloadAccessService::canDownload($params, $application->getIdentity()))
 		{
 			$this->sendError(404, Text::_('COM_AUDIOARCHIVE_STREAM_NOT_FOUND'));
 		}

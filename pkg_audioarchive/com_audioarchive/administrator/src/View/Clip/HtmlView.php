@@ -33,7 +33,10 @@ class HtmlView extends BaseHtmlView
      */
     public function display($tpl = null)
     {
-        $this->getDocument()->getWebAssetManager()->useStyle('com_audioarchive.admin');
+        $this->getDocument()->getWebAssetManager()
+            ->useStyle('com_audioarchive.admin')
+            ->useStyle('com_audioarchive.player-style')
+            ->useScript('com_audioarchive.player');
         $this->form = $this->get('Form');
         $this->item = $this->get('Item');
         $this->state = $this->get('State');

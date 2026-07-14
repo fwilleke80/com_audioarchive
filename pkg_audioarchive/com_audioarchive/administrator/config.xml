@@ -160,7 +160,8 @@
             <option value="compact">COM_AUDIOARCHIVE_PRESENTATION_COMPACT</option>
             <option value="featured">COM_AUDIOARCHIVE_PRESENTATION_FEATURED</option>
         </field>
-        <field name="allow_original_downloads" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_ALLOW_DOWNLOADS_LABEL" default="1"><option value="0">JNO</option><option value="1">JYES</option></field>
+        <field name="allow_original_downloads" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_ALLOW_DOWNLOADS_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ALLOW_DOWNLOADS_DESC" default="1"><option value="0">JNO</option><option value="1">JYES</option></field>
+        <field name="download_access_level" type="accesslevel" label="COM_AUDIOARCHIVE_CONFIG_DOWNLOAD_ACCESS_LEVEL_LABEL" description="COM_AUDIOARCHIVE_CONFIG_DOWNLOAD_ACCESS_LEVEL_DESC" default="1" showon="allow_original_downloads:1" />
     </fieldset>
 
     <fieldset name="detail" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_LABEL">
@@ -175,7 +176,7 @@
         <field name="detail_show_file_size" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_FILE_SIZE_LABEL" default="0"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
         <field name="detail_show_play_count" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_PLAY_COUNT_LABEL" default="0"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
         <field name="detail_show_download_count" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_COUNT_LABEL" default="0"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
-        <field name="detail_show_download" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        <field name="detail_show_download" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_LABEL" description="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_DESC" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
     </fieldset>
 
     <fieldset name="processing" label="COM_AUDIOARCHIVE_CONFIG_PROCESSING_LABEL">

@@ -2,6 +2,7 @@
 
 namespace Willeke\Module\Audioarchive\Site\Helper;
 
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Helper\TagsHelper;
 use Joomla\CMS\Router\Route;
@@ -10,6 +11,7 @@ use Joomla\Database\ParameterType;
 use Joomla\Registry\Registry;
 use Willeke\Component\Audioarchive\Site\Helper\RouteHelper;
 use Willeke\Component\Audioarchive\Site\Service\ArchiveMenuItemResolver;
+use Willeke\Component\Audioarchive\Site\Service\DownloadAccessService;
 
 \defined('_JEXEC') or die;
 
@@ -197,6 +199,8 @@ abstract class AudioarchiveHelper
 		$app = Factory::getApplication();
 		$levels = $app->getIdentity()->getAuthorisedViewLevels();
 		$preferredItemId = $app->getInput()->getInt('Itemid', 0);
+		$componentParams = ComponentHelper::getParams('com_audioarchive');
+		$canDownload = DownloadAccessService::canDownload($componentParams, $app->getIdentity());
 
 		foreach ($items as $item)
 		{
@@ -205,7 +209,10 @@ abstract class AudioarchiveHelper
 			$item->itemid = $resolver->resolve((string) $item->language, (int) $item->catid, $tagIds, $preferredItemId, $levels);
 			$item->detail_url = Route::_(RouteHelper::getClipRoute((int) $item->id, (int) $item->itemid));
 			$item->stream_url = Route::_(RouteHelper::getPlaybackRoute((int) $item->id, (int) $item->itemid));
-			$item->download_url = Route::_(RouteHelper::getDownloadRoute((int) $item->id, (int) $item->itemid));
+			$item->can_download = $canDownload;
+			$item->download_url = $item->can_download
+				? Route::_(RouteHelper::getDownloadRoute((int) $item->id, (int) $item->itemid))
+				: '';
 		}
 		return $items;
 	}
