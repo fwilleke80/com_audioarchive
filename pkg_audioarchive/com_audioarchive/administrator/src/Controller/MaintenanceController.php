@@ -82,6 +82,65 @@ class MaintenanceController extends BaseController
     }
 
     /**
+     * @brief Delete selected stale derivatives and unreferenced managed files.
+     *
+     * @return void
+     */
+    public function deleteStale(): void
+    {
+        Session::checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+        $this->assertProcessPermission();
+        $application = Factory::getApplication();
+
+        if (!$application->getIdentity()->authorise('audioarchive.managefiles', 'com_audioarchive'))
+        {
+            throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+        }
+
+        $tokens = $application->getInput()->post->get('stale', [], 'array');
+        $tokens = array_values(array_unique(array_filter(array_map('strval', is_array($tokens) ? $tokens : []))));
+
+        if ($tokens === [])
+        {
+            $application->enqueueMessage(Text::_('COM_AUDIOARCHIVE_MAINTENANCE_STALE_NO_SELECTION'), 'warning');
+            $this->setRedirect($this->maintenanceUrl());
+            return;
+        }
+
+        if (count($tokens) > 200)
+        {
+            $application->enqueueMessage(Text::sprintf('COM_AUDIOARCHIVE_MAINTENANCE_STALE_BATCH_LIMIT', 200), 'warning');
+            $this->setRedirect($this->maintenanceUrl());
+            return;
+        }
+
+        $model = $this->getModel('Maintenance');
+
+        if (!$model instanceof MaintenanceModel)
+        {
+            throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_MAINTENANCE_ERROR_MODEL'), 500);
+        }
+
+        $result = $model->deleteStaleItems($tokens);
+
+        foreach ((array) ($result['messages'] ?? []) as $message)
+        {
+            $application->enqueueMessage((string) $message, 'warning');
+        }
+
+        $failed = (int) ($result['failed'] ?? 0);
+        $application->enqueueMessage(
+            Text::sprintf(
+                'COM_AUDIOARCHIVE_MAINTENANCE_STALE_DELETE_COMPLETE',
+                (int) ($result['succeeded'] ?? 0),
+                $failed
+            ),
+            $failed > 0 ? 'warning' : 'success'
+        );
+        $this->setRedirect($this->maintenanceUrl());
+    }
+
+    /**
      * @brief Export the current integrity report as UTF-8 CSV.
      *
      * @return void

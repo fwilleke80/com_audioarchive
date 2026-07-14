@@ -2,6 +2,17 @@
 <form>
     <fieldset name="scan" label="COM_AUDIOARCHIVE_IMPORT_SCAN_OPTIONS_TITLE">
         <field
+            name="operation_mode"
+            type="list"
+            label="COM_AUDIOARCHIVE_IMPORT_OPERATION_MODE_LABEL"
+            description="COM_AUDIOARCHIVE_IMPORT_OPERATION_MODE_DESC"
+            default="import"
+            validate="options"
+        >
+            <option value="import">COM_AUDIOARCHIVE_IMPORT_OPERATION_MODE_IMPORT</option>
+            <option value="replace">COM_AUDIOARCHIVE_IMPORT_OPERATION_MODE_REPLACE</option>
+        </field>
+        <field
             name="recursive"
             type="radio"
             layout="joomla.form.field.radio.switcher"
@@ -32,6 +43,18 @@
             layout="joomla.form.field.radio.switcher"
             label="COM_AUDIOARCHIVE_IMPORT_DELETE_SOURCE_LABEL"
             description="COM_AUDIOARCHIVE_IMPORT_DELETE_SOURCE_DESC"
+            default="1"
+            filter="integer"
+        >
+            <option value="0">JNO</option>
+            <option value="1">JYES</option>
+        </field>
+        <field
+            name="retain_previous_original"
+            type="radio"
+            layout="joomla.form.field.radio.switcher"
+            label="COM_AUDIOARCHIVE_REPLACEMENT_RETAIN_PREVIOUS_LABEL"
+            description="COM_AUDIOARCHIVE_REPLACEMENT_RETAIN_PREVIOUS_DESC"
             default="1"
             filter="integer"
         >

@@ -6,6 +6,7 @@ use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Form\Form;
 use Joomla\Registry\Registry;
 use Willeke\Component\Audioarchive\Administrator\Service\AudioUploadService;
+use Willeke\Component\Audioarchive\Administrator\Service\BulkReplacementService;
 use Willeke\Component\Audioarchive\Administrator\Service\DirectoryImportService;
 use Willeke\Component\Audioarchive\Administrator\Service\ImportCategoryService;
 
@@ -42,9 +43,11 @@ class ImportModel extends UploadModel
 	{
 		$data = parent::loadFormData();
 		$params = ComponentHelper::getParams('com_audioarchive');
+		$data->operation_mode = 'import';
 		$data->recursive = (int) $params->get('recursive_import', 0);
 		$data->duplicate_policy = 'component';
 		$data->delete_source = (int) $params->get('delete_inbox_after_import', 1);
+		$data->retain_previous_original = 1;
 		$data->category_mode = 'selected';
 		$data->create_missing_categories = 1;
 
@@ -110,6 +113,50 @@ class ImportModel extends UploadModel
 		);
 
 		return ['source' => $source, 'prepared' => $prepared];
+	}
+
+
+	/**
+	 * @brief Inspect an inbox file and resolve its unique replacement target.
+	 *
+	 * @param string $relativePath Relative inbox path.
+	 *
+	 * @return array<string, mixed> Replacement analysis.
+	 */
+	public function prepareInboxReplacement(string $relativePath): array
+	{
+		$params = $this->getComponentParams();
+		$directoryService = new DirectoryImportService($params);
+		$source = $directoryService->resolveSource($relativePath);
+		$matcher = new BulkReplacementService($this->getDatabase());
+		$matches = $matcher->findMatches((string) $source['filename']);
+		$prepared = null;
+		$identical = false;
+
+		if (count($matches) === 1)
+		{
+			$match = $matches[0];
+			$prepared = $this->createAudioUploadService()->prepareLocalFile(
+				(string) $source['real_path'],
+				(string) $source['relative_path'],
+				'warn',
+				(int) $match->clip_id
+			);
+			$currentChecksum = strtolower(trim((string) $match->checksum_sha256));
+			$newChecksum = strtolower(trim((string) ($prepared['checksum_sha256'] ?? '')));
+			$identical = $currentChecksum !== ''
+				&& $newChecksum !== ''
+				&& hash_equals($currentChecksum, $newChecksum);
+		}
+
+		return [
+			'source' => $source,
+			'normalised_basename' => $matcher->normaliseBasename((string) $source['filename']),
+			'matches' => $matches,
+			'prepared' => $prepared,
+			'identical' => $identical,
+			'eligible' => count($matches) === 1 && $prepared !== null && !$identical,
+		];
 	}
 
 	/**

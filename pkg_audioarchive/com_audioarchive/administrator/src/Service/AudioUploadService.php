@@ -194,10 +194,16 @@ class AudioUploadService
      * @param string $path Absolute source path.
      * @param string $filename Original filename or relative inbox path.
      * @param string $duplicatePolicy Optional duplicate-policy override.
+     * @param int $excludeClipId Clip excluded from duplicate detection.
      *
      * @return array<string, mixed> Prepared immutable file data.
      */
-    public function prepareLocalFile(string $path, string $filename, string $duplicatePolicy = ''): array
+    public function prepareLocalFile(
+        string $path,
+        string $filename,
+        string $duplicatePolicy = '',
+        int $excludeClipId = 0
+    ): array
     {
         $prepared = $this->prepare(
             [
@@ -206,7 +212,7 @@ class AudioUploadService
                 'name' => basename($filename),
                 'size' => is_file($path) ? (int) filesize($path) : 0,
             ],
-            0,
+            $excludeClipId,
             $duplicatePolicy
         );
         $prepared['preserve_source'] = true;
@@ -310,7 +316,7 @@ class AudioUploadService
      * @param string $uuid Clip UUID.
      * @param array<string, mixed> $prepared Prepared replacement upload.
      *
-     * @return array{file:object,warnings:string[]} Updated file and cleanup warnings.
+     * @return array{file:object,warnings:string[],previous_original_retained:bool} Updated file and cleanup warnings.
      */
     public function replaceForClip(int $clipId, string $uuid, array $prepared): array
     {
@@ -321,13 +327,15 @@ class AudioUploadService
             return [
                 'file' => $this->storeForClip($clipId, $uuid, $prepared),
                 'warnings' => [],
+                'previous_original_retained' => false,
             ];
         }
 
         $stored = $this->storage->storeReplacementOriginal(
             (string) $prepared['temporary_path'],
             $uuid,
-            (string) $prepared['extension']
+            (string) $prepared['extension'],
+            !(bool) ($prepared['preserve_source'] ?? false)
         );
         $metadata = (array) $prepared['metadata'];
         $now = Factory::getDate()->toSql();
@@ -423,17 +431,21 @@ class AudioUploadService
         }
 
         $warnings = [];
+        $previousOriginalRetained = (bool) ($prepared['retain_previous_original'] ?? false);
 
-        try
+        if (!$previousOriginalRetained)
         {
-            if (!$this->storage->deleteManagedFile('original', (string) $current->storage_key))
+            try
+            {
+                if (!$this->storage->deleteManagedFile('original', (string) $current->storage_key))
+                {
+                    $warnings[] = Text::_('COM_AUDIOARCHIVE_WARNING_OLD_ORIGINAL_NOT_DELETED');
+                }
+            }
+            catch (\Throwable $exception)
             {
                 $warnings[] = Text::_('COM_AUDIOARCHIVE_WARNING_OLD_ORIGINAL_NOT_DELETED');
             }
-        }
-        catch (\Throwable $exception)
-        {
-            $warnings[] = Text::_('COM_AUDIOARCHIVE_WARNING_OLD_ORIGINAL_NOT_DELETED');
         }
 
         $current->storage_key = $storageKey;
@@ -449,7 +461,11 @@ class AudioUploadService
         $current->is_available = 1;
         $current->processing_error = '';
 
-        return ['file' => $current, 'warnings' => $warnings];
+        return [
+            'file' => $current,
+            'warnings' => $warnings,
+            'previous_original_retained' => $previousOriginalRetained,
+        ];
     }
 
     /**

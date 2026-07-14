@@ -58,6 +58,13 @@ class ImportController extends BaseController
 			$this->assertRequestAuthorised();
 			$app = Factory::getApplication();
 			$relativePath = $app->getInput()->post->getString('path');
+			$operationMode = $app->getInput()->post->getCmd('operation_mode', 'import');
+
+			if ($operationMode === 'replace')
+			{
+				$this->inspectReplacement($relativePath);
+			}
+
 			$policyChoice = $app->getInput()->post->getCmd('duplicate_policy', 'component');
 			$categoryMode = $app->getInput()->post->getCmd('category_mode', 'selected');
 			$baseCategoryId = $app->getInput()->post->getInt('catid', 0);
@@ -214,6 +221,7 @@ class ImportController extends BaseController
 				static fn ($value): bool => (string) $value !== ''
 			));
 			unset(
+				$data['operation_mode'],
 				$data['recursive'],
 				$data['duplicate_policy'],
 				$data['delete_source'],
@@ -289,6 +297,240 @@ class ImportController extends BaseController
 		{
 			$this->sendException($exception);
 		}
+	}
+
+
+	/**
+	 * @brief Replace one existing clip original with a uniquely matched inbox file.
+	 *
+	 * @return void
+	 */
+	public function replaceFile(): void
+	{
+		$app = Factory::getApplication();
+
+		try
+		{
+			$this->assertRequestAuthorised();
+			$user = $app->getIdentity();
+
+			if (!$user->authorise('audioarchive.managefiles', 'com_audioarchive'))
+			{
+				throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+			}
+
+			$relativePath = $app->getInput()->post->getString('path');
+			/** @var ImportModel $importModel */
+			$importModel = $this->getModel('Import');
+			$analysis = $importModel->prepareInboxReplacement($relativePath);
+			$matches = (array) ($analysis['matches'] ?? []);
+
+			if (count($matches) !== 1)
+			{
+				throw new \RuntimeException(
+					count($matches) === 0
+						? Text::_('COM_AUDIOARCHIVE_REPLACEMENT_NO_MATCH')
+						: Text::sprintf('COM_AUDIOARCHIVE_REPLACEMENT_AMBIGUOUS_MATCH', count($matches)),
+					400
+				);
+			}
+
+			if ((bool) ($analysis['identical'] ?? false))
+			{
+				throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_REPLACEMENT_IDENTICAL'), 400);
+			}
+
+			$match = $matches[0];
+			$clipId = (int) $match->clip_id;
+			$asset = 'com_audioarchive.clip.' . $clipId;
+
+			if (!$user->authorise('core.edit', $asset) && !$user->authorise('core.edit', 'com_audioarchive'))
+			{
+				throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+			}
+
+			$prepared = $analysis['prepared'] ?? null;
+
+			if (!is_array($prepared))
+			{
+				throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_REPLACEMENT_NOT_PREPARED'), 400);
+			}
+
+			$prepared['retain_previous_original'] = $app->getInput()->post->getBool(
+				'retain_previous_original',
+				true
+			);
+
+			/** @var ClipModel $clipModel */
+			$clipModel = $this->getModel('Clip', 'Administrator', ['ignore_request' => true]);
+			$result = $clipModel->replacePreparedFile($clipId, $prepared);
+			$item = $clipModel->getItem($clipId);
+			$file = $clipModel->getOriginalFile($clipId);
+
+			if (!$item || $file === null)
+			{
+				throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_ERROR_SAVED_CLIP_NOT_FOUND'), 500);
+			}
+
+			$sourceDeleted = false;
+
+			if ($app->getInput()->post->getBool('delete_source', false))
+			{
+				$sourceDeleted = $importModel->deleteInboxFile($relativePath);
+
+				if (!$sourceDeleted)
+				{
+					$app->enqueueMessage(Text::_('COM_AUDIOARCHIVE_IMPORT_WARNING_SOURCE_NOT_DELETED'), 'warning');
+				}
+			}
+
+			$warnings = array_values(array_unique(array_filter(array_merge(
+				(array) ($prepared['metadata']['warnings'] ?? []),
+				(array) ($result['warnings'] ?? [])
+			))));
+			$currentDuration = (int) ($match->duration_ms ?? 0);
+			$newDuration = (int) $file->duration_ms;
+			$tolerance = max(2000, (int) round($currentDuration * 0.02));
+
+			if ($currentDuration > 0 && $newDuration > 0 && abs($currentDuration - $newDuration) > $tolerance)
+			{
+				$warnings[] = Text::sprintf(
+					'COM_AUDIOARCHIVE_REPLACEMENT_DURATION_WARNING',
+					$this->formatDuration($currentDuration),
+					$this->formatDuration($newDuration)
+				);
+				$warnings = array_values(array_unique($warnings));
+			}
+
+			$this->sendJson(
+				[
+					'clip_id' => $clipId,
+					'path' => $relativePath,
+					'title' => (string) $item->title,
+					'filename' => (string) $item->original_filename,
+					'duration_ms' => (int) $file->duration_ms,
+					'duration' => $this->formatDuration((int) $file->duration_ms),
+					'container' => (string) $file->container_format,
+					'codec' => (string) $file->audio_codec,
+					'edit_url' => Route::_('index.php?option=com_audioarchive&task=clip.edit&id=' . $clipId, false),
+					'source_deleted' => $sourceDeleted,
+					'previous_original_retained' => (bool) ($result['previous_original_retained'] ?? false),
+					'warnings' => $warnings,
+				],
+				Text::sprintf('COM_AUDIOARCHIVE_REPLACEMENT_SUCCESS', (string) $item->title),
+				false,
+				200
+			);
+		}
+		catch (\Throwable $exception)
+		{
+			$this->sendException($exception);
+		}
+	}
+
+	/**
+	 * @brief Inspect one inbox file for bulk replacement.
+	 *
+	 * @param string $relativePath Relative inbox path.
+	 *
+	 * @return never
+	 */
+	private function inspectReplacement(string $relativePath): never
+	{
+		/** @var ImportModel $model */
+		$model = $this->getModel('Import');
+		$analysis = $model->prepareInboxReplacement($relativePath);
+		$matches = (array) ($analysis['matches'] ?? []);
+		$prepared = is_array($analysis['prepared'] ?? null) ? $analysis['prepared'] : null;
+		$metadata = $prepared !== null ? (array) ($prepared['metadata'] ?? []) : [];
+		$normalisedMatches = array_map(
+			fn (object $match): array => $this->normaliseReplacementMatch($match),
+			$matches
+		);
+		$warnings = array_values(array_filter((array) ($metadata['warnings'] ?? [])));
+		$message = Text::_('COM_AUDIOARCHIVE_REPLACEMENT_READY');
+
+		if (count($matches) === 0)
+		{
+			$message = Text::_('COM_AUDIOARCHIVE_REPLACEMENT_NO_MATCH');
+		}
+		elseif (count($matches) > 1)
+		{
+			$message = Text::sprintf('COM_AUDIOARCHIVE_REPLACEMENT_AMBIGUOUS_MATCH', count($matches));
+		}
+		elseif ((bool) ($analysis['identical'] ?? false))
+		{
+			$message = Text::_('COM_AUDIOARCHIVE_REPLACEMENT_IDENTICAL');
+		}
+		elseif ($prepared !== null)
+		{
+			$currentDuration = (int) ($matches[0]->duration_ms ?? 0);
+			$newDuration = (int) ($metadata['duration_ms'] ?? 0);
+			$tolerance = max(2000, (int) round($currentDuration * 0.02));
+
+			if ($currentDuration > 0 && $newDuration > 0 && abs($currentDuration - $newDuration) > $tolerance)
+			{
+				$warnings[] = Text::sprintf(
+					'COM_AUDIOARCHIVE_REPLACEMENT_DURATION_WARNING',
+					$this->formatDuration($currentDuration),
+					$this->formatDuration($newDuration)
+				);
+			}
+		}
+
+		$this->sendJson(
+			[
+				'path' => $relativePath,
+				'operation_mode' => 'replace',
+				'eligible' => (bool) ($analysis['eligible'] ?? false),
+				'normalised_basename' => (string) ($analysis['normalised_basename'] ?? ''),
+				'matches' => $normalisedMatches,
+				'match' => count($normalisedMatches) === 1 ? $normalisedMatches[0] : null,
+				'identical' => (bool) ($analysis['identical'] ?? false),
+				'replacement' => $prepared === null ? null : [
+					'filename' => (string) ($prepared['original_filename'] ?? ''),
+					'duration_ms' => (int) ($metadata['duration_ms'] ?? 0),
+					'duration' => $this->formatDuration((int) ($metadata['duration_ms'] ?? 0)),
+					'container' => (string) ($metadata['container_format'] ?? ''),
+					'codec' => (string) ($metadata['audio_codec'] ?? ''),
+					'mime_type' => (string) ($metadata['mime_type'] ?? ''),
+					'checksum' => (string) ($prepared['checksum_sha256'] ?? ''),
+				],
+				'warnings' => array_values(array_unique($warnings)),
+			],
+			$message,
+			false,
+			200
+		);
+	}
+
+	/**
+	 * @brief Convert a replacement match row to response data.
+	 *
+	 * @param object $match Matching clip and original row.
+	 *
+	 * @return array<string, mixed> Safe response data.
+	 */
+	private function normaliseReplacementMatch(object $match): array
+	{
+		$clipId = (int) ($match->clip_id ?? 0);
+
+		return [
+			'clip_id' => $clipId,
+			'title' => (string) ($match->title ?? ''),
+			'filename' => (string) ($match->original_filename ?? ''),
+			'category' => (string) ($match->category_title ?? ''),
+			'state' => (int) ($match->state ?? 0),
+			'extension' => (string) ($match->file_extension ?? ''),
+			'container' => (string) ($match->container_format ?? ''),
+			'codec' => (string) ($match->audio_codec ?? ''),
+			'file_size' => (int) ($match->file_size ?? 0),
+			'duration_ms' => (int) ($match->duration_ms ?? 0),
+			'duration' => $this->formatDuration((int) ($match->duration_ms ?? 0)),
+			'edit_url' => $clipId > 0
+				? Route::_('index.php?option=com_audioarchive&task=clip.edit&id=' . $clipId, false)
+				: '',
+		];
 	}
 
 	/**

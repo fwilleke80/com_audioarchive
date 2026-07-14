@@ -146,12 +146,24 @@ class ManagedStorageService
      * @param string $temporaryPath PHP upload temporary path.
      * @param string $uuid Clip UUID.
      * @param string $extension Validated lowercase extension.
+     * @param bool $moveSource Whether the source may be moved instead of copied.
      *
      * @return array{storage_key:string,absolute_path:string} Stored path data.
      */
-    public function storeReplacementOriginal(string $temporaryPath, string $uuid, string $extension): array
+    public function storeReplacementOriginal(
+        string $temporaryPath,
+        string $uuid,
+        string $extension,
+        bool $moveSource = true
+    ): array
     {
-        return $this->storeOriginalFile($temporaryPath, $uuid, $extension, '-r' . bin2hex(random_bytes(6)), true);
+        return $this->storeOriginalFile(
+            $temporaryPath,
+            $uuid,
+            $extension,
+            '-r' . bin2hex(random_bytes(6)),
+            $moveSource
+        );
     }
 
     /**

@@ -20,6 +20,8 @@ foreach ([
 	'COM_AUDIOARCHIVE_IMPORT_STATUS_FAILED',
 	'COM_AUDIOARCHIVE_IMPORT_ACTION_EDIT',
 	'COM_AUDIOARCHIVE_IMPORT_ACTION_RETRY',
+	'COM_AUDIOARCHIVE_IMPORT_START',
+	'COM_AUDIOARCHIVE_IMPORT_CATEGORY_COLUMN',
 	'COM_AUDIOARCHIVE_IMPORT_NO_RESPONSE',
 	'COM_AUDIOARCHIVE_IMPORT_NETWORK_ERROR',
 	'COM_AUDIOARCHIVE_IMPORT_SCAN_SUMMARY',
@@ -29,6 +31,14 @@ foreach ([
 	'COM_AUDIOARCHIVE_IMPORT_SOURCE_REMOVED',
 	'COM_AUDIOARCHIVE_IMPORT_SOURCE_PRESERVED',
 	'COM_AUDIOARCHIVE_IMPORT_CATEGORY_WILL_CREATE',
+	'COM_AUDIOARCHIVE_REPLACEMENT_STATUS_REPLACING',
+	'COM_AUDIOARCHIVE_REPLACEMENT_START',
+	'COM_AUDIOARCHIVE_REPLACEMENT_TARGET_COLUMN',
+	'COM_AUDIOARCHIVE_REPLACEMENT_CURRENT_MEDIA',
+	'COM_AUDIOARCHIVE_REPLACEMENT_NEW_MEDIA',
+	'COM_AUDIOARCHIVE_REPLACEMENT_AMBIGUOUS_LIST',
+	'COM_AUDIOARCHIVE_REPLACEMENT_PREVIOUS_RETAINED',
+	'COM_AUDIOARCHIVE_REPLACEMENT_PREVIOUS_DELETED',
 ] as $key)
 {
 	Text::script($key);
@@ -37,6 +47,7 @@ foreach ([
 $scanEndpoint = Route::_('index.php?option=com_audioarchive&task=import.scan&format=json', false);
 $inspectEndpoint = Route::_('index.php?option=com_audioarchive&task=import.inspect&format=json', false);
 $importEndpoint = Route::_('index.php?option=com_audioarchive&task=import.importFile&format=json', false);
+$replacementEndpoint = Route::_('index.php?option=com_audioarchive&task=import.replaceFile&format=json', false);
 $tokenName = Session::getFormToken();
 ?>
 <form
@@ -45,11 +56,16 @@ $tokenName = Session::getFormToken();
 	data-scan-endpoint="<?php echo htmlspecialchars($scanEndpoint, ENT_QUOTES, 'UTF-8'); ?>"
 	data-inspect-endpoint="<?php echo htmlspecialchars($inspectEndpoint, ENT_QUOTES, 'UTF-8'); ?>"
 	data-import-endpoint="<?php echo htmlspecialchars($importEndpoint, ENT_QUOTES, 'UTF-8'); ?>"
+	data-replacement-endpoint="<?php echo htmlspecialchars($replacementEndpoint, ENT_QUOTES, 'UTF-8'); ?>"
 	data-token-name="<?php echo htmlspecialchars($tokenName, ENT_QUOTES, 'UTF-8'); ?>"
 >
-	<div class="alert alert-info">
+	<div class="alert alert-info" id="audioarchive-import-info">
 		<h2 class="h5 alert-heading"><?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_INBOX_TITLE'); ?></h2>
 		<p class="mb-0"><?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_INBOX_DESC'); ?></p>
+	</div>
+	<div class="alert alert-warning d-none" id="audioarchive-replacement-info">
+		<h2 class="h5 alert-heading"><?php echo Text::_('COM_AUDIOARCHIVE_REPLACEMENT_INBOX_TITLE'); ?></h2>
+		<p class="mb-0"><?php echo Text::_('COM_AUDIOARCHIVE_REPLACEMENT_INBOX_DESC'); ?></p>
 	</div>
 
 	<div class="row g-4 mb-4">
@@ -63,7 +79,7 @@ $tokenName = Session::getFormToken();
 				</div>
 			</div>
 		</div>
-		<div class="col-12 col-xl-7">
+		<div class="col-12 col-xl-7" id="audioarchive-import-metadata-card">
 			<div class="card h-100">
 				<div class="card-header">
 					<h2 class="h4 mb-0"><?php echo Text::_('COM_AUDIOARCHIVE_BULK_UPLOAD_METADATA_TITLE'); ?></h2>
@@ -103,7 +119,7 @@ $tokenName = Session::getFormToken();
 			</button>
 			<button type="button" class="btn btn-primary" id="audioarchive-import-start" disabled>
 				<span class="icon-play" aria-hidden="true"></span>
-				<?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_START'); ?>
+				<span id="audioarchive-import-start-label"><?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_START'); ?></span>
 			</button>
 			<button type="button" class="btn btn-outline-danger d-none" id="audioarchive-import-stop">
 				<?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_STOP'); ?>
@@ -121,7 +137,7 @@ $tokenName = Session::getFormToken();
 					<tr>
 						<th scope="col" class="text-center"><?php echo Text::_('JGLOBAL_CHECK_ALL'); ?></th>
 						<th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_PATH'); ?></th>
-						<th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_CATEGORY_COLUMN'); ?></th>
+						<th scope="col" id="audioarchive-import-context-heading"><?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_CATEGORY_COLUMN'); ?></th>
 						<th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_METADATA'); ?></th>
 						<th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_STATUS'); ?></th>
 						<th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_RESULT'); ?></th>

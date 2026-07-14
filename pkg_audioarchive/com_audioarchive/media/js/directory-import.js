@@ -1,5 +1,5 @@
 /**
- * @brief Incremental server-directory import UI.
+ * @brief Incremental inbox import and bulk replacement UI.
  */
 (() =>
 {
@@ -16,15 +16,21 @@
 	const selectButton = document.getElementById('audioarchive-import-select');
 	const deselectButton = document.getElementById('audioarchive-import-deselect');
 	const startButton = document.getElementById('audioarchive-import-start');
+	const startLabel = document.getElementById('audioarchive-import-start-label');
 	const stopButton = document.getElementById('audioarchive-import-stop');
 	const summary = document.getElementById('audioarchive-import-summary');
 	const empty = document.getElementById('audioarchive-import-empty');
 	const tableWrapper = document.getElementById('audioarchive-import-table-wrapper');
 	const tableBody = document.getElementById('audioarchive-import-files');
+	const metadataCard = document.getElementById('audioarchive-import-metadata-card');
+	const importInfo = document.getElementById('audioarchive-import-info');
+	const replacementInfo = document.getElementById('audioarchive-replacement-info');
+	const contextHeading = document.getElementById('audioarchive-import-context-heading');
 	const tokenName = form.dataset.tokenName;
 	const scanEndpoint = form.dataset.scanEndpoint;
 	const inspectEndpoint = form.dataset.inspectEndpoint;
 	const importEndpoint = form.dataset.importEndpoint;
+	const replacementEndpoint = form.dataset.replacementEndpoint;
 	let jobs = [];
 	let running = false;
 	let stopRequested = false;
@@ -35,14 +41,25 @@
 	 *
 	 * @param {string} key Language key.
 	 * @param {string} fallback Fallback text.
+	 *
 	 * @returns {string} Translation.
 	 */
 	const translate = (key, fallback) => Joomla.Text._(key, fallback);
 
 	/**
+	 * @brief Return the selected inbox operation mode.
+	 *
+	 * @returns {string} import or replace.
+	 */
+	const currentMode = () => document.getElementById('jform_operation_mode')?.value === 'replace'
+		? 'replace'
+		: 'import';
+
+	/**
 	 * @brief Escape text for HTML insertion.
 	 *
 	 * @param {unknown} value Value.
+	 *
 	 * @returns {string} Escaped text.
 	 */
 	const escapeHtml = (value) =>
@@ -56,6 +73,7 @@
 	 * @brief Format a byte count.
 	 *
 	 * @param {number} bytes Byte count.
+	 *
 	 * @returns {string} Human-readable size.
 	 */
 	const formatBytes = (bytes) =>
@@ -75,6 +93,7 @@
 	 *
 	 * @param {string} endpoint Endpoint URL.
 	 * @param {FormData} data Request data.
+	 *
 	 * @returns {Promise<object>} Joomla JSON response.
 	 */
 	const request = async (endpoint, data) =>
@@ -109,12 +128,13 @@
 	 * @brief Return one row for a job.
 	 *
 	 * @param {object} job Job.
+	 *
 	 * @returns {HTMLElement|null} Row.
 	 */
 	const getRow = (job) => document.getElementById(`audioarchive-import-${job.id}`);
 
 	/**
-	 * @brief Return all selected importable jobs.
+	 * @brief Return selected executable jobs.
 	 *
 	 * @returns {object[]} Jobs.
 	 */
@@ -138,7 +158,20 @@
 		startButton.disabled = running || selected === 0;
 		stopButton.classList.toggle('d-none', !running);
 		stopButton.disabled = !running || stopRequested;
-		['jform_recursive', 'jform_duplicate_policy', 'jform_delete_source', 'jform_category_mode', 'jform_catid', 'jform_create_missing_categories', 'jform_tags', 'jform_access', 'jform_state', 'jform_recorded_at'].forEach((id) =>
+		[
+			'jform_operation_mode',
+			'jform_recursive',
+			'jform_duplicate_policy',
+			'jform_delete_source',
+			'jform_retain_previous_original',
+			'jform_category_mode',
+			'jform_catid',
+			'jform_create_missing_categories',
+			'jform_tags',
+			'jform_access',
+			'jform_state',
+			'jform_recorded_at',
+		].forEach((id) =>
 		{
 			const field = document.getElementById(id);
 
@@ -159,9 +192,51 @@
 	};
 
 	/**
-	 * @brief Render a job's state, metadata and actions.
+	 * @brief Render the replacement target cell.
 	 *
 	 * @param {object} job Job.
+	 *
+	 * @returns {string} HTML fragment.
+	 */
+	const renderReplacementTarget = (job) =>
+	{
+		if (!job.analysis)
+		{
+			return '';
+		}
+
+		if (job.analysis.match)
+		{
+			const match = job.analysis.match;
+			const title = escapeHtml(match.title || `#${match.clip_id}`);
+			const linkedTitle = match.edit_url
+				? `<a href="${escapeHtml(match.edit_url)}">${title}</a>`
+				: title;
+			const currentMedia = [match.filename, match.codec || match.container, match.duration]
+				.filter(Boolean)
+				.map(escapeHtml)
+				.join(' · ');
+			return `<div class="fw-semibold">${linkedTitle}</div><div class="small text-body-secondary">${currentMedia}</div>`;
+		}
+
+		if (Array.isArray(job.analysis.matches) && job.analysis.matches.length > 1)
+		{
+			const links = job.analysis.matches.map((match) =>
+			{
+				const title = escapeHtml(match.title || `#${match.clip_id}`);
+				return match.edit_url ? `<a href="${escapeHtml(match.edit_url)}">${title}</a>` : title;
+			}).join(', ');
+			return `<div class="small text-warning">${escapeHtml(translate('COM_AUDIOARCHIVE_REPLACEMENT_AMBIGUOUS_LIST', 'Multiple clips match:'))} ${links}</div>`;
+		}
+
+		return `<code>${escapeHtml(job.analysis.normalised_basename || '')}</code>`;
+	};
+
+	/**
+	 * @brief Render a job's state, metadata, and actions.
+	 *
+	 * @param {object} job Job.
+	 *
 	 * @returns {void}
 	 */
 	const renderJob = (job) =>
@@ -173,12 +248,17 @@
 			return;
 		}
 
+		const replacing = currentMode() === 'replace';
 		const states = {
 			discovered: ['bg-secondary', 'COM_AUDIOARCHIVE_IMPORT_STATUS_DISCOVERED', 'Discovered'],
 			analysing: ['bg-info text-dark', 'COM_AUDIOARCHIVE_IMPORT_STATUS_ANALYSING', 'Analysing'],
 			ready: ['bg-success', 'COM_AUDIOARCHIVE_IMPORT_STATUS_READY', 'Ready'],
 			ineligible: ['bg-warning text-dark', 'COM_AUDIOARCHIVE_IMPORT_STATUS_INELIGIBLE', 'Unavailable'],
-			importing: ['bg-info text-dark', 'COM_AUDIOARCHIVE_IMPORT_STATUS_IMPORTING', 'Importing'],
+			processing: [
+				'bg-info text-dark',
+				replacing ? 'COM_AUDIOARCHIVE_REPLACEMENT_STATUS_REPLACING' : 'COM_AUDIOARCHIVE_IMPORT_STATUS_IMPORTING',
+				replacing ? 'Replacing' : 'Importing',
+			],
 			complete: ['bg-success', 'COM_AUDIOARCHIVE_IMPORT_STATUS_COMPLETE', 'Complete'],
 			failed: ['bg-danger', 'COM_AUDIOARCHIVE_IMPORT_STATUS_FAILED', 'Failed'],
 		};
@@ -189,7 +269,7 @@
 		const badge = row.querySelector('.com-audioarchive-import-status');
 		badge.className = `badge com-audioarchive-import-status ${state[0]}`;
 		badge.textContent = translate(state[1], state[2]);
-		const category = row.querySelector('.com-audioarchive-import-category');
+		const context = row.querySelector('.com-audioarchive-import-category');
 		const metadata = row.querySelector('.com-audioarchive-import-metadata');
 		const result = row.querySelector('.com-audioarchive-import-result');
 		const actions = row.querySelector('.com-audioarchive-import-actions');
@@ -197,36 +277,53 @@
 
 		if (job.analysis)
 		{
-			const categoryPath = job.analysis.category_path || '';
-			const categoryCreation = job.analysis.category_will_create
-				? `<div class="small text-info">${escapeHtml(translate('COM_AUDIOARCHIVE_IMPORT_CATEGORY_WILL_CREATE', 'Missing categories will be created during import.'))}</div>`
-				: '';
-			category.innerHTML = `<span class="text-break">${escapeHtml(categoryPath)}</span>${categoryCreation}`;
-			const details = [
-				job.analysis.proposed_title,
-				job.analysis.duration,
-				job.analysis.codec || job.analysis.container,
-				job.analysis.recorded_at,
-			].filter(Boolean).map(escapeHtml).join(' · ');
-			let duplicate = '';
-
-			if (job.analysis.duplicate)
+			if (replacing)
 			{
-				const duplicateTitle = escapeHtml(job.analysis.duplicate.title || job.analysis.duplicate.filename || '');
-				const link = job.analysis.duplicate.edit_url
-					? ` <a href="${escapeHtml(job.analysis.duplicate.edit_url)}">${escapeHtml(translate('COM_AUDIOARCHIVE_DUPLICATE_EDIT_LINK', 'Edit existing clip'))}</a>`
+				context.innerHTML = renderReplacementTarget(job);
+				const replacement = job.analysis.replacement || {};
+				const replacementMedia = [
+					replacement.filename,
+					replacement.codec || replacement.container,
+					replacement.duration,
+				].filter(Boolean).map(escapeHtml).join(' · ');
+				const warnings = Array.isArray(job.analysis.warnings)
+					? job.analysis.warnings.map((warning) => `<div class="small text-warning">${escapeHtml(warning)}</div>`).join('')
 					: '';
-				duplicate = `<div class="small text-warning">${escapeHtml(translate('COM_AUDIOARCHIVE_IMPORT_DUPLICATE_LABEL', 'Duplicate: %s')).replace('%s', duplicateTitle)}${link}</div>`;
+				metadata.innerHTML = `<div>${replacementMedia}</div>${warnings}`;
 			}
+			else
+			{
+				const categoryPath = job.analysis.category_path || '';
+				const categoryCreation = job.analysis.category_will_create
+					? `<div class="small text-info">${escapeHtml(translate('COM_AUDIOARCHIVE_IMPORT_CATEGORY_WILL_CREATE', 'Missing categories will be created during import.'))}</div>`
+					: '';
+				context.innerHTML = `<span class="text-break">${escapeHtml(categoryPath)}</span>${categoryCreation}`;
+				const details = [
+					job.analysis.proposed_title,
+					job.analysis.duration,
+					job.analysis.codec || job.analysis.container,
+					job.analysis.recorded_at,
+				].filter(Boolean).map(escapeHtml).join(' · ');
+				let duplicate = '';
 
-			const warnings = Array.isArray(job.analysis.warnings)
-				? job.analysis.warnings.map((warning) => `<div class="small text-warning">${escapeHtml(warning)}</div>`).join('')
-				: '';
-			metadata.innerHTML = `${details}${duplicate}${warnings}`;
+				if (job.analysis.duplicate)
+				{
+					const duplicateTitle = escapeHtml(job.analysis.duplicate.title || job.analysis.duplicate.filename || '');
+					const link = job.analysis.duplicate.edit_url
+						? ` <a href="${escapeHtml(job.analysis.duplicate.edit_url)}">${escapeHtml(translate('COM_AUDIOARCHIVE_DUPLICATE_EDIT_LINK', 'Edit existing clip'))}</a>`
+						: '';
+					duplicate = `<div class="small text-warning">${escapeHtml(translate('COM_AUDIOARCHIVE_IMPORT_DUPLICATE_LABEL', 'Duplicate: %s')).replace('%s', duplicateTitle)}${link}</div>`;
+				}
+
+				const warnings = Array.isArray(job.analysis.warnings)
+					? job.analysis.warnings.map((warning) => `<div class="small text-warning">${escapeHtml(warning)}</div>`).join('')
+					: '';
+				metadata.innerHTML = `${details}${duplicate}${warnings}`;
+			}
 		}
 		else
 		{
-			category.textContent = '';
+			context.textContent = '';
 			metadata.textContent = '';
 		}
 
@@ -235,8 +332,24 @@
 			const sourceState = job.result.source_deleted
 				? translate('COM_AUDIOARCHIVE_IMPORT_SOURCE_REMOVED', 'Source removed from inbox')
 				: translate('COM_AUDIOARCHIVE_IMPORT_SOURCE_PRESERVED', 'Source retained in inbox');
-			result.innerHTML = `<strong>${escapeHtml(job.result.title || job.filename)}</strong><div class="small text-body-secondary">${escapeHtml(sourceState)}</div>`;
-			category.textContent = job.result.category || job.analysis?.category_path || '';
+			const previousState = replacing
+				? (job.result.previous_original_retained
+					? translate('COM_AUDIOARCHIVE_REPLACEMENT_PREVIOUS_RETAINED', 'Previous original retained for maintenance cleanup')
+					: translate('COM_AUDIOARCHIVE_REPLACEMENT_PREVIOUS_DELETED', 'Previous original deleted'))
+				: '';
+			const warnings = Array.isArray(job.result.warnings)
+				? job.result.warnings.map((warning) => `<div class="small text-warning">${escapeHtml(warning)}</div>`).join('')
+				: '';
+			const previousMarkup = previousState !== ''
+				? `<div class="small text-body-secondary">${escapeHtml(previousState)}</div>`
+				: '';
+			result.innerHTML = `<strong>${escapeHtml(job.result.title || job.filename)}</strong><div class="small text-body-secondary">${escapeHtml(sourceState)}</div>${previousMarkup}${warnings}`;
+
+			if (!replacing)
+			{
+				context.textContent = job.result.category || job.analysis?.category_path || '';
+			}
+
 			const link = document.createElement('a');
 			link.className = 'btn btn-sm btn-outline-primary';
 			link.href = job.result.edit_url;
@@ -266,6 +379,7 @@
 	 * @brief Add scanned files to the table.
 	 *
 	 * @param {object[]} files Discovered files.
+	 *
 	 * @returns {void}
 	 */
 	const setJobs = (files) =>
@@ -314,6 +428,7 @@
 	 * @brief Analyse one file.
 	 *
 	 * @param {object} job Job.
+	 *
 	 * @returns {Promise<void>}
 	 */
 	const analyseJob = async (job) =>
@@ -325,6 +440,7 @@
 		renderJob(job);
 		const data = new FormData();
 		data.append('path', job.path);
+		data.append('operation_mode', currentMode());
 		data.append('duplicate_policy', document.getElementById('jform_duplicate_policy')?.value || 'component');
 		data.append('category_mode', document.getElementById('jform_category_mode')?.value || 'selected');
 		data.append('catid', document.getElementById('jform_catid')?.value || '0');
@@ -373,11 +489,12 @@
 	};
 
 	/**
-	 * @brief Freeze batch metadata for the current import run.
+	 * @brief Freeze batch values for the current run.
 	 *
 	 * @returns {object} Batch values.
 	 */
 	const readBatchMetadata = () => ({
+		mode: currentMode(),
 		categoryMode: document.getElementById('jform_category_mode')?.value || 'selected',
 		catid: document.getElementById('jform_catid')?.value || '',
 		createMissingCategories: document.querySelector('input[name="jform[create_missing_categories]"]:checked')?.value || '0',
@@ -387,35 +504,49 @@
 		recordedAt: document.getElementById('jform_recorded_at')?.value || '',
 		duplicatePolicy: document.getElementById('jform_duplicate_policy')?.value || 'component',
 		deleteSource: document.querySelector('input[name="jform[delete_source]"]:checked')?.value || '0',
+		retainPreviousOriginal: document.querySelector('input[name="jform[retain_previous_original]"]:checked')?.value || '1',
 	});
 
 	/**
-	 * @brief Import one selected job.
+	 * @brief Import or replace one selected job.
 	 *
 	 * @param {object} job Job.
+	 *
 	 * @returns {Promise<void>}
 	 */
-	const importJob = async (job) =>
+	const processJob = async (job) =>
 	{
-		job.state = 'importing';
+		job.state = 'processing';
 		job.message = '';
 		renderJob(job);
 		const data = new FormData();
 		data.append('path', job.path);
-		data.append('jform[category_mode]', batchMetadata.categoryMode);
-		data.append('jform[catid]', batchMetadata.catid);
-		data.append('jform[create_missing_categories]', batchMetadata.createMissingCategories);
-		data.append('jform[access]', batchMetadata.access);
-		data.append('jform[state]', batchMetadata.state);
-		data.append('jform[recorded_at]', batchMetadata.recordedAt);
-		data.append('jform[duplicate_policy]', batchMetadata.duplicatePolicy);
-		data.append('jform[delete_source]', batchMetadata.deleteSource);
-		data.append('jform[recursive]', document.querySelector('input[name="jform[recursive]"]:checked')?.value || '0');
-		batchMetadata.tags.forEach((tag) => data.append('jform[tags][]', tag));
+		let endpoint = importEndpoint;
+
+		if (batchMetadata.mode === 'replace')
+		{
+			endpoint = replacementEndpoint;
+			data.append('delete_source', batchMetadata.deleteSource);
+			data.append('retain_previous_original', batchMetadata.retainPreviousOriginal);
+		}
+		else
+		{
+			data.append('jform[operation_mode]', 'import');
+			data.append('jform[category_mode]', batchMetadata.categoryMode);
+			data.append('jform[catid]', batchMetadata.catid);
+			data.append('jform[create_missing_categories]', batchMetadata.createMissingCategories);
+			data.append('jform[access]', batchMetadata.access);
+			data.append('jform[state]', batchMetadata.state);
+			data.append('jform[recorded_at]', batchMetadata.recordedAt);
+			data.append('jform[duplicate_policy]', batchMetadata.duplicatePolicy);
+			data.append('jform[delete_source]', batchMetadata.deleteSource);
+			data.append('jform[recursive]', document.querySelector('input[name="jform[recursive]"]:checked')?.value || '0');
+			batchMetadata.tags.forEach((tag) => data.append('jform[tags][]', tag));
+		}
 
 		try
 		{
-			const response = await request(importEndpoint, data);
+			const response = await request(endpoint, data);
 			job.state = 'complete';
 			job.selected = false;
 			job.result = response.data || {};
@@ -475,7 +606,7 @@
 
 	startButton.addEventListener('click', async () =>
 	{
-		if (document.formvalidator && !document.formvalidator.isValid(form))
+		if (currentMode() === 'import' && document.formvalidator && !document.formvalidator.isValid(form))
 		{
 			return;
 		}
@@ -492,7 +623,7 @@
 				break;
 			}
 
-			await importJob(job);
+			await processJob(job);
 		}
 
 		running = false;
@@ -506,6 +637,11 @@
 		stopButton.disabled = true;
 	});
 
+	/**
+	 * @brief Update category controls for folder-derived import mode.
+	 *
+	 * @returns {void}
+	 */
 	const updateCategoryMode = () =>
 	{
 		const folderMode = (document.getElementById('jform_category_mode')?.value || 'selected') === 'folders';
@@ -516,7 +652,7 @@
 			createField.classList.toggle('d-none', !folderMode);
 		}
 
-		if (folderMode)
+		if (folderMode && currentMode() === 'import')
 		{
 			const recursive = document.querySelector('input[name="jform[recursive]"][value="1"]');
 
@@ -527,7 +663,48 @@
 		}
 	};
 
+	/**
+	 * @brief Apply UI changes for import or replacement mode.
+	 *
+	 * @param {boolean} clearJobs Whether existing scan results are discarded.
+	 *
+	 * @returns {void}
+	 */
+	const updateOperationMode = (clearJobs) =>
+	{
+		const replacing = currentMode() === 'replace';
+		metadataCard?.classList.toggle('d-none', replacing);
+		importInfo?.classList.toggle('d-none', replacing);
+		replacementInfo?.classList.toggle('d-none', !replacing);
+		const duplicateGroup = document.getElementById('jform_duplicate_policy')?.closest('.control-group');
+		const retainGroup = document.getElementById('jform_retain_previous_original')?.closest('.control-group');
+		duplicateGroup?.classList.toggle('d-none', replacing);
+		retainGroup?.classList.toggle('d-none', !replacing);
+
+		if (contextHeading)
+		{
+			contextHeading.textContent = replacing
+				? translate('COM_AUDIOARCHIVE_REPLACEMENT_TARGET_COLUMN', 'Matched clip')
+				: translate('COM_AUDIOARCHIVE_IMPORT_CATEGORY_COLUMN', 'Category');
+		}
+
+		if (startLabel)
+		{
+			startLabel.textContent = replacing
+				? translate('COM_AUDIOARCHIVE_REPLACEMENT_START', 'Replace selected files')
+				: translate('COM_AUDIOARCHIVE_IMPORT_START', 'Import selected files');
+		}
+
+		if (clearJobs)
+		{
+			setJobs([]);
+		}
+
+		updateCategoryMode();
+		updateControls();
+	};
+
 	document.getElementById('jform_category_mode')?.addEventListener('change', updateCategoryMode);
-	updateCategoryMode();
-	updateControls();
+	document.getElementById('jform_operation_mode')?.addEventListener('change', () => updateOperationMode(true));
+	updateOperationMode(false);
 })();

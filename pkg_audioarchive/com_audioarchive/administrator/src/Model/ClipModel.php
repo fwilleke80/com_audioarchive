@@ -377,6 +377,47 @@ class ClipModel extends AdminModel
     }
 
     /**
+     * @brief Replace one clip original from an already validated server-side source.
+     *
+     * @param int $clipId Clip identifier.
+     * @param array<string, mixed> $prepared Prepared replacement data.
+     *
+     * @return array{file:object,warnings:string[],previous_original_retained:bool} Replacement result.
+     */
+    public function replacePreparedFile(int $clipId, array $prepared): array
+    {
+        $table = $this->getTable();
+
+        if ($clipId <= 0 || !$table->load($clipId))
+        {
+            throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_ERROR_SAVED_CLIP_NOT_FOUND'));
+        }
+
+        $service = new AudioUploadService(
+            $this->getDatabase(),
+            ComponentHelper::getParams('com_audioarchive'),
+            $this->getCurrentUser()
+        );
+        $result = $service->replaceForClip($clipId, (string) $table->uuid, $prepared);
+        $modified = Factory::getDate()->toSql();
+        $modifiedBy = (int) $this->getCurrentUser()->id;
+        $query = $this->getDatabase()->getQuery(true)
+            ->update($this->getDatabase()->quoteName('#__audioarchive_clips'))
+            ->set($this->getDatabase()->quoteName('modified') . ' = :modified')
+            ->set($this->getDatabase()->quoteName('modified_by') . ' = :modifiedBy')
+            ->set($this->getDatabase()->quoteName('version') . ' = ' . $this->getDatabase()->quoteName('version') . ' + 1')
+            ->where($this->getDatabase()->quoteName('id') . ' = :clipId')
+            ->bind(':modified', $modified, ParameterType::STRING)
+            ->bind(':modifiedBy', $modifiedBy, ParameterType::INTEGER)
+            ->bind(':clipId', $clipId, ParameterType::INTEGER);
+        $this->getDatabase()->setQuery($query)->execute();
+        $this->cleanCache();
+        $this->notifyFinderAfterSave($clipId);
+
+        return $result;
+    }
+
+    /**
      * @brief Return the original file record attached to the current clip.
      *
      * @param int|null $clipId Optional clip identifier.

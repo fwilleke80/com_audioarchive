@@ -11,6 +11,22 @@ HTMLHelper::_('behavior.multiselect');
 $summary = (array) ($this->report['summary'] ?? []);
 $issues = (array) ($this->report['issues'] ?? []);
 $actionableClips = (array) ($this->report['actionable_clips'] ?? []);
+$codecInventory = (array) ($this->report['codec_inventory'] ?? []);
+$codecFilter = (string) ($this->report['codec_filter'] ?? '');
+$codecClips = (array) ($this->report['codec_clips'] ?? []);
+$staleItems = (array) ($this->report['stale_items'] ?? []);
+$formatBytes = static function (int $bytes): string
+{
+    if ($bytes <= 0)
+    {
+        return '0 B';
+    }
+
+    $units = ['B', 'KiB', 'MiB', 'GiB', 'TiB'];
+    $index = min((int) floor(log($bytes, 1024)), count($units) - 1);
+
+    return number_format($bytes / (1024 ** $index), $index === 0 ? 0 : 1) . ' ' . $units[$index];
+};
 $severityClasses = [
     'error' => 'bg-danger',
     'warning' => 'bg-warning text-dark',
@@ -79,6 +95,13 @@ $severityKeys = [
         </div>
     </div>
 
+    <div class="alert alert-secondary d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <span><?php echo Text::sprintf('COM_AUDIOARCHIVE_MAINTENANCE_STALE_SUMMARY', (int) ($summary['stale_files'] ?? 0)); ?></span>
+        <?php if ((int) ($summary['stale_files'] ?? 0) > 0) : ?>
+            <a href="#audioarchive-stale-files" class="btn btn-sm btn-outline-secondary"><?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_STALE_SHOW'); ?></a>
+        <?php endif; ?>
+    </div>
+
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <p class="text-body-secondary mb-0">
             <?php echo Text::sprintf(
@@ -91,7 +114,183 @@ $severityKeys = [
         </a>
     </div>
 
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2 class="h4 mb-1"><?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_CODEC_TITLE'); ?></h2>
+            <p class="mb-0 text-body-secondary"><?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_CODEC_TEXT'); ?></p>
+        </div>
+        <?php if ($codecInventory === []) : ?>
+            <div class="card-body text-body-secondary"><?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_CODEC_EMPTY'); ?></div>
+        <?php else : ?>
+            <div class="table-responsive">
+                <table class="table table-striped align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_CODEC'); ?></th>
+                            <th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_CONTAINER'); ?></th>
+                            <th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_EXTENSION'); ?></th>
+                            <th scope="col" class="text-end"><?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_CLIP_COUNT'); ?></th>
+                            <th scope="col" class="text-end"><?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_TOTAL_SIZE'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($codecInventory as $row) : ?>
+                            <?php $filterValue = (string) $row['codec_filter']; ?>
+                            <tr>
+                                <th scope="row">
+                                    <a href="<?php echo Route::_('index.php?option=com_audioarchive&view=maintenance&codec=' . rawurlencode($filterValue)); ?>">
+                                        <?php echo (string) $row['codec'] !== ''
+                                            ? htmlspecialchars((string) $row['codec'], ENT_QUOTES, 'UTF-8')
+                                            : Text::_('COM_AUDIOARCHIVE_MAINTENANCE_UNKNOWN_CODEC'); ?>
+                                    </a>
+                                </th>
+                                <td><?php echo htmlspecialchars((string) ($row['container'] ?: '—'), ENT_QUOTES, 'UTF-8'); ?></td>
+                                <td><code><?php echo htmlspecialchars((string) ($row['extension'] ?: '—'), ENT_QUOTES, 'UTF-8'); ?></code></td>
+                                <td class="text-end"><?php echo (int) $row['clip_count']; ?></td>
+                                <td class="text-end"><?php echo htmlspecialchars($formatBytes((int) $row['total_size']), ENT_QUOTES, 'UTF-8'); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
+
+        <?php if ($codecFilter !== '') : ?>
+            <div class="card-header border-top d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <h3 class="h5 mb-0">
+                    <?php echo Text::sprintf(
+                        'COM_AUDIOARCHIVE_MAINTENANCE_CODEC_CLIPS_TITLE',
+                        $codecFilter === '__unknown__'
+                            ? Text::_('COM_AUDIOARCHIVE_MAINTENANCE_UNKNOWN_CODEC')
+                            : htmlspecialchars($codecFilter, ENT_QUOTES, 'UTF-8')
+                    ); ?>
+                </h3>
+                <a class="btn btn-sm btn-outline-secondary" href="<?php echo Route::_('index.php?option=com_audioarchive&view=maintenance'); ?>">
+                    <?php echo Text::_('JCLEAR'); ?>
+                </a>
+            </div>
+            <?php if ($codecClips === []) : ?>
+                <div class="card-body text-body-secondary"><?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_CODEC_CLIPS_EMPTY'); ?></div>
+            <?php else : ?>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_COLUMN_CLIP'); ?></th>
+                                <th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_COLUMN_FILENAME'); ?></th>
+                                <th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_CONTAINER'); ?></th>
+                                <th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_DURATION'); ?></th>
+                                <th scope="col" class="text-end"><?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_TOTAL_SIZE'); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($codecClips as $clip) : ?>
+                                <?php
+                                $seconds = max(0, intdiv((int) $clip->duration_ms, 1000));
+                                $duration = sprintf('%d:%02d', intdiv($seconds, 60), $seconds % 60);
+                                ?>
+                                <tr>
+                                    <th scope="row">
+                                        <a href="<?php echo Route::_('index.php?option=com_audioarchive&task=clip.edit&id=' . (int) $clip->id); ?>">
+                                            <?php echo htmlspecialchars((string) $clip->title, ENT_QUOTES, 'UTF-8'); ?>
+                                        </a>
+                                        <div class="small text-body-secondary">#<?php echo (int) $clip->id; ?></div>
+                                    </th>
+                                    <td><?php echo htmlspecialchars((string) $clip->original_filename, ENT_QUOTES, 'UTF-8'); ?></td>
+                                    <td>
+                                        <?php echo htmlspecialchars((string) ($clip->container_format ?: '—'), ENT_QUOTES, 'UTF-8'); ?>
+                                        <code class="ms-1"><?php echo htmlspecialchars((string) ($clip->file_extension ?: ''), ENT_QUOTES, 'UTF-8'); ?></code>
+                                    </td>
+                                    <td><?php echo htmlspecialchars($duration, ENT_QUOTES, 'UTF-8'); ?></td>
+                                    <td class="text-end"><?php echo htmlspecialchars($formatBytes((int) $clip->file_size), ENT_QUOTES, 'UTF-8'); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+        <?php endif; ?>
+    </div>
+
     <form action="<?php echo Route::_('index.php?option=com_audioarchive'); ?>" method="post" id="adminForm" name="adminForm">
+        <div class="card mb-4" id="audioarchive-stale-files">
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div>
+                    <h2 class="h4 mb-1"><?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_STALE_TITLE'); ?></h2>
+                    <p class="mb-0 text-body-secondary"><?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_STALE_TEXT'); ?></p>
+                </div>
+                <?php if ($staleItems !== []) : ?>
+                    <button
+                        type="submit"
+                        name="task"
+                        value="maintenance.deleteStale"
+                        class="btn btn-danger"
+                        onclick="return confirm('<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_MAINTENANCE_STALE_CONFIRM')); ?>');"
+                    >
+                        <?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_STALE_DELETE_SELECTED'); ?>
+                    </button>
+                <?php endif; ?>
+            </div>
+            <?php if ($staleItems === []) : ?>
+                <div class="card-body">
+                    <div class="alert alert-success mb-0"><?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_STALE_EMPTY'); ?></div>
+                </div>
+            <?php else : ?>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col" class="w-1 text-center">
+                                    <input
+                                        type="checkbox"
+                                        class="form-check-input"
+                                        aria-label="<?php echo Text::_('JGLOBAL_CHECK_ALL'); ?>"
+                                        onclick="document.querySelectorAll('input[name=&quot;stale[]&quot;]').forEach((item) => item.checked = this.checked);"
+                                    >
+                                </th>
+                                <th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_STALE_REASON'); ?></th>
+                                <th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_STALE_ROLE'); ?></th>
+                                <th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_COLUMN_CLIP'); ?></th>
+                                <th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_COLUMN_STORAGE_KEY'); ?></th>
+                                <th scope="col" class="text-end"><?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_TOTAL_SIZE'); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($staleItems as $item) : ?>
+                                <tr>
+                                    <td class="text-center">
+                                        <input
+                                            type="checkbox"
+                                            class="form-check-input"
+                                            name="stale[]"
+                                            value="<?php echo htmlspecialchars((string) $item['token'], ENT_QUOTES, 'UTF-8'); ?>"
+                                            aria-label="<?php echo htmlspecialchars((string) $item['storage_key'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        >
+                                    </td>
+                                    <th scope="row"><?php echo Text::_((string) $item['reason']); ?></th>
+                                    <td><span class="badge text-bg-secondary"><?php echo htmlspecialchars((string) $item['role'], ENT_QUOTES, 'UTF-8'); ?></span></td>
+                                    <td>
+                                        <?php if ((int) $item['clip_id'] > 0) : ?>
+                                            <a href="<?php echo Route::_('index.php?option=com_audioarchive&task=clip.edit&id=' . (int) $item['clip_id']); ?>">
+                                                <?php echo htmlspecialchars((string) ($item['clip_title'] ?: '#' . $item['clip_id']), ENT_QUOTES, 'UTF-8'); ?>
+                                            </a>
+                                            <?php if ((string) $item['original_filename'] !== '') : ?>
+                                                <div class="small text-body-secondary"><?php echo htmlspecialchars((string) $item['original_filename'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <?php endif; ?>
+                                        <?php else : ?>
+                                            <span class="text-body-secondary"><?php echo Text::_('JNONE'); ?></span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td><code class="text-break"><?php echo htmlspecialchars((string) $item['storage_key'], ENT_QUOTES, 'UTF-8'); ?></code></td>
+                                    <td class="text-end"><?php echo htmlspecialchars($formatBytes((int) $item['size']), ENT_QUOTES, 'UTF-8'); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+        </div>
+
         <?php if ($actionableClips !== []) : ?>
             <div class="card mb-4">
                 <div class="card-header">
