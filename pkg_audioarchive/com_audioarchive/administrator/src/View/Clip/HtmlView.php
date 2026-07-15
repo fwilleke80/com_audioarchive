@@ -8,6 +8,8 @@ use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
 use Joomla\CMS\Toolbar\ToolbarHelper;
+use Joomla\Database\DatabaseInterface;
+use Willeke\Component\Audioarchive\Administrator\Service\Analysis\AnalysisRepositoryService;
 
 \defined('_JEXEC') or die;
 
@@ -23,6 +25,7 @@ class HtmlView extends BaseHtmlView
     protected bool $canManageFiles = false;
     protected bool $canProcess = false;
     protected string $playbackUrl = '';
+    protected string $waveformUrl = '';
 
     /**
      * @brief Display the edit form.
@@ -56,6 +59,23 @@ class HtmlView extends BaseHtmlView
                 . '&' . Session::getFormToken() . '=1',
                 false
             );
+            $repository = new AnalysisRepositoryService(
+                Factory::getContainer()->get(DatabaseInterface::class)
+            );
+            $waveform = $repository->get((int) $this->item->id, 'waveform');
+
+            if (
+                $waveform !== null
+                && (int) ($waveform->is_available ?? 0) === 1
+                && (string) ($waveform->status ?? '') === 'available'
+            )
+            {
+                $this->waveformUrl = Route::_(
+                    'index.php?option=com_audioarchive&task=media.analysis&id=' . (int) $this->item->id
+                    . '&type=waveform&' . Session::getFormToken() . '=1',
+                    false
+                );
+            }
         }
 
         if (count($errors = $this->get('Errors')))

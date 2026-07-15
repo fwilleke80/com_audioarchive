@@ -170,20 +170,50 @@
     </fieldset>
 
     <fieldset name="playback" label="COM_AUDIOARCHIVE_CONFIG_PLAYBACK_LABEL">
-        <field
-            name="default_embed_presentation"
-            type="list"
-            label="COM_AUDIOARCHIVE_CONFIG_DEFAULT_EMBED_PRESENTATION_LABEL"
-            description="COM_AUDIOARCHIVE_CONFIG_DEFAULT_EMBED_PRESENTATION_DESC"
-            default="default"
-            validate="options"
-        >
-            <option value="default">COM_AUDIOARCHIVE_PRESENTATION_DEFAULT</option>
-            <option value="compact">COM_AUDIOARCHIVE_PRESENTATION_COMPACT</option>
-            <option value="featured">COM_AUDIOARCHIVE_PRESENTATION_FEATURED</option>
-        </field>
-        <field name="allow_original_downloads" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_ALLOW_DOWNLOADS_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ALLOW_DOWNLOADS_DESC" default="1"><option value="0">JNO</option><option value="1">JYES</option></field>
-        <field name="download_access_level" type="accesslevel" label="COM_AUDIOARCHIVE_CONFIG_DOWNLOAD_ACCESS_LEVEL_LABEL" description="COM_AUDIOARCHIVE_CONFIG_DOWNLOAD_ACCESS_LEVEL_DESC" default="1" showon="allow_original_downloads:1" />
+        <fieldset name="player_style" label="COM_AUDIOARCHIVE_CONFIG_PLAYER_STYLE_SECTION_LABEL">
+            <field
+                name="default_embed_presentation"
+                type="list"
+                label="COM_AUDIOARCHIVE_CONFIG_DEFAULT_EMBED_PRESENTATION_LABEL"
+                description="COM_AUDIOARCHIVE_CONFIG_DEFAULT_EMBED_PRESENTATION_DESC"
+                default="default"
+                validate="options"
+            >
+                <option value="minimal">COM_AUDIOARCHIVE_PRESENTATION_MINIMAL</option>
+                <option value="compact">COM_AUDIOARCHIVE_PRESENTATION_COMPACT</option>
+                <option value="default">COM_AUDIOARCHIVE_PRESENTATION_DEFAULT</option>
+                <option value="featured">COM_AUDIOARCHIVE_PRESENTATION_FEATURED</option>
+            </field>
+            <field
+                name="admin_player_presentation"
+                type="list"
+                label="COM_AUDIOARCHIVE_CONFIG_ADMIN_PLAYER_PRESENTATION_LABEL"
+                description="COM_AUDIOARCHIVE_CONFIG_ADMIN_PLAYER_PRESENTATION_DESC"
+                default="featured"
+                validate="options"
+            >
+                <option value="minimal">COM_AUDIOARCHIVE_PRESENTATION_MINIMAL</option>
+                <option value="compact">COM_AUDIOARCHIVE_PRESENTATION_COMPACT</option>
+                <option value="default">COM_AUDIOARCHIVE_PRESENTATION_DEFAULT</option>
+                <option value="featured">COM_AUDIOARCHIVE_PRESENTATION_FEATURED</option>
+            </field>
+            <field name="player_background_color" type="color" label="COM_AUDIOARCHIVE_CONFIG_PLAYER_BACKGROUND_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_PLAYER_BACKGROUND_COLOR_DESC" default="#f8f9fa" />
+            <field name="player_text_color" type="color" label="COM_AUDIOARCHIVE_CONFIG_PLAYER_TEXT_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_PLAYER_TEXT_COLOR_DESC" default="#212529" />
+            <field name="player_control_color" type="color" label="COM_AUDIOARCHIVE_CONFIG_PLAYER_CONTROL_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_PLAYER_CONTROL_COLOR_DESC" default="#0d6efd" />
+            <field name="player_waveform_unplayed_color" type="color" label="COM_AUDIOARCHIVE_CONFIG_PLAYER_WAVEFORM_UNPLAYED_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_PLAYER_WAVEFORM_UNPLAYED_COLOR_DESC" default="#6c757d" />
+            <field name="player_waveform_played_color" type="color" label="COM_AUDIOARCHIVE_CONFIG_PLAYER_WAVEFORM_PLAYED_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_PLAYER_WAVEFORM_PLAYED_COLOR_DESC" default="#0d6efd" />
+            <field name="player_border_radius" type="number" label="COM_AUDIOARCHIVE_CONFIG_PLAYER_BORDER_RADIUS_LABEL" description="COM_AUDIOARCHIVE_CONFIG_PLAYER_BORDER_RADIUS_DESC" default="14" min="0" max="40" step="1" />
+            <field name="player_minimal_button_size" type="number" label="COM_AUDIOARCHIVE_CONFIG_PLAYER_MINIMAL_BUTTON_SIZE_LABEL" description="COM_AUDIOARCHIVE_CONFIG_PLAYER_BUTTON_SIZE_DESC" default="42" min="32" max="88" step="1" />
+            <field name="player_compact_button_size" type="number" label="COM_AUDIOARCHIVE_CONFIG_PLAYER_COMPACT_BUTTON_SIZE_LABEL" description="COM_AUDIOARCHIVE_CONFIG_PLAYER_BUTTON_SIZE_DESC" default="48" min="32" max="88" step="1" />
+            <field name="player_default_button_size" type="number" label="COM_AUDIOARCHIVE_CONFIG_PLAYER_DEFAULT_BUTTON_SIZE_LABEL" description="COM_AUDIOARCHIVE_CONFIG_PLAYER_BUTTON_SIZE_DESC" default="54" min="32" max="88" step="1" />
+            <field name="player_featured_button_size" type="number" label="COM_AUDIOARCHIVE_CONFIG_PLAYER_FEATURED_BUTTON_SIZE_LABEL" description="COM_AUDIOARCHIVE_CONFIG_PLAYER_BUTTON_SIZE_DESC" default="54" min="32" max="88" step="1" />
+            <field name="player_featured_waveform_height" type="number" label="COM_AUDIOARCHIVE_CONFIG_PLAYER_FEATURED_WAVEFORM_HEIGHT_LABEL" description="COM_AUDIOARCHIVE_CONFIG_PLAYER_FEATURED_WAVEFORM_HEIGHT_DESC" default="100" min="48" max="240" step="1" />
+        </fieldset>
+
+        <fieldset name="downloads" label="COM_AUDIOARCHIVE_CONFIG_DOWNLOADS_SECTION_LABEL">
+            <field name="allow_original_downloads" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_ALLOW_DOWNLOADS_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ALLOW_DOWNLOADS_DESC" default="1"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="download_access_level" type="accesslevel" label="COM_AUDIOARCHIVE_CONFIG_DOWNLOAD_ACCESS_LEVEL_LABEL" description="COM_AUDIOARCHIVE_CONFIG_DOWNLOAD_ACCESS_LEVEL_DESC" default="1" showon="allow_original_downloads:1" />
+        </fieldset>
     </fieldset>
 
     <fieldset name="detail" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_LABEL">
@@ -199,7 +229,12 @@
         <field name="detail_show_play_count" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_PLAY_COUNT_LABEL" default="0"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
         <field name="detail_show_download_count" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_COUNT_LABEL" default="0"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
         <field name="detail_show_download" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_LABEL" description="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_DESC" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
-        <field name="detail_show_waveform" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_WAVEFORM_LABEL" description="COM_AUDIOARCHIVE_CONFIG_DETAIL_WAVEFORM_DESC" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        <field name="detail_presentation" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_PRESENTATION_LABEL" description="COM_AUDIOARCHIVE_CONFIG_DETAIL_PRESENTATION_DESC" default="featured" validate="options">
+            <option value="minimal">COM_AUDIOARCHIVE_PRESENTATION_MINIMAL</option>
+            <option value="compact">COM_AUDIOARCHIVE_PRESENTATION_COMPACT</option>
+            <option value="default">COM_AUDIOARCHIVE_PRESENTATION_DEFAULT</option>
+            <option value="featured">COM_AUDIOARCHIVE_PRESENTATION_FEATURED</option>
+        </field>
     </fieldset>
 
     <fieldset name="processing" label="COM_AUDIOARCHIVE_CONFIG_PROCESSING_LABEL">

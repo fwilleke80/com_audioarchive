@@ -870,50 +870,18 @@
 
 .com-audioarchive-detail-player
 {
-	display: grid;
-	grid-template-columns: auto minmax(0, 1fr);
-	align-items: center;
-	gap: 1rem;
+	max-width: 62rem;
 	margin-block: 1rem 2rem;
-	padding: 1rem;
-	border: 1px solid var(--audioarchive-border);
-	border-radius: var(--audioarchive-radius);
-	background: linear-gradient(135deg, color-mix(in srgb, var(--audioarchive-accent) 9%, transparent), var(--audioarchive-surface));
-	box-shadow: var(--audioarchive-shadow);
-}
-
-.com-audioarchive-player-symbol
-{
-	display: grid;
-	place-items: center;
-	width: 3.5rem;
-	height: 3.5rem;
-	border-radius: 50%;
-	background: color-mix(in srgb, var(--audioarchive-accent) 15%, transparent);
-	color: var(--audioarchive-accent);
-	font-size: 1.5rem;
-}
-
-.com-audioarchive-player-content
-{
-	min-width: 0;
 }
 
 .com-audioarchive-player-title
 {
-	margin: 0 0 .45rem;
+	margin: 0 0 .55rem;
 	font-size: .82rem;
 	font-weight: 800;
 	letter-spacing: .05em;
 	text-transform: uppercase;
 	color: var(--audioarchive-muted);
-}
-
-.com-audioarchive-detail-player audio
-{
-	display: block;
-	width: 100%;
-	max-width: 58rem;
 }
 
 .com-audioarchive-clip-layout

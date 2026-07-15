@@ -83,7 +83,11 @@ abstract class AudioarchiveHelper
 			$items = (array) $database->setQuery($query, 0, $count)->loadObjectList();
 		}
 
-		return self::prepareItems($database, $items);
+		return self::prepareItems(
+			$database,
+			$items,
+			(string) $params->get('player_presentation', 'default') === 'featured'
+		);
 	}
 
 	/**
@@ -187,8 +191,20 @@ abstract class AudioarchiveHelper
 		return $query;
 	}
 
-	/** @return object[] */
-	private static function prepareItems(DatabaseInterface $database, array $items): array
+	/**
+	 * @brief Add routes, tags, download state, and optional waveform routes to selected clips.
+	 *
+	 * @param DatabaseInterface $database Joomla database connection.
+	 * @param object[] $items Selected clip records.
+	 * @param bool $loadWaveforms Whether protected waveform routes are required.
+	 *
+	 * @return object[] Prepared clip records.
+	 */
+	private static function prepareItems(
+		DatabaseInterface $database,
+		array $items,
+		bool $loadWaveforms
+	): array
 	{
 		if ($items === [])
 		{
@@ -203,6 +219,9 @@ abstract class AudioarchiveHelper
 		$preferredItemId = $app->getInput()->getInt('Itemid', 0);
 		$componentParams = ComponentHelper::getParams('com_audioarchive');
 		$canDownload = DownloadAccessService::canDownload($componentParams, $app->getIdentity());
+		$waveformClipIds = $loadWaveforms
+			? self::getAvailableWaveformClipIds($database, $ids)
+			: [];
 
 		foreach ($items as $item)
 		{
@@ -211,12 +230,48 @@ abstract class AudioarchiveHelper
 			$item->itemid = $resolver->resolve((string) $item->language, (int) $item->catid, $tagIds, $preferredItemId, $levels);
 			$item->detail_url = Route::_(RouteHelper::getClipRoute((int) $item->id, (int) $item->itemid));
 			$item->stream_url = Route::_(RouteHelper::getPlaybackRoute((int) $item->id, (int) $item->itemid));
+			$item->waveform_url = isset($waveformClipIds[(int) $item->id])
+				? Route::_(RouteHelper::getAnalysisRoute((int) $item->id, 'waveform', (int) $item->itemid))
+				: '';
 			$item->can_download = $canDownload;
 			$item->download_url = $item->can_download
 				? Route::_(RouteHelper::getDownloadRoute((int) $item->id, (int) $item->itemid))
 				: '';
 		}
 		return $items;
+	}
+
+	/**
+	 * @brief Return clip identifiers with an available waveform analysis.
+	 *
+	 * @param DatabaseInterface $database Joomla database connection.
+	 * @param int[] $clipIds Clip identifiers.
+	 *
+	 * @return array<int, true> Available waveform identifiers as a lookup map.
+	 */
+	private static function getAvailableWaveformClipIds(DatabaseInterface $database, array $clipIds): array
+	{
+		if ($clipIds === [])
+		{
+			return [];
+		}
+
+		$analysisType = 'waveform';
+		$status = 'available';
+		$available = 1;
+		$query = $database->getQuery(true)
+			->select($database->quoteName('clip_id'))
+			->from($database->quoteName('#__audioarchive_analyses'))
+			->whereIn($database->quoteName('clip_id'), $clipIds, ParameterType::INTEGER)
+			->where($database->quoteName('analysis_type') . ' = :analysisType')
+			->where($database->quoteName('status') . ' = :analysisStatus')
+			->where($database->quoteName('is_available') . ' = :analysisAvailable')
+			->bind(':analysisType', $analysisType, ParameterType::STRING)
+			->bind(':analysisStatus', $status, ParameterType::STRING)
+			->bind(':analysisAvailable', $available, ParameterType::INTEGER);
+		$ids = array_map('intval', (array) $database->setQuery($query)->loadColumn());
+
+		return array_fill_keys($ids, true);
 	}
 
 	/** @return object[] */

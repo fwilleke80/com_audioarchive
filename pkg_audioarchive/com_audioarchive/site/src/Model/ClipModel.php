@@ -62,18 +62,46 @@ class ClipModel extends BaseDatabaseModel
 		}
 
 		$params = clone ComponentHelper::getParams('com_audioarchive');
+
+		if (trim((string) $params->get('detail_presentation', '')) === '')
+		{
+			$params->set(
+				'detail_presentation',
+				(int) $params->get('detail_show_waveform', 1) === 1 ? 'featured' : 'default'
+			);
+		}
+
 		$item = Factory::getApplication()->getMenu()->getActive();
 
 		if ($item)
 		{
-			foreach ($item->getParams()->toArray() as $key => $value)
+			$menuParams = $item->getParams()->toArray();
+			$legacyWaveformOverride = $menuParams['detail_show_waveform'] ?? null;
+
+			foreach ($menuParams as $key => $value)
 			{
 				if ($value !== '' && $value !== null)
 				{
 					$params->set($key, $value);
 				}
 			}
+
+			if (trim((string) ($menuParams['detail_presentation'] ?? '')) === ''
+				&& $legacyWaveformOverride !== ''
+				&& $legacyWaveformOverride !== null)
+			{
+				$params->set(
+					'detail_presentation',
+					(int) $legacyWaveformOverride === 1 ? 'featured' : 'default'
+				);
+			}
 		}
+
+		$detailPresentation = (string) $params->get('detail_presentation', 'featured');
+		$params->set(
+			'detail_presentation',
+			in_array($detailPresentation, ['minimal', 'compact', 'default', 'featured'], true) ? $detailPresentation : 'featured'
+		);
 
 		$this->resolvedParams = $params;
 

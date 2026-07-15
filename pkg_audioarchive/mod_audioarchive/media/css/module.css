@@ -112,7 +112,7 @@
 .mod-audioarchive--default .mod-audioarchive-item
 {
 	display: grid;
-	grid-template-columns: 2.9rem minmax(0, 1fr);
+	grid-template-columns: auto minmax(0, 1fr);
 	grid-template-areas:
 		"player title"
 		"player meta"
@@ -179,7 +179,7 @@
 .mod-audioarchive--compact .mod-audioarchive-item
 {
 	display: grid;
-	grid-template-columns: 2.65rem minmax(0, 1fr);
+	grid-template-columns: auto minmax(0, 1fr);
 	grid-template-areas:
 		"player title"
 		"player meta";
@@ -225,7 +225,7 @@
 .mod-audioarchive--featured .mod-audioarchive-item
 {
 	display: grid;
-	grid-template-columns: 4rem minmax(0, 1fr);
+	grid-template-columns: auto minmax(0, 1fr);
 	grid-template-areas:
 		"player title"
 		"player meta"
@@ -336,7 +336,7 @@
 	.mod-audioarchive--default .mod-audioarchive-item,
 	.mod-audioarchive--featured .mod-audioarchive-item
 	{
-		grid-template-columns: 2.9rem minmax(0, 1fr);
+		grid-template-columns: auto minmax(0, 1fr);
 		gap: .35rem .7rem;
 	}
 
@@ -349,5 +349,65 @@
 	.mod-audioarchive-meta
 	{
 		gap: .2rem .65rem;
+	}
+}
+
+
+/* Player presentation is independent from the surrounding module layout. */
+.mod-audioarchive-item.has-wide-player .mod-audioarchive-player
+{
+	display: block;
+	width: 100%;
+	min-width: 0;
+	margin-top: .35rem;
+	padding-top: 0;
+}
+
+.mod-audioarchive--default .mod-audioarchive-item.has-wide-player
+{
+	grid-template-columns: minmax(0, 1fr);
+	grid-template-areas:
+		"title"
+		"meta"
+		"player"
+		"description"
+		"tags"
+		"actions";
+	align-items: stretch;
+}
+
+.mod-audioarchive--compact .mod-audioarchive-item.has-wide-player
+{
+	grid-template-columns: minmax(0, 1fr);
+	grid-template-areas:
+		"title"
+		"meta"
+		"player";
+	align-items: stretch;
+}
+
+.mod-audioarchive--featured .mod-audioarchive-item.has-wide-player
+{
+	grid-template-columns: minmax(0, 1fr);
+	grid-template-areas:
+		"title"
+		"meta"
+		"player"
+		"description"
+		"tags"
+		"actions";
+	align-items: stretch;
+}
+
+.mod-audioarchive-item.player-presentation-minimal .mod-audioarchive-player
+{
+	justify-content: center;
+}
+
+@media (max-width: 32rem)
+{
+	.mod-audioarchive-item.has-wide-player .mod-audioarchive-player
+	{
+		margin-top: .25rem;
 	}
 }

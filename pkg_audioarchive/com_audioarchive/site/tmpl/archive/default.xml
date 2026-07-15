@@ -51,7 +51,13 @@
 			<field name="detail_show_play_count" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_PLAY_COUNT_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
 			<field name="detail_show_download_count" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_COUNT_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
 			<field name="detail_show_download" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_LABEL" description="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_DESC" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
-			<field name="detail_show_waveform" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_WAVEFORM_LABEL" description="COM_AUDIOARCHIVE_CONFIG_DETAIL_WAVEFORM_DESC" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
+			<field name="detail_presentation" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_PRESENTATION_LABEL" description="COM_AUDIOARCHIVE_CONFIG_DETAIL_PRESENTATION_DESC" default="" validate="options">
+				<option value="">JGLOBAL_USE_GLOBAL</option>
+				<option value="minimal">COM_AUDIOARCHIVE_PRESENTATION_MINIMAL</option>
+				<option value="compact">COM_AUDIOARCHIVE_PRESENTATION_COMPACT</option>
+				<option value="default">COM_AUDIOARCHIVE_PRESENTATION_DEFAULT</option>
+				<option value="featured">COM_AUDIOARCHIVE_PRESENTATION_FEATURED</option>
+			</field>
 		</fieldset>
 		<fieldset name="columns" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_COLUMNS_LABEL">
 			<field name="archive_columns_note" type="note" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_COLUMNS_NOTE_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_COLUMNS_DESC" class="alert alert-info" />

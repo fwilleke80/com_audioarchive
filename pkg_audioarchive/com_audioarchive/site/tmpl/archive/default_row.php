@@ -2,6 +2,7 @@
 
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Layout\LayoutHelper;
 
 \defined('_JEXEC') or die;
 
@@ -15,26 +16,32 @@ $mime = trim((string) $item->mime_type) ?: 'application/octet-stream';
 <tr class="com-audioarchive-result-row <?php echo $columns['play'] ? 'has-player' : 'no-player'; ?>">
 	<?php if ($columns['play']) : ?>
 		<td class="com-audioarchive-play-cell" data-label="<?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_PLAY'); ?>">
-			<button
-				class="com-audioarchive-play-button"
-				type="button"
-				aria-controls="<?php echo $audioId; ?>"
-				aria-pressed="false"
-				aria-label="<?php echo Text::sprintf('COM_AUDIOARCHIVE_PLAY_LABEL', $this->escape($item->title)); ?>"
-				title="<?php echo Text::sprintf('COM_AUDIOARCHIVE_PLAY_LABEL', $this->escape($item->title)); ?>"
-				data-audioarchive-play
-				data-clip-id="<?php echo (int) $item->id; ?>"
-				data-clip-title="<?php echo $this->escape((string) $item->title); ?>"
-				data-play-label="<?php echo Text::sprintf('COM_AUDIOARCHIVE_PLAY_LABEL', $this->escape($item->title)); ?>"
-				data-pause-label="<?php echo Text::sprintf('COM_AUDIOARCHIVE_PAUSE_LABEL', $this->escape($item->title)); ?>"
-				data-error-label="<?php echo Text::sprintf('COM_AUDIOARCHIVE_PLAY_ERROR_LABEL', $this->escape($item->title)); ?>"
-			>
-				<span data-audioarchive-icon aria-hidden="true">▶</span>
-			</button>
-			<audio id="<?php echo $audioId; ?>" class="com-audioarchive-row-audio" preload="none">
-				<source src="<?php echo $item->stream_url; ?>" type="<?php echo $this->escape($mime); ?>">
-			</audio>
-			<noscript><a href="<?php echo $item->detail_url; ?>"><?php echo Text::_('COM_AUDIOARCHIVE_OPEN_CLIP'); ?></a></noscript>
+			<?php
+			echo LayoutHelper::render(
+				'player.unified',
+				[
+					'audioId' => $audioId,
+					'clipId' => (int) $item->id,
+					'title' => (string) $item->title,
+					'streamUrl' => (string) $item->stream_url,
+					'waveformUrl' => '',
+					'mime' => $mime,
+					'params' => $this->params,
+					'presentation' => 'minimal',
+					'labels' => [
+						'play' => Text::sprintf('COM_AUDIOARCHIVE_PLAY_LABEL', (string) $item->title),
+						'pause' => Text::sprintf('COM_AUDIOARCHIVE_PAUSE_LABEL', (string) $item->title),
+						'seek' => Text::_('COM_AUDIOARCHIVE_PLAYER_SEEK'),
+						'mute' => Text::_('COM_AUDIOARCHIVE_PLAYER_MUTE'),
+						'unmute' => Text::_('COM_AUDIOARCHIVE_PLAYER_UNMUTE'),
+						'volume' => Text::_('COM_AUDIOARCHIVE_PLAYER_VOLUME'),
+						'fallback' => Text::_('COM_AUDIOARCHIVE_PLAYER_FALLBACK'),
+						'waveformLoading' => Text::_('COM_AUDIOARCHIVE_WAVEFORM_LOADING'),
+					],
+				],
+				JPATH_ROOT . '/components/com_audioarchive/layouts'
+			);
+			?>
 		</td>
 	<?php endif; ?>
 	<?php if ($columns['title']) : ?>

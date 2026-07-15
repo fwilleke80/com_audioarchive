@@ -110,6 +110,7 @@ class HtmlView extends BaseHtmlView
 		$this->prepareDocument($itemId, $item);
 		$this->getDocument()->getWebAssetManager()
 			->useStyle('com_audioarchive.site')
+			->useStyle('com_audioarchive.player-style')
 			->useScript('com_audioarchive.player')
 			->useScript('com_audioarchive.archive');
 

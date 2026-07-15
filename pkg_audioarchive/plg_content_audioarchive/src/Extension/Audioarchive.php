@@ -241,14 +241,14 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 			)));
 		}
 
-		if (!in_array($configuredPresentation, ['default', 'compact', 'featured'], true))
+		if (!in_array($configuredPresentation, ['minimal', 'compact', 'default', 'featured'], true))
 		{
 			$configuredPresentation = 'default';
 		}
 
 		$layout = strtolower(trim((string) ($attributes['layout'] ?? $configuredPresentation)));
 
-		if (!in_array($layout, ['default', 'compact', 'featured'], true))
+		if (!in_array($layout, ['minimal', 'compact', 'default', 'featured'], true))
 		{
 			return null;
 		}
@@ -529,7 +529,8 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 			'selection_mode' => $options['mode'] === 'random' ? 'random' : 'specific',
 			'count' => 1,
 			'specific_clip' => 0,
-			'presentation' => $options['layout'],
+			'presentation' => 'default',
+			'player_presentation' => $options['layout'],
 			'show_title' => (int) $this->params->get('show_title', 1),
 			'link_title' => (int) $this->params->get('link_title', 1),
 			'show_player' => 1,
@@ -613,6 +614,11 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 			$assets->registerStyle('com_audioarchive.site', 'com_audioarchive/site.css');
 		}
 
+		if (!$assets->assetExists('style', 'com_audioarchive.player-style'))
+		{
+			$assets->registerStyle('com_audioarchive.player-style', 'com_audioarchive/player.css');
+		}
+
 		if (!$assets->assetExists('script', 'com_audioarchive.player'))
 		{
 			$assets->registerScript('com_audioarchive.player', 'com_audioarchive/player.js', [], ['type' => 'module'], ['core']);
@@ -620,6 +626,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 
 		$assets
 			->useStyle('com_audioarchive.site')
+			->useStyle('com_audioarchive.player-style')
 			->useScript('com_audioarchive.player')
 			->registerAndUseStyle('mod_audioarchive.site', 'mod_audioarchive/module.css');
 
@@ -632,7 +639,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 			$playCountToken = Session::getFormToken();
 		}
 
-		$layout = (string) $params->get('presentation', 'default');
+		$layout = 'default';
 		ob_start();
 
 		try

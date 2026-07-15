@@ -66,6 +66,56 @@ class MediaController extends BaseController
 	}
 
 	/**
+	 * @brief Deliver one protected derived analysis to an authorised administrator.
+	 *
+	 * @return void
+	 */
+	public function analysis(): void
+	{
+		$application = Factory::getApplication();
+		$method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+
+		if (!in_array($method, ['GET', 'HEAD'], true))
+		{
+			header('Allow: GET, HEAD');
+			$this->sendError(405, Text::_('COM_AUDIOARCHIVE_ADMIN_STREAM_METHOD_NOT_ALLOWED'));
+		}
+
+		if (!Session::checkToken('get'))
+		{
+			$this->sendError(403, Text::_('JINVALID_TOKEN'));
+		}
+
+		$id = $application->getInput()->getInt('id', 0);
+		$type = $application->getInput()->getCmd('type', 'waveform');
+		$analysis = $this->getClipAnalysis($id, $type);
+
+		if ($analysis === null || !$this->canPreview($analysis))
+		{
+			$this->sendError(403, Text::_('JERROR_ALERTNOAUTHOR'));
+		}
+
+		if (
+			(int) ($analysis->is_available ?? 0) !== 1
+			|| (string) ($analysis->status ?? '') !== 'available'
+		)
+		{
+			$this->sendError(404, Text::_('COM_AUDIOARCHIVE_ADMIN_ANALYSIS_NOT_FOUND'));
+		}
+
+		try
+		{
+			$path = $this->resolveAnalysisPath((string) $analysis->storage_key);
+		}
+		catch (\Throwable)
+		{
+			$this->sendError(404, Text::_('COM_AUDIOARCHIVE_ADMIN_ANALYSIS_NOT_FOUND'));
+		}
+
+		$this->sendAnalysisFile($path, $analysis, $method === 'HEAD');
+	}
+
+	/**
 	 * @brief Load the clip and its original file record.
 	 *
 	 * @param int $id Clip identifier.
@@ -101,6 +151,45 @@ class MediaController extends BaseController
 			->where($database->quoteName('f.file_role') . ' = :fileRole')
 			->bind(':clipId', $id, ParameterType::INTEGER)
 			->bind(':fileRole', $role, ParameterType::STRING);
+		$result = $database->setQuery($query, 0, 1)->loadObject();
+
+		return is_object($result) ? $result : null;
+	}
+
+	/**
+	 * @brief Load one clip and one derived analysis record.
+	 *
+	 * @param int $id Clip identifier.
+	 * @param string $analysisType Stable analysis type.
+	 *
+	 * @return object|null Joined clip/analysis data.
+	 */
+	private function getClipAnalysis(int $id, string $analysisType): ?object
+	{
+		if ($id <= 0 || preg_match('/^[a-z][a-z0-9_]{0,63}$/', $analysisType) !== 1)
+		{
+			return null;
+		}
+
+		$database = Factory::getContainer()->get(DatabaseInterface::class);
+		$query = $database->getQuery(true)
+			->select([
+				$database->quoteName('a.id'),
+				$database->quoteName('a.created_by'),
+				$database->quoteName('n.storage_key'),
+				$database->quoteName('n.data_format'),
+				$database->quoteName('n.status'),
+				$database->quoteName('n.is_available'),
+			])
+			->from($database->quoteName('#__audioarchive_clips', 'a'))
+			->innerJoin(
+				$database->quoteName('#__audioarchive_analyses', 'n')
+				. ' ON ' . $database->quoteName('n.clip_id') . ' = ' . $database->quoteName('a.id')
+			)
+			->where($database->quoteName('a.id') . ' = :clipId')
+			->where($database->quoteName('n.analysis_type') . ' = :analysisType')
+			->bind(':clipId', $id, ParameterType::INTEGER)
+			->bind(':analysisType', $analysisType, ParameterType::STRING);
 		$result = $database->setQuery($query, 0, 1)->loadObject();
 
 		return is_object($result) ? $result : null;
@@ -169,6 +258,114 @@ class MediaController extends BaseController
 		}
 
 		return $realPath;
+	}
+
+	/**
+	 * @brief Resolve one managed analysis without allowing path or symlink escapes.
+	 *
+	 * @param string $storageKey Managed analysis storage key.
+	 *
+	 * @return string Validated absolute path.
+	 */
+	private function resolveAnalysisPath(string $storageKey): string
+	{
+		$storage = new ManagedStorageService(ComponentHelper::getParams('com_audioarchive'));
+		$root = realpath($storage->getRoot('analysis'));
+		$candidate = $storage->resolveManagedPath('analysis', $storageKey);
+		$realPath = realpath($candidate);
+
+		if (
+			$root === false
+			|| $realPath === false
+			|| !is_dir($root)
+			|| !is_file($realPath)
+			|| is_link($candidate)
+			|| !is_readable($realPath)
+		)
+		{
+			throw new \RuntimeException('Stored analysis is unavailable.');
+		}
+
+		$root = rtrim(Path::clean($root), DIRECTORY_SEPARATOR);
+		$realPath = Path::clean($realPath);
+
+		if (!str_starts_with($realPath . DIRECTORY_SEPARATOR, $root . DIRECTORY_SEPARATOR))
+		{
+			throw new \RuntimeException('Stored analysis escaped its configured root.');
+		}
+
+		return $realPath;
+	}
+
+	/**
+	 * @brief Send one compact analysis data file.
+	 *
+	 * @param string $path Validated absolute path.
+	 * @param object $analysis Analysis record.
+	 * @param bool $headOnly Whether the request is HEAD.
+	 *
+	 * @return void
+	 */
+	private function sendAnalysisFile(string $path, object $analysis, bool $headOnly): void
+	{
+		$size = max(0, (int) filesize($path));
+
+		if ($size <= 0)
+		{
+			$this->sendError(404, Text::_('COM_AUDIOARCHIVE_ADMIN_ANALYSIS_NOT_FOUND'));
+		}
+
+		$handle = null;
+
+		if (!$headOnly)
+		{
+			$handle = @fopen($path, 'rb');
+
+			if ($handle === false)
+			{
+				$this->sendError(404, Text::_('COM_AUDIOARCHIVE_ADMIN_ANALYSIS_NOT_FOUND'));
+			}
+		}
+
+		$format = strtolower(trim((string) ($analysis->data_format ?? '')));
+		$mime = match (true)
+		{
+			str_starts_with($format, 'json-') => 'application/json; charset=utf-8',
+			str_starts_with($format, 'png-') => 'image/png',
+			str_starts_with($format, 'webp-') => 'image/webp',
+			str_starts_with($format, 'svg-') => 'image/svg+xml; charset=utf-8',
+			default => 'application/octet-stream',
+		};
+		$etag = '"' . sha1($path . ':' . $size . ':' . (int) filemtime($path)) . '"';
+		$this->clearOutputBuffers();
+		@session_write_close();
+		http_response_code(200);
+		header('Content-Type: ' . $mime);
+		header('Content-Length: ' . $size);
+		header('ETag: ' . $etag);
+		header('Last-Modified: ' . gmdate('D, d M Y H:i:s', (int) filemtime($path)) . ' GMT');
+		header('Cache-Control: private, max-age=86400, must-revalidate');
+		header('X-Content-Type-Options: nosniff');
+
+		if ($headOnly)
+		{
+			Factory::getApplication()->close();
+		}
+
+		while (!feof($handle))
+		{
+			$chunk = fread($handle, 65536);
+
+			if ($chunk === false || $chunk === '')
+			{
+				break;
+			}
+
+			echo $chunk;
+		}
+
+		fclose($handle);
+		Factory::getApplication()->close();
 	}
 
 	/**

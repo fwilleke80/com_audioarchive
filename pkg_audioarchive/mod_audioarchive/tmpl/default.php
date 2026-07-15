@@ -1,18 +1,23 @@
 <?php
 
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Router\Route;
-use Willeke\Component\Audioarchive\Site\Helper\RouteHelper;
 use Joomla\String\StringHelper;
+use Willeke\Component\Audioarchive\Site\Helper\RouteHelper;
 
 \defined('_JEXEC') or die;
 
-$presentation = in_array((string) $params->get('presentation', 'default'), ['default', 'compact', 'featured'], true)
+$modulePresentation = in_array((string) $params->get('presentation', 'default'), ['default', 'compact', 'featured'], true)
 	? (string) $params->get('presentation', 'default')
 	: 'default';
+$playerPresentation = in_array((string) $params->get('player_presentation', 'default'), ['minimal', 'compact', 'default', 'featured'], true)
+	? (string) $params->get('player_presentation', 'default')
+	: 'default';
 $moduleClass = trim(
-	'mod-audioarchive mod-audioarchive--' . $presentation . ' '
+	'mod-audioarchive mod-audioarchive--' . $modulePresentation . ' '
 	. htmlspecialchars((string) $params->get('moduleclass_sfx', ''), ENT_QUOTES, 'UTF-8')
 );
 $showTitle = (int) $params->get('show_title', 1) === 1;
@@ -28,6 +33,8 @@ $showDownload = (int) $params->get('show_download', 0) === 1;
 $showCounts = (int) $params->get('show_counts', 0) === 1;
 $descriptionLength = max(20, (int) $params->get('description_length', 160));
 $displayDate = (string) $params->get('display_date', 'uploaded');
+$widePlayer = $playerPresentation !== 'minimal';
+$componentParams = ComponentHelper::getParams('com_audioarchive');
 ?>
 <div
 	class="com-audioarchive <?php echo $moduleClass; ?>"
@@ -52,12 +59,13 @@ $displayDate = (string) $params->get('display_date', 'uploaded');
 			};
 			$itemShowDownload = $showDownload && !empty($item->can_download) && (string) $item->download_url !== '';
 			$plainDescription = trim(strip_tags((string) $item->description));
+
 			if (StringHelper::strlen($plainDescription) > $descriptionLength)
 			{
 				$plainDescription = rtrim(StringHelper::substr($plainDescription, 0, $descriptionLength - 1)) . '…';
 			}
 			?>
-			<article class="mod-audioarchive-item <?php echo $showPlayer ? 'has-player' : 'no-player'; ?>">
+			<article class="mod-audioarchive-item <?php echo $showPlayer ? 'has-player' : 'no-player'; ?><?php echo $showPlayer && $widePlayer ? ' has-wide-player' : ''; ?> player-presentation-<?php echo htmlspecialchars($playerPresentation, ENT_QUOTES, 'UTF-8'); ?>">
 				<?php if ($showTitle) : ?>
 					<h3 class="mod-audioarchive-title">
 						<?php if ($linkTitle) : ?><a href="<?php echo $item->detail_url; ?>"><?php endif; ?>
@@ -67,24 +75,33 @@ $displayDate = (string) $params->get('display_date', 'uploaded');
 				<?php endif; ?>
 
 				<?php if ($showPlayer) : ?>
-					<div class="mod-audioarchive-player">
-						<button
-							class="com-audioarchive-play-button"
-							type="button"
-							aria-controls="<?php echo $audioId; ?>"
-							aria-pressed="false"
-							aria-label="<?php echo htmlspecialchars(Text::sprintf('MOD_AUDIOARCHIVE_PLAY_LABEL', $item->title), ENT_QUOTES, 'UTF-8'); ?>"
-							title="<?php echo htmlspecialchars(Text::sprintf('MOD_AUDIOARCHIVE_PLAY_LABEL', $item->title), ENT_QUOTES, 'UTF-8'); ?>"
-							data-audioarchive-play
-							data-clip-id="<?php echo (int) $item->id; ?>"
-							data-clip-title="<?php echo htmlspecialchars((string) $item->title, ENT_QUOTES, 'UTF-8'); ?>"
-							data-play-label="<?php echo htmlspecialchars(Text::sprintf('MOD_AUDIOARCHIVE_PLAY_LABEL', $item->title), ENT_QUOTES, 'UTF-8'); ?>"
-							data-pause-label="<?php echo htmlspecialchars(Text::sprintf('MOD_AUDIOARCHIVE_PAUSE_LABEL', $item->title), ENT_QUOTES, 'UTF-8'); ?>"
-							data-error-label="<?php echo htmlspecialchars(Text::sprintf('MOD_AUDIOARCHIVE_PLAY_ERROR_LABEL', $item->title), ENT_QUOTES, 'UTF-8'); ?>"
-						><span data-audioarchive-icon aria-hidden="true">▶</span></button>
-						<audio id="<?php echo $audioId; ?>" class="com-audioarchive-row-audio" preload="none">
-							<source src="<?php echo $item->stream_url; ?>" type="<?php echo htmlspecialchars($mime, ENT_QUOTES, 'UTF-8'); ?>">
-						</audio>
+					<div class="mod-audioarchive-player mod-audioarchive-player--unified">
+						<?php
+						echo LayoutHelper::render(
+							'player.unified',
+							[
+								'audioId' => $audioId,
+								'clipId' => (int) $item->id,
+								'title' => (string) $item->title,
+								'streamUrl' => (string) $item->stream_url,
+								'waveformUrl' => (string) ($item->waveform_url ?? ''),
+								'mime' => $mime,
+								'params' => $componentParams,
+								'presentation' => $playerPresentation,
+								'labels' => [
+									'play' => Text::sprintf('MOD_AUDIOARCHIVE_PLAY_LABEL', $item->title),
+									'pause' => Text::sprintf('MOD_AUDIOARCHIVE_PAUSE_LABEL', $item->title),
+									'seek' => Text::_('MOD_AUDIOARCHIVE_PLAYER_SEEK'),
+									'mute' => Text::_('MOD_AUDIOARCHIVE_PLAYER_MUTE'),
+									'unmute' => Text::_('MOD_AUDIOARCHIVE_PLAYER_UNMUTE'),
+									'volume' => Text::_('MOD_AUDIOARCHIVE_PLAYER_VOLUME'),
+									'fallback' => Text::_('MOD_AUDIOARCHIVE_PLAYER_FALLBACK'),
+									'waveformLoading' => Text::_('MOD_AUDIOARCHIVE_WAVEFORM_LOADING'),
+								],
+							],
+							JPATH_ROOT . '/components/com_audioarchive/layouts'
+						);
+						?>
 					</div>
 				<?php endif; ?>
 

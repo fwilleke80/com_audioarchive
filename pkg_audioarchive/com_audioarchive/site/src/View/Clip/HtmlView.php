@@ -105,7 +105,7 @@ class HtmlView extends BaseHtmlView
 			? Route::_(RouteHelper::getDownloadRoute((int) $item->id, $routeItemId))
 			: '';
 
-		if ((int) $this->params->get('detail_show_waveform', 1) === 1)
+		if ((string) $this->params->get('detail_presentation', 'featured') === 'featured')
 		{
 			$waveform = $model->getAnalysis('waveform', (int) $item->id);
 
@@ -140,15 +140,10 @@ class HtmlView extends BaseHtmlView
 		$this->preparePathway($routeItemId);
 		$this->prepareDocument($canonical, $routeItemId);
 
-		$assets = $this->getDocument()->getWebAssetManager()
+		$this->getDocument()->getWebAssetManager()
 			->useStyle('com_audioarchive.site')
 			->useStyle('com_audioarchive.player-style')
 			->useScript('com_audioarchive.player');
-
-		if ($this->waveformUrl !== '')
-		{
-			$assets->useScript('com_audioarchive.waveform');
-		}
 
 		parent::display($tpl);
 	}
