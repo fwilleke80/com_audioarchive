@@ -229,8 +229,8 @@ const initialiseAudioArchiveFilters = () =>
 
 			minimumRange.value = String(minimum);
 			maximumRange.value = String(maximumValue);
-			minimumField.value = formatDuration(minimum);
-			maximumField.value = formatDuration(maximumValue);
+			minimumField.value = minimum > 0 ? formatDuration(minimum) : '';
+			maximumField.value = maximumValue < maximum ? formatDuration(maximumValue) : '';
 			updatePresentation();
 		};
 

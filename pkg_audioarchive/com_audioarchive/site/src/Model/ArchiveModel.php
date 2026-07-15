@@ -466,6 +466,9 @@ class ArchiveModel extends ListModel
 		$durationMinimumMs = $this->getState('filter.duration_min_ms');
 		$durationMaximumMs = $this->getState('filter.duration_max_ms');
 		$maximumDurationMs = $this->getMaximumDurationMs();
+		$durationMaximumExclusive = $durationMaximumMs !== null
+			? ((int) $durationMaximumMs >= PHP_INT_MAX - 1000 ? PHP_INT_MAX : (int) $durationMaximumMs + 1000)
+			: null;
 
 		if ($search !== '')
 		{
@@ -492,8 +495,9 @@ class ArchiveModel extends ListModel
 			$durationMaximum !== ''
 			&& $durationMaximumMs !== null
 			&& (int) $durationMaximumMs > 0
+			&& $durationMaximumExclusive !== null
 			&& $maximumDurationMs > 0
-			&& (int) $durationMaximumMs < $maximumDurationMs
+			&& $durationMaximumExclusive <= $maximumDurationMs
 		)
 		{
 			$values['duration_max'] = $durationMaximum;

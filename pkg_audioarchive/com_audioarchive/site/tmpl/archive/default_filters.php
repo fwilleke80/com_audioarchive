@@ -139,23 +139,8 @@ $tagListId = 'audioarchive-filter-tag-list';
 						$sliderMaximumValue = $durationMaximumMs !== null
 							? max($sliderMinimumValue, min($sliderMaximum, (int) floor((int) $durationMaximumMs / 1000)))
 							: $sliderMaximum;
-						$formatDurationValue = static function(int $seconds): string
-						{
-							$seconds = max(0, $seconds);
-							$hours = intdiv($seconds, 3600);
-							$minutes = intdiv($seconds % 3600, 60);
-							$remainder = $seconds % 60;
-
-							return $hours > 0
-								? sprintf('%d:%02d:%02d', $hours, $minutes, $remainder)
-								: sprintf('%d:%02d', $minutes, $remainder);
-						};
 						$durationMinimumValue = trim((string) $this->state->get('filter.duration_min', ''));
 						$durationMaximumValue = trim((string) $this->state->get('filter.duration_max', ''));
-						$durationMinimumValue = $durationMinimumValue !== '' ? $durationMinimumValue : $formatDurationValue(0);
-						$durationMaximumValue = $durationMaximumValue !== ''
-							? $durationMaximumValue
-							: $formatDurationValue($sliderMaximum);
 						?>
 						<fieldset class="com-audioarchive-filter com-audioarchive-filter-range com-audioarchive-filter-duration">
 							<legend><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_DURATION'); ?></legend>

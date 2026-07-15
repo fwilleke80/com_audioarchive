@@ -80,13 +80,14 @@ class HtmlView extends BaseHtmlView
 		$this->pagination = $model->getPagination();
 		$this->state = $model->getState();
 		$this->params = $model->getResolvedParams();
+		$this->preparePaginationQuery();
 		$this->categoryOptions = $model->getCategoryOptions();
 		$this->tagOptions = $model->getTagOptions();
 		$this->filterErrors = $model->getFilterErrors();
 		$this->pageSizeOptions = $model->getPageSizeOptions();
 		$maximumDurationMs = $model->getMaximumDurationMs();
 		$this->maximumDurationSeconds = $maximumDurationMs > 0
-			? max(1, (int) floor($maximumDurationMs / 1000))
+			? max(1, (int) ceil($maximumDurationMs / 1000))
 			: 0;
 
 		$app = Factory::getApplication();
@@ -167,6 +168,29 @@ class HtmlView extends BaseHtmlView
 		if ($description !== '')
 		{
 			$document->setMetaData('og:description', $description, 'property');
+		}
+	}
+
+
+	/**
+	 * @brief Preserve the current archive query in all pagination links.
+	 *
+	 * Joomla's Pagination class only retains URL parameters registered as
+	 * additional parameters. Register the canonical filter and list state so
+	 * changing pages does not reset the archive query.
+	 *
+	 * @return void
+	 */
+	private function preparePaginationQuery(): void
+	{
+		foreach ($this->getQueryValues() as $name => $value)
+		{
+			if (in_array($name, ['start', 'limitstart'], true))
+			{
+				continue;
+			}
+
+			$this->pagination->setAdditionalUrlParam($name, $value);
 		}
 	}
 

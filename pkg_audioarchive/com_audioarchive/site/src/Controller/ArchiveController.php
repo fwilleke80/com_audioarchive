@@ -26,7 +26,7 @@ class ArchiveController extends BaseController
 		$model = $this->getModel('Archive');
 		$model->getState();
 		$itemId = Factory::getApplication()->getInput()->getInt('Itemid', 0);
-		$url = Route::_(RouteHelper::getArchiveRoute($itemId, $model->getCanonicalQueryValues()));
+		$url = Route::_(RouteHelper::getArchiveRoute($itemId, $model->getCanonicalQueryValues()), false);
 		$this->setRedirect($url);
 
 		return $this;
