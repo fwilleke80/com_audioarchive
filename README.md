@@ -4,7 +4,7 @@ Audio Archive is a native Joomla! 6 extension package for managing and publishin
 
 It is intended for archives ranging from a small collection to several thousand files. Administrators can upload or import clips, organise them with Joomla categories and tags, edit metadata, replace source files in bulk, inspect archive integrity, generate waveform analysis with FFmpeg, control publication and access, and review playback and download statistics. Visitors can search and filter the archive, browse a tag directory, use consistent responsive players throughout the site, open clip detail pages, and—where permitted—download the protected original files.
 
-> **Current version:** `0.7.7`  
+> **Current version:** `0.7.10`  
 > **Package:** `pkg_audioarchive`
 
 ## Table of contents
@@ -44,6 +44,7 @@ It is intended for archives ranging from a small collection to several thousand 
 - [Using the Quick Icons plugin](#using-the-quick-icons-plugin)
 - [Using the Content plugin](#using-the-content-plugin)
   - [Embedding clips](#embedding-clips)
+  - [Longest and shortest clips](#longest-and-shortest-clips)
   - [Embedded player presentations](#embedded-player-presentations)
   - [Archive clip counts](#archive-clip-counts)
   - [Archive playtime](#archive-playtime)
@@ -95,8 +96,8 @@ It is intended for archives ranging from a small collection to several thousand 
 - Configurable Tag Directory menu-item type
 - Text search across clip metadata
 - Category filtering
-- Multiple-tag filtering using logical **AND**
-- Searchable tag checkbox list
+- Multiple-tag filtering using selectable logical **AND** or **OR**
+- Searchable tag checkbox list with a dedicated **Clear tag filter** action
 - Minimum and maximum duration filtering
 - JavaScript-enhanced duration slider with text-field fallback
 - Recording-date and upload-date ranges
@@ -141,12 +142,12 @@ The package installs the following Joomla extensions:
 | `mod_audioarchive_tags` | Site module | Displays Audio Archive tags with descriptions, optional clip counts, and links to a filtered Archive |
 | `plg_finder_audioarchive` | Smart Search plugin | Adds eligible Audio Archive clips to Joomla Smart Search |
 | `plg_quickicon_audioarchive` | Quick Icons plugin | Adds an Audio Archive shortcut to the administrator Home Dashboard |
-| `plg_content_audioarchive` | Content plugin | Embeds clips with any shared player presentation and inserts aggregate clip counts or playtime into prepared content |
+| `plg_content_audioarchive` | Content plugin | Embeds random, specific, longest, or shortest eligible clips with any shared player presentation and inserts aggregate clip counts or playtime into prepared content |
 
 Install the package ZIP rather than installing its individual extension ZIP files separately.
 
 ```text
-pkg_audioarchive_v0-7-7.zip
+pkg_audioarchive_v0-7-10.zip
 ```
 
 ## Installing and updating the package
@@ -154,7 +155,7 @@ pkg_audioarchive_v0-7-7.zip
 To install Audio Archive:
 
 1. Open **System → Install → Extensions** in the Joomla administrator.
-2. Upload `pkg_audioarchive_v0-7-7.zip`.
+2. Upload `pkg_audioarchive_v0-7-10.zip`.
 3. Open **Components → Audio Archive**.
 4. Review the dashboard and component options before importing files.
 
@@ -195,6 +196,11 @@ Review the following settings before importing the archive:
 - FFmpeg and FFprobe paths
 - Waveform generation, detail level, automatic queueing, process timeout, and retry limit
 - Uninstallation media-retention policy
+
+The **Processing** tab is divided into two groups:
+
+- **Clip analysis** — waveform generation, waveform detail, and automatic waveform queueing after upload, import, or replacement
+- **Processing** — explicit FFmpeg and FFprobe paths, external-process timeout, and maximum processing attempts
 
 The same component configuration is also available through Joomla's Global Configuration.
 
@@ -498,10 +504,17 @@ Available filters include:
 
 - Text search
 - Category
-- Multiple tags using logical AND
+- Multiple tags using selectable logical AND or OR
 - Minimum and maximum duration
 - Recording date from and to
 - Upload date from and to
+
+The tag list includes compact **AND** and **OR** radio buttons:
+
+- **AND** returns only clips containing every selected tag.
+- **OR** returns clips containing at least one selected tag.
+
+The selected mode is retained in filtered URLs, sorting links, and pagination. A **Clear tag filter** action removes the selected visitor tags without resetting the other archive filters. Tag restrictions configured on the Archive menu item remain mandatory in either mode.
 
 Duration values can be entered as seconds or as formatted times:
 
@@ -786,6 +799,36 @@ Embed a routed ID and alias:
 {audioarchive clip=123-some-clip-alias}
 ```
 
+### Longest and shortest clips
+
+Embed the single longest eligible clip:
+
+```text
+{audioarchive longest}
+```
+
+Embed the single shortest eligible clip:
+
+```text
+{audioarchive shortest}
+```
+
+Use `count` to display several clips:
+
+```text
+{audioarchive longest count=3}
+{audioarchive shortest count=5}
+```
+
+The value is limited to 1–50 clips and defaults to 1. A player presentation can be selected at the same time:
+
+```text
+{audioarchive longest count=3 layout=compact}
+{audioarchive shortest count=5 layout=featured}
+```
+
+Longest and shortest selections use the same public eligibility checks as other embedded clips. Duration is the primary ordering criterion; recording date and clip ID provide stable tie-breaking.
+
 ### Embedded player presentations
 
 The `layout` attribute selects one of the four shared player presentations:
@@ -844,7 +887,7 @@ The durations of clips in the selected categories are summed and inserted as one
 
 ### Content-plugin behaviour
 
-Embedded clips reuse the module's shared clip-selection and eligibility logic, but use the player presentation selected by the placeholder or plugin configuration. They inherit the component's publication, category, clip-access, language, file-availability, routing, playback, protected analysis, download, and counting logic. Links and protected media endpoints are additionally subject to the component-wide frontend access setting.
+Random, specific, longest, and shortest embedded clips reuse the module's shared clip-selection and eligibility logic, but use the player presentation selected by the placeholder or plugin configuration. They inherit the component's publication, category, clip-access, language, file-availability, routing, playback, protected analysis, download, and counting logic. Links and protected media endpoints are additionally subject to the component-wide frontend access setting.
 
 The plugin has independent options for showing or hiding:
 
