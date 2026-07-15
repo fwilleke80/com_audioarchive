@@ -19,6 +19,7 @@ class SystemCheckService
         'audioarchive_clips',
         'audioarchive_files',
         'audioarchive_waveforms',
+        'audioarchive_analyses',
         'audioarchive_jobs',
     ];
 

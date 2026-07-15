@@ -8,6 +8,8 @@ use Joomla\CMS\User\User;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
 use Joomla\Registry\Registry;
+use Willeke\Component\Audioarchive\Administrator\Service\Analysis\AnalysisJobService;
+use Willeke\Component\Audioarchive\Administrator\Service\Analysis\AnalysisRepositoryService;
 
 \defined('_JEXEC') or die;
 
@@ -306,6 +308,8 @@ class AudioUploadService
             throw $exception;
         }
 
+        $this->queueWaveformAfterUpload($clipId);
+
         return $file;
     }
 
@@ -412,6 +416,7 @@ class AudioUploadService
                 ->bind(':technicalMetadata', $technicalMetadata, ParameterType::STRING)
                 ->bind(':clipId', $clipId, ParameterType::INTEGER);
             $this->database->setQuery($clipQuery)->execute();
+            $this->synchroniseWaveformAnalysisStatus($clipId, $waveformStatus);
             $this->database->transactionCommit();
         }
         catch (\Throwable $exception)
@@ -430,6 +435,7 @@ class AudioUploadService
             throw $exception;
         }
 
+        $this->queueWaveformAfterUpload($clipId);
         $warnings = [];
         $previousOriginalRetained = (bool) ($prepared['retain_previous_original'] ?? false);
 
@@ -566,12 +572,23 @@ class AudioUploadService
             }
 
             $this->database->setQuery($clipQuery)->execute();
+
+            if ($contentChanged)
+            {
+                $this->synchroniseWaveformAnalysisStatus($clipId, $waveformStatus);
+            }
+
             $this->database->transactionCommit();
         }
         catch (\Throwable $exception)
         {
             $this->database->transactionRollback();
             throw $exception;
+        }
+
+        if ($contentChanged)
+        {
+            $this->queueWaveformAfterUpload($clipId);
         }
 
         return array_values(array_unique(array_filter((array) ($metadata['warnings'] ?? []))));
@@ -658,6 +675,11 @@ class AudioUploadService
                 }
 
                 $this->database->setQuery($clipQuery)->execute();
+
+                if ($this->hasWaveform($clipId))
+                {
+                    $this->synchroniseWaveformAnalysisStatus($clipId, 'stale');
+                }
             }
 
             $this->database->transactionCommit();
@@ -797,28 +819,29 @@ class AudioUploadService
             }
         }
 
-        $waveformQuery = $this->database->getQuery(true)
+        $analysisQuery = $this->database->getQuery(true)
             ->select(['id', 'storage_key'])
-            ->from($this->database->quoteName('#__audioarchive_waveforms'))
-            ->whereIn($this->database->quoteName('clip_id'), $clipIds);
-        $waveforms = $this->database->setQuery($waveformQuery)->loadObjectList() ?: [];
+            ->from($this->database->quoteName('#__audioarchive_analyses'))
+            ->whereIn($this->database->quoteName('clip_id'), $clipIds)
+            ->where($this->database->quoteName('storage_key') . ' <> ' . $this->database->quote(''));
+        $analyses = $this->database->setQuery($analysisQuery)->loadObjectList() ?: [];
 
-        foreach ($waveforms as $waveform)
+        foreach ($analyses as $analysis)
         {
             try
             {
-                if (!$this->storage->deleteManagedFile('waveform', (string) $waveform->storage_key))
+                if (!$this->storage->deleteManagedFile('analysis', (string) $analysis->storage_key))
                 {
-                    $warnings[] = Text::sprintf('COM_AUDIOARCHIVE_WARNING_FILE_DELETE_FAILED', (string) $waveform->storage_key);
+                    $warnings[] = Text::sprintf('COM_AUDIOARCHIVE_WARNING_FILE_DELETE_FAILED', (string) $analysis->storage_key);
                 }
             }
             catch (\Throwable $exception)
             {
-                $warnings[] = Text::sprintf('COM_AUDIOARCHIVE_WARNING_FILE_DELETE_FAILED', (string) $waveform->storage_key);
+                $warnings[] = Text::sprintf('COM_AUDIOARCHIVE_WARNING_FILE_DELETE_FAILED', (string) $analysis->storage_key);
             }
         }
 
-        foreach (['#__audioarchive_files', '#__audioarchive_waveforms', '#__audioarchive_jobs'] as $table)
+        foreach (['#__audioarchive_files', '#__audioarchive_waveforms', '#__audioarchive_analyses', '#__audioarchive_jobs'] as $table)
         {
             $delete = $this->database->getQuery(true)
                 ->delete($this->database->quoteName($table))
@@ -827,6 +850,55 @@ class AudioUploadService
         }
 
         return $warnings;
+    }
+
+    /**
+     * @brief Synchronise the generic waveform record with a denormalised clip status.
+     *
+     * @param int $clipId Clip identifier.
+     * @param string $status Waveform status.
+     *
+     * @return void
+     */
+    private function synchroniseWaveformAnalysisStatus(int $clipId, string $status): void
+    {
+        if ($status !== 'stale')
+        {
+            return;
+        }
+
+        (new AnalysisRepositoryService($this->database))->markStale($clipId, 'waveform');
+    }
+
+    /**
+     * @brief Queue waveform generation after a successful upload or replacement.
+     *
+     * Queue failures are non-fatal because the original file and clip record are
+     * already valid and administrators can queue the waveform from maintenance.
+     *
+     * @param int $clipId Clip identifier.
+     *
+     * @return void
+     */
+    private function queueWaveformAfterUpload(int $clipId): void
+    {
+        if (
+            (int) $this->params->get('enable_waveform_generation', 1) !== 1
+            || (int) $this->params->get('queue_waveform_after_upload', 1) !== 1
+        )
+        {
+            return;
+        }
+
+        try
+        {
+            (new AnalysisJobService($this->database, $this->params, $this->user))
+                ->queueWaveform($clipId);
+        }
+        catch (\Throwable)
+        {
+            // Deferred generation can be queued manually from maintenance.
+        }
     }
 
     /**
@@ -983,11 +1055,14 @@ class AudioUploadService
      */
     private function hasWaveform(int $clipId): bool
     {
+        $analysisType = 'waveform';
         $query = $this->database->getQuery(true)
             ->select('COUNT(*)')
-            ->from($this->database->quoteName('#__audioarchive_waveforms'))
+            ->from($this->database->quoteName('#__audioarchive_analyses'))
             ->where($this->database->quoteName('clip_id') . ' = :clipId')
-            ->bind(':clipId', $clipId, ParameterType::INTEGER);
+            ->where($this->database->quoteName('analysis_type') . ' = :analysisType')
+            ->bind(':clipId', $clipId, ParameterType::INTEGER)
+            ->bind(':analysisType', $analysisType, ParameterType::STRING);
 
         return (int) $this->database->setQuery($query)->loadResult() > 0;
     }

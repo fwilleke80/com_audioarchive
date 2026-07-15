@@ -39,6 +39,8 @@ $hasDescription = trim((string) $this->item->description) !== '';
 
 	<?php echo $this->loadTemplate('player'); ?>
 
+	<?php echo $this->loadTemplate('waveform'); ?>
+
 	<div class="com-audioarchive-clip-layout <?php echo $hasDescription ? 'has-description' : 'no-description'; ?>">
 		<?php if ($hasDescription) : ?>
 			<div class="com-audioarchive-clip-main">

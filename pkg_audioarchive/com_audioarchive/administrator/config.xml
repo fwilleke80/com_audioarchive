@@ -199,9 +199,25 @@
         <field name="detail_show_play_count" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_PLAY_COUNT_LABEL" default="0"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
         <field name="detail_show_download_count" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_COUNT_LABEL" default="0"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
         <field name="detail_show_download" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_LABEL" description="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_DESC" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        <field name="detail_show_waveform" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_WAVEFORM_LABEL" description="COM_AUDIOARCHIVE_CONFIG_DETAIL_WAVEFORM_DESC" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
     </fieldset>
 
     <fieldset name="processing" label="COM_AUDIOARCHIVE_CONFIG_PROCESSING_LABEL">
+        <field name="enable_waveform_generation" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_ENABLE_WAVEFORMS_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ENABLE_WAVEFORMS_DESC" default="1">
+            <option value="0">JNO</option>
+            <option value="1">JYES</option>
+        </field>
+        <field name="waveform_point_count" type="list" label="COM_AUDIOARCHIVE_CONFIG_WAVEFORM_POINTS_LABEL" description="COM_AUDIOARCHIVE_CONFIG_WAVEFORM_POINTS_DESC" default="1024" showon="enable_waveform_generation:1">
+            <option value="256">256</option>
+            <option value="512">512</option>
+            <option value="1024">1024</option>
+            <option value="2048">2048</option>
+            <option value="4096">4096</option>
+        </field>
+        <field name="queue_waveform_after_upload" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_QUEUE_WAVEFORM_UPLOAD_LABEL" description="COM_AUDIOARCHIVE_CONFIG_QUEUE_WAVEFORM_UPLOAD_DESC" default="1" showon="enable_waveform_generation:1">
+            <option value="0">JNO</option>
+            <option value="1">JYES</option>
+        </field>
         <field name="automatic_executable_detection" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_AUTOMATIC_DETECTION_LABEL" default="1">
             <option value="0">JNO</option>
             <option value="1">JYES</option>

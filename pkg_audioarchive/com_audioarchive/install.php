@@ -14,7 +14,7 @@ use Joomla\Registry\Registry;
 
 return new class () implements InstallerScriptInterface
 {
-	private const SCHEMA_VERSION = '0.2.0';
+	private const SCHEMA_VERSION = '0.7.0';
 
 	private const CATEGORY_MENU_LINK = 'index.php?option=com_categories&view=categories&extension=com_audioarchive';
 
@@ -29,6 +29,7 @@ return new class () implements InstallerScriptInterface
 		'audioarchive_clips',
 		'audioarchive_files',
 		'audioarchive_waveforms',
+		'audioarchive_analyses',
 		'audioarchive_jobs',
 	];
 
@@ -386,6 +387,7 @@ return new class () implements InstallerScriptInterface
 				$this->executeSchemaFile($database);
 			}
 
+			$this->repairAnalysisSchema($database);
 			$this->repairCheckoutColumns($database);
 			$this->ensureFileRoleUniqueIndex($database);
 			$this->ensureContentType($database);
@@ -417,6 +419,44 @@ return new class () implements InstallerScriptInterface
 		}
 	}
 
+
+	/**
+	 * @brief Apply the idempotent generic-analysis migration and column repair.
+	 *
+	 * This duplicates Joomla's normal schema-update safety net deliberately. The
+	 * component already repairs incomplete schemas during installation, so the
+	 * analysis migration must participate in the same recovery path.
+	 *
+	 * @param DatabaseInterface $database Joomla database connection.
+	 * @return void
+	 */
+	private function repairAnalysisSchema(DatabaseInterface $database): void
+	{
+		$updatePath = JPATH_ADMINISTRATOR
+			. '/components/com_audioarchive/sql/updates/mysql/0.7.0.sql';
+
+		if (!is_file($updatePath) || !is_readable($updatePath))
+		{
+			throw new RuntimeException('The Audio Archive 0.7.0 schema update is missing or unreadable.');
+		}
+
+		$sql = file_get_contents($updatePath);
+
+		if ($sql === false)
+		{
+			throw new RuntimeException('The Audio Archive 0.7.0 schema update could not be read.');
+		}
+
+		foreach (Installer::splitSql($sql) as $query)
+		{
+			$query = trim($query);
+
+			if ($query !== '')
+			{
+				$database->setQuery($query)->execute();
+			}
+		}
+	}
 
 	/**
 	 * @brief Ensure that each clip has at most one file for a given role.
@@ -729,19 +769,27 @@ return new class () implements InstallerScriptInterface
 			}
 		}
 
-		if ($this->tableExists($database, 'audioarchive_waveforms') && $roots['waveform'] !== null)
+		if ($roots['waveform'] !== null)
 		{
-			$query = $database->getQuery(true)
-				->select($database->quoteName('storage_key'))
-				->from($database->quoteName('#__audioarchive_waveforms'))
-				->where($database->quoteName('storage_key') . ' <> ' . $database->quote(''));
-
-			foreach ($database->setQuery($query)->loadColumn() as $storageKey)
+			foreach (['audioarchive_analyses', 'audioarchive_waveforms'] as $tableName)
 			{
-				$entries[] = [
-					'root' => $roots['waveform'],
-					'key' => (string) $storageKey,
-				];
+				if (!$this->tableExists($database, $tableName))
+				{
+					continue;
+				}
+
+				$query = $database->getQuery(true)
+					->select($database->quoteName('storage_key'))
+					->from($database->quoteName('#__' . $tableName))
+					->where($database->quoteName('storage_key') . ' <> ' . $database->quote(''));
+
+				foreach ($database->setQuery($query)->loadColumn() as $storageKey)
+				{
+					$entries[] = [
+						'root' => $roots['waveform'],
+						'key' => (string) $storageKey,
+					];
+				}
 			}
 		}
 
@@ -756,7 +804,14 @@ return new class () implements InstallerScriptInterface
 			}
 		}
 
-		return $entries;
+		$uniqueEntries = [];
+
+		foreach ($entries as $entry)
+		{
+			$uniqueEntries[$entry['root'] . "\0" . $entry['key']] = $entry;
+		}
+
+		return array_values($uniqueEntries);
 	}
 
 	/**
@@ -810,7 +865,7 @@ return new class () implements InstallerScriptInterface
 	 */
 	private function dropComponentTables(DatabaseInterface $database): void
 	{
-		foreach (['audioarchive_jobs', 'audioarchive_waveforms', 'audioarchive_files', 'audioarchive_clips'] as $tableName)
+		foreach (['audioarchive_jobs', 'audioarchive_analyses', 'audioarchive_waveforms', 'audioarchive_files', 'audioarchive_clips'] as $tableName)
 		{
 			$database->setQuery(
 				'DROP TABLE IF EXISTS ' . $database->quoteName('#__' . $tableName)

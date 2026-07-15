@@ -220,6 +220,12 @@ $renderAudioPreview = function (string $headingId): void
                             <span class="icon-refresh" aria-hidden="true"></span>
                             <?php echo Text::_('COM_AUDIOARCHIVE_ACTION_REANALYSE'); ?>
                         </button>
+                        <button type="button" class="btn btn-secondary" onclick="Joomla.submitbutton('clip.generateWaveform');">
+                            <span class="icon-chart" aria-hidden="true"></span>
+                            <?php echo Text::_((string) $this->item->waveform_status === 'available'
+                                ? 'COM_AUDIOARCHIVE_ACTION_REGENERATE_WAVEFORM'
+                                : 'COM_AUDIOARCHIVE_ACTION_GENERATE_WAVEFORM'); ?>
+                        </button>
                     </div>
                 <?php endif; ?>
             <?php endif; ?>

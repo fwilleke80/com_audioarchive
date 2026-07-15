@@ -1,7 +1,7 @@
 {
   "$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
   "name": "com_audioarchive",
-  "version": "0.6.27",
+  "version": "0.7.2",
   "description": "Joomla Audio Archive assets",
   "license": "GPL-2.0-or-later",
   "assets": [
@@ -68,6 +68,28 @@
       "name": "com_audioarchive.batch",
       "type": "script",
       "uri": "com_audioarchive/batch.js",
+      "attributes": {
+        "type": "module"
+      },
+      "dependencies": [
+        "core"
+      ]
+    },
+    {
+      "name": "com_audioarchive.waveform",
+      "type": "script",
+      "uri": "com_audioarchive/waveform.js",
+      "attributes": {
+        "type": "module"
+      },
+      "dependencies": [
+        "core"
+      ]
+    },
+    {
+      "name": "com_audioarchive.analysis-maintenance",
+      "type": "script",
+      "uri": "com_audioarchive/analysis-maintenance.js",
       "attributes": {
         "type": "module"
       },

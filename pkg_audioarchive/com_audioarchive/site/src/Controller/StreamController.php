@@ -39,6 +39,49 @@ class StreamController extends BaseController
 	}
 
 	/**
+	 * @brief Deliver one protected derived analysis for an authorised clip.
+	 *
+	 * @return void
+	 */
+	public function analysis(): void
+	{
+		$application = Factory::getApplication();
+		$method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+
+		if (!in_array($method, ['GET', 'HEAD'], true))
+		{
+			header('Allow: GET, HEAD');
+			$this->sendError(405, Text::_('COM_AUDIOARCHIVE_STREAM_METHOD_NOT_ALLOWED'));
+		}
+
+		$id = $application->getInput()->getInt('id', 0);
+		$type = $application->getInput()->getCmd('type', 'waveform');
+		$params = ComponentHelper::getParams('com_audioarchive');
+		$service = new PublicMediaService(
+			Factory::getContainer()->get(DatabaseInterface::class),
+			$params,
+			$application->getIdentity()
+		);
+		$analysis = $service->getPublicAnalysis($id, $type);
+
+		if ($analysis === null)
+		{
+			$this->sendError(404, Text::_('COM_AUDIOARCHIVE_ANALYSIS_NOT_FOUND'));
+		}
+
+		try
+		{
+			$path = $service->resolveAnalysisPath($analysis);
+		}
+		catch (\Throwable)
+		{
+			$this->sendError(404, Text::_('COM_AUDIOARCHIVE_ANALYSIS_NOT_FOUND'));
+		}
+
+		$this->sendAnalysisFile($path, $analysis, $method === 'HEAD');
+	}
+
+	/**
 	 * @brief Record the first actual playback start reported by the page.
 	 *
 	 * @return void
@@ -152,6 +195,77 @@ class StreamController extends BaseController
 		}
 
 		$this->sendFile($path, $clip, $download, $method === 'HEAD');
+	}
+
+	/**
+	 * @brief Send one compact analysis data file.
+	 *
+	 * @param string $path Absolute validated path.
+	 * @param object $analysis Analysis record.
+	 * @param bool $headOnly Whether the request is HEAD.
+	 *
+	 * @return void
+	 */
+	private function sendAnalysisFile(string $path, object $analysis, bool $headOnly): void
+	{
+		$size = max(0, (int) filesize($path));
+
+		if ($size <= 0)
+		{
+			$this->sendError(404, Text::_('COM_AUDIOARCHIVE_ANALYSIS_NOT_FOUND'));
+		}
+
+		$handle = null;
+
+		if (!$headOnly)
+		{
+			$handle = @fopen($path, 'rb');
+
+			if ($handle === false)
+			{
+				$this->sendError(404, Text::_('COM_AUDIOARCHIVE_ANALYSIS_NOT_FOUND'));
+			}
+		}
+
+		$format = strtolower(trim((string) ($analysis->data_format ?? '')));
+		$mime = match (true)
+		{
+			str_starts_with($format, 'json-') => 'application/json; charset=utf-8',
+			str_starts_with($format, 'png-') => 'image/png',
+			str_starts_with($format, 'webp-') => 'image/webp',
+			str_starts_with($format, 'svg-') => 'image/svg+xml; charset=utf-8',
+			default => 'application/octet-stream',
+		};
+		$etag = '"' . sha1($path . ':' . $size . ':' . (int) filemtime($path)) . '"';
+		$this->clearOutputBuffers();
+		@session_write_close();
+		http_response_code(200);
+		header('Content-Type: ' . $mime);
+		header('Content-Length: ' . $size);
+		header('ETag: ' . $etag);
+		header('Last-Modified: ' . gmdate('D, d M Y H:i:s', (int) filemtime($path)) . ' GMT');
+		header('Cache-Control: private, max-age=86400, must-revalidate');
+		header('X-Content-Type-Options: nosniff');
+
+		if ($headOnly)
+		{
+			Factory::getApplication()->close();
+		}
+
+		while (!feof($handle))
+		{
+			$chunk = fread($handle, 65536);
+
+			if ($chunk === false || $chunk === '')
+			{
+				break;
+			}
+
+			echo $chunk;
+		}
+
+		fclose($handle);
+		Factory::getApplication()->close();
 	}
 
 	/**

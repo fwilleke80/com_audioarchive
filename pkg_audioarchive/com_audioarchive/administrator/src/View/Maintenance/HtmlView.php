@@ -34,7 +34,9 @@ class HtmlView extends BaseHtmlView
         }
 
         $this->report = $this->get('Report');
-        $this->getDocument()->getWebAssetManager()->useStyle('com_audioarchive.admin');
+        $this->getDocument()->getWebAssetManager()
+            ->useStyle('com_audioarchive.admin')
+            ->useScript('com_audioarchive.analysis-maintenance');
         $this->addToolbar();
         parent::display($tpl);
     }

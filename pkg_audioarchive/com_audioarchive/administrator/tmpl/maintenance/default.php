@@ -3,6 +3,7 @@
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\Session\Session;
 
 \defined('_JEXEC') or die;
 
@@ -15,6 +16,9 @@ $codecInventory = (array) ($this->report['codec_inventory'] ?? []);
 $codecFilter = (string) ($this->report['codec_filter'] ?? '');
 $codecClips = (array) ($this->report['codec_clips'] ?? []);
 $staleItems = (array) ($this->report['stale_items'] ?? []);
+$waveforms = (array) ($this->report['waveforms'] ?? []);
+$analysisProcessUrl = Route::_('index.php?option=com_audioarchive&task=maintenance.processAnalysisJob&format=json', false);
+$analysisToken = Session::getFormToken();
 $formatBytes = static function (int $bytes): string
 {
     if ($bytes <= 0)
@@ -112,6 +116,71 @@ $severityKeys = [
         <a class="btn btn-outline-primary" href="<?php echo Route::_('index.php?option=com_audioarchive&view=maintenance'); ?>">
             <?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_RESCAN'); ?>
         </a>
+    </div>
+
+    <div
+        class="card mb-4"
+        data-audioarchive-analysis-maintenance
+        data-process-url="<?php echo htmlspecialchars($analysisProcessUrl, ENT_QUOTES, 'UTF-8'); ?>"
+        data-token-name="<?php echo htmlspecialchars($analysisToken, ENT_QUOTES, 'UTF-8'); ?>"
+        data-progress-template="<?php echo htmlspecialchars(Text::_('COM_AUDIOARCHIVE_WAVEFORM_PROCESS_PROGRESS'), ENT_QUOTES, 'UTF-8'); ?>"
+        data-failure-text="<?php echo htmlspecialchars(Text::_('COM_AUDIOARCHIVE_WAVEFORM_PROCESS_AJAX_FAILED'), ENT_QUOTES, 'UTF-8'); ?>"
+    >
+        <div class="card-header">
+            <h2 class="h4 mb-1"><?php echo Text::_('COM_AUDIOARCHIVE_WAVEFORM_MAINTENANCE_TITLE'); ?></h2>
+            <p class="mb-0 text-body-secondary"><?php echo Text::_('COM_AUDIOARCHIVE_WAVEFORM_MAINTENANCE_TEXT'); ?></p>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 mb-3">
+                <?php foreach ([
+                    'available' => 'COM_AUDIOARCHIVE_WAVEFORM_STATUS_AVAILABLE',
+                    'missing' => 'COM_AUDIOARCHIVE_WAVEFORM_STATUS_MISSING',
+                    'pending' => 'COM_AUDIOARCHIVE_WAVEFORM_STATUS_PENDING',
+                    'failed' => 'COM_AUDIOARCHIVE_WAVEFORM_STATUS_FAILED',
+                    'stale' => 'COM_AUDIOARCHIVE_WAVEFORM_STATUS_STALE',
+                    'queued' => 'COM_AUDIOARCHIVE_WAVEFORM_STATUS_QUEUED',
+                ] as $key => $label) : ?>
+                    <div class="col-6 col-md-4 col-xl-2">
+                        <div class="border rounded p-3 h-100">
+                            <div class="h3 mb-1"><?php echo (int) ($waveforms[$key] ?? 0); ?></div>
+                            <div class="small text-body-secondary"><?php echo Text::_($label); ?></div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+
+            <form action="<?php echo Route::_('index.php?option=com_audioarchive'); ?>" method="post" class="d-flex flex-wrap gap-2 mb-3">
+                <input type="hidden" name="task" value="maintenance.queueWaveforms">
+                <button type="submit" name="waveform_mode" value="missing" class="btn btn-outline-primary" <?php echo (int) ($waveforms['missing'] ?? 0) <= 0 ? 'disabled' : ''; ?>>
+                    <?php echo Text::_('COM_AUDIOARCHIVE_WAVEFORM_QUEUE_MISSING'); ?>
+                </button>
+                <button type="submit" name="waveform_mode" value="stale" class="btn btn-outline-primary" <?php echo (int) ($waveforms['stale'] ?? 0) <= 0 ? 'disabled' : ''; ?>>
+                    <?php echo Text::_('COM_AUDIOARCHIVE_WAVEFORM_QUEUE_STALE'); ?>
+                </button>
+                <button type="submit" name="waveform_mode" value="failed" class="btn btn-outline-primary" <?php echo (int) ($waveforms['failed'] ?? 0) <= 0 ? 'disabled' : ''; ?>>
+                    <?php echo Text::_('COM_AUDIOARCHIVE_WAVEFORM_RETRY_FAILED'); ?>
+                </button>
+                <?php echo HTMLHelper::_('form.token'); ?>
+            </form>
+
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    data-audioarchive-process-analyses
+                    <?php echo (int) ($waveforms['queued'] ?? 0) <= 0 ? 'disabled' : ''; ?>
+                >
+                    <span class="icon-play" aria-hidden="true"></span>
+                    <?php echo Text::_('COM_AUDIOARCHIVE_WAVEFORM_PROCESS_QUEUE'); ?>
+                </button>
+                <div class="flex-grow-1" style="min-width: 16rem;">
+                    <div class="progress" role="progressbar" aria-label="<?php echo Text::_('COM_AUDIOARCHIVE_WAVEFORM_PROCESS_PROGRESS_LABEL'); ?>" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-audioarchive-analysis-progress hidden>
+                        <div class="progress-bar" style="width: 0%" data-audioarchive-analysis-progress-bar></div>
+                    </div>
+                    <div class="small text-body-secondary mt-1" data-audioarchive-analysis-status aria-live="polite"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="card mb-4">

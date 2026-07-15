@@ -18,6 +18,7 @@ class ManagedStorageService
         'original' => 'original_directory',
         'preview' => 'preview_directory',
         'waveform' => 'waveform_directory',
+        'analysis' => 'waveform_directory',
         'import' => 'import_directory',
     ];
 
@@ -43,7 +44,7 @@ class ManagedStorageService
     {
         $paths = [];
 
-        foreach (array_keys(self::ROLE_PARAMETERS) as $role)
+        foreach (['original', 'preview', 'waveform', 'import'] as $role)
         {
             $paths[$role] = $this->ensureDirectory($role);
         }
@@ -237,6 +238,83 @@ class ManagedStorageService
         }
 
         if (!$moved || !is_file($temporaryDestination))
+        {
+            @unlink($temporaryDestination);
+            throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_STORAGE_ERROR_MOVE'));
+        }
+
+        @chmod($temporaryDestination, 0640);
+
+        if (!@rename($temporaryDestination, $destination))
+        {
+            @unlink($temporaryDestination);
+            throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_STORAGE_ERROR_FINALISE'));
+        }
+
+        return [
+            'storage_key' => str_replace(DIRECTORY_SEPARATOR, '/', $relativePath),
+            'absolute_path' => $destination,
+        ];
+    }
+
+    /**
+     * @brief Store a generated analysis file under a type-specific managed key.
+     *
+     * @param string $temporaryPath Generated temporary file.
+     * @param string $uuid Clip UUID.
+     * @param string $analysisType Stable analysis type.
+     * @param string $extension Generated file extension.
+     *
+     * @return array{storage_key:string,absolute_path:string} Stored path data.
+     */
+    public function storeAnalysisFile(
+        string $temporaryPath,
+        string $uuid,
+        string $analysisType,
+        string $extension
+    ): array
+    {
+        if (!is_file($temporaryPath) || !is_readable($temporaryPath))
+        {
+            throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_STORAGE_ERROR_TEMP_NOT_READABLE'));
+        }
+
+        if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $uuid))
+        {
+            throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_STORAGE_ERROR_UUID'));
+        }
+
+        $analysisType = strtolower(trim($analysisType));
+        $extension = strtolower(trim($extension));
+
+        if (!preg_match('/^[a-z0-9][a-z0-9_-]{0,31}$/', $analysisType))
+        {
+            throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_STORAGE_ERROR_ANALYSIS_TYPE'));
+        }
+
+        if (!preg_match('/^[a-z0-9]{1,16}$/', $extension))
+        {
+            throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_STORAGE_ERROR_EXTENSION'));
+        }
+
+        $root = $this->ensureDirectory('analysis');
+        $normalisedUuid = strtolower($uuid);
+        $compactUuid = str_replace('-', '', $normalisedUuid);
+        $relativeDirectory = $analysisType . '/' . substr($compactUuid, 0, 2) . '/' . substr($compactUuid, 2, 2);
+        $basename = $normalisedUuid . '-a' . bin2hex(random_bytes(6)) . '.' . $extension;
+        $relativePath = $relativeDirectory . '/' . $basename;
+        $directory = $root . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativeDirectory);
+
+        if (!is_dir($directory) && !@mkdir($directory, 0750, true) && !is_dir($directory))
+        {
+            throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_STORAGE_ERROR_CREATE_SHARD'));
+        }
+
+        $this->assertContainedPath($root, $directory);
+        $destination = $directory . DIRECTORY_SEPARATOR . $basename;
+        $temporaryDestination = $destination . '.part-' . bin2hex(random_bytes(6));
+
+        if (!@rename($temporaryPath, $temporaryDestination) && !@copy($temporaryPath, $temporaryDestination))
         {
             @unlink($temporaryDestination);
             throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_STORAGE_ERROR_MOVE'));

@@ -624,6 +624,14 @@ class MediaMaintenanceService
 				->bind(':recordId', $recordId, ParameterType::INTEGER)
 				->bind(':clipId', $clipId, ParameterType::INTEGER);
 			$this->database->setQuery($query)->execute();
+			$analysisType = 'waveform';
+			$query = $this->database->getQuery(true)
+				->delete($this->database->quoteName('#__audioarchive_analyses'))
+				->where($this->database->quoteName('clip_id') . ' = :clipId')
+				->where($this->database->quoteName('analysis_type') . ' = :analysisType')
+				->bind(':clipId', $clipId, ParameterType::INTEGER)
+				->bind(':analysisType', $analysisType, ParameterType::STRING);
+			$this->database->setQuery($query)->execute();
 			$this->updateClipStatus($clipId, 'waveform_status', $this->hasWaveform($clipId) ? 'stale' : 'missing');
 			$this->database->transactionCommit();
 		}

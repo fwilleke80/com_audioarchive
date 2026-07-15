@@ -181,6 +181,75 @@ class MaintenanceController extends BaseController
     }
 
     /**
+     * @brief Queue waveform jobs for one maintenance status group.
+     *
+     * @return void
+     */
+    public function queueWaveforms(): void
+    {
+        Session::checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+        $this->assertProcessPermission();
+        $application = Factory::getApplication();
+        $mode = $application->getInput()->post->getCmd('waveform_mode', '');
+        $model = $this->getModel('Maintenance');
+
+        if (!$model instanceof MaintenanceModel)
+        {
+            throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_MAINTENANCE_ERROR_MODEL'), 500);
+        }
+
+        try
+        {
+            $queued = $model->queueWaveforms($mode);
+            $application->enqueueMessage(
+                Text::sprintf('COM_AUDIOARCHIVE_WAVEFORM_QUEUE_COMPLETE', $queued),
+                $queued > 0 ? 'success' : 'info'
+            );
+        }
+        catch (\Throwable $exception)
+        {
+            $application->enqueueMessage(
+                Text::sprintf('COM_AUDIOARCHIVE_WAVEFORM_QUEUE_FAILED', $exception->getMessage()),
+                'error'
+            );
+        }
+
+        $this->setRedirect($this->maintenanceUrl());
+    }
+
+    /**
+     * @brief Process one pending analysis job for the maintenance progress UI.
+     *
+     * @return void
+     */
+    public function processAnalysisJob(): void
+    {
+        Session::checkToken('post') or jexit(Text::_('JINVALID_TOKEN'));
+        $this->assertProcessPermission();
+        $application = Factory::getApplication();
+        $model = $this->getModel('Maintenance');
+
+        if (!$model instanceof MaintenanceModel)
+        {
+            throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_MAINTENANCE_ERROR_MODEL'), 500);
+        }
+
+        try
+        {
+            $result = $model->processNextAnalysisJob();
+            $application->setHeader('Content-Type', 'application/json; charset=utf-8', true);
+            echo new JsonResponse($result);
+        }
+        catch (\Throwable $exception)
+        {
+            $application->setHeader('Content-Type', 'application/json; charset=utf-8', true);
+            echo new JsonResponse(null, $exception->getMessage(), true);
+        }
+
+        $application->close();
+    }
+
+    /**
      * @brief Export the current integrity report as UTF-8 CSV.
      *
      * @return void

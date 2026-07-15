@@ -162,6 +162,60 @@ class PublicMediaService
 	}
 
 	/**
+	 * @brief Load one available derived analysis for an authorised public clip.
+	 *
+	 * @param int $clipId Clip identifier.
+	 * @param string $analysisType Stable analysis type.
+	 *
+	 * @return object|null Analysis record or null.
+	 */
+	public function getPublicAnalysis(int $clipId, string $analysisType): ?object
+	{
+		$analysisType = strtolower(trim($analysisType));
+
+		if (
+			$clipId <= 0
+			|| !preg_match('/^[a-z0-9][a-z0-9_-]{0,31}$/', $analysisType)
+			|| $this->getPublicClip($clipId, false) === null
+		)
+		{
+			return null;
+		}
+
+		$available = 1;
+		$status = 'available';
+		$query = $this->database->getQuery(true)
+			->select('*')
+			->from($this->database->quoteName('#__audioarchive_analyses'))
+			->where($this->database->quoteName('clip_id') . ' = :clipId')
+			->where($this->database->quoteName('analysis_type') . ' = :analysisType')
+			->where($this->database->quoteName('status') . ' = :status')
+			->where($this->database->quoteName('is_available') . ' = :available')
+			->bind(':clipId', $clipId, ParameterType::INTEGER)
+			->bind(':analysisType', $analysisType, ParameterType::STRING)
+			->bind(':status', $status, ParameterType::STRING)
+			->bind(':available', $available, ParameterType::INTEGER);
+		$result = $this->database->setQuery($query, 0, 1)->loadObject();
+
+		return is_object($result) ? $result : null;
+	}
+
+	/**
+	 * @brief Resolve a protected analysis file beneath the configured analysis root.
+	 *
+	 * @param object $analysis Analysis record with a storage key.
+	 *
+	 * @return string Absolute regular-file path.
+	 */
+	public function resolveAnalysisPath(object $analysis): string
+	{
+		return $this->resolveProtectedPath(
+			(string) ($analysis->storage_key ?? ''),
+			(string) $this->params->get('waveform_directory', 'audioarchive/waveforms')
+		);
+	}
+
+	/**
 	 * @brief Resolve the absolute original-file path without allowing an escape.
 	 *
 	 * @param object $clip Public clip with a storage_key field.
@@ -207,6 +261,59 @@ class PublicMediaService
 		$prefix = $realRoot . DIRECTORY_SEPARATOR;
 
 		if (!str_starts_with($realPath . DIRECTORY_SEPARATOR, $prefix))
+		{
+			throw new \RuntimeException('Managed media path escaped its storage root.');
+		}
+
+		return $realPath;
+	}
+
+	/**
+	 * @brief Resolve a protected managed key beneath one configured root.
+	 *
+	 * @param string $storageKey Managed storage key.
+	 * @param string $configuredRoot Absolute or Joomla-root-relative storage root.
+	 *
+	 * @return string Absolute regular-file path.
+	 */
+	private function resolveProtectedPath(string $storageKey, string $configuredRoot): string
+	{
+		$storageKey = str_replace('\\', '/', trim($storageKey));
+
+		if ($storageKey === '' || str_contains($storageKey, "\0") || str_starts_with($storageKey, '/') || preg_match('#(^|/)\.\.(/|$)#', $storageKey))
+		{
+			throw new \RuntimeException('Invalid managed storage key.');
+		}
+
+		$configuredRoot = trim($configuredRoot);
+
+		if ($configuredRoot === '' || str_contains($configuredRoot, "\0"))
+		{
+			throw new \RuntimeException('Invalid managed storage root.');
+		}
+
+		$root = $this->isAbsolutePath($configuredRoot)
+			? Path::clean($configuredRoot)
+			: Path::clean(JPATH_ROOT . DIRECTORY_SEPARATOR . $configuredRoot);
+		$realRoot = realpath($root);
+
+		if ($realRoot === false || !is_dir($realRoot))
+		{
+			throw new \RuntimeException('Managed storage root is unavailable.');
+		}
+
+		$realRoot = rtrim(Path::clean($realRoot), DIRECTORY_SEPARATOR);
+		$candidate = Path::clean($realRoot . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $storageKey));
+		$realPath = realpath($candidate);
+
+		if ($realPath === false || !is_file($realPath) || is_link($candidate) || !is_readable($realPath))
+		{
+			throw new \RuntimeException('Managed file is unavailable.');
+		}
+
+		$realPath = Path::clean($realPath);
+
+		if (!str_starts_with($realPath . DIRECTORY_SEPARATOR, $realRoot . DIRECTORY_SEPARATOR))
 		{
 			throw new \RuntimeException('Managed media path escaped its storage root.');
 		}

@@ -34,6 +34,22 @@ class ClipModel extends BaseDatabaseModel
 	}
 
 	/**
+	 * @brief Load one available derived analysis for the current public clip.
+	 *
+	 * @param string $analysisType Stable analysis type.
+	 * @param int|null $id Optional clip identifier.
+	 *
+	 * @return object|null Analysis record.
+	 */
+	public function getAnalysis(string $analysisType, ?int $id = null): ?object
+	{
+		$id ??= Factory::getApplication()->getInput()->getInt('id', 0);
+		$service = new PublicMediaService($this->getDatabase(), $this->getResolvedParams(), $this->getCurrentUser());
+
+		return $service->getPublicAnalysis($id, $analysisType);
+	}
+
+	/**
 	 * @brief Return global settings with active menu-item overrides.
 	 *
 	 * @return Registry

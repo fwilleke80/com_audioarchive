@@ -35,6 +35,9 @@ class HtmlView extends BaseHtmlView
 	public string $downloadUrl = '';
 
 	/** @var string */
+	public string $waveformUrl = '';
+
+	/** @var string */
 	public string $archiveUrl = '';
 
 	/** @var string */
@@ -101,6 +104,18 @@ class HtmlView extends BaseHtmlView
 		$this->downloadUrl = $this->canDownload
 			? Route::_(RouteHelper::getDownloadRoute((int) $item->id, $routeItemId))
 			: '';
+
+		if ((int) $this->params->get('detail_show_waveform', 1) === 1)
+		{
+			$waveform = $model->getAnalysis('waveform', (int) $item->id);
+
+			if ($waveform !== null)
+			{
+				$this->waveformUrl = Route::_(
+					RouteHelper::getAnalysisRoute((int) $item->id, 'waveform', $routeItemId)
+				);
+			}
+		}
 		$this->archiveUrl = $routeItemId > 0
 			? Route::_('index.php?Itemid=' . $routeItemId)
 			: Route::_('index.php?option=com_audioarchive&view=archive');
@@ -125,10 +140,15 @@ class HtmlView extends BaseHtmlView
 		$this->preparePathway($routeItemId);
 		$this->prepareDocument($canonical, $routeItemId);
 
-		$this->getDocument()->getWebAssetManager()
+		$assets = $this->getDocument()->getWebAssetManager()
 			->useStyle('com_audioarchive.site')
 			->useStyle('com_audioarchive.player-style')
 			->useScript('com_audioarchive.player');
+
+		if ($this->waveformUrl !== '')
+		{
+			$assets->useScript('com_audioarchive.waveform');
+		}
 
 		parent::display($tpl);
 	}

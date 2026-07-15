@@ -86,10 +86,30 @@ CREATE TABLE IF NOT EXISTS `#__audioarchive_waveforms` (
     UNIQUE KEY `idx_audioarchive_waveform_clip` (`clip_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `#__audioarchive_analyses` (
+    `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+    `clip_id` int unsigned NOT NULL,
+    `analysis_type` varchar(32) NOT NULL,
+    `storage_key` varchar(512) NOT NULL DEFAULT '',
+    `data_format` varchar(64) NOT NULL DEFAULT '',
+    `status` varchar(16) NOT NULL DEFAULT 'missing',
+    `parameters` mediumtext NOT NULL,
+    `generated_at` datetime DEFAULT NULL,
+    `generator` varchar(64) NOT NULL DEFAULT '',
+    `generator_version` varchar(64) NOT NULL DEFAULT '',
+    `file_size` bigint unsigned NOT NULL DEFAULT 0,
+    `is_available` tinyint unsigned NOT NULL DEFAULT 0,
+    `processing_error` text NOT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `idx_audioarchive_analysis_clip_type` (`clip_id`, `analysis_type`),
+    KEY `idx_audioarchive_analysis_type_status` (`analysis_type`, `status`),
+    KEY `idx_audioarchive_analysis_available` (`is_available`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `#__audioarchive_jobs` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `clip_id` int unsigned DEFAULT NULL,
-    `job_type` varchar(32) NOT NULL,
+    `job_type` varchar(64) NOT NULL,
     `state` varchar(16) NOT NULL DEFAULT 'pending',
     `priority` int NOT NULL DEFAULT 0,
     `attempts` int unsigned NOT NULL DEFAULT 0,

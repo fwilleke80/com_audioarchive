@@ -2,11 +2,14 @@
 
 namespace Willeke\Component\Audioarchive\Administrator\Controller;
 
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\FormController;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
+use Joomla\Database\DatabaseInterface;
+use Willeke\Component\Audioarchive\Administrator\Service\Analysis\AnalysisManagerService;
 
 \defined('_JEXEC') or die;
 
@@ -121,6 +124,49 @@ class ClipController extends FormController
         {
             $app->enqueueMessage(
                 Text::sprintf('COM_AUDIOARCHIVE_VERIFY_FAILED', $exception->getMessage()),
+                'error'
+            );
+        }
+
+        $this->setRedirect($this->getEditRedirect($clipId));
+    }
+
+    /**
+     * @brief Generate or regenerate waveform analysis for the current clip.
+     *
+     * @return void
+     */
+    public function generateWaveform(): void
+    {
+        Session::checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+        $app = Factory::getApplication();
+        $clipId = $this->getPostedClipId();
+
+        if (!$app->getIdentity()->authorise('audioarchive.process', 'com_audioarchive'))
+        {
+            throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+        }
+
+        try
+        {
+            $manager = new AnalysisManagerService(
+                Factory::getContainer()->get(DatabaseInterface::class),
+                ComponentHelper::getParams('com_audioarchive'),
+                $app->getIdentity()
+            );
+            $result = $manager->generate('waveform', $clipId);
+            $app->enqueueMessage(
+                Text::sprintf(
+                    'COM_AUDIOARCHIVE_WAVEFORM_GENERATED_SUCCESS',
+                    (int) ($result->parameters['point_count'] ?? 0)
+                ),
+                'success'
+            );
+        }
+        catch (\Throwable $exception)
+        {
+            $app->enqueueMessage(
+                Text::sprintf('COM_AUDIOARCHIVE_WAVEFORM_GENERATED_FAILED', $exception->getMessage()),
                 'error'
             );
         }

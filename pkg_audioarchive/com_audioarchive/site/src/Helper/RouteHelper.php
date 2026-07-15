@@ -116,6 +116,28 @@ abstract class RouteHelper
 	}
 
 	/**
+	 * @brief Return the protected route for one derived analysis.
+	 *
+	 * @param int $id Clip identifier.
+	 * @param string $analysisType Stable analysis type.
+	 * @param int $itemId Optional Archive menu item identifier.
+	 *
+	 * @return string Internal Joomla route.
+	 */
+	public static function getAnalysisRoute(int $id, string $analysisType, int $itemId = 0): string
+	{
+		$link = 'index.php?option=com_audioarchive&task=stream.analysis&id=' . $id
+			. '&type=' . rawurlencode($analysisType) . '&format=raw';
+
+		if ($itemId > 0)
+		{
+			$link .= '&Itemid=' . $itemId;
+		}
+
+		return $link;
+	}
+
+	/**
 	 * @brief Return the protected original-download route for one clip.
 	 *
 	 * @param int $id Clip identifier.
