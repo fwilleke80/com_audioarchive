@@ -2,13 +2,6 @@
 <config>
     <fieldset name="general" label="COM_AUDIOARCHIVE_CONFIG_GENERAL_LABEL">
         <field
-            name="frontend_access_level"
-            type="accesslevel"
-            label="COM_AUDIOARCHIVE_CONFIG_FRONTEND_ACCESS_LEVEL_LABEL"
-            description="COM_AUDIOARCHIVE_CONFIG_FRONTEND_ACCESS_LEVEL_DESC"
-            default="1"
-        />
-        <field
             name="default_category"
             type="category"
             extension="com_audioarchive"
@@ -36,36 +29,6 @@
             <option value="1">JPUBLISHED</option>
             <option value="0">JUNPUBLISHED</option>
         </field>
-        <field
-            name="default_ordering"
-            type="list"
-            label="COM_AUDIOARCHIVE_CONFIG_DEFAULT_ORDERING_LABEL"
-            default="uploaded_at"
-            validate="options"
-        >
-            <option value="uploaded_at">COM_AUDIOARCHIVE_FIELD_UPLOAD_DATE</option>
-            <option value="recorded_at">COM_AUDIOARCHIVE_FIELD_RECORDING_DATE</option>
-            <option value="title">JGLOBAL_TITLE</option>
-        </field>
-        <field
-            name="default_direction"
-            type="list"
-            label="COM_AUDIOARCHIVE_CONFIG_DEFAULT_DIRECTION_LABEL"
-            default="desc"
-            validate="options"
-        >
-            <option value="asc">JGLOBAL_ORDER_ASCENDING</option>
-            <option value="desc">JGLOBAL_ORDER_DESCENDING</option>
-        </field>
-        <field
-            name="default_limit"
-            type="number"
-            label="COM_AUDIOARCHIVE_CONFIG_DEFAULT_LIMIT_LABEL"
-            default="20"
-            min="5"
-            max="200"
-            step="5"
-        />
         <field name="enable_play_counts" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_PLAY_COUNTS_LABEL" default="1">
             <option value="0">JNO</option>
             <option value="1">JYES</option>
@@ -124,34 +87,81 @@
 
 
     <fieldset name="archive" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_LABEL">
-        <field name="archive_show_search" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_SEARCH_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
-        <field name="archive_show_category_filter" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_CATEGORY_FILTER_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
-        <field name="archive_show_tag_filter" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_TAG_FILTER_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
-        <field name="archive_show_duration_filter" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_DURATION_FILTER_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
-        <field name="archive_show_recorded_filter" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_RECORDED_FILTER_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
-        <field name="archive_show_uploaded_filter" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_UPLOADED_FILTER_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
-        <field name="archive_show_active_filters" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_ACTIVE_FILTERS_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
-        <field name="archive_show_result_count" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_RESULT_COUNT_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
-        <field name="archive_show_pagination" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_PAGINATION_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
-        <field name="archive_show_page_size" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_PAGE_SIZE_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
-        <field name="archive_show_empty_categories" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_EMPTY_CATEGORIES_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SHOW_EMPTY_CATEGORIES_DESC" default="0"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
-        <field name="archive_filters_initial_state" type="list" label="COM_AUDIOARCHIVE_CONFIG_FILTERS_INITIAL_STATE_LABEL" description="COM_AUDIOARCHIVE_CONFIG_FILTERS_INITIAL_STATE_DESC" default="expanded" validate="options">
-            <option value="expanded">COM_AUDIOARCHIVE_FILTERS_STATE_EXPANDED</option>
-            <option value="collapsed">COM_AUDIOARCHIVE_FILTERS_STATE_COLLAPSED</option>
-        </field>
-        <field name="archive_allowed_page_sizes" type="text" label="COM_AUDIOARCHIVE_CONFIG_ALLOWED_PAGE_SIZES_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ALLOWED_PAGE_SIZES_DESC" default="10,20,50,100" />
-        <field name="archive_maximum_page_size" type="number" label="COM_AUDIOARCHIVE_CONFIG_MAXIMUM_PAGE_SIZE_LABEL" description="COM_AUDIOARCHIVE_CONFIG_MAXIMUM_PAGE_SIZE_DESC" default="200" min="1" max="1000" step="1" />
-    </fieldset>
+        <fieldset name="archive_general" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_SECTION_GENERAL_LABEL">
+            <field
+                name="frontend_access_level"
+                type="accesslevel"
+                label="COM_AUDIOARCHIVE_CONFIG_FRONTEND_ACCESS_LEVEL_LABEL"
+                description="COM_AUDIOARCHIVE_CONFIG_FRONTEND_ACCESS_LEVEL_DESC"
+                default="1"
+            />
+        </fieldset>
 
-    <fieldset name="archive_columns" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_COLUMNS_LABEL">
-        <field name="archive_columns_note" type="note" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_COLUMNS_NOTE_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_COLUMNS_DESC" class="alert alert-info" />
-        <field name="archive_column_play" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_PLAY" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
-        <field name="archive_column_title" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_TITLE" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
-        <field name="archive_column_category" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_CATEGORY" default="0"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
-        <field name="archive_column_duration" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_DURATION" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
-        <field name="archive_column_recorded" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_RECORDED" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
-        <field name="archive_column_uploaded" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_UPLOADED" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
-        <field name="archive_column_tags" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_TAGS" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        <fieldset name="archive_filter" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_SECTION_FILTER_LABEL">
+            <field name="archive_filters_initial_state" type="list" label="COM_AUDIOARCHIVE_CONFIG_FILTERS_INITIAL_STATE_LABEL" description="COM_AUDIOARCHIVE_CONFIG_FILTERS_INITIAL_STATE_DESC" default="expanded" validate="options">
+                <option value="expanded">COM_AUDIOARCHIVE_FILTERS_STATE_EXPANDED</option>
+                <option value="collapsed">COM_AUDIOARCHIVE_FILTERS_STATE_COLLAPSED</option>
+            </field>
+            <field name="archive_show_search" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_SEARCH_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+            <field name="archive_show_category_filter" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_CATEGORY_FILTER_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+            <field name="archive_show_empty_categories" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_EMPTY_CATEGORIES_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SHOW_EMPTY_CATEGORIES_DESC" default="0"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+            <field name="archive_show_tag_filter" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_TAG_FILTER_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+            <field name="archive_show_duration_filter" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_DURATION_FILTER_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+            <field name="archive_show_recorded_filter" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_RECORDED_FILTER_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+            <field name="archive_show_uploaded_filter" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_UPLOADED_FILTER_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+            <field name="archive_show_active_filters" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_ACTIVE_FILTERS_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        </fieldset>
+
+        <fieldset name="archive_list" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_SECTION_LIST_LABEL">
+            <field
+                name="default_ordering"
+                type="list"
+                label="COM_AUDIOARCHIVE_CONFIG_DEFAULT_ORDERING_LABEL"
+                default="uploaded_at"
+                validate="options"
+            >
+                <option value="uploaded_at">COM_AUDIOARCHIVE_FIELD_UPLOAD_DATE</option>
+                <option value="recorded_at">COM_AUDIOARCHIVE_FIELD_RECORDING_DATE</option>
+                <option value="title">JGLOBAL_TITLE</option>
+            </field>
+            <field
+                name="default_direction"
+                type="list"
+                label="COM_AUDIOARCHIVE_CONFIG_DEFAULT_DIRECTION_LABEL"
+                default="desc"
+                validate="options"
+            >
+                <option value="asc">JGLOBAL_ORDER_ASCENDING</option>
+                <option value="desc">JGLOBAL_ORDER_DESCENDING</option>
+            </field>
+            <field
+                name="default_limit"
+                type="number"
+                label="COM_AUDIOARCHIVE_CONFIG_DEFAULT_LIMIT_LABEL"
+                default="20"
+                min="5"
+                max="200"
+                step="5"
+            />
+            <field name="archive_show_result_count" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_RESULT_COUNT_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        </fieldset>
+
+        <fieldset name="archive_columns" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_SECTION_COLUMNS_LABEL">
+            <field name="archive_column_play" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_PLAY" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+            <field name="archive_column_title" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_TITLE" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+            <field name="archive_column_category" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_CATEGORY" default="0"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+            <field name="archive_column_duration" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_DURATION" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+            <field name="archive_column_recorded" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_RECORDED" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+            <field name="archive_column_uploaded" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_UPLOADED" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+            <field name="archive_column_tags" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_TAGS" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        </fieldset>
+
+        <fieldset name="archive_pagination" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_SECTION_PAGINATION_LABEL">
+            <field name="archive_show_pagination" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_PAGINATION_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+            <field name="archive_show_page_size" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_PAGE_SIZE_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+            <field name="archive_allowed_page_sizes" type="text" label="COM_AUDIOARCHIVE_CONFIG_ALLOWED_PAGE_SIZES_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ALLOWED_PAGE_SIZES_DESC" default="10,20,50,100" />
+            <field name="archive_maximum_page_size" type="number" label="COM_AUDIOARCHIVE_CONFIG_MAXIMUM_PAGE_SIZE_LABEL" description="COM_AUDIOARCHIVE_CONFIG_MAXIMUM_PAGE_SIZE_DESC" default="200" min="1" max="1000" step="1" />
+        </fieldset>
     </fieldset>
 
     <fieldset name="playback" label="COM_AUDIOARCHIVE_CONFIG_PLAYBACK_LABEL">
@@ -191,8 +201,8 @@
             <option value="0">JNO</option>
             <option value="1">JYES</option>
         </field>
-        <field name="ffmpeg_path" type="text" label="COM_AUDIOARCHIVE_CONFIG_FFMPEG_PATH_LABEL" default="" />
-        <field name="ffprobe_path" type="text" label="COM_AUDIOARCHIVE_CONFIG_FFPROBE_PATH_LABEL" default="" />
+        <field name="ffmpeg_path" type="text" label="COM_AUDIOARCHIVE_CONFIG_FFMPEG_PATH_LABEL" description="COM_AUDIOARCHIVE_CONFIG_FFMPEG_PATH_DESC" default="" />
+        <field name="ffprobe_path" type="text" label="COM_AUDIOARCHIVE_CONFIG_FFPROBE_PATH_LABEL" description="COM_AUDIOARCHIVE_CONFIG_FFPROBE_PATH_DESC" default="" />
         <field name="process_timeout" type="number" label="COM_AUDIOARCHIVE_CONFIG_PROCESS_TIMEOUT_LABEL" default="120" min="1" max="3600" />
         <field name="maximum_attempts" type="number" label="COM_AUDIOARCHIVE_CONFIG_MAXIMUM_ATTEMPTS_LABEL" default="3" min="1" max="20" />
     </fieldset>

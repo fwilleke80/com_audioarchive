@@ -434,6 +434,65 @@ class SystemCheckService
     }
 
     /**
+     * @brief Resolve an explicit executable path.
+     *
+     * @param string $configuredPath Absolute path or path relative to the Joomla site root.
+     *
+     * @return array{path: string, error: string} Resolved path or validation error.
+     */
+    private function resolveConfiguredExecutablePath(string $configuredPath): array
+    {
+        if ($this->isAbsolutePath($configuredPath))
+        {
+            return [
+                'path' => Path::clean($configuredPath),
+                'error' => '',
+            ];
+        }
+
+        $siteRoot = rtrim(Path::clean(JPATH_ROOT), DIRECTORY_SEPARATOR);
+        $resolvedPath = Path::clean(
+            $siteRoot . DIRECTORY_SEPARATOR . ltrim($configuredPath, '/\\')
+        );
+
+        if (!$this->isPathInsideRoot($resolvedPath, $siteRoot))
+        {
+            return [
+                'path' => '',
+                'error' => $configuredPath . ': relative executable paths must remain inside the Joomla site root',
+            ];
+        }
+
+        return [
+            'path' => $resolvedPath,
+            'error' => '',
+        ];
+    }
+
+    /**
+     * @brief Determine whether a path is located inside a root directory.
+     *
+     * @param string $path Path to test.
+     * @param string $root Allowed root directory.
+     *
+     * @return bool True when the path is a child of the root directory.
+     */
+    private function isPathInsideRoot(string $path, string $root): bool
+    {
+        $normalisedPath = rtrim(Path::clean($path), DIRECTORY_SEPARATOR);
+        $normalisedRoot = rtrim(Path::clean($root), DIRECTORY_SEPARATOR);
+
+        if (DIRECTORY_SEPARATOR === '\\')
+        {
+            $normalisedPath = strtolower($normalisedPath);
+            $normalisedRoot = strtolower($normalisedRoot);
+        }
+
+        return $normalisedPath !== $normalisedRoot
+            && str_starts_with($normalisedPath, $normalisedRoot . DIRECTORY_SEPARATOR);
+    }
+
+    /**
      * @brief Detect an FFmpeg-family executable and obtain its version.
      *
      * @param string $program Program name.
@@ -444,11 +503,21 @@ class SystemCheckService
     private function detectExecutable(string $program, string $configuredPath): array
     {
         $candidates = [];
+        $configuredError = '';
         $configuredPath = trim($configuredPath);
 
         if ($configuredPath !== '')
         {
-            $candidates[] = $configuredPath;
+            $resolved = $this->resolveConfiguredExecutablePath($configuredPath);
+
+            if ($resolved['path'] !== '')
+            {
+                $candidates[] = $resolved['path'];
+            }
+            else
+            {
+                $configuredError = $resolved['error'];
+            }
         }
 
         if ((int) $this->params->get('automatic_executable_detection', 1) === 1)
@@ -464,7 +533,7 @@ class SystemCheckService
         }
 
         $candidates = array_values(array_unique($candidates));
-        $lastError = '';
+        $lastError = $configuredError;
 
         foreach ($candidates as $candidate)
         {
