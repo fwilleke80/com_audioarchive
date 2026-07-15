@@ -19,6 +19,42 @@ class ClipController extends FormController
     protected $view_list = 'clips';
 
     /**
+     * @brief Check whether the current user may edit one clip.
+     *
+     * @param array $data Record data containing the clip identifier.
+     * @param string $key Primary-key field name.
+     *
+     * @return bool True when editing is permitted.
+     */
+    protected function allowEdit($data = [], $key = 'id')
+    {
+        $recordId = (int) ($data[$key] ?? 0);
+
+        if ($recordId <= 0)
+        {
+            return false;
+        }
+
+        $user = Factory::getApplication()->getIdentity();
+        $asset = 'com_audioarchive.clip.' . $recordId;
+
+        if ($user->authorise('core.edit', $asset))
+        {
+            return true;
+        }
+
+        if (!$user->authorise('core.edit.own', $asset))
+        {
+            return false;
+        }
+
+        $table = $this->getModel()->getTable();
+
+        return $table->load($recordId)
+            && (int) $table->created_by === (int) $user->id;
+    }
+
+    /**
      * @brief Reinspect the stored original and refresh technical metadata.
      *
      * @return void

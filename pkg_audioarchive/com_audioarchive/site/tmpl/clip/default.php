@@ -19,7 +19,16 @@ $hasDescription = trim((string) $this->item->description) !== '';
 >
 	<div class="visually-hidden" aria-live="polite" aria-atomic="true" data-audioarchive-status></div>
 
-	<a class="com-audioarchive-back-link" href="<?php echo $this->archiveUrl; ?>">← <?php echo Text::_('COM_AUDIOARCHIVE_BACK_TO_ARCHIVE'); ?></a>
+	<div class="com-audioarchive-clip-actions">
+		<a class="com-audioarchive-back-link" href="<?php echo $this->archiveUrl; ?>">← <?php echo Text::_('COM_AUDIOARCHIVE_BACK_TO_ARCHIVE'); ?></a>
+
+		<?php if ($this->canEdit && $this->editUrl !== '') : ?>
+			<a class="btn btn-sm btn-outline-secondary com-audioarchive-edit-link" href="<?php echo $this->escape($this->editUrl); ?>" target="_blank" rel="noopener noreferrer">
+				<span class="icon-edit" aria-hidden="true"></span>
+				<?php echo Text::_('COM_AUDIOARCHIVE_EDIT_CLIP'); ?>
+			</a>
+		<?php endif; ?>
+	</div>
 
 	<header class="com-audioarchive-clip-header">
 		<?php if ((int) $this->params->get('detail_show_category', 1) === 1 && trim((string) $this->item->category_title) !== '') : ?>

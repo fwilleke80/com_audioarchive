@@ -828,15 +828,28 @@
 	margin-inline: auto;
 }
 
+.com-audioarchive-clip-actions
+{
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-bottom: 1.4rem;
+}
+
 .com-audioarchive-back-link
 {
 	display: inline-flex;
 	align-items: center;
 	gap: .35rem;
-	margin-bottom: 1.4rem;
 	font-size: .88rem;
 	font-weight: 650;
 	text-decoration: none;
+}
+
+.com-audioarchive-edit-link
+{
+	flex: 0 0 auto;
 }
 
 .com-audioarchive-clip-header
@@ -1025,6 +1038,12 @@
 
 @media (max-width: 48rem)
 {
+	.com-audioarchive-clip-actions
+	{
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
 	.com-audioarchive-filter-header
 	{
 		align-items: stretch;

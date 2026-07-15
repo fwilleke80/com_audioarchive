@@ -38,6 +38,9 @@ class HtmlView extends BaseHtmlView
 	public string $archiveUrl = '';
 
 	/** @var string */
+	public string $editUrl = '';
+
+	/** @var string */
 	public string $playCountUrl = '';
 
 	/** @var string */
@@ -45,6 +48,9 @@ class HtmlView extends BaseHtmlView
 
 	/** @var bool */
 	public bool $canDownload = false;
+
+	/** @var bool */
+	public bool $canEdit = false;
 
 	/** @var int */
 	public int $archiveItemId = 0;
@@ -71,9 +77,10 @@ class HtmlView extends BaseHtmlView
 		$this->item = $item;
 		$this->params = $model->getResolvedParams();
 		$application = Factory::getApplication();
+		$identity = $application->getIdentity();
 		$this->canDownload = DownloadAccessService::canDownload(
 			$this->params,
-			$application->getIdentity()
+			$identity
 		);
 		$currentItemId = $application->getInput()->getInt('Itemid', 0);
 		$tagIds = array_map(
@@ -106,6 +113,14 @@ class HtmlView extends BaseHtmlView
 
 		$canonicalInternal = RouteHelper::getClipRoute((int) $item->id, $routeItemId);
 		$canonical = Route::_($canonicalInternal, false, Route::TLS_IGNORE, true);
+		$this->canEdit = $this->canEditClip($identity, $item);
+
+		if ($this->canEdit)
+		{
+			$this->editUrl = Uri::root()
+				. 'administrator/index.php?option=com_audioarchive&task=clip.edit&id=' . (int) $item->id;
+		}
+
 		$this->redirectLegacyOrStaleRoute($canonicalInternal, $routeItemId, $currentItemId);
 		$this->preparePathway($routeItemId);
 		$this->prepareDocument($canonical, $routeItemId);
@@ -116,6 +131,35 @@ class HtmlView extends BaseHtmlView
 			->useScript('com_audioarchive.player');
 
 		parent::display($tpl);
+	}
+
+	/**
+	 * @brief Check whether the current user may edit this clip in the administrator interface.
+	 *
+	 * @param \Joomla\CMS\User\User $user Current user.
+	 * @param object $item Clip record.
+	 *
+	 * @return bool True when the administrator edit page is accessible.
+	 */
+	private function canEditClip(\Joomla\CMS\User\User $user, object $item): bool
+	{
+		if (
+			!$user->authorise('core.login.admin')
+			|| !$user->authorise('core.manage', 'com_audioarchive')
+		)
+		{
+			return false;
+		}
+
+		$asset = 'com_audioarchive.clip.' . (int) $item->id;
+
+		if ($user->authorise('core.edit', $asset))
+		{
+			return true;
+		}
+
+		return (int) $item->created_by === (int) $user->id
+			&& $user->authorise('core.edit.own', $asset);
 	}
 
 
