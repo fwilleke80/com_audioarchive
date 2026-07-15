@@ -2,6 +2,7 @@
 
 namespace Willeke\Component\Audioarchive\Administrator\Service;
 
+use Joomla\CMS\Language\Text;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Filesystem\Path;
 use Joomla\Registry\Registry;
@@ -316,7 +317,7 @@ class SystemCheckService
             return $this->check(
                 $label,
                 'warning',
-                'COM_AUDIOARCHIVE_SYSTEM_CHECK_NOT_FOUND',
+                (string) ($result['value'] ?? 'COM_AUDIOARCHIVE_SYSTEM_CHECK_NOT_FOUND'),
                 (string) $result['error']
             );
         }
@@ -326,6 +327,12 @@ class SystemCheckService
         if ((string) $result['version'] !== '')
         {
             $detail .= ($detail !== '' ? ' — ' : '') . (string) $result['version'];
+        }
+
+        if ((bool) ($result['permission_adjusted'] ?? false))
+        {
+            $detail .= ($detail !== '' ? ' — ' : '')
+                . Text::_('COM_AUDIOARCHIVE_SYSTEM_CHECK_EXECUTE_PERMISSION_ADDED');
         }
 
         return $this->check($label, 'ok', 'COM_AUDIOARCHIVE_SYSTEM_CHECK_AVAILABLE', $detail);
@@ -459,7 +466,7 @@ class SystemCheckService
         {
             return [
                 'path' => '',
-                'error' => $configuredPath . ': relative executable paths must remain inside the Joomla site root',
+                'error' => Text::sprintf('COM_AUDIOARCHIVE_SYSTEM_CHECK_EXECUTABLE_OUTSIDE_ROOT_DESC', $configuredPath),
             ];
         }
 
@@ -504,7 +511,7 @@ class SystemCheckService
     {
         $candidates = [];
         $configuredError = '';
-        $configuredPath = trim($configuredPath);
+        $configuredPath = $this->normaliseConfiguredExecutablePath($configuredPath);
 
         if ($configuredPath !== '')
         {
@@ -512,7 +519,10 @@ class SystemCheckService
 
             if ($resolved['path'] !== '')
             {
-                $candidates[] = $resolved['path'];
+                $candidates[] = [
+                    'path' => $resolved['path'],
+                    'configured' => true,
+                ];
             }
             else
             {
@@ -522,42 +532,222 @@ class SystemCheckService
 
         if ((int) $this->params->get('automatic_executable_detection', 1) === 1)
         {
-            $candidates = array_merge(
-                $candidates,
-                [
-                    $program,
-                    '/usr/bin/' . $program,
-                    '/usr/local/bin/' . $program,
-                ]
-            );
+            foreach ([
+                $program,
+                '/usr/bin/' . $program,
+                '/usr/local/bin/' . $program,
+            ] as $candidate)
+            {
+                $candidates[] = [
+                    'path' => $candidate,
+                    'configured' => false,
+                ];
+            }
         }
 
-        $candidates = array_values(array_unique($candidates));
-        $lastError = $configuredError;
+        $uniqueCandidates = [];
 
         foreach ($candidates as $candidate)
         {
-            if ($this->isAbsolutePath($candidate) && (!is_file($candidate) || !is_executable($candidate)))
+            $uniqueCandidates[(string) $candidate['path']] = $candidate;
+        }
+
+        $configuredFailure = $configuredError !== ''
+            ? $this->unavailableExecutableResult(
+                $configuredPath,
+                'COM_AUDIOARCHIVE_SYSTEM_CHECK_NOT_FOUND',
+                $configuredError
+            )
+            : null;
+        $lastResult = $configuredFailure ?? [
+            'available' => false,
+            'candidate' => '',
+            'version' => '',
+            'error' => '',
+            'value' => 'COM_AUDIOARCHIVE_SYSTEM_CHECK_NOT_FOUND',
+            'permission_adjusted' => false,
+        ];
+
+        foreach ($uniqueCandidates as $candidateData)
+        {
+            $candidate = (string) $candidateData['path'];
+            $configured = (bool) $candidateData['configured'];
+            $permissionAdjusted = false;
+
+            if ($this->isAbsolutePath($candidate))
             {
-                $lastError = $candidate . ': not executable';
-                continue;
+                clearstatcache(true, $candidate);
+
+                if (!file_exists($candidate))
+                {
+                    $lastResult = $this->unavailableExecutableResult(
+                        $candidate,
+                        'COM_AUDIOARCHIVE_SYSTEM_CHECK_NOT_FOUND',
+                        Text::sprintf('COM_AUDIOARCHIVE_SYSTEM_CHECK_EXECUTABLE_MISSING_DESC', $candidate)
+                    );
+
+                    if ($configured)
+                    {
+                        $configuredFailure = $lastResult;
+                    }
+
+                    continue;
+                }
+
+                if (!is_file($candidate))
+                {
+                    $lastResult = $this->unavailableExecutableResult(
+                        $candidate,
+                        'COM_AUDIOARCHIVE_SYSTEM_CHECK_NOT_FOUND',
+                        Text::sprintf('COM_AUDIOARCHIVE_SYSTEM_CHECK_EXECUTABLE_NOT_FILE_DESC', $candidate)
+                    );
+
+                    if ($configured)
+                    {
+                        $configuredFailure = $lastResult;
+                    }
+
+                    continue;
+                }
+
+                if (!is_readable($candidate))
+                {
+                    $lastResult = $this->unavailableExecutableResult(
+                        $candidate,
+                        'COM_AUDIOARCHIVE_SYSTEM_CHECK_NOT_READABLE',
+                        Text::sprintf('COM_AUDIOARCHIVE_SYSTEM_CHECK_EXECUTABLE_NOT_READABLE_DESC', $candidate)
+                    );
+
+                    if ($configured)
+                    {
+                        $configuredFailure = $lastResult;
+                    }
+
+                    continue;
+                }
+
+                if (!is_executable($candidate) && $configured)
+                {
+                    $permissionAdjusted = $this->tryAddExecutePermission($candidate);
+                }
+
+                clearstatcache(true, $candidate);
+
+                if (!is_executable($candidate))
+                {
+                    $lastResult = $this->unavailableExecutableResult(
+                        $candidate,
+                        'COM_AUDIOARCHIVE_SYSTEM_CHECK_NOT_EXECUTABLE',
+                        Text::sprintf('COM_AUDIOARCHIVE_SYSTEM_CHECK_EXECUTABLE_NOT_EXECUTABLE_DESC', $candidate)
+                    );
+
+                    if ($configured)
+                    {
+                        $configuredFailure = $lastResult;
+                    }
+
+                    continue;
+                }
             }
 
             $result = $this->runVersionCommand($candidate);
+            $result['permission_adjusted'] = $permissionAdjusted;
 
             if ($result['available'])
             {
                 return $result;
             }
 
-            $lastError = (string) $result['error'];
+            $lastResult = $result;
+
+            if ($configured)
+            {
+                $configuredFailure = $result;
+            }
         }
 
+        return $configuredFailure ?? $lastResult;
+    }
+
+    /**
+     * @brief Normalise an administrator-configured executable path.
+     *
+     * @param string $configuredPath Configured path, optionally surrounded by quotes.
+     *
+     * @return string Trimmed path without matching surrounding quotes.
+     */
+    private function normaliseConfiguredExecutablePath(string $configuredPath): string
+    {
+        $configuredPath = trim($configuredPath);
+
+        if (strlen($configuredPath) >= 2)
+        {
+            $first = $configuredPath[0];
+            $last = $configuredPath[strlen($configuredPath) - 1];
+
+            if (($first === '"' && $last === '"') || ($first === "'" && $last === "'"))
+            {
+                $configuredPath = trim(substr($configuredPath, 1, -1));
+            }
+        }
+
+        return $configuredPath;
+    }
+
+    /**
+     * @brief Try to add Unix execute bits to an explicitly configured binary.
+     *
+     * This is limited to administrator-configured files. Existing read and write
+     * permissions are preserved.
+     *
+     * @param string $path Absolute executable path.
+     *
+     * @return bool True when the file became executable.
+     */
+    private function tryAddExecutePermission(string $path): bool
+    {
+        if (DIRECTORY_SEPARATOR === '\\' || !$this->isFunctionAvailable('chmod'))
+        {
+            return false;
+        }
+
+        $permissions = @fileperms($path);
+
+        if ($permissions === false)
+        {
+            return false;
+        }
+
+        $mode = ($permissions & 0777) | 0111;
+
+        if (!@chmod($path, $mode))
+        {
+            return false;
+        }
+
+        clearstatcache(true, $path);
+
+        return is_executable($path);
+    }
+
+    /**
+     * @brief Create a detailed unavailable-executable result.
+     *
+     * @param string $candidate Candidate path.
+     * @param string $value Language key describing the failure type.
+     * @param string $error Detailed diagnostic message.
+     *
+     * @return array<string, mixed> Detection result.
+     */
+    private function unavailableExecutableResult(string $candidate, string $value, string $error): array
+    {
         return [
             'available' => false,
-            'candidate' => '',
+            'candidate' => $candidate,
             'version' => '',
-            'error' => $lastError,
+            'error' => $error,
+            'value' => $value,
+            'permission_adjusted' => false,
         ];
     }
 
@@ -584,7 +774,9 @@ class SystemCheckService
                 'available' => false,
                 'candidate' => $candidate,
                 'version' => '',
-                'error' => $candidate . ': could not be started',
+                'error' => Text::sprintf('COM_AUDIOARCHIVE_SYSTEM_CHECK_EXECUTABLE_START_FAILED_DESC', $candidate),
+                'value' => 'COM_AUDIOARCHIVE_SYSTEM_CHECK_EXECUTION_FAILED',
+                'permission_adjusted' => false,
             ];
         }
 
@@ -639,7 +831,13 @@ class SystemCheckService
                 'available' => false,
                 'candidate' => $candidate,
                 'version' => '',
-                'error' => $candidate . ': ' . ($output !== '' ? strtok($output, "\r\n") : 'no version response'),
+                'error' => Text::sprintf(
+                    'COM_AUDIOARCHIVE_SYSTEM_CHECK_EXECUTABLE_VERSION_FAILED_DESC',
+                    $candidate,
+                    $output !== '' ? strtok($output, "\r\n") : Text::_('COM_AUDIOARCHIVE_SYSTEM_CHECK_NO_VERSION_RESPONSE')
+                ),
+                'value' => 'COM_AUDIOARCHIVE_SYSTEM_CHECK_EXECUTION_FAILED',
+                'permission_adjusted' => false,
             ];
         }
 
@@ -650,6 +848,8 @@ class SystemCheckService
             'candidate' => $candidate,
             'version' => $version,
             'error' => '',
+            'value' => 'COM_AUDIOARCHIVE_SYSTEM_CHECK_AVAILABLE',
+            'permission_adjusted' => false,
         ];
     }
 
@@ -681,6 +881,8 @@ class SystemCheckService
             'candidate' => '',
             'version' => '',
             'error' => '',
+            'value' => 'COM_AUDIOARCHIVE_SYSTEM_CHECK_NOT_FOUND',
+            'permission_adjusted' => false,
         ];
     }
 
