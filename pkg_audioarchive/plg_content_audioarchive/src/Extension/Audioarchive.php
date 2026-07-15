@@ -111,7 +111,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 		$params = $this->createRenderParams($options);
 		$items = [];
 
-		if ($options['mode'] === 'random')
+		if (in_array($options['mode'], ['random', 'longest', 'shortest'], true))
 		{
 			$items = AudioarchiveHelper::getItems($params, $module);
 		}
@@ -143,6 +143,9 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 	 * Supported forms:
 	 * {audioarchive random}
 	 * {audioarchive random layout=compact}
+	 * {audioarchive longest}
+	 * {audioarchive longest count=3 layout=compact}
+	 * {audioarchive shortest}
 	 * {audioarchive clip=some-alias}
 	 * {audioarchive clip=123 layout=featured}
 	 * {audioarchive count}
@@ -152,7 +155,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 	 *
 	 * @param string $arguments Placeholder arguments.
 	 *
-	 * @return array{mode:string, clip:string, layout:string, categories:string[]}|null Parsed options or null.
+	 * @return array{mode:string, clip:string, layout:string, categories:string[], count:int}|null Parsed options or null.
 	 */
 	private function parseArguments(string $arguments): ?array
 	{
@@ -174,7 +177,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 
 		$mode = '';
 		$modeMatches = [];
-		preg_match_all('/\b(random|count|playtime)\b/i', $remaining, $modeMatches);
+		preg_match_all('/\b(random|longest|shortest|count|playtime)\b/i', $remaining, $modeMatches);
 
 		if (count($modeMatches[1] ?? []) > 1)
 		{
@@ -193,7 +196,8 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 		}
 
 		$aggregateMode = in_array($mode, ['count', 'playtime'], true);
-		$allowed = $aggregateMode ? ['category'] : ['clip', 'layout'];
+		$orderedMode = in_array($mode, ['longest', 'shortest'], true);
+		$allowed = $aggregateMode ? ['category'] : ($orderedMode ? ['layout', 'count'] : ['clip', 'layout']);
 
 		foreach (array_keys($attributes) as $key)
 		{
@@ -204,6 +208,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 		}
 
 		$clip = trim((string) ($attributes['clip'] ?? ''));
+		$count = max(1, min(50, (int) ($attributes['count'] ?? 1)));
 		$categories = $this->parseCategoryReferences((string) ($attributes['category'] ?? ''));
 
 		if ($aggregateMode)
@@ -213,6 +218,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 				'clip' => '',
 				'layout' => '',
 				'categories' => $categories,
+				'count' => 1,
 			];
 		}
 
@@ -258,6 +264,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 			'clip' => $clip,
 			'layout' => $layout,
 			'categories' => [],
+			'count' => $orderedMode ? $count : 1,
 		];
 	}
 
@@ -285,7 +292,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 	/**
 	 * @brief Render an archive count or total playtime placeholder.
 	 *
-	 * @param array{mode:string, clip:string, layout:string, categories:string[]} $options Parsed placeholder options.
+	 * @param array{mode:string, clip:string, layout:string, categories:string[], count:int} $options Parsed placeholder options.
 	 *
 	 * @return string Aggregate value formatted for inline content.
 	 */
@@ -519,15 +526,15 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 	/**
 	 * @brief Create module-compatible rendering parameters.
 	 *
-	 * @param array{mode:string, clip:string, layout:string, categories:string[]} $options Parsed placeholder options.
+	 * @param array{mode:string, clip:string, layout:string, categories:string[], count:int} $options Parsed placeholder options.
 	 *
 	 * @return Registry Module-compatible parameters.
 	 */
 	private function createRenderParams(array $options): Registry
 	{
 		return new Registry([
-			'selection_mode' => $options['mode'] === 'random' ? 'random' : 'specific',
-			'count' => 1,
+			'selection_mode' => in_array($options['mode'], ['random', 'longest', 'shortest'], true) ? $options['mode'] : 'specific',
+			'count' => (int) ($options['count'] ?? 1),
 			'specific_clip' => 0,
 			'presentation' => 'default',
 			'player_presentation' => $options['layout'],

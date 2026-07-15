@@ -58,6 +58,14 @@ abstract class AudioarchiveHelper
 			};
 			$query->order($database->quoteName($dateColumn) . ' DESC')->order($database->quoteName('a.id') . ' DESC');
 		}
+		elseif ($mode === 'longest')
+		{
+			$query->order($database->quoteName('a.duration_ms') . ' DESC')->order($database->quoteName('a.recorded_at') . ' DESC')->order($database->quoteName('a.id') . ' DESC');
+		}
+		elseif ($mode === 'shortest')
+		{
+			$query->order($database->quoteName('a.duration_ms') . ' ASC')->order($database->quoteName('a.recorded_at') . ' DESC')->order($database->quoteName('a.id') . ' DESC');
+		}
 		elseif ($mode === 'most_played')
 		{
 			$query->order($database->quoteName('a.play_count') . ' DESC')->order($database->quoteName('a.id') . ' DESC');

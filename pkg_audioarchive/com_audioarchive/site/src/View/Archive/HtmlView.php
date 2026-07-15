@@ -241,9 +241,14 @@ class HtmlView extends BaseHtmlView
 	 */
 	public function getRemoveFilterUrl(string $name, ?string $value = null): string
 	{
-		if ($name !== 'tags' || $value === null || trim($value) === '')
+		if ($name !== 'tags')
 		{
 			return $this->buildUrl([], [$name]);
+		}
+
+		if ($value === null || trim($value) === '')
+		{
+			return $this->buildUrl([], ['tags', 'tag_mode']);
 		}
 
 		$value = trim($value);

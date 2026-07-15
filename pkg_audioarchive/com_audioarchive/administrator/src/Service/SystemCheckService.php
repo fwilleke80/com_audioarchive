@@ -531,19 +531,16 @@ class SystemCheckService
             }
         }
 
-        if ((int) $this->params->get('automatic_executable_detection', 1) === 1)
+        foreach ([
+            $program,
+            '/usr/bin/' . $program,
+            '/usr/local/bin/' . $program,
+        ] as $candidate)
         {
-            foreach ([
-                $program,
-                '/usr/bin/' . $program,
-                '/usr/local/bin/' . $program,
-            ] as $candidate)
-            {
-                $candidates[] = [
-                    'path' => $candidate,
-                    'configured' => false,
-                ];
-            }
+            $candidates[] = [
+                'path' => $candidate,
+                'configured' => false,
+            ];
         }
 
         $uniqueCandidates = [];

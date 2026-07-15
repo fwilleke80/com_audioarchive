@@ -233,22 +233,79 @@ class ArchiveModel extends ListModel
 
 		$tagBindings = [];
 		$typeBindings = [];
-		$activeTags = $this->ignoreVisitorFiltersForMaximum ? $this->menuTags : $this->selectedTags;
-		foreach ($activeTags as $index => $tagId)
+		$mandatoryTags = $this->menuTags;
+		$visitorTags = $this->ignoreVisitorFiltersForMaximum ? [] : $this->selectedTags;
+
+		foreach ($mandatoryTags as $index => $tagId)
 		{
-			$tagPlaceholder = ':archiveTag' . $index;
-			$typePlaceholder = ':archiveType' . $index;
-			$tagBindings[$index] = (int) $tagId;
-			$typeBindings[$index] = 'com_audioarchive.clip';
+			$tagPlaceholder = ':archiveMenuTag' . $index;
+			$typePlaceholder = ':archiveMenuType' . $index;
+			$tagBindings['menu' . $index] = (int) $tagId;
+			$typeBindings['menu' . $index] = 'com_audioarchive.clip';
 			$subquery = $db->getQuery(true)
 				->select('1')
-				->from($db->quoteName('#__contentitem_tag_map', 'tm' . $index))
-				->where($db->quoteName('tm' . $index . '.content_item_id') . ' = ' . $db->quoteName('a.id'))
-				->where($db->quoteName('tm' . $index . '.type_alias') . ' = ' . $typePlaceholder)
-				->where($db->quoteName('tm' . $index . '.tag_id') . ' = ' . $tagPlaceholder);
+				->from($db->quoteName('#__contentitem_tag_map', 'mtm' . $index))
+				->where($db->quoteName('mtm' . $index . '.content_item_id') . ' = ' . $db->quoteName('a.id'))
+				->where($db->quoteName('mtm' . $index . '.type_alias') . ' = ' . $typePlaceholder)
+				->where($db->quoteName('mtm' . $index . '.tag_id') . ' = ' . $tagPlaceholder);
 			$query->where('EXISTS (' . $subquery . ')')
-				->bind($tagPlaceholder, $tagBindings[$index], ParameterType::INTEGER)
-				->bind($typePlaceholder, $typeBindings[$index], ParameterType::STRING);
+				->bind($tagPlaceholder, $tagBindings['menu' . $index], ParameterType::INTEGER)
+				->bind($typePlaceholder, $typeBindings['menu' . $index], ParameterType::STRING);
+		}
+
+		if ($visitorTags !== [])
+		{
+			$tagMode = (string) $this->getState('filter.tag_mode', 'and');
+
+			if ($tagMode === 'or')
+			{
+				$typePlaceholder = ':archiveVisitorOrType';
+				$typeBindings['visitorOr'] = 'com_audioarchive.clip';
+				$tagConditions = [];
+				$tagPlaceholders = [];
+
+				foreach ($visitorTags as $index => $tagId)
+				{
+					$tagPlaceholder = ':archiveVisitorOrTag' . $index;
+					$bindingKey = 'visitorOr' . $index;
+					$tagBindings[$bindingKey] = (int) $tagId;
+					$tagConditions[] = $db->quoteName('vtm.tag_id') . ' = ' . $tagPlaceholder;
+					$tagPlaceholders[$bindingKey] = $tagPlaceholder;
+				}
+
+				$subquery = $db->getQuery(true)
+					->select('1')
+					->from($db->quoteName('#__contentitem_tag_map', 'vtm'))
+					->where($db->quoteName('vtm.content_item_id') . ' = ' . $db->quoteName('a.id'))
+					->where($db->quoteName('vtm.type_alias') . ' = ' . $typePlaceholder)
+					->where('(' . implode(' OR ', $tagConditions) . ')');
+				$query->where('EXISTS (' . $subquery . ')')
+					->bind($typePlaceholder, $typeBindings['visitorOr'], ParameterType::STRING);
+
+				foreach ($tagPlaceholders as $bindingKey => $tagPlaceholder)
+				{
+					$query->bind($tagPlaceholder, $tagBindings[$bindingKey], ParameterType::INTEGER);
+				}
+			}
+			else
+			{
+				foreach ($visitorTags as $index => $tagId)
+				{
+					$tagPlaceholder = ':archiveVisitorTag' . $index;
+					$typePlaceholder = ':archiveVisitorType' . $index;
+					$tagBindings['visitor' . $index] = (int) $tagId;
+					$typeBindings['visitor' . $index] = 'com_audioarchive.clip';
+					$subquery = $db->getQuery(true)
+						->select('1')
+						->from($db->quoteName('#__contentitem_tag_map', 'vtm' . $index))
+						->where($db->quoteName('vtm' . $index . '.content_item_id') . ' = ' . $db->quoteName('a.id'))
+						->where($db->quoteName('vtm' . $index . '.type_alias') . ' = ' . $typePlaceholder)
+						->where($db->quoteName('vtm' . $index . '.tag_id') . ' = ' . $tagPlaceholder);
+					$query->where('EXISTS (' . $subquery . ')')
+						->bind($tagPlaceholder, $tagBindings['visitor' . $index], ParameterType::INTEGER)
+						->bind($typePlaceholder, $typeBindings['visitor' . $index], ParameterType::STRING);
+				}
+			}
 		}
 
 		$orderMap = [
@@ -484,6 +541,11 @@ class ArchiveModel extends ListModel
 		{
 			sort($tagAliases, SORT_NATURAL | SORT_FLAG_CASE);
 			$values['tags'] = implode(',', $tagAliases);
+
+			if ((string) $this->getState('filter.tag_mode', 'and') === 'or')
+			{
+				$values['tag_mode'] = 'or';
+			}
 		}
 
 		if ($durationMinimum !== '' && $durationMinimumMs !== null && (int) $durationMinimumMs > 0)
@@ -761,8 +823,10 @@ class ArchiveModel extends ListModel
 		$requestedTags = $this->resolveVisitorTagIdentifiers($input->get('tags', [], 'raw'));
 		$menuTags = $this->normaliseIntegerList($params->get('archive_tag_restriction', []));
 		$this->menuTags = $menuTags;
-		$this->selectedTags = array_values(array_unique(array_merge($requestedTags, $menuTags)));
+		$this->selectedTags = $requestedTags;
 		$this->setState('filter.tags', $requestedTags);
+		$tagMode = strtolower($input->getCmd('tag_mode', 'and'));
+		$this->setState('filter.tag_mode', $tagMode === 'or' ? 'or' : 'and');
 
 		$minimum = $this->parseDuration($durationMinimumInput, 'COM_AUDIOARCHIVE_FILTER_DURATION_MIN_INVALID');
 		$maximum = $this->parseDuration($durationMaximumInput, 'COM_AUDIOARCHIVE_FILTER_DURATION_MAX_INVALID');

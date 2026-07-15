@@ -238,29 +238,30 @@
     </fieldset>
 
     <fieldset name="processing" label="COM_AUDIOARCHIVE_CONFIG_PROCESSING_LABEL">
-        <field name="enable_waveform_generation" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_ENABLE_WAVEFORMS_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ENABLE_WAVEFORMS_DESC" default="1">
-            <option value="0">JNO</option>
-            <option value="1">JYES</option>
-        </field>
-        <field name="waveform_point_count" type="list" label="COM_AUDIOARCHIVE_CONFIG_WAVEFORM_POINTS_LABEL" description="COM_AUDIOARCHIVE_CONFIG_WAVEFORM_POINTS_DESC" default="1024" showon="enable_waveform_generation:1">
-            <option value="256">256</option>
-            <option value="512">512</option>
-            <option value="1024">1024</option>
-            <option value="2048">2048</option>
-            <option value="4096">4096</option>
-        </field>
-        <field name="queue_waveform_after_upload" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_QUEUE_WAVEFORM_UPLOAD_LABEL" description="COM_AUDIOARCHIVE_CONFIG_QUEUE_WAVEFORM_UPLOAD_DESC" default="1" showon="enable_waveform_generation:1">
-            <option value="0">JNO</option>
-            <option value="1">JYES</option>
-        </field>
-        <field name="automatic_executable_detection" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_AUTOMATIC_DETECTION_LABEL" default="1">
-            <option value="0">JNO</option>
-            <option value="1">JYES</option>
-        </field>
-        <field name="ffmpeg_path" type="text" label="COM_AUDIOARCHIVE_CONFIG_FFMPEG_PATH_LABEL" description="COM_AUDIOARCHIVE_CONFIG_FFMPEG_PATH_DESC" default="" />
-        <field name="ffprobe_path" type="text" label="COM_AUDIOARCHIVE_CONFIG_FFPROBE_PATH_LABEL" description="COM_AUDIOARCHIVE_CONFIG_FFPROBE_PATH_DESC" default="" />
-        <field name="process_timeout" type="number" label="COM_AUDIOARCHIVE_CONFIG_PROCESS_TIMEOUT_LABEL" default="120" min="1" max="3600" />
-        <field name="maximum_attempts" type="number" label="COM_AUDIOARCHIVE_CONFIG_MAXIMUM_ATTEMPTS_LABEL" default="3" min="1" max="20" />
+        <fieldset name="clip_analysis" label="COM_AUDIOARCHIVE_CONFIG_CLIP_ANALYSIS_SECTION_LABEL">
+            <field name="enable_waveform_generation" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_ENABLE_WAVEFORMS_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ENABLE_WAVEFORMS_DESC" default="1">
+                <option value="0">JNO</option>
+                <option value="1">JYES</option>
+            </field>
+            <field name="waveform_point_count" type="list" label="COM_AUDIOARCHIVE_CONFIG_WAVEFORM_POINTS_LABEL" description="COM_AUDIOARCHIVE_CONFIG_WAVEFORM_POINTS_DESC" default="1024" showon="enable_waveform_generation:1">
+                <option value="256">256</option>
+                <option value="512">512</option>
+                <option value="1024">1024</option>
+                <option value="2048">2048</option>
+                <option value="4096">4096</option>
+            </field>
+            <field name="queue_waveform_after_upload" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_QUEUE_WAVEFORM_UPLOAD_LABEL" description="COM_AUDIOARCHIVE_CONFIG_QUEUE_WAVEFORM_UPLOAD_DESC" default="1" showon="enable_waveform_generation:1">
+                <option value="0">JNO</option>
+                <option value="1">JYES</option>
+            </field>
+        </fieldset>
+
+        <fieldset name="external_processing" label="COM_AUDIOARCHIVE_CONFIG_PROCESSING_SECTION_LABEL">
+            <field name="ffmpeg_path" type="text" label="COM_AUDIOARCHIVE_CONFIG_FFMPEG_PATH_LABEL" description="COM_AUDIOARCHIVE_CONFIG_FFMPEG_PATH_DESC" default="" />
+            <field name="ffprobe_path" type="text" label="COM_AUDIOARCHIVE_CONFIG_FFPROBE_PATH_LABEL" description="COM_AUDIOARCHIVE_CONFIG_FFPROBE_PATH_DESC" default="" />
+            <field name="process_timeout" type="number" label="COM_AUDIOARCHIVE_CONFIG_PROCESS_TIMEOUT_LABEL" default="120" min="1" max="3600" />
+            <field name="maximum_attempts" type="number" label="COM_AUDIOARCHIVE_CONFIG_MAXIMUM_ATTEMPTS_LABEL" default="3" min="1" max="20" />
+        </fieldset>
     </fieldset>
 
     <fieldset name="uninstall" label="COM_AUDIOARCHIVE_CONFIG_UNINSTALL_LABEL">

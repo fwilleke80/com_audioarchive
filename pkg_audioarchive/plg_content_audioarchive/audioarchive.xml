@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <extension type="plugin" group="content" method="upgrade">
 	<name>PLG_CONTENT_AUDIOARCHIVE</name>
-	<version>0.2.0</version>
+	<version>0.3.0</version>
 	<creationDate>2026-07-15</creationDate>
 	<author>Frank Willeke</author>
 	<copyright>Copyright (C) 2026 Frank Willeke.</copyright>
@@ -31,18 +31,18 @@
 					<option value="default">PLG_CONTENT_AUDIOARCHIVE_PRESENTATION_DEFAULT</option>
 					<option value="featured">PLG_CONTENT_AUDIOARCHIVE_PRESENTATION_FEATURED</option>
 				</field>
-				<field name="show_title" type="radio" layout="joomla.form.field.radio.switcher" default="1" label="PLG_CONTENT_AUDIOARCHIVE_FIELD_SHOW_TITLE_LABEL"><option value="1">JYES</option><option value="0">JNO</option></field>
-				<field name="link_title" type="radio" layout="joomla.form.field.radio.switcher" default="1" label="PLG_CONTENT_AUDIOARCHIVE_FIELD_LINK_TITLE_LABEL" showon="show_title:1"><option value="1">JYES</option><option value="0">JNO</option></field>
-				<field name="show_duration" type="radio" layout="joomla.form.field.radio.switcher" default="1" label="PLG_CONTENT_AUDIOARCHIVE_FIELD_SHOW_DURATION_LABEL"><option value="1">JYES</option><option value="0">JNO</option></field>
-				<field name="show_date" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="PLG_CONTENT_AUDIOARCHIVE_FIELD_SHOW_DATE_LABEL"><option value="1">JYES</option><option value="0">JNO</option></field>
+				<field name="show_title" type="radio" layout="joomla.form.field.radio.switcher" default="1" label="PLG_CONTENT_AUDIOARCHIVE_FIELD_SHOW_TITLE_LABEL"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+				<field name="link_title" type="radio" layout="joomla.form.field.radio.switcher" default="1" label="PLG_CONTENT_AUDIOARCHIVE_FIELD_LINK_TITLE_LABEL" showon="show_title:1"><option value="0">JNO</option><option value="1">JYES</option></field>
+				<field name="show_duration" type="radio" layout="joomla.form.field.radio.switcher" default="1" label="PLG_CONTENT_AUDIOARCHIVE_FIELD_SHOW_DURATION_LABEL"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+				<field name="show_date" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="PLG_CONTENT_AUDIOARCHIVE_FIELD_SHOW_DATE_LABEL"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
 				<field name="display_date" type="list" default="uploaded" label="PLG_CONTENT_AUDIOARCHIVE_FIELD_DISPLAY_DATE_LABEL" showon="show_date:1"><option value="uploaded">PLG_CONTENT_AUDIOARCHIVE_DATE_UPLOADED</option><option value="recorded">PLG_CONTENT_AUDIOARCHIVE_DATE_RECORDED</option><option value="published">PLG_CONTENT_AUDIOARCHIVE_DATE_PUBLISHED</option></field>
-				<field name="show_category" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="PLG_CONTENT_AUDIOARCHIVE_FIELD_SHOW_CATEGORY_LABEL"><option value="1">JYES</option><option value="0">JNO</option></field>
-				<field name="show_tags" type="radio" layout="joomla.form.field.radio.switcher" default="1" label="PLG_CONTENT_AUDIOARCHIVE_FIELD_SHOW_TAGS_LABEL"><option value="1">JYES</option><option value="0">JNO</option></field>
-				<field name="show_description" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="PLG_CONTENT_AUDIOARCHIVE_FIELD_SHOW_DESCRIPTION_LABEL"><option value="1">JYES</option><option value="0">JNO</option></field>
+				<field name="show_category" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="PLG_CONTENT_AUDIOARCHIVE_FIELD_SHOW_CATEGORY_LABEL"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+				<field name="show_tags" type="radio" layout="joomla.form.field.radio.switcher" default="1" label="PLG_CONTENT_AUDIOARCHIVE_FIELD_SHOW_TAGS_LABEL"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+				<field name="show_description" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="PLG_CONTENT_AUDIOARCHIVE_FIELD_SHOW_DESCRIPTION_LABEL"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
 				<field name="description_length" type="number" default="160" min="20" max="1000" label="PLG_CONTENT_AUDIOARCHIVE_FIELD_DESCRIPTION_LENGTH_LABEL" showon="show_description:1" />
-				<field name="show_detail_link" type="radio" layout="joomla.form.field.radio.switcher" default="1" label="PLG_CONTENT_AUDIOARCHIVE_FIELD_SHOW_DETAIL_LINK_LABEL"><option value="1">JYES</option><option value="0">JNO</option></field>
-				<field name="show_download" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="PLG_CONTENT_AUDIOARCHIVE_FIELD_SHOW_DOWNLOAD_LABEL"><option value="1">JYES</option><option value="0">JNO</option></field>
-				<field name="show_counts" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="PLG_CONTENT_AUDIOARCHIVE_FIELD_SHOW_COUNTS_LABEL"><option value="1">JYES</option><option value="0">JNO</option></field>
+				<field name="show_detail_link" type="radio" layout="joomla.form.field.radio.switcher" default="1" label="PLG_CONTENT_AUDIOARCHIVE_FIELD_SHOW_DETAIL_LINK_LABEL"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+				<field name="show_download" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="PLG_CONTENT_AUDIOARCHIVE_FIELD_SHOW_DOWNLOAD_LABEL"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+				<field name="show_counts" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="PLG_CONTENT_AUDIOARCHIVE_FIELD_SHOW_COUNTS_LABEL"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
 				<field name="missing_behavior" type="list" default="message" label="PLG_CONTENT_AUDIOARCHIVE_FIELD_MISSING_BEHAVIOR_LABEL">
 					<option value="message">PLG_CONTENT_AUDIOARCHIVE_MISSING_MESSAGE</option>
 					<option value="remove">PLG_CONTENT_AUDIOARCHIVE_MISSING_REMOVE</option>

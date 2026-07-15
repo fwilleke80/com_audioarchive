@@ -196,6 +196,48 @@
 	margin-bottom: .55rem;
 }
 
+.com-audioarchive-tag-filter-footer
+{
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: .75rem;
+	margin-top: .45rem;
+}
+
+.com-audioarchive-tag-mode-options
+{
+	display: flex;
+	align-items: center;
+	gap: .85rem;
+}
+
+.com-audioarchive-tag-mode-option
+{
+	display: inline-flex !important;
+	align-items: center;
+	gap: .32rem;
+	margin: 0 !important;
+	font-size: .82rem !important;
+	font-weight: 600 !important;
+	line-height: 1 !important;
+	cursor: pointer;
+}
+
+.com-audioarchive-tag-mode-option input
+{
+	width: .95rem;
+	height: .95rem;
+	margin: 0;
+}
+
+.com-audioarchive-clear-tag-filter
+{
+	font-size: .8rem;
+	white-space: nowrap;
+}
+
 .com-audioarchive-tag-options
 {
 	display: grid;

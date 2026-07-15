@@ -12,6 +12,7 @@ $showDuration = (int) $this->params->get('archive_show_duration_filter', 1) === 
 $showRecorded = (int) $this->params->get('archive_show_recorded_filter', 1) === 1;
 $showUploaded = (int) $this->params->get('archive_show_uploaded_filter', 1) === 1;
 $selectedTags = array_map('intval', (array) $this->state->get('filter.tags', []));
+$tagMode = (string) $this->state->get('filter.tag_mode', 'and');
 $forceOpen = $this->hasActiveFilters() || $this->filterErrors !== [];
 $defaultExpanded = (string) $this->params->get('archive_filters_initial_state', 'expanded') !== 'collapsed';
 $filterContentId = 'audioarchive-filter-content';
@@ -108,7 +109,6 @@ $tagListId = 'audioarchive-filter-tag-list';
 								id="<?php echo $tagListId; ?>"
 								class="com-audioarchive-tag-options"
 								role="group"
-								aria-describedby="audioarchive-tag-hint"
 								data-audioarchive-tag-options
 							>
 								<?php foreach ($this->tagOptions as $tag) : ?>
@@ -127,7 +127,25 @@ $tagListId = 'audioarchive-filter-tag-list';
 							<p class="com-audioarchive-tag-no-matches" data-audioarchive-tag-no-matches hidden aria-live="polite">
 								<?php echo Text::_('COM_AUDIOARCHIVE_FILTER_TAG_NO_MATCHES'); ?>
 							</p>
-							<small id="audioarchive-tag-hint"><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_TAGS_AND_HINT'); ?></small>
+							<div class="com-audioarchive-tag-filter-footer">
+								<div
+									class="com-audioarchive-tag-mode-options"
+									role="radiogroup"
+									aria-label="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_FILTER_TAG_MODE_ACCESSIBLE')); ?>"
+								>
+									<label class="com-audioarchive-tag-mode-option">
+										<input type="radio" name="tag_mode" value="and"<?php echo $tagMode === 'and' ? ' checked' : ''; ?>>
+										<span><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_TAG_MODE_AND'); ?></span>
+									</label>
+									<label class="com-audioarchive-tag-mode-option">
+										<input type="radio" name="tag_mode" value="or"<?php echo $tagMode === 'or' ? ' checked' : ''; ?>>
+										<span><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_TAG_MODE_OR'); ?></span>
+									</label>
+								</div>
+								<?php if ($selectedTags !== []) : ?>
+									<a class="com-audioarchive-clear-tag-filter" href="<?php echo $this->getRemoveFilterUrl('tags'); ?>"><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_CLEAR_TAGS'); ?></a>
+								<?php endif; ?>
+							</div>
 						</fieldset>
 					<?php endif; ?>
 
