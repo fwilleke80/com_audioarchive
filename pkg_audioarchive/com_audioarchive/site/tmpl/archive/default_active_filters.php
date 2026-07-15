@@ -17,47 +17,94 @@ foreach ($this->categoryOptions as $category)
 
 $queryValues = $this->getQueryValues();
 $tagNames = [];
+$tagAliases = [];
 $tagDescriptions = [];
 foreach ($this->tagOptions as $tag)
 {
 	$tagNames[(int) $tag->id] = (string) $tag->title;
+	$tagAliases[(int) $tag->id] = trim((string) ($tag->alias ?? ''));
 	$tagDescriptions[(int) $tag->id] = trim((string) ($tag->description_text ?? ''));
+}
+
+$activeFilters = [];
+$search = trim((string) $this->state->get('filter.search'));
+if ($search !== '')
+{
+	$activeFilters[] = [
+		'label' => Text::sprintf('COM_AUDIOARCHIVE_ACTIVE_SEARCH', $search),
+		'url' => $this->getRemoveFilterUrl('q'),
+		'title' => '',
+	];
+}
+
+$categoryId = (int) $this->state->get('filter.category');
+if ($categoryId > 0 && isset($categoryNames[$categoryId]))
+{
+	$activeFilters[] = [
+		'label' => Text::sprintf('COM_AUDIOARCHIVE_ACTIVE_CATEGORY', $categoryNames[$categoryId]),
+		'url' => $this->getRemoveFilterUrl('category'),
+		'title' => '',
+	];
+}
+
+foreach ((array) $this->state->get('filter.tags', []) as $tagId)
+{
+	$tagId = (int) $tagId;
+
+	if (!isset($tagNames[$tagId]))
+	{
+		continue;
+	}
+
+	$activeFilters[] = [
+		'label' => Text::sprintf('COM_AUDIOARCHIVE_ACTIVE_TAG', $tagNames[$tagId]),
+		'url' => $this->getRemoveFilterUrl('tags', $tagAliases[$tagId] ?? ''),
+		'title' => $tagDescriptions[$tagId] ?? '',
+	];
+}
+
+$filterDefinitions = [
+	'duration_min' => 'COM_AUDIOARCHIVE_ACTIVE_DURATION_MIN',
+	'duration_max' => 'COM_AUDIOARCHIVE_ACTIVE_DURATION_MAX',
+	'recorded_from' => 'COM_AUDIOARCHIVE_ACTIVE_RECORDED_FROM',
+	'recorded_to' => 'COM_AUDIOARCHIVE_ACTIVE_RECORDED_TO',
+	'uploaded_from' => 'COM_AUDIOARCHIVE_ACTIVE_UPLOADED_FROM',
+	'uploaded_to' => 'COM_AUDIOARCHIVE_ACTIVE_UPLOADED_TO',
+];
+
+foreach ($filterDefinitions as $queryName => $languageKey)
+{
+	$value = trim((string) ($queryValues[$queryName] ?? ''));
+
+	if ($value === '')
+	{
+		continue;
+	}
+
+	$activeFilters[] = [
+		'label' => Text::sprintf($languageKey, $value),
+		'url' => $this->getRemoveFilterUrl($queryName),
+		'title' => '',
+	];
 }
 ?>
 <section class="com-audioarchive-active-filters" aria-labelledby="audioarchive-active-filter-heading">
 	<h2 id="audioarchive-active-filter-heading"><?php echo Text::_('COM_AUDIOARCHIVE_ACTIVE_FILTERS'); ?></h2>
 	<ul>
-		<?php if ((string) $this->state->get('filter.search') !== '') : ?>
-			<li><?php echo Text::sprintf('COM_AUDIOARCHIVE_ACTIVE_SEARCH', $this->escape((string) $this->state->get('filter.search'))); ?></li>
-		<?php endif; ?>
-		<?php $categoryId = (int) $this->state->get('filter.category'); ?>
-		<?php if ($categoryId > 0 && isset($categoryNames[$categoryId])) : ?>
-			<li><?php echo Text::sprintf('COM_AUDIOARCHIVE_ACTIVE_CATEGORY', $this->escape($categoryNames[$categoryId])); ?></li>
-		<?php endif; ?>
-		<?php foreach ((array) $this->state->get('filter.tags', []) as $tagId) : ?>
-			<?php if (isset($tagNames[(int) $tagId])) : ?>
-				<?php $tagDescription = $tagDescriptions[(int) $tagId] ?? ''; ?>
-				<li<?php if ($tagDescription !== '') : ?> title="<?php echo $this->escape($tagDescription); ?>"<?php endif; ?>><?php echo Text::sprintf('COM_AUDIOARCHIVE_ACTIVE_TAG', $this->escape($tagNames[(int) $tagId])); ?></li>
-			<?php endif; ?>
+		<?php foreach ($activeFilters as $activeFilter) : ?>
+			<?php $removeLabel = Text::sprintf('COM_AUDIOARCHIVE_REMOVE_FILTER', $activeFilter['label']); ?>
+			<li<?php if ($activeFilter['title'] !== '') : ?> title="<?php echo $this->escape($activeFilter['title']); ?>"<?php endif; ?>>
+				<span><?php echo $this->escape($activeFilter['label']); ?></span>
+				<a
+					href="<?php echo $activeFilter['url']; ?>"
+					class="com-audioarchive-active-filter-remove"
+					aria-label="<?php echo $this->escape($removeLabel); ?>"
+					title="<?php echo $this->escape($removeLabel); ?>"
+				>
+					<span aria-hidden="true">&times;</span>
+				</a>
+			</li>
 		<?php endforeach; ?>
-		<?php if (isset($queryValues['duration_min'])) : ?>
-			<li><?php echo Text::sprintf('COM_AUDIOARCHIVE_ACTIVE_DURATION_MIN', $this->escape((string) $queryValues['duration_min'])); ?></li>
-		<?php endif; ?>
-		<?php if (isset($queryValues['duration_max'])) : ?>
-			<li><?php echo Text::sprintf('COM_AUDIOARCHIVE_ACTIVE_DURATION_MAX', $this->escape((string) $queryValues['duration_max'])); ?></li>
-		<?php endif; ?>
-		<?php if ((string) $this->state->get('filter.recorded_from') !== '') : ?>
-			<li><?php echo Text::sprintf('COM_AUDIOARCHIVE_ACTIVE_RECORDED_FROM', $this->escape((string) $this->state->get('filter.recorded_from'))); ?></li>
-		<?php endif; ?>
-		<?php if ((string) $this->state->get('filter.recorded_to') !== '') : ?>
-			<li><?php echo Text::sprintf('COM_AUDIOARCHIVE_ACTIVE_RECORDED_TO', $this->escape((string) $this->state->get('filter.recorded_to'))); ?></li>
-		<?php endif; ?>
-		<?php if ((string) $this->state->get('filter.uploaded_from') !== '') : ?>
-			<li><?php echo Text::sprintf('COM_AUDIOARCHIVE_ACTIVE_UPLOADED_FROM', $this->escape((string) $this->state->get('filter.uploaded_from'))); ?></li>
-		<?php endif; ?>
-		<?php if ((string) $this->state->get('filter.uploaded_to') !== '') : ?>
-			<li><?php echo Text::sprintf('COM_AUDIOARCHIVE_ACTIVE_UPLOADED_TO', $this->escape((string) $this->state->get('filter.uploaded_to'))); ?></li>
-		<?php endif; ?>
 	</ul>
 	<a href="<?php echo $this->getResetUrl(); ?>"><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_RESET_ALL'); ?></a>
 </section>

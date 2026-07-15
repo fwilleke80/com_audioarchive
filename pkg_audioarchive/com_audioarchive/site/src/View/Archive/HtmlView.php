@@ -228,6 +228,38 @@ class HtmlView extends BaseHtmlView
 	}
 
 	/**
+	 * @brief Build a URL that removes one active archive filter.
+	 *
+	 * For tag filters, only the supplied tag alias is removed while the other
+	 * selected tags remain active.
+	 *
+	 * @param string $name Canonical query parameter name.
+	 * @param string|null $value Optional individual value to remove.
+	 *
+	 * @return string
+	 */
+	public function getRemoveFilterUrl(string $name, ?string $value = null): string
+	{
+		if ($name !== 'tags' || $value === null || trim($value) === '')
+		{
+			return $this->buildUrl([], [$name]);
+		}
+
+		$value = trim($value);
+		$query = $this->getQueryValues();
+		$tagAliases = preg_split('/\s*,\s*/', (string) ($query['tags'] ?? ''), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+		$tagAliases = array_values(array_filter(
+			$tagAliases,
+			static fn(string $alias): bool => strcasecmp($alias, $value) !== 0
+		));
+
+		return $this->buildUrl([
+			'tags' => $tagAliases === [] ? null : implode(',', $tagAliases),
+		]);
+	}
+
+
+	/**
 	 * @brief Build an Archive URL filtered exclusively by one tag.
 	 *
 	 * @param int $tagId Joomla tag identifier.

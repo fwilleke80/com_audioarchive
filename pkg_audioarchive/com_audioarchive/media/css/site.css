@@ -433,12 +433,45 @@
 
 .com-audioarchive-active-filters li
 {
-	padding: .28rem .62rem;
+	display: inline-flex;
+	align-items: center;
+	gap: .35rem;
+	padding: .28rem .32rem .28rem .62rem;
 	border: 1px solid var(--audioarchive-border-strong);
 	border-radius: 999px;
 	background: var(--audioarchive-surface);
 	font-size: .82rem;
 	line-height: 1.2;
+}
+
+.com-audioarchive-active-filter-remove
+{
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.25rem;
+	height: 1.25rem;
+	border-radius: 50%;
+	color: inherit;
+	font-size: 1.05rem;
+	font-weight: 700;
+	line-height: 1;
+	text-decoration: none;
+	opacity: .68;
+}
+
+.com-audioarchive-active-filter-remove:hover
+{
+	background: var(--audioarchive-surface-raised);
+	color: inherit;
+	opacity: 1;
+}
+
+.com-audioarchive-active-filter-remove:focus-visible
+{
+	outline: .18rem solid color-mix(in srgb, var(--audioarchive-accent) 34%, transparent);
+	outline-offset: .08rem;
+	opacity: 1;
 }
 
 .com-audioarchive-active-filters > a
