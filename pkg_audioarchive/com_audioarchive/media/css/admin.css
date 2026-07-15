@@ -114,3 +114,9 @@
 		align-items: stretch;
 	}
 }
+
+.com-audioarchive-action-bar .btn:disabled,
+.com-audioarchive-action-bar .btn.disabled
+{
+    opacity: .62;
+}

@@ -55,34 +55,39 @@
     </fieldset>
 
     <fieldset name="upload" label="COM_AUDIOARCHIVE_CONFIG_UPLOAD_LABEL">
-        <field name="permitted_extensions" type="text" label="COM_AUDIOARCHIVE_CONFIG_EXTENSIONS_LABEL" default="m4a,mp4,aac,mp3,ogg,oga,opus,wav,flac,webm" />
-        <field
-            name="permitted_mime_types"
-            type="text"
-            label="COM_AUDIOARCHIVE_CONFIG_MIME_TYPES_LABEL"
-            description="COM_AUDIOARCHIVE_CONFIG_MIME_TYPES_DESC"
-            default="audio/mp4,audio/x-m4a,video/mp4,application/mp4,audio/aac,audio/x-aac,audio/x-hx-aac-adts,audio/mpeg,audio/mp3,audio/x-mp3,audio/ogg,audio/opus,application/ogg,audio/wav,audio/x-wav,audio/vnd.wave,audio/flac,audio/x-flac,audio/webm,video/webm"
-        />
-        <field name="maximum_file_size" type="number" label="COM_AUDIOARCHIVE_CONFIG_MAXIMUM_FILE_SIZE_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ZERO_UNLIMITED_DESC" default="0" min="0" step="1" />
-        <field name="maximum_duration" type="number" label="COM_AUDIOARCHIVE_CONFIG_MAXIMUM_DURATION_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ZERO_UNLIMITED_DESC" default="0" min="0" step="1" />
-        <field name="delete_inbox_after_import" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DELETE_INBOX_AFTER_IMPORT_LABEL" description="COM_AUDIOARCHIVE_CONFIG_DELETE_INBOX_AFTER_IMPORT_DESC" default="1">
-            <option value="0">JNO</option>
-            <option value="1">JYES</option>
-        </field>
-        <field name="duplicate_policy" type="list" label="COM_AUDIOARCHIVE_CONFIG_DUPLICATE_POLICY_LABEL" default="warn" validate="options">
-            <option value="ignore">COM_AUDIOARCHIVE_DUPLICATE_IGNORE</option>
-            <option value="warn">COM_AUDIOARCHIVE_DUPLICATE_WARN</option>
-            <option value="reject">COM_AUDIOARCHIVE_DUPLICATE_REJECT</option>
-        </field>
-        <field name="title_policy" type="list" label="COM_AUDIOARCHIVE_CONFIG_TITLE_POLICY_LABEL" default="embedded_filename" validate="options">
-            <option value="embedded_filename">COM_AUDIOARCHIVE_TITLE_POLICY_EMBEDDED_FILENAME</option>
-            <option value="filename">COM_AUDIOARCHIVE_TITLE_POLICY_FILENAME</option>
-        </field>
-        <field name="recorded_date_policy" type="list" label="COM_AUDIOARCHIVE_CONFIG_RECORDED_DATE_POLICY_LABEL" default="embedded_filesystem_import" validate="options">
-            <option value="embedded_filesystem_import">COM_AUDIOARCHIVE_DATE_POLICY_EMBEDDED_FILESYSTEM_IMPORT</option>
-            <option value="filesystem_import">COM_AUDIOARCHIVE_DATE_POLICY_FILESYSTEM_IMPORT</option>
-            <option value="import">COM_AUDIOARCHIVE_DATE_POLICY_IMPORT</option>
-        </field>
+        <fieldset name="upload_general" label="COM_AUDIOARCHIVE_CONFIG_UPLOAD_SECTION_GENERAL_LABEL">
+            <field name="permitted_extensions" type="text" label="COM_AUDIOARCHIVE_CONFIG_EXTENSIONS_LABEL" default="m4a,mp4,aac,mp3,ogg,oga,opus,wav,flac,webm" />
+            <field
+                name="permitted_mime_types"
+                type="text"
+                label="COM_AUDIOARCHIVE_CONFIG_MIME_TYPES_LABEL"
+                description="COM_AUDIOARCHIVE_CONFIG_MIME_TYPES_DESC"
+                default="audio/mp4,audio/x-m4a,video/mp4,application/mp4,audio/aac,audio/x-aac,audio/x-hx-aac-adts,audio/mpeg,audio/mp3,audio/x-mp3,audio/ogg,audio/opus,application/ogg,audio/wav,audio/x-wav,audio/vnd.wave,audio/flac,audio/x-flac,audio/webm,video/webm"
+            />
+            <field name="maximum_file_size" type="number" label="COM_AUDIOARCHIVE_CONFIG_MAXIMUM_FILE_SIZE_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ZERO_UNLIMITED_DESC" default="0" min="0" step="1" />
+            <field name="maximum_duration" type="number" label="COM_AUDIOARCHIVE_CONFIG_MAXIMUM_DURATION_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ZERO_UNLIMITED_DESC" default="0" min="0" step="1" />
+        </fieldset>
+
+        <fieldset name="upload_import" label="COM_AUDIOARCHIVE_CONFIG_UPLOAD_SECTION_IMPORT_LABEL">
+            <field name="delete_inbox_after_import" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DELETE_INBOX_AFTER_IMPORT_LABEL" description="COM_AUDIOARCHIVE_CONFIG_DELETE_INBOX_AFTER_IMPORT_DESC" default="1">
+                <option value="0">JNO</option>
+                <option value="1">JYES</option>
+            </field>
+            <field name="duplicate_policy" type="list" label="COM_AUDIOARCHIVE_CONFIG_DUPLICATE_POLICY_LABEL" default="warn" validate="options">
+                <option value="ignore">COM_AUDIOARCHIVE_DUPLICATE_IGNORE</option>
+                <option value="warn">COM_AUDIOARCHIVE_DUPLICATE_WARN</option>
+                <option value="reject">COM_AUDIOARCHIVE_DUPLICATE_REJECT</option>
+            </field>
+            <field name="title_policy" type="list" label="COM_AUDIOARCHIVE_CONFIG_TITLE_POLICY_LABEL" default="embedded_filename" validate="options">
+                <option value="embedded_filename">COM_AUDIOARCHIVE_TITLE_POLICY_EMBEDDED_FILENAME</option>
+                <option value="filename">COM_AUDIOARCHIVE_TITLE_POLICY_FILENAME</option>
+            </field>
+            <field name="recorded_date_policy" type="list" label="COM_AUDIOARCHIVE_CONFIG_RECORDED_DATE_POLICY_LABEL" default="embedded_filesystem_import" validate="options">
+                <option value="embedded_filesystem_import">COM_AUDIOARCHIVE_DATE_POLICY_EMBEDDED_FILESYSTEM_IMPORT</option>
+                <option value="filesystem_import">COM_AUDIOARCHIVE_DATE_POLICY_FILESYSTEM_IMPORT</option>
+                <option value="import">COM_AUDIOARCHIVE_DATE_POLICY_IMPORT</option>
+            </field>
+        </fieldset>
     </fieldset>
 
 

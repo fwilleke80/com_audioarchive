@@ -105,19 +105,19 @@ $tokenName = Session::getFormToken();
 	</div>
 
 	<div class="card">
-		<div class="card-header d-flex flex-wrap align-items-center gap-2">
+		<div class="com-audioarchive-action-bar card-header d-flex flex-wrap align-items-center gap-2">
 			<h2 class="h4 mb-0 me-auto"><?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_FILES_TITLE'); ?></h2>
-			<button type="button" class="btn btn-outline-primary" id="audioarchive-import-scan">
+			<button type="button" class="btn btn-primary" id="audioarchive-import-scan">
 				<span class="icon-search" aria-hidden="true"></span>
 				<?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_SCAN'); ?>
 			</button>
-			<button type="button" class="btn btn-outline-secondary" id="audioarchive-import-select" disabled>
+			<button type="button" class="btn btn-secondary" id="audioarchive-import-select" disabled>
 				<?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_SELECT_ELIGIBLE'); ?>
 			</button>
-			<button type="button" class="btn btn-outline-secondary" id="audioarchive-import-deselect" disabled>
+			<button type="button" class="btn btn-secondary" id="audioarchive-import-deselect" disabled>
 				<?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_DESELECT_ALL'); ?>
 			</button>
-			<button type="button" class="btn btn-primary" id="audioarchive-import-start" disabled>
+			<button type="button" class="btn btn-success" id="audioarchive-import-start" disabled>
 				<span class="icon-play" aria-hidden="true"></span>
 				<span id="audioarchive-import-start-label"><?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_START'); ?></span>
 			</button>

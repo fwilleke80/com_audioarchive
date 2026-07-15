@@ -96,33 +96,51 @@ $translateValue = static function (string $value): string
                 <?php endif; ?>
             </div>
             <p><?php echo Text::_('COM_AUDIOARCHIVE_DASHBOARD_FOUNDATION_TEXT'); ?></p>
-            <a class="btn btn-primary" href="<?php echo Route::_('index.php?option=com_audioarchive&view=clips'); ?>">
-                <?php echo Text::_('COM_AUDIOARCHIVE_MANAGE_CLIPS'); ?>
-            </a>
-            <?php if (Factory::getApplication()->getIdentity()->authorise('audioarchive.managefiles', 'com_audioarchive')) : ?>
-                <a class="btn btn-outline-primary" href="<?php echo Route::_('index.php?option=com_audioarchive&view=upload'); ?>">
-                    <?php echo Text::_('COM_AUDIOARCHIVE_BULK_UPLOAD_TITLE'); ?>
-                </a>
-            <?php endif; ?>
-            <?php if (Factory::getApplication()->getIdentity()->authorise('audioarchive.import', 'com_audioarchive')) : ?>
-                <a class="btn btn-outline-primary" href="<?php echo Route::_('index.php?option=com_audioarchive&view=import'); ?>">
-                    <?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_TITLE'); ?>
-                </a>
-            <?php endif; ?>
-            <?php if (Factory::getApplication()->getIdentity()->authorise('audioarchive.process', 'com_audioarchive')) : ?>
-                <a class="btn btn-outline-primary" href="<?php echo Route::_('index.php?option=com_audioarchive&view=maintenance'); ?>">
-                    <?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_TITLE'); ?>
-                </a>
-            <?php endif; ?>
-            <a class="btn btn-outline-secondary" href="<?php echo Route::_('index.php?option=com_categories&view=categories&extension=com_audioarchive'); ?>">
-                <?php echo Text::_('COM_AUDIOARCHIVE_MANAGE_CATEGORIES'); ?>
-            </a>
-            <a class="btn btn-outline-secondary" href="<?php echo Route::_('index.php?option=com_finder&view=index'); ?>">
-                <?php echo Text::_('COM_AUDIOARCHIVE_SMART_SEARCH_INDEX'); ?>
-            </a>
-            <a class="btn btn-outline-secondary" href="<?php echo Route::_('index.php?option=com_config&view=component&component=com_audioarchive'); ?>">
-                <?php echo Text::_('JOPTIONS'); ?>
-            </a>
+            <div class="row g-3 mt-1">
+                <div class="col-12 col-xl-6">
+                    <div class="border rounded p-3 h-100">
+                        <h3 class="h5 mb-3"><?php echo Text::_('COM_AUDIOARCHIVE_DASHBOARD_ARCHIVE_MANAGEMENT_HEADING'); ?></h3>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a class="btn btn-primary" href="<?php echo Route::_('index.php?option=com_audioarchive&view=clips'); ?>">
+                                <?php echo Text::_('COM_AUDIOARCHIVE_MANAGE_CLIPS'); ?>
+                            </a>
+                            <a class="btn btn-outline-primary" href="<?php echo Route::_('index.php?option=com_categories&view=categories&extension=com_audioarchive'); ?>">
+                                <?php echo Text::_('COM_AUDIOARCHIVE_MANAGE_CATEGORIES'); ?>
+                            </a>
+                            <?php if (Factory::getApplication()->getIdentity()->authorise('audioarchive.managefiles', 'com_audioarchive')) : ?>
+                                <a class="btn btn-outline-primary" href="<?php echo Route::_('index.php?option=com_audioarchive&view=upload'); ?>">
+                                    <?php echo Text::_('COM_AUDIOARCHIVE_BULK_UPLOAD_TITLE'); ?>
+                                </a>
+                            <?php endif; ?>
+                            <?php if (Factory::getApplication()->getIdentity()->authorise('audioarchive.import', 'com_audioarchive')) : ?>
+                                <a class="btn btn-outline-primary" href="<?php echo Route::_('index.php?option=com_audioarchive&view=import'); ?>">
+                                    <?php echo Text::_('COM_AUDIOARCHIVE_IMPORT_TITLE'); ?>
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-xl-6">
+                    <div class="border rounded p-3 h-100">
+                        <h3 class="h5 mb-3"><?php echo Text::_('COM_AUDIOARCHIVE_DASHBOARD_TOOLS_HEADING'); ?></h3>
+                        <div class="d-flex flex-wrap gap-2">
+                            <?php if (Factory::getApplication()->getIdentity()->authorise('audioarchive.process', 'com_audioarchive')) : ?>
+                                <a class="btn btn-outline-secondary" href="<?php echo Route::_('index.php?option=com_audioarchive&view=maintenance'); ?>">
+                                    <?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_TITLE'); ?>
+                                </a>
+                            <?php endif; ?>
+                            <?php if ($this->finderInstalled) : ?>
+                                <a class="btn btn-outline-secondary" href="<?php echo Route::_('index.php?option=com_finder&view=index'); ?>">
+                                    <?php echo Text::_('COM_AUDIOARCHIVE_SMART_SEARCH_INDEX'); ?>
+                                </a>
+                            <?php endif; ?>
+                            <a class="btn btn-outline-secondary" href="<?php echo Route::_('index.php?option=com_config&view=component&component=com_audioarchive'); ?>">
+                                <?php echo Text::_('JOPTIONS'); ?>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

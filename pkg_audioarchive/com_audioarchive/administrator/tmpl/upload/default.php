@@ -84,16 +84,16 @@ $tokenName = Session::getFormToken();
                 <span><?php echo Text::_('COM_AUDIOARCHIVE_BULK_UPLOAD_DROP_DESC'); ?></span>
             </div>
 
-            <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
-                <button type="button" class="btn btn-outline-primary" id="audioarchive-bulk-upload-select">
+            <div class="com-audioarchive-action-bar d-flex flex-wrap align-items-center gap-2 mt-3">
+                <button type="button" class="btn btn-primary" id="audioarchive-bulk-upload-select">
                     <span class="icon-folder-open" aria-hidden="true"></span>
                     <?php echo Text::_('COM_AUDIOARCHIVE_BULK_UPLOAD_SELECT_FILES'); ?>
                 </button>
-                <button type="button" class="btn btn-primary" id="audioarchive-bulk-upload-start" disabled>
+                <button type="button" class="btn btn-success" id="audioarchive-bulk-upload-start" disabled>
                     <span class="icon-play" aria-hidden="true"></span>
                     <?php echo Text::_('COM_AUDIOARCHIVE_BULK_UPLOAD_START'); ?>
                 </button>
-                <button type="button" class="btn btn-outline-secondary" id="audioarchive-bulk-upload-clear" disabled>
+                <button type="button" class="btn btn-secondary" id="audioarchive-bulk-upload-clear" disabled>
                     <?php echo Text::_('COM_AUDIOARCHIVE_BULK_UPLOAD_CLEAR_FINISHED'); ?>
                 </button>
                 <span id="audioarchive-bulk-upload-summary" class="ms-lg-auto text-body-secondary" aria-live="polite"></span>
