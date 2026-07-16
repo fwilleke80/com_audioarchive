@@ -14,7 +14,7 @@ use Joomla\Registry\Registry;
 
 return new class () implements InstallerScriptInterface
 {
-	private const SCHEMA_VERSION = '0.7.0';
+	private const SCHEMA_VERSION = '0.8.0';
 
 	private const CATEGORY_MENU_LINK = 'index.php?option=com_categories&view=categories&extension=com_audioarchive';
 
@@ -388,6 +388,7 @@ return new class () implements InstallerScriptInterface
 			}
 
 			$this->repairAnalysisSchema($database);
+			$this->ensureSpectrogramStatusColumn($database);
 			$this->repairCheckoutColumns($database);
 			$this->ensureFileRoleUniqueIndex($database);
 			$this->ensureContentType($database);
@@ -456,6 +457,29 @@ return new class () implements InstallerScriptInterface
 				$database->setQuery($query)->execute();
 			}
 		}
+	}
+
+
+	/**
+	 * @brief Ensure the denormalised spectrogram status column exists.
+	 *
+	 * @param DatabaseInterface $database Joomla database connection.
+	 * @return void
+	 */
+	private function ensureSpectrogramStatusColumn(DatabaseInterface $database): void
+	{
+		$columns = $database->getTableColumns('#__audioarchive_clips', false);
+
+		if (isset($columns['spectrogram_status']))
+		{
+			return;
+		}
+
+		$query = 'ALTER TABLE ' . $database->quoteName('#__audioarchive_clips')
+			. ' ADD COLUMN ' . $database->quoteName('spectrogram_status')
+			. " varchar(24) NOT NULL DEFAULT 'missing' AFTER "
+			. $database->quoteName('waveform_status');
+		$database->setQuery($query)->execute();
 	}
 
 	/**

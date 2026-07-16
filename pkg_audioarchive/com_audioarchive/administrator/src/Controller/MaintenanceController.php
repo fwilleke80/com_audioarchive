@@ -218,6 +218,43 @@ class MaintenanceController extends BaseController
     }
 
     /**
+     * @brief Queue spectrogram jobs for one maintenance status group.
+     *
+     * @return void
+     */
+    public function queueSpectrograms(): void
+    {
+        Session::checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+        $this->assertProcessPermission();
+        $application = Factory::getApplication();
+        $mode = $application->getInput()->post->getCmd('spectrogram_mode', '');
+        $model = $this->getModel('Maintenance');
+
+        if (!$model instanceof MaintenanceModel)
+        {
+            throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_MAINTENANCE_ERROR_MODEL'), 500);
+        }
+
+        try
+        {
+            $queued = $model->queueSpectrograms($mode);
+            $application->enqueueMessage(
+                Text::sprintf('COM_AUDIOARCHIVE_SPECTROGRAM_QUEUE_COMPLETE', $queued),
+                $queued > 0 ? 'success' : 'info'
+            );
+        }
+        catch (\Throwable $exception)
+        {
+            $application->enqueueMessage(
+                Text::sprintf('COM_AUDIOARCHIVE_SPECTROGRAM_QUEUE_FAILED', $exception->getMessage()),
+                'error'
+            );
+        }
+
+        $this->setRedirect($this->maintenanceUrl());
+    }
+
+    /**
      * @brief Process one pending analysis job for the maintenance progress UI.
      *
      * @return void

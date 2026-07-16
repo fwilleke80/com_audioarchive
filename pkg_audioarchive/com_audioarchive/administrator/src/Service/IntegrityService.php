@@ -5,6 +5,7 @@ namespace Willeke\Component\Audioarchive\Administrator\Service;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\Database\DatabaseInterface;
+use Joomla\Database\ParameterType;
 use Joomla\Registry\Registry;
 
 \defined('_JEXEC') or die;
@@ -59,6 +60,7 @@ class IntegrityService
         $clips = $this->loadClipsWithOriginals();
         $fileRows = $this->loadFileRows();
         $waveformRows = $this->loadWaveformRows();
+        $analysisRows = $this->loadAnalysisRows();
         $clipIds = [];
         $originalRecordCount = 0;
 
@@ -308,6 +310,52 @@ class IntegrityService
             }
         }
 
+        foreach ($analysisRows as $analysis)
+        {
+            $storageKey = (string) $analysis->storage_key;
+
+            if ($storageKey !== '')
+            {
+                $referencedKeys['waveform'][$this->normaliseKey($storageKey)] = true;
+            }
+
+            if (!isset($clipIds[(int) $analysis->clip_id]))
+            {
+                $issues[] = $this->standaloneIssue(
+                    'error',
+                    'orphan_analysis_record',
+                    'COM_AUDIOARCHIVE_MAINTENANCE_ISSUE_ORPHAN_FILE_RECORD',
+                    Text::sprintf(
+                        'COM_AUDIOARCHIVE_MAINTENANCE_DETAIL_ORPHAN_FILE_RECORD',
+                        (int) $analysis->id,
+                        (int) $analysis->clip_id,
+                        (string) $analysis->analysis_type
+                    ),
+                    $storageKey
+                );
+                continue;
+            }
+
+            if ($storageKey === '')
+            {
+                continue;
+            }
+
+            $pathResult = $this->inspectManagedPath('analysis', $storageKey);
+
+            if (!$pathResult['valid'])
+            {
+                $issues[] = $this->standaloneIssue(
+                    'warning',
+                    'missing_analysis_file',
+                    'COM_AUDIOARCHIVE_MAINTENANCE_ISSUE_MISSING_DERIVATIVE',
+                    (string) $pathResult['detail'],
+                    $storageKey,
+                    (int) $analysis->clip_id
+                );
+            }
+        }
+
         $this->appendDuplicateIssues($issues);
         $this->appendBrokenTagMappingIssues($issues, $clipIds);
         $this->appendStuckJobIssues($issues);
@@ -437,6 +485,23 @@ class IntegrityService
         $query = $this->database->getQuery(true)
             ->select(['id', 'clip_id', 'storage_key'])
             ->from($this->database->quoteName('#__audioarchive_waveforms'));
+
+        return $this->database->setQuery($query)->loadObjectList() ?: [];
+    }
+
+    /**
+     * @brief Load non-waveform generic analysis records.
+     *
+     * @return object[] Analysis rows.
+     */
+    private function loadAnalysisRows(): array
+    {
+        $waveform = 'waveform';
+        $query = $this->database->getQuery(true)
+            ->select(['id', 'clip_id', 'analysis_type', 'storage_key'])
+            ->from($this->database->quoteName('#__audioarchive_analyses'))
+            ->where($this->database->quoteName('analysis_type') . ' <> :waveform')
+            ->bind(':waveform', $waveform, ParameterType::STRING);
 
         return $this->database->setQuery($query)->loadObjectList() ?: [];
     }

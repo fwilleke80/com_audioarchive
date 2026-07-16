@@ -40,6 +40,7 @@ final class AnalysisManagerService
 		$this->repository = new AnalysisRepositoryService($database);
 		$this->storage = new ManagedStorageService($params);
 		$this->register(new WaveformGeneratorService($database, $params, $user));
+		$this->register(new SpectrogramGeneratorService($database, $params, $user));
 	}
 
 	/**

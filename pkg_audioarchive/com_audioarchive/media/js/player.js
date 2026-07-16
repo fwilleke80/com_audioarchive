@@ -9,6 +9,7 @@ const initialiseAudioArchivePlayers = () =>
 	const countedClipIds = new Set();
 	const animationFrames = new WeakMap();
 	const waveformStates = new WeakMap();
+	const spectrogramStates = new WeakMap();
 
 	const getArchiveRoot = (element) => element.closest('.com-audioarchive');
 
@@ -134,6 +135,63 @@ const initialiseAudioArchivePlayers = () =>
 		}
 	};
 
+	const selectAnalysisPanel = (player, analysisType) =>
+	{
+		const panels = Array.from(player.querySelectorAll('[data-audioarchive-analysis-panel]'))
+			.filter((panel) => panel instanceof HTMLElement && panel.dataset.analysisUnavailable !== 'true');
+		const switcher = player.querySelector('.audioarchive-custom-player-analysis-switch');
+
+		if (panels.length === 0)
+		{
+			const analysis = player.querySelector('[data-audioarchive-player-analysis]');
+
+			if (analysis instanceof HTMLElement)
+			{
+				analysis.hidden = true;
+			}
+
+			player.classList.remove('has-analysis');
+			player.classList.add('no-analysis');
+			return;
+		}
+
+		player.classList.add('has-analysis');
+		player.classList.remove('no-analysis');
+		const selected = panels.find((panel) => panel.dataset.audioarchiveAnalysisPanel === analysisType) || panels[0];
+
+		panels.forEach((panel) =>
+		{
+			panel.hidden = panel !== selected;
+		});
+
+		if (switcher instanceof HTMLElement)
+		{
+			switcher.hidden = panels.length < 2;
+			switcher.querySelectorAll('[data-audioarchive-analysis-switch]').forEach((button) =>
+			{
+				if (!(button instanceof HTMLButtonElement))
+				{
+					return;
+				}
+
+				const active = button.dataset.audioarchiveAnalysisSwitch === selected.dataset.audioarchiveAnalysisPanel;
+				button.classList.toggle('is-active', active);
+				button.setAttribute('aria-pressed', active ? 'true' : 'false');
+			});
+		}
+	};
+
+	const markAnalysisUnavailable = (player, panel) =>
+	{
+		if (panel instanceof HTMLElement)
+		{
+			panel.dataset.analysisUnavailable = 'true';
+			panel.hidden = true;
+		}
+
+		selectAnalysisPanel(player, '');
+	};
+
 	const drawPeakLayer = (canvas, peaks, color, width, height, ratio) =>
 	{
 		canvas.width = Math.max(1, Math.round(width * ratio));
@@ -253,9 +311,9 @@ const initialiseAudioArchivePlayers = () =>
 
 		if (!(canvas instanceof HTMLCanvasElement) || url === '')
 		{
-			waveform.hidden = true;
 			player.classList.remove('has-waveform');
 			player.classList.add('no-waveform');
+			markAnalysisUnavailable(player, waveform);
 			return;
 		}
 
@@ -331,10 +389,102 @@ const initialiseAudioArchivePlayers = () =>
 			})
 			.catch(() =>
 			{
-				waveform.hidden = true;
 				player.classList.remove('has-waveform');
 				player.classList.add('no-waveform');
+				markAnalysisUnavailable(player, waveform);
 			});
+	};
+
+	const drawPlayerSpectrogram = (player, audio) =>
+	{
+		const spectrogram = player.querySelector('[data-audioarchive-player-spectrogram]');
+		const state = spectrogram instanceof HTMLElement ? spectrogramStates.get(spectrogram) : null;
+
+		if (!state)
+		{
+			return;
+		}
+
+		const progress = getProgress(audio);
+		state.playhead.style.left = `${progress * 100}%`;
+		state.playhead.hidden = !(progress > 0 && progress < 1);
+	};
+
+	const initialisePlayerSpectrogram = (player, audio) =>
+	{
+		const spectrogram = player.querySelector('[data-audioarchive-player-spectrogram]');
+
+		if (!(spectrogram instanceof HTMLElement))
+		{
+			return;
+		}
+
+		const image = spectrogram.querySelector('[data-audioarchive-spectrogram-image]');
+		const playhead = spectrogram.querySelector('[data-audioarchive-spectrogram-playhead]');
+		const status = spectrogram.querySelector('[data-audioarchive-spectrogram-status]');
+		const url = spectrogram.dataset.spectrogramUrl || '';
+
+		if (!(image instanceof HTMLImageElement) || !(playhead instanceof HTMLElement) || url === '')
+		{
+			player.classList.remove('has-spectrogram');
+			player.classList.add('no-spectrogram');
+			markAnalysisUnavailable(player, spectrogram);
+			return;
+		}
+
+		image.addEventListener('load', () =>
+		{
+			spectrogramStates.set(spectrogram, { image, playhead });
+
+			if (status instanceof HTMLElement)
+			{
+				status.hidden = true;
+			}
+
+			drawPlayerSpectrogram(player, audio);
+		});
+
+		image.addEventListener('error', () =>
+		{
+			player.classList.remove('has-spectrogram');
+			player.classList.add('no-spectrogram');
+			markAnalysisUnavailable(player, spectrogram);
+		});
+
+		spectrogram.addEventListener('click', (event) =>
+		{
+			if (!Number.isFinite(audio.duration) || audio.duration <= 0)
+			{
+				return;
+			}
+
+			const bounds = spectrogram.getBoundingClientRect();
+			const progress = bounds.width > 0
+				? Math.min(1, Math.max(0, (event.clientX - bounds.left) / bounds.width))
+				: 0;
+			audio.currentTime = progress * audio.duration;
+			drawPlayerSpectrogram(player, audio);
+		});
+
+		image.src = url;
+	};
+
+	const initialiseAnalysisSwitcher = (player) =>
+	{
+		player.querySelectorAll('[data-audioarchive-analysis-switch]').forEach((button) =>
+		{
+			if (!(button instanceof HTMLButtonElement))
+			{
+				return;
+			}
+
+			button.addEventListener('click', () =>
+			{
+				selectAnalysisPanel(player, button.dataset.audioarchiveAnalysisSwitch || '');
+			});
+		});
+
+		selectAnalysisPanel(player, 'waveform');
 	};
 
 	const updateCustomPlayerProgress = (player, audio) =>
@@ -365,6 +515,7 @@ const initialiseAudioArchivePlayers = () =>
 		}
 
 		drawPlayerWaveform(player, audio);
+		drawPlayerSpectrogram(player, audio);
 	};
 
 	const stopProgressAnimation = (player) =>
@@ -570,6 +721,8 @@ const initialiseAudioArchivePlayers = () =>
 		updateCustomPlayerProgress(player, audio);
 		updateCustomPlayerVolume(player, audio);
 		initialisePlayerWaveform(player, audio);
+		initialisePlayerSpectrogram(player, audio);
+		initialiseAnalysisSwitcher(player);
 
 		toggle.addEventListener('click', async () =>
 		{

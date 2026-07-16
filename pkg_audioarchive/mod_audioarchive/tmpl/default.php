@@ -85,6 +85,7 @@ $componentParams = ComponentHelper::getParams('com_audioarchive');
 								'title' => (string) $item->title,
 								'streamUrl' => (string) $item->stream_url,
 								'waveformUrl' => (string) ($item->waveform_url ?? ''),
+								'spectrogramUrl' => (string) ($item->spectrogram_url ?? ''),
 								'mime' => $mime,
 								'params' => $componentParams,
 								'presentation' => $playerPresentation,
@@ -97,6 +98,10 @@ $componentParams = ComponentHelper::getParams('com_audioarchive');
 									'volume' => Text::_('MOD_AUDIOARCHIVE_PLAYER_VOLUME'),
 									'fallback' => Text::_('MOD_AUDIOARCHIVE_PLAYER_FALLBACK'),
 									'waveformLoading' => Text::_('MOD_AUDIOARCHIVE_WAVEFORM_LOADING'),
+									'spectrogramLoading' => Text::_('MOD_AUDIOARCHIVE_SPECTROGRAM_LOADING'),
+									'analysisView' => Text::_('MOD_AUDIOARCHIVE_ANALYSIS_VIEW'),
+									'waveform' => Text::_('MOD_AUDIOARCHIVE_ANALYSIS_WAVEFORM'),
+									'spectrum' => Text::_('MOD_AUDIOARCHIVE_ANALYSIS_SPECTRUM'),
 								],
 							],
 							JPATH_ROOT . '/components/com_audioarchive/layouts'

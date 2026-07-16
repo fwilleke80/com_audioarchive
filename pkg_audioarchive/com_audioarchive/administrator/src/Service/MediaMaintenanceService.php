@@ -154,6 +154,7 @@ class MediaMaintenanceService
 		$referencedPaths = $this->loadReferencedPaths();
 		$this->appendStalePreviewItems($items);
 		$this->appendStaleWaveformItems($items);
+		$this->appendStaleSpectrogramItems($items);
 
 		foreach (['original', 'preview', 'waveform'] as $role)
 		{
@@ -276,6 +277,21 @@ class MediaMaintenanceService
 			}
 		}
 
+		$query = $this->database->getQuery(true)
+			->select('storage_key')
+			->from($this->database->quoteName('#__audioarchive_analyses'))
+			->where($this->database->quoteName('storage_key') . ' <> ' . $this->database->quote(''));
+
+		foreach ($this->database->setQuery($query)->loadColumn() ?: [] as $value)
+		{
+			$key = $this->normaliseKey((string) $value);
+
+			if ($key !== '')
+			{
+				$result['waveform'][$key] = true;
+			}
+		}
+
 		return $result;
 	}
 
@@ -314,6 +330,16 @@ class MediaMaintenanceService
 		foreach ($this->database->setQuery($query)->loadColumn() ?: [] as $storageKey)
 		{
 			$this->appendReferencedPath($paths, 'waveform', (string) $storageKey);
+		}
+
+		$query = $this->database->getQuery(true)
+			->select('storage_key')
+			->from($this->database->quoteName('#__audioarchive_analyses'))
+			->where($this->database->quoteName('storage_key') . ' <> ' . $this->database->quote(''));
+
+		foreach ($this->database->setQuery($query)->loadColumn() ?: [] as $storageKey)
+		{
+			$this->appendReferencedPath($paths, 'analysis', (string) $storageKey);
 		}
 
 		return $paths;
@@ -422,6 +448,52 @@ class MediaMaintenanceService
 				(string) $row->original_filename,
 				(int) $row->record_id,
 				'COM_AUDIOARCHIVE_MAINTENANCE_STALE_REASON_WAVEFORM'
+			);
+		}
+	}
+
+	/**
+	 * @brief Append spectral analyses marked stale.
+	 *
+	 * @param array<int, array<string, mixed>> $items Candidate collection.
+	 *
+	 * @return void
+	 */
+	private function appendStaleSpectrogramItems(array &$items): void
+	{
+		$analysisType = 'spectrogram';
+		$status = 'stale';
+		$query = $this->database->getQuery(true)
+			->select([
+				$this->database->quoteName('x.id', 'record_id'),
+				$this->database->quoteName('x.clip_id'),
+				$this->database->quoteName('x.storage_key'),
+				$this->database->quoteName('x.file_size'),
+				$this->database->quoteName('a.title', 'clip_title'),
+				$this->database->quoteName('a.original_filename'),
+			])
+			->from($this->database->quoteName('#__audioarchive_analyses', 'x'))
+			->innerJoin(
+				$this->database->quoteName('#__audioarchive_clips', 'a')
+					. ' ON ' . $this->database->quoteName('a.id') . ' = ' . $this->database->quoteName('x.clip_id')
+			)
+			->where($this->database->quoteName('x.analysis_type') . ' = :analysisType')
+			->where($this->database->quoteName('x.status') . ' = :analysisStatus')
+			->bind(':analysisType', $analysisType, ParameterType::STRING)
+			->bind(':analysisStatus', $status, ParameterType::STRING);
+
+		foreach ($this->database->setQuery($query)->loadObjectList() ?: [] as $row)
+		{
+			$items[] = $this->makeItem(
+				'stale_spectrogram',
+				'analysis',
+				(string) $row->storage_key,
+				(int) $row->file_size,
+				(int) $row->clip_id,
+				(string) $row->clip_title,
+				(string) $row->original_filename,
+				(int) $row->record_id,
+				'COM_AUDIOARCHIVE_MAINTENANCE_STALE_REASON_SPECTROGRAM'
 			);
 		}
 	}
@@ -567,6 +639,10 @@ class MediaMaintenanceService
 		{
 			$this->deleteWaveformRecord((int) $item['record_id'], (int) $item['clip_id']);
 		}
+		elseif ($kind === 'stale_spectrogram')
+		{
+			$this->deleteAnalysisRecord((int) $item['record_id'], (int) $item['clip_id'], 'spectrogram', 'spectrogram_status');
+		}
 		else
 		{
 			throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_MAINTENANCE_STALE_CHANGED'));
@@ -643,6 +719,46 @@ class MediaMaintenanceService
 	}
 
 	/**
+	 * @brief Remove one stale generic analysis record and refresh its clip status.
+	 *
+	 * @param int $recordId Analysis record identifier.
+	 * @param int $clipId Clip identifier.
+	 * @param string $analysisType Stable analysis type.
+	 * @param string $statusField Denormalised clip status field.
+	 *
+	 * @return void
+	 */
+	private function deleteAnalysisRecord(
+		int $recordId,
+		int $clipId,
+		string $analysisType,
+		string $statusField
+	): void
+	{
+		$this->database->transactionStart();
+
+		try
+		{
+			$query = $this->database->getQuery(true)
+				->delete($this->database->quoteName('#__audioarchive_analyses'))
+				->where($this->database->quoteName('id') . ' = :recordId')
+				->where($this->database->quoteName('clip_id') . ' = :clipId')
+				->where($this->database->quoteName('analysis_type') . ' = :analysisType')
+				->bind(':recordId', $recordId, ParameterType::INTEGER)
+				->bind(':clipId', $clipId, ParameterType::INTEGER)
+				->bind(':analysisType', $analysisType, ParameterType::STRING);
+			$this->database->setQuery($query)->execute();
+			$this->updateClipStatus($clipId, $statusField, 'missing');
+			$this->database->transactionCommit();
+		}
+		catch (\Throwable $exception)
+		{
+			$this->database->transactionRollback();
+			throw $exception;
+		}
+	}
+
+	/**
 	 * @brief Check whether a clip still has a preview record.
 	 */
 	private function hasPreview(int $clipId): bool
@@ -703,7 +819,7 @@ class MediaMaintenanceService
 	 */
 	private function updateClipStatus(int $clipId, string $field, string $status): void
 	{
-		if (!in_array($field, ['preview_status', 'waveform_status'], true))
+		if (!in_array($field, ['preview_status', 'waveform_status', 'spectrogram_status'], true))
 		{
 			throw new \InvalidArgumentException('Invalid derivative status field.');
 		}

@@ -30,13 +30,17 @@ $presentation = in_array($presentation, ['minimal', 'compact', 'default', 'featu
 	: 'default';
 $showSeek = $presentation !== 'minimal';
 $showVolume = in_array($presentation, ['default', 'featured'], true);
-$showWaveform = $presentation === 'featured';
+$showAnalysis = $presentation === 'featured';
 $audioId = trim((string) ($data['audioId'] ?? 'audioarchive-player'));
 $seekId = $audioId . '-seek';
 $volumeId = $audioId . '-volume';
 $title = trim((string) ($data['title'] ?? ''));
 $streamUrl = trim((string) ($data['streamUrl'] ?? ''));
-$waveformUrl = $showWaveform ? trim((string) ($data['waveformUrl'] ?? '')) : '';
+$waveformUrl = $showAnalysis ? trim((string) ($data['waveformUrl'] ?? '')) : '';
+$spectrogramUrl = $showAnalysis ? trim((string) ($data['spectrogramUrl'] ?? '')) : '';
+$hasWaveform = $waveformUrl !== '';
+$hasSpectrogram = $spectrogramUrl !== '';
+$hasAnalysis = $hasWaveform || $hasSpectrogram;
 $mime = trim((string) ($data['mime'] ?? '')) ?: 'application/octet-stream';
 $clipId = max(0, (int) ($data['clipId'] ?? 0));
 $labels = is_array($data['labels'] ?? null) ? $data['labels'] : [];
@@ -47,6 +51,9 @@ $muteLabel = (string) ($labels['mute'] ?? 'Mute');
 $unmuteLabel = (string) ($labels['unmute'] ?? 'Unmute');
 $fallbackLabel = (string) ($labels['fallback'] ?? 'Your browser cannot play this audio.');
 $waveformLoadingLabel = (string) ($labels['waveformLoading'] ?? 'Loading waveform…');
+$spectrogramLoadingLabel = (string) ($labels['spectrogramLoading'] ?? 'Loading spectrum…');
+$waveformLabel = (string) ($labels['waveform'] ?? 'Waveform');
+$spectrumLabel = (string) ($labels['spectrum'] ?? 'Spectrum');
 $buttonSizeParameter = match ($presentation)
 {
 	'minimal' => 'player_minimal_button_size',
@@ -64,7 +71,9 @@ $className = trim(
 	'audioarchive-custom-player audioarchive-custom-player--' . $presentation . ' '
 	. (string) ($data['class'] ?? '')
 );
-$className .= $waveformUrl !== '' ? ' has-waveform' : ' no-waveform';
+$className .= $hasAnalysis ? ' has-analysis' : ' no-analysis';
+$className .= $hasWaveform ? ' has-waveform' : ' no-waveform';
+$className .= $hasSpectrogram ? ' has-spectrogram' : ' no-spectrogram';
 $style = implode(';', [
 	'--audioarchive-player-background:' . $normaliseColor($params->get('player_background_color'), '#f8f9fa'),
 	'--audioarchive-player-text:' . $normaliseColor($params->get('player_text_color'), '#212529'),
@@ -171,16 +180,48 @@ $style = implode(';', [
 			<?php endif; ?>
 		</div>
 
-		<?php if ($waveformUrl !== '') : ?>
-			<div
-				class="audioarchive-custom-player-waveform"
-				data-audioarchive-player-waveform
-				data-waveform-url="<?php echo $escape($waveformUrl); ?>"
-			>
-				<canvas aria-hidden="true"></canvas>
-				<p class="audioarchive-custom-player-waveform-status" data-audioarchive-waveform-status>
-					<?php echo $escape($waveformLoadingLabel); ?>
-				</p>
+		<?php if ($hasAnalysis) : ?>
+			<div class="audioarchive-custom-player-analysis" data-audioarchive-player-analysis>
+				<?php if ($hasWaveform && $hasSpectrogram) : ?>
+					<div class="audioarchive-custom-player-analysis-switch" role="group" aria-label="<?php echo $escape((string) ($labels['analysisView'] ?? 'Analysis view')); ?>">
+						<button type="button" class="is-active" aria-pressed="true" data-audioarchive-analysis-switch="waveform">
+							<?php echo $escape($waveformLabel); ?>
+						</button>
+						<button type="button" aria-pressed="false" data-audioarchive-analysis-switch="spectrogram">
+							<?php echo $escape($spectrumLabel); ?>
+						</button>
+					</div>
+				<?php endif; ?>
+
+				<?php if ($hasWaveform) : ?>
+					<div
+						class="audioarchive-custom-player-analysis-panel audioarchive-custom-player-waveform"
+						data-audioarchive-analysis-panel="waveform"
+						data-audioarchive-player-waveform
+						data-waveform-url="<?php echo $escape($waveformUrl); ?>"
+					>
+						<canvas aria-hidden="true"></canvas>
+						<p class="audioarchive-custom-player-analysis-status" data-audioarchive-waveform-status>
+							<?php echo $escape($waveformLoadingLabel); ?>
+						</p>
+					</div>
+				<?php endif; ?>
+
+				<?php if ($hasSpectrogram) : ?>
+					<div
+						class="audioarchive-custom-player-analysis-panel audioarchive-custom-player-spectrogram"
+						data-audioarchive-analysis-panel="spectrogram"
+						data-audioarchive-player-spectrogram
+						data-spectrogram-url="<?php echo $escape($spectrogramUrl); ?>"
+						<?php echo $hasWaveform ? 'hidden' : ''; ?>
+					>
+						<img alt="" aria-hidden="true" data-audioarchive-spectrogram-image>
+						<span class="audioarchive-custom-player-spectrogram-playhead" aria-hidden="true" data-audioarchive-spectrogram-playhead></span>
+						<p class="audioarchive-custom-player-analysis-status" data-audioarchive-spectrogram-status>
+							<?php echo $escape($spectrogramLoadingLabel); ?>
+						</p>
+					</div>
+				<?php endif; ?>
 			</div>
 		<?php endif; ?>
 	</div>

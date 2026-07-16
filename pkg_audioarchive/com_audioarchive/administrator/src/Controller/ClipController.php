@@ -175,6 +175,50 @@ class ClipController extends FormController
     }
 
     /**
+     * @brief Generate or regenerate spectral analysis for the current clip.
+     *
+     * @return void
+     */
+    public function generateSpectrogram(): void
+    {
+        Session::checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+        $app = Factory::getApplication();
+        $clipId = $this->getPostedClipId();
+
+        if (!$app->getIdentity()->authorise('audioarchive.process', 'com_audioarchive'))
+        {
+            throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+        }
+
+        try
+        {
+            $manager = new AnalysisManagerService(
+                Factory::getContainer()->get(DatabaseInterface::class),
+                ComponentHelper::getParams('com_audioarchive'),
+                $app->getIdentity()
+            );
+            $result = $manager->generate('spectrogram', $clipId);
+            $app->enqueueMessage(
+                Text::sprintf(
+                    'COM_AUDIOARCHIVE_SPECTROGRAM_GENERATED_SUCCESS',
+                    (int) ($result->parameters['width'] ?? 0),
+                    (int) ($result->parameters['height'] ?? 0)
+                ),
+                'success'
+            );
+        }
+        catch (\Throwable $exception)
+        {
+            $app->enqueueMessage(
+                Text::sprintf('COM_AUDIOARCHIVE_SPECTROGRAM_GENERATED_FAILED', $exception->getMessage()),
+                'error'
+            );
+        }
+
+        $this->setRedirect($this->getEditRedirect($clipId));
+    }
+
+    /**
      * @brief Read and validate the clip identifier from the posted edit form.
      *
      * @return int Clip identifier.

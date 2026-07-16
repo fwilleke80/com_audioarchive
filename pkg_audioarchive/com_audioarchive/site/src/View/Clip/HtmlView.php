@@ -38,6 +38,9 @@ class HtmlView extends BaseHtmlView
 	public string $waveformUrl = '';
 
 	/** @var string */
+	public string $spectrogramUrl = '';
+
+	/** @var string */
 	public string $archiveUrl = '';
 
 	/** @var string */
@@ -108,11 +111,19 @@ class HtmlView extends BaseHtmlView
 		if ((string) $this->params->get('detail_presentation', 'featured') === 'featured')
 		{
 			$waveform = $model->getAnalysis('waveform', (int) $item->id);
+			$spectrogram = $model->getAnalysis('spectrogram', (int) $item->id);
 
 			if ($waveform !== null)
 			{
 				$this->waveformUrl = Route::_(
 					RouteHelper::getAnalysisRoute((int) $item->id, 'waveform', $routeItemId)
+				);
+			}
+
+			if ($spectrogram !== null)
+			{
+				$this->spectrogramUrl = Route::_(
+					RouteHelper::getAnalysisRoute((int) $item->id, 'spectrogram', $routeItemId)
 				);
 			}
 		}

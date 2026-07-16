@@ -54,6 +54,7 @@
         <field name="metadata_status" type="text" label="COM_AUDIOARCHIVE_FIELD_METADATA_STATUS" readonly="true" />
         <field name="preview_status" type="text" label="COM_AUDIOARCHIVE_FIELD_PREVIEW_STATUS" readonly="true" />
         <field name="waveform_status" type="text" label="COM_AUDIOARCHIVE_FIELD_WAVEFORM_STATUS" readonly="true" />
+        <field name="spectrogram_status" type="text" label="COM_AUDIOARCHIVE_FIELD_SPECTROGRAM_STATUS" readonly="true" />
         <field name="play_count" type="number" label="COM_AUDIOARCHIVE_FIELD_PLAY_COUNT" readonly="true" />
         <field name="download_count" type="number" label="COM_AUDIOARCHIVE_FIELD_DOWNLOAD_COUNT" readonly="true" />
     </fieldset>

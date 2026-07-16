@@ -26,6 +26,7 @@ class HtmlView extends BaseHtmlView
     protected bool $canProcess = false;
     protected string $playbackUrl = '';
     protected string $waveformUrl = '';
+    protected string $spectrogramUrl = '';
 
     /**
      * @brief Display the edit form.
@@ -73,6 +74,20 @@ class HtmlView extends BaseHtmlView
                 $this->waveformUrl = Route::_(
                     'index.php?option=com_audioarchive&task=media.analysis&id=' . (int) $this->item->id
                     . '&type=waveform&' . Session::getFormToken() . '=1',
+                    false
+                );
+            }
+            $spectrogram = $repository->get((int) $this->item->id, 'spectrogram');
+
+            if (
+                $spectrogram !== null
+                && (int) ($spectrogram->is_available ?? 0) === 1
+                && (string) ($spectrogram->status ?? '') === 'available'
+            )
+            {
+                $this->spectrogramUrl = Route::_(
+                    'index.php?option=com_audioarchive&task=media.analysis&id=' . (int) $this->item->id
+                    . '&type=spectrogram&' . Session::getFormToken() . '=1',
                     false
                 );
             }

@@ -361,14 +361,21 @@ final class AnalysisRepositoryService
 	 */
 	private function updateClipStatus(int $clipId, string $analysisType, string $status): void
 	{
-		if ($analysisType !== 'waveform')
+		$statusField = match ($analysisType)
+		{
+			'waveform' => 'waveform_status',
+			'spectrogram' => 'spectrogram_status',
+			default => '',
+		};
+
+		if ($statusField === '')
 		{
 			return;
 		}
 
 		$query = $this->database->getQuery(true)
 			->update($this->database->quoteName('#__audioarchive_clips'))
-			->set($this->database->quoteName('waveform_status') . ' = :status')
+			->set($this->database->quoteName($statusField) . ' = :status')
 			->where($this->database->quoteName('id') . ' = :clipId')
 			->bind(':status', $status, ParameterType::STRING)
 			->bind(':clipId', $clipId, ParameterType::INTEGER);

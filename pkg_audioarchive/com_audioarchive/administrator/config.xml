@@ -254,6 +254,21 @@
                 <option value="0">JNO</option>
                 <option value="1">JYES</option>
             </field>
+
+            <field name="enable_spectrogram_generation" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_ENABLE_SPECTROGRAMS_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ENABLE_SPECTROGRAMS_DESC" default="1">
+                <option value="0">JNO</option>
+                <option value="1">JYES</option>
+            </field>
+            <field name="spectrogram_detail" type="list" label="COM_AUDIOARCHIVE_CONFIG_SPECTROGRAM_DETAIL_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SPECTROGRAM_DETAIL_DESC" default="standard" showon="enable_spectrogram_generation:1">
+                <option value="low">COM_AUDIOARCHIVE_SPECTROGRAM_DETAIL_LOW</option>
+                <option value="standard">COM_AUDIOARCHIVE_SPECTROGRAM_DETAIL_STANDARD</option>
+                <option value="high">COM_AUDIOARCHIVE_SPECTROGRAM_DETAIL_HIGH</option>
+                <option value="very_high">COM_AUDIOARCHIVE_SPECTROGRAM_DETAIL_VERY_HIGH</option>
+            </field>
+            <field name="queue_spectrogram_after_upload" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_QUEUE_SPECTROGRAM_UPLOAD_LABEL" description="COM_AUDIOARCHIVE_CONFIG_QUEUE_SPECTROGRAM_UPLOAD_DESC" default="1" showon="enable_spectrogram_generation:1">
+                <option value="0">JNO</option>
+                <option value="1">JYES</option>
+            </field>
         </fieldset>
 
         <fieldset name="external_processing" label="COM_AUDIOARCHIVE_CONFIG_PROCESSING_SECTION_LABEL">

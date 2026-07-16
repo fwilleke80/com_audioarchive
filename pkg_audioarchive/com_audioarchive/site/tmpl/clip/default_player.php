@@ -22,6 +22,7 @@ $title = (string) $this->item->title;
 			'title' => $title,
 			'streamUrl' => $this->streamUrl,
 			'waveformUrl' => $this->waveformUrl,
+			'spectrogramUrl' => $this->spectrogramUrl,
 			'presentation' => (string) $this->params->get('detail_presentation', 'featured'),
 			'mime' => $mime,
 			'params' => $this->params,
@@ -34,6 +35,10 @@ $title = (string) $this->item->title;
 				'volume' => Text::_('COM_AUDIOARCHIVE_PLAYER_VOLUME'),
 				'fallback' => Text::_('COM_AUDIOARCHIVE_PLAYER_FALLBACK'),
 				'waveformLoading' => Text::_('COM_AUDIOARCHIVE_WAVEFORM_LOADING'),
+				'spectrogramLoading' => Text::_('COM_AUDIOARCHIVE_SPECTROGRAM_LOADING'),
+				'analysisView' => Text::_('COM_AUDIOARCHIVE_ANALYSIS_VIEW'),
+				'waveform' => Text::_('COM_AUDIOARCHIVE_ANALYSIS_WAVEFORM'),
+				'spectrum' => Text::_('COM_AUDIOARCHIVE_ANALYSIS_SPECTRUM'),
 			],
 		],
 		JPATH_ROOT . '/components/com_audioarchive/layouts'

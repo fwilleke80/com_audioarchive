@@ -274,6 +274,7 @@ class AudioUploadService
         $duration = (int) $file->duration_ms;
         $metadataStatus = 'available';
         $waveformStatus = 'missing';
+        $spectrogramStatus = 'missing';
 
         $this->database->transactionStart();
 
@@ -288,6 +289,7 @@ class AudioUploadService
                 ->set($this->database->quoteName('metadata_status') . ' = :metadataStatus')
                 ->set($this->database->quoteName('preview_status') . ' = :previewStatus')
                 ->set($this->database->quoteName('waveform_status') . ' = :waveformStatus')
+                ->set($this->database->quoteName('spectrogram_status') . ' = :spectrogramStatus')
                 ->set($this->database->quoteName('technical_metadata') . ' = :technicalMetadata')
                 ->where($this->database->quoteName('id') . ' = :clipId')
                 ->bind(':originalFilename', $originalFilename, ParameterType::STRING)
@@ -296,6 +298,7 @@ class AudioUploadService
                 ->bind(':metadataStatus', $metadataStatus, ParameterType::STRING)
                 ->bind(':previewStatus', $previewStatus, ParameterType::STRING)
                 ->bind(':waveformStatus', $waveformStatus, ParameterType::STRING)
+                ->bind(':spectrogramStatus', $spectrogramStatus, ParameterType::STRING)
                 ->bind(':technicalMetadata', $technicalMetadata, ParameterType::STRING)
                 ->bind(':clipId', $clipId, ParameterType::INTEGER);
             $this->database->setQuery($query)->execute();
@@ -308,7 +311,7 @@ class AudioUploadService
             throw $exception;
         }
 
-        $this->queueWaveformAfterUpload($clipId);
+        $this->queueAnalysesAfterUpload($clipId);
 
         return $file;
     }
@@ -345,11 +348,13 @@ class AudioUploadService
         $now = Factory::getDate()->toSql();
         $technicalMetadata = $this->technicalMetadataJson($metadata);
         $hasPreview = $this->hasFileRole($clipId, 'preview');
-        $hasWaveform = $this->hasWaveform($clipId);
+        $hasWaveform = $this->hasAnalysis($clipId, 'waveform');
+        $hasSpectrogram = $this->hasAnalysis($clipId, 'spectrogram');
         $previewStatus = $hasPreview
             ? 'stale'
             : ($this->requiresCompatibilityPreview($metadata) ? 'unavailable' : 'not_required');
         $waveformStatus = $hasWaveform ? 'stale' : 'missing';
+        $spectrogramStatus = $hasSpectrogram ? 'stale' : 'missing';
         $storageKey = (string) $stored['storage_key'];
         $extension = (string) $prepared['extension'];
         $mimeType = (string) ($metadata['mime_type'] ?? '');
@@ -406,6 +411,7 @@ class AudioUploadService
                 ->set($this->database->quoteName('metadata_status') . ' = :metadataStatus')
                 ->set($this->database->quoteName('preview_status') . ' = :previewStatus')
                 ->set($this->database->quoteName('waveform_status') . ' = :waveformStatus')
+                ->set($this->database->quoteName('spectrogram_status') . ' = :spectrogramStatus')
                 ->set($this->database->quoteName('technical_metadata') . ' = :technicalMetadata')
                 ->where($this->database->quoteName('id') . ' = :clipId')
                 ->bind(':originalFilename', $originalFilename, ParameterType::STRING)
@@ -413,10 +419,12 @@ class AudioUploadService
                 ->bind(':metadataStatus', $metadataStatus, ParameterType::STRING)
                 ->bind(':previewStatus', $previewStatus, ParameterType::STRING)
                 ->bind(':waveformStatus', $waveformStatus, ParameterType::STRING)
+                ->bind(':spectrogramStatus', $spectrogramStatus, ParameterType::STRING)
                 ->bind(':technicalMetadata', $technicalMetadata, ParameterType::STRING)
                 ->bind(':clipId', $clipId, ParameterType::INTEGER);
             $this->database->setQuery($clipQuery)->execute();
-            $this->synchroniseWaveformAnalysisStatus($clipId, $waveformStatus);
+            $this->synchroniseAnalysisStatus($clipId, 'waveform', $waveformStatus);
+            $this->synchroniseAnalysisStatus($clipId, 'spectrogram', $spectrogramStatus);
             $this->database->transactionCommit();
         }
         catch (\Throwable $exception)
@@ -435,7 +443,7 @@ class AudioUploadService
             throw $exception;
         }
 
-        $this->queueWaveformAfterUpload($clipId);
+        $this->queueAnalysesAfterUpload($clipId);
         $warnings = [];
         $previousOriginalRetained = (bool) ($prepared['retain_previous_original'] ?? false);
 
@@ -524,7 +532,8 @@ class AudioUploadService
         $previewStatus = $this->hasFileRole($clipId, 'preview')
             ? 'stale'
             : ($this->requiresCompatibilityPreview($metadata) ? 'unavailable' : 'not_required');
-        $waveformStatus = $this->hasWaveform($clipId) ? 'stale' : 'missing';
+        $waveformStatus = $this->hasAnalysis($clipId, 'waveform') ? 'stale' : 'missing';
+        $spectrogramStatus = $this->hasAnalysis($clipId, 'spectrogram') ? 'stale' : 'missing';
 
         $this->database->transactionStart();
 
@@ -567,15 +576,18 @@ class AudioUploadService
             {
                 $clipQuery->set($this->database->quoteName('preview_status') . ' = :previewStatus')
                     ->set($this->database->quoteName('waveform_status') . ' = :waveformStatus')
+                    ->set($this->database->quoteName('spectrogram_status') . ' = :spectrogramStatus')
                     ->bind(':previewStatus', $previewStatus, ParameterType::STRING)
-                    ->bind(':waveformStatus', $waveformStatus, ParameterType::STRING);
+                    ->bind(':waveformStatus', $waveformStatus, ParameterType::STRING)
+                    ->bind(':spectrogramStatus', $spectrogramStatus, ParameterType::STRING);
             }
 
             $this->database->setQuery($clipQuery)->execute();
 
             if ($contentChanged)
             {
-                $this->synchroniseWaveformAnalysisStatus($clipId, $waveformStatus);
+                $this->synchroniseAnalysisStatus($clipId, 'waveform', $waveformStatus);
+                $this->synchroniseAnalysisStatus($clipId, 'spectrogram', $spectrogramStatus);
             }
 
             $this->database->transactionCommit();
@@ -588,7 +600,7 @@ class AudioUploadService
 
         if ($contentChanged)
         {
-            $this->queueWaveformAfterUpload($clipId);
+            $this->queueAnalysesAfterUpload($clipId);
         }
 
         return array_values(array_unique(array_filter((array) ($metadata['warnings'] ?? []))));
@@ -667,19 +679,24 @@ class AudioUploadService
                         ->bind(':previewStatus', $previewStatus, ParameterType::STRING);
                 }
 
-                if ($this->hasWaveform($clipId))
+                if ($this->hasAnalysis($clipId, 'waveform'))
                 {
                     $waveformStatus = 'stale';
                     $clipQuery->set($this->database->quoteName('waveform_status') . ' = :waveformStatus')
                         ->bind(':waveformStatus', $waveformStatus, ParameterType::STRING);
                 }
 
+                if ($this->hasAnalysis($clipId, 'spectrogram'))
+                {
+                    $spectrogramStatus = 'stale';
+                    $clipQuery->set($this->database->quoteName('spectrogram_status') . ' = :spectrogramStatus')
+                        ->bind(':spectrogramStatus', $spectrogramStatus, ParameterType::STRING);
+                }
+
                 $this->database->setQuery($clipQuery)->execute();
 
-                if ($this->hasWaveform($clipId))
-                {
-                    $this->synchroniseWaveformAnalysisStatus($clipId, 'stale');
-                }
+                $this->synchroniseAnalysisStatus($clipId, 'waveform', 'stale');
+                $this->synchroniseAnalysisStatus($clipId, 'spectrogram', 'stale');
             }
 
             $this->database->transactionCommit();
@@ -853,51 +870,64 @@ class AudioUploadService
     }
 
     /**
-     * @brief Synchronise the generic waveform record with a denormalised clip status.
+     * @brief Synchronise a generic analysis record with a denormalised clip status.
      *
      * @param int $clipId Clip identifier.
-     * @param string $status Waveform status.
+     * @param string $analysisType Stable analysis type.
+     * @param string $status Analysis status.
      *
      * @return void
      */
-    private function synchroniseWaveformAnalysisStatus(int $clipId, string $status): void
+    private function synchroniseAnalysisStatus(int $clipId, string $analysisType, string $status): void
     {
-        if ($status !== 'stale')
+        if ($status !== 'stale' || !$this->hasAnalysis($clipId, $analysisType))
         {
             return;
         }
 
-        (new AnalysisRepositoryService($this->database))->markStale($clipId, 'waveform');
+        (new AnalysisRepositoryService($this->database))->markStale($clipId, $analysisType);
     }
 
     /**
-     * @brief Queue waveform generation after a successful upload or replacement.
+     * @brief Queue enabled analyses after a successful upload or replacement.
      *
      * Queue failures are non-fatal because the original file and clip record are
-     * already valid and administrators can queue the waveform from maintenance.
+     * already valid and administrators can queue analyses from maintenance.
      *
      * @param int $clipId Clip identifier.
      *
      * @return void
      */
-    private function queueWaveformAfterUpload(int $clipId): void
+    private function queueAnalysesAfterUpload(int $clipId): void
     {
-        if (
-            (int) $this->params->get('enable_waveform_generation', 1) !== 1
-            || (int) $this->params->get('queue_waveform_after_upload', 1) !== 1
-        )
+        $jobs = new AnalysisJobService($this->database, $this->params, $this->user);
+
+        try
         {
-            return;
+            if (
+                (int) $this->params->get('enable_waveform_generation', 1) === 1
+                && (int) $this->params->get('queue_waveform_after_upload', 1) === 1
+            )
+            {
+                $jobs->queueWaveform($clipId);
+            }
+        }
+        catch (\Throwable)
+        {
         }
 
         try
         {
-            (new AnalysisJobService($this->database, $this->params, $this->user))
-                ->queueWaveform($clipId);
+            if (
+                (int) $this->params->get('enable_spectrogram_generation', 1) === 1
+                && (int) $this->params->get('queue_spectrogram_after_upload', 1) === 1
+            )
+            {
+                $jobs->queueSpectrogram($clipId);
+            }
         }
         catch (\Throwable)
         {
-            // Deferred generation can be queued manually from maintenance.
         }
     }
 
@@ -1047,15 +1077,15 @@ class AudioUploadService
     }
 
     /**
-     * @brief Check whether a clip already has generated waveform data.
+     * @brief Check whether a clip already has one generic analysis record.
      *
      * @param int $clipId Clip identifier.
+     * @param string $analysisType Stable analysis type.
      *
-     * @return bool True when a waveform row exists.
+     * @return bool True when a matching analysis row exists.
      */
-    private function hasWaveform(int $clipId): bool
+    private function hasAnalysis(int $clipId, string $analysisType): bool
     {
-        $analysisType = 'waveform';
         $query = $this->database->getQuery(true)
             ->select('COUNT(*)')
             ->from($this->database->quoteName('#__audioarchive_analyses'))

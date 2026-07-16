@@ -34,11 +34,13 @@ class MaintenanceModel extends BaseDatabaseModel
 		$report['codec_filter'] = $codecFilter;
 		$report['codec_clips'] = $media->getClipsByCodec($codecFilter);
 		$report['stale_items'] = $staleItems;
-		$report['waveforms'] = (new AnalysisJobService(
+		$analysisJobs = new AnalysisJobService(
 			$this->getDatabase(),
 			$params,
 			Factory::getApplication()->getIdentity()
-		))->getWaveformSummary();
+		);
+		$report['waveforms'] = $analysisJobs->getWaveformSummary();
+		$report['spectrograms'] = $analysisJobs->getSpectrogramSummary();
 		$report['summary']['stale_files'] = count($staleItems);
 
 		return $report;
@@ -53,26 +55,19 @@ class MaintenanceModel extends BaseDatabaseModel
 	 */
 	public function queueWaveforms(string $mode): int
 	{
-		$statuses = match ($mode)
-		{
-			'missing' => ['missing'],
-			'stale' => ['stale'],
-			'failed' => ['failed'],
-			default => [],
-		};
+		return $this->queueAnalysis('waveform', $mode);
+	}
 
-		if ($statuses === [])
-		{
-			throw new \InvalidArgumentException(Text::_('COM_AUDIOARCHIVE_ANALYSIS_ERROR_INVALID_QUEUE_MODE'));
-		}
-
-		$service = new AnalysisJobService(
-			$this->getDatabase(),
-			ComponentHelper::getParams('com_audioarchive'),
-			Factory::getApplication()->getIdentity()
-		);
-
-		return $service->queueByStatuses('waveform', $statuses);
+	/**
+	 * @brief Queue spectrogram jobs for one status group.
+	 *
+	 * @param string $mode Missing, stale, or failed.
+	 *
+	 * @return int Number of newly queued jobs.
+	 */
+	public function queueSpectrograms(string $mode): int
+	{
+		return $this->queueAnalysis('spectrogram', $mode);
 	}
 
 	/**
@@ -106,5 +101,37 @@ class MaintenanceModel extends BaseDatabaseModel
 		);
 
 		return $service->deleteStaleItems($tokens);
+	}
+
+	/**
+	 * @brief Queue analysis jobs for one status group.
+	 *
+	 * @param string $analysisType Analysis type.
+	 * @param string $mode Missing, stale, or failed.
+	 *
+	 * @return int Number of newly queued jobs.
+	 */
+	private function queueAnalysis(string $analysisType, string $mode): int
+	{
+		$statuses = match ($mode)
+		{
+			'missing' => ['missing'],
+			'stale' => ['stale'],
+			'failed' => ['failed'],
+			default => [],
+		};
+
+		if ($statuses === [])
+		{
+			throw new \InvalidArgumentException(Text::_('COM_AUDIOARCHIVE_ANALYSIS_ERROR_INVALID_QUEUE_MODE'));
+		}
+
+		$service = new AnalysisJobService(
+			$this->getDatabase(),
+			ComponentHelper::getParams('com_audioarchive'),
+			Factory::getApplication()->getIdentity()
+		);
+
+		return $service->queueByStatuses($analysisType, $statuses);
 	}
 }

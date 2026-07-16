@@ -264,23 +264,89 @@
 	background: var(--audioarchive-player-accent);
 }
 
-.audioarchive-custom-player-waveform
+.audioarchive-custom-player-analysis
 {
-	position: relative;
 	margin-top: .95rem;
 	padding-top: .9rem;
 	border-top: 1px solid var(--audioarchive-player-border);
+}
+
+.audioarchive-custom-player-analysis-switch
+{
+	display: inline-flex;
+	gap: .15rem;
+	padding: .18rem;
+	border: 1px solid var(--audioarchive-player-border);
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--audioarchive-player-text) 4%, transparent);
+}
+
+.audioarchive-custom-player-analysis-switch button
+{
+	padding: .28rem .72rem;
+	border: 0;
+	border-radius: 999px;
+	background: transparent;
+	color: var(--audioarchive-player-muted);
+	font: inherit;
+	font-size: .78rem;
+	font-weight: 700;
 	cursor: pointer;
 }
 
-.audioarchive-custom-player-waveform canvas
+.audioarchive-custom-player-analysis-switch button.is-active
+{
+	background: var(--audioarchive-player-accent);
+	color: #fff;
+}
+
+.audioarchive-custom-player-analysis-switch button:focus-visible
+{
+	outline: .2rem solid color-mix(in srgb, var(--audioarchive-player-accent) 38%, transparent);
+	outline-offset: .12rem;
+}
+
+.audioarchive-custom-player-analysis-panel
+{
+	position: relative;
+	margin-top: .65rem;
+	overflow: hidden;
+	border-radius: calc(var(--audioarchive-player-radius) * .55);
+	background: color-mix(in srgb, var(--audioarchive-player-text) 5%, transparent);
+	cursor: pointer;
+}
+
+.audioarchive-custom-player-analysis-panel[hidden]
+{
+	display: none !important;
+}
+
+.audioarchive-custom-player-waveform canvas,
+.audioarchive-custom-player-spectrogram img
 {
 	display: block;
 	width: 100%;
 	height: var(--audioarchive-waveform-height);
 }
 
-.audioarchive-custom-player-waveform-status
+.audioarchive-custom-player-spectrogram img
+{
+	object-fit: fill;
+	background: #000;
+}
+
+.audioarchive-custom-player-spectrogram-playhead
+{
+	position: absolute;
+	inset: 0 auto 0 0;
+	width: 2px;
+	transform: translateX(-1px);
+	background: var(--audioarchive-player-playhead);
+	box-shadow: 0 0 .35rem color-mix(in srgb, var(--audioarchive-player-playhead) 70%, transparent);
+	pointer-events: none;
+}
+
+.audioarchive-custom-player-analysis-status
 {
 	position: absolute;
 	inset: 50% auto auto 50%;
@@ -291,7 +357,15 @@
 	color: var(--audioarchive-player-muted);
 }
 
-.audioarchive-custom-player.no-waveform
+.audioarchive-custom-player-spectrogram .audioarchive-custom-player-analysis-status
+{
+	padding: .25rem .5rem;
+	border-radius: .35rem;
+	background: rgb(0 0 0 / 58%);
+	color: #fff;
+}
+
+.audioarchive-custom-player.no-analysis
 {
 	padding-block: .9rem;
 }
@@ -369,14 +443,14 @@
 }
 
 /* Default: complete controls without analysis graphics. */
-.audioarchive-custom-player--default.no-waveform,
-.audioarchive-custom-player--featured.no-waveform
+.audioarchive-custom-player--default.no-analysis,
+.audioarchive-custom-player--featured.no-analysis
 {
 	padding-block: .9rem;
 }
 
-/* Featured: complete controls plus waveform when available. */
-.audioarchive-custom-player--featured.has-waveform
+/* Featured: complete controls plus waveform or spectral analysis when available. */
+.audioarchive-custom-player--featured.has-analysis
 {
 	padding-bottom: .85rem;
 }

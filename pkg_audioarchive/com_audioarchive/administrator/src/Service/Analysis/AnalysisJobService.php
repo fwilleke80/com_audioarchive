@@ -58,6 +58,20 @@ final class AnalysisJobService
 	}
 
 	/**
+	 * @brief Queue a spectrogram for one clip unless an active job already exists.
+	 *
+	 * @param int $clipId Clip identifier.
+	 * @param array<string, mixed> $options Generator options.
+	 * @param int $priority Job priority.
+	 *
+	 * @return bool True when a new job was queued.
+	 */
+	public function queueSpectrogram(int $clipId, array $options = [], int $priority = 0): bool
+	{
+		return $this->queueAnalysis('spectrogram', $clipId, $options, $priority);
+	}
+
+	/**
 	 * @brief Queue one registered analysis type for a clip.
 	 *
 	 * @param string $analysisType Stable analysis type.
@@ -96,7 +110,7 @@ final class AnalysisJobService
 	{
 		$analysisType = strtolower(trim($analysisType));
 
-		if ($analysisType !== 'waveform')
+		if (!in_array($analysisType, ['waveform', 'spectrogram'], true))
 		{
 			throw new \InvalidArgumentException(Text::_('COM_AUDIOARCHIVE_ANALYSIS_ERROR_UNSUPPORTED_BULK_TYPE'));
 		}
@@ -108,6 +122,7 @@ final class AnalysisJobService
 			return 0;
 		}
 
+		$statusField = $analysisType === 'waveform' ? 'waveform_status' : 'spectrogram_status';
 		$query = $this->database->getQuery(true)
 			->select($this->database->quoteName('a.id'))
 			->from($this->database->quoteName('#__audioarchive_clips', 'a'))
@@ -117,7 +132,7 @@ final class AnalysisJobService
 				. ' AND ' . $this->database->quoteName('f.file_role') . ' = ' . $this->database->quote('original')
 				. ' AND ' . $this->database->quoteName('f.is_available') . ' = 1'
 			)
-			->whereIn($this->database->quoteName('a.waveform_status'), $statuses, ParameterType::STRING)
+			->whereIn($this->database->quoteName('a.' . $statusField), $statuses, ParameterType::STRING)
 			->order($this->database->quoteName('a.id') . ' ASC');
 		$clipIds = array_map('intval', $this->database->setQuery($query)->loadColumn() ?: []);
 		$queued = 0;
@@ -140,17 +155,41 @@ final class AnalysisJobService
 	 */
 	public function getWaveformSummary(): array
 	{
+		return $this->getAnalysisSummary('waveform', 'waveform_status');
+	}
+
+	/**
+	 * @brief Return spectrogram status and queue counts for maintenance UI.
+	 *
+	 * @return array<string, int> Summary counts.
+	 */
+	public function getSpectrogramSummary(): array
+	{
+		return $this->getAnalysisSummary('spectrogram', 'spectrogram_status');
+	}
+
+	/**
+	 * @brief Return status and queue counts for one denormalised analysis type.
+	 *
+	 * @param string $analysisType Stable analysis type.
+	 * @param string $statusField Clip status column.
+	 *
+	 * @return array<string, int> Summary counts.
+	 */
+	private function getAnalysisSummary(string $analysisType, string $statusField): array
+	{
+		$statusColumn = $this->database->quoteName($statusField);
 		$query = $this->database->getQuery(true)
 			->select([
-				"SUM(CASE WHEN waveform_status = 'available' THEN 1 ELSE 0 END) AS available_count",
-				"SUM(CASE WHEN waveform_status = 'missing' THEN 1 ELSE 0 END) AS missing_count",
-				"SUM(CASE WHEN waveform_status = 'pending' THEN 1 ELSE 0 END) AS pending_count",
-				"SUM(CASE WHEN waveform_status = 'failed' THEN 1 ELSE 0 END) AS failed_count",
-				"SUM(CASE WHEN waveform_status = 'stale' THEN 1 ELSE 0 END) AS stale_count",
+				"SUM(CASE WHEN {$statusColumn} = 'available' THEN 1 ELSE 0 END) AS available_count",
+				"SUM(CASE WHEN {$statusColumn} = 'missing' THEN 1 ELSE 0 END) AS missing_count",
+				"SUM(CASE WHEN {$statusColumn} = 'pending' THEN 1 ELSE 0 END) AS pending_count",
+				"SUM(CASE WHEN {$statusColumn} = 'failed' THEN 1 ELSE 0 END) AS failed_count",
+				"SUM(CASE WHEN {$statusColumn} = 'stale' THEN 1 ELSE 0 END) AS stale_count",
 			])
 			->from($this->database->quoteName('#__audioarchive_clips'));
 		$row = (array) ($this->database->setQuery($query)->loadAssoc() ?: []);
-		$jobType = $this->jobType('waveform');
+		$jobType = $this->jobType($analysisType);
 		$query = $this->database->getQuery(true)
 			->select('COUNT(*)')
 			->from($this->database->quoteName('#__audioarchive_jobs'))
@@ -200,12 +239,19 @@ final class AnalysisJobService
 			$result = (new AnalysisManagerService($this->database, $this->params, $this->user))
 				->generate($analysisType, (int) $job->clip_id, $options);
 			$success = true;
-			$message = $analysisType === 'waveform'
-				? Text::sprintf(
+			$message = match ($analysisType)
+			{
+				'waveform' => Text::sprintf(
 					'COM_AUDIOARCHIVE_WAVEFORM_JOB_SUCCESS',
 					(int) ($result->parameters['point_count'] ?? 0)
-				)
-				: Text::sprintf('COM_AUDIOARCHIVE_ANALYSIS_JOB_SUCCESS', $analysisType);
+				),
+				'spectrogram' => Text::sprintf(
+					'COM_AUDIOARCHIVE_SPECTROGRAM_JOB_SUCCESS',
+					(int) ($result->parameters['width'] ?? 0),
+					(int) ($result->parameters['height'] ?? 0)
+				),
+				default => Text::sprintf('COM_AUDIOARCHIVE_ANALYSIS_JOB_SUCCESS', $analysisType),
+			};
 			$this->finishJob((int) $job->id, 'completed', '');
 		}
 		catch (\Throwable $exception)
@@ -255,7 +301,10 @@ final class AnalysisJobService
 			return false;
 		}
 
-		if ($analysisType === 'waveform' && (int) $this->params->get('enable_waveform_generation', 1) !== 1)
+		if (
+			($analysisType === 'waveform' && (int) $this->params->get('enable_waveform_generation', 1) !== 1)
+			|| ($analysisType === 'spectrogram' && (int) $this->params->get('enable_spectrogram_generation', 1) !== 1)
+		)
 		{
 			return false;
 		}

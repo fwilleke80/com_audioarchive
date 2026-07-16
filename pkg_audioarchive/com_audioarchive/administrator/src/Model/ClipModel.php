@@ -256,6 +256,7 @@ class ClipModel extends AdminModel
             'metadata_status',
             'preview_status',
             'waveform_status',
+            'spectrogram_status',
             'technical_metadata',
             'play_count',
             'download_count',
@@ -277,6 +278,7 @@ class ClipModel extends AdminModel
             $data['metadata_status'] = 'missing';
             $data['preview_status'] = 'not_required';
             $data['waveform_status'] = 'missing';
+            $data['spectrogram_status'] = 'missing';
             $data['technical_metadata'] = '{}';
             $data['play_count'] = 0;
             $data['download_count'] = 0;

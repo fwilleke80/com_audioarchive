@@ -42,6 +42,7 @@ $renderAudioPreview = function (string $headingId): void
 				'title' => $title,
 				'streamUrl' => $this->playbackUrl,
 				'waveformUrl' => $this->waveformUrl,
+				'spectrogramUrl' => $this->spectrogramUrl,
 				'presentation' => (string) ComponentHelper::getParams('com_audioarchive')->get('admin_player_presentation', 'featured'),
 				'mime' => $mime,
 				'params' => ComponentHelper::getParams('com_audioarchive'),
@@ -54,6 +55,10 @@ $renderAudioPreview = function (string $headingId): void
 					'volume' => Text::_('COM_AUDIOARCHIVE_ADMIN_PLAYER_VOLUME'),
 					'fallback' => Text::_('COM_AUDIOARCHIVE_ADMIN_PLAYER_FALLBACK'),
 					'waveformLoading' => Text::_('COM_AUDIOARCHIVE_ADMIN_WAVEFORM_LOADING'),
+					'spectrogramLoading' => Text::_('COM_AUDIOARCHIVE_ADMIN_SPECTROGRAM_LOADING'),
+					'analysisView' => Text::_('COM_AUDIOARCHIVE_ANALYSIS_VIEW'),
+					'waveform' => Text::_('COM_AUDIOARCHIVE_ANALYSIS_WAVEFORM'),
+					'spectrum' => Text::_('COM_AUDIOARCHIVE_ANALYSIS_SPECTRUM'),
 				],
 			],
 			JPATH_ROOT . '/components/com_audioarchive/layouts'
@@ -163,6 +168,12 @@ $renderAudioPreview = function (string $headingId): void
                                 ? 'COM_AUDIOARCHIVE_ACTION_REGENERATE_WAVEFORM'
                                 : 'COM_AUDIOARCHIVE_ACTION_GENERATE_WAVEFORM'); ?>
                         </button>
+                        <button type="button" class="btn btn-secondary" onclick="Joomla.submitbutton('clip.generateSpectrogram');">
+                            <span class="icon-eye" aria-hidden="true"></span>
+                            <?php echo Text::_((string) $this->item->spectrogram_status === 'available'
+                                ? 'COM_AUDIOARCHIVE_ACTION_REGENERATE_SPECTROGRAM'
+                                : 'COM_AUDIOARCHIVE_ACTION_GENERATE_SPECTROGRAM'); ?>
+                        </button>
                     </div>
                 <?php endif; ?>
             <?php endif; ?>
@@ -172,6 +183,7 @@ $renderAudioPreview = function (string $headingId): void
             <?php echo $this->form->renderField('metadata_status'); ?>
             <?php echo $this->form->renderField('preview_status'); ?>
             <?php echo $this->form->renderField('waveform_status'); ?>
+            <?php echo $this->form->renderField('spectrogram_status'); ?>
             <?php echo $this->form->renderField('play_count'); ?>
             <?php echo $this->form->renderField('download_count'); ?>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
