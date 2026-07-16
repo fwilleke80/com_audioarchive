@@ -19,6 +19,7 @@ $staleItems = (array) ($this->report['stale_items'] ?? []);
 $waveforms = (array) ($this->report['waveforms'] ?? []);
 $spectrograms = (array) ($this->report['spectrograms'] ?? []);
 $analysisProcessUrl = Route::_('index.php?option=com_audioarchive&task=maintenance.processAnalysisJob&format=json', false);
+$spectrogramRegenerateUrl = Route::_('index.php?option=com_audioarchive&task=maintenance.regenerateSpectrograms&format=json', false);
 $analysisToken = Session::getFormToken();
 $formatBytes = static function (int $bytes): string
 {
@@ -123,9 +124,12 @@ $severityKeys = [
         class="card mb-4"
         data-audioarchive-analysis-maintenance
         data-process-url="<?php echo htmlspecialchars($analysisProcessUrl, ENT_QUOTES, 'UTF-8'); ?>"
+        data-regenerate-spectrograms-url="<?php echo htmlspecialchars($spectrogramRegenerateUrl, ENT_QUOTES, 'UTF-8'); ?>"
         data-token-name="<?php echo htmlspecialchars($analysisToken, ENT_QUOTES, 'UTF-8'); ?>"
         data-progress-template="<?php echo htmlspecialchars(Text::_('COM_AUDIOARCHIVE_ANALYSIS_PROCESS_PROGRESS'), ENT_QUOTES, 'UTF-8'); ?>"
         data-failure-text="<?php echo htmlspecialchars(Text::_('COM_AUDIOARCHIVE_ANALYSIS_PROCESS_AJAX_FAILED'), ENT_QUOTES, 'UTF-8'); ?>"
+        data-regenerate-spectrograms-confirm="<?php echo htmlspecialchars(Text::_('COM_AUDIOARCHIVE_SPECTROGRAM_REGENERATE_ALL_CONFIRM'), ENT_QUOTES, 'UTF-8'); ?>"
+        data-regenerate-spectrograms-queued="<?php echo htmlspecialchars(Text::_('COM_AUDIOARCHIVE_SPECTROGRAM_REGENERATE_ALL_QUEUED'), ENT_QUOTES, 'UTF-8'); ?>"
     >
         <div class="card-header">
             <h2 class="h4 mb-1"><?php echo Text::_('COM_AUDIOARCHIVE_ANALYSIS_MAINTENANCE_TITLE'); ?></h2>
@@ -182,6 +186,12 @@ $severityKeys = [
                         <button type="submit" name="<?php echo htmlspecialchars($analysisSection['mode_name'], ENT_QUOTES, 'UTF-8'); ?>" value="failed" class="btn btn-outline-primary" <?php echo (int) ($analysisSection['summary']['failed'] ?? 0) <= 0 ? 'disabled' : ''; ?>>
                             <?php echo Text::_($analysisSection['retry_failed']); ?>
                         </button>
+                        <?php if ($analysisSection['task'] === 'maintenance.queueSpectrograms') : ?>
+                            <button type="button" class="btn btn-warning" data-audioarchive-regenerate-spectrograms>
+                                <span class="icon-refresh" aria-hidden="true"></span>
+                                <?php echo Text::_('COM_AUDIOARCHIVE_SPECTROGRAM_REGENERATE_ALL'); ?>
+                            </button>
+                        <?php endif; ?>
                         <?php echo HTMLHelper::_('form.token'); ?>
                     </form>
                 </section>

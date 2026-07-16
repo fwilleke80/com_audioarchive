@@ -254,6 +254,39 @@ class MaintenanceController extends BaseController
         $this->setRedirect($this->maintenanceUrl());
     }
 
+
+    /**
+     * @brief Queue and begin regeneration of spectral analyses for all eligible clips.
+     *
+     * @return void
+     */
+    public function regenerateSpectrograms(): void
+    {
+        Session::checkToken('post') or jexit(Text::_('JINVALID_TOKEN'));
+        $this->assertProcessPermission();
+        $application = Factory::getApplication();
+        $model = $this->getModel('Maintenance');
+
+        if (!$model instanceof MaintenanceModel)
+        {
+            throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_MAINTENANCE_ERROR_MODEL'), 500);
+        }
+
+        try
+        {
+            $queued = $model->queueAllSpectrograms();
+            $application->setHeader('Content-Type', 'application/json; charset=utf-8', true);
+            echo new JsonResponse(['queued' => $queued]);
+        }
+        catch (\Throwable $exception)
+        {
+            $application->setHeader('Content-Type', 'application/json; charset=utf-8', true);
+            echo new JsonResponse(null, $exception->getMessage(), true);
+        }
+
+        $application->close();
+    }
+
     /**
      * @brief Process one pending analysis job for the maintenance progress UI.
      *

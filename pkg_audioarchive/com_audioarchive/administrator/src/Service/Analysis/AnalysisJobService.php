@@ -148,6 +148,49 @@ final class AnalysisJobService
 		return $queued;
 	}
 
+
+	/**
+	 * @brief Queue one analysis type for every clip with an available original file.
+	 *
+	 * Active pending or running jobs are retained and are not duplicated.
+	 *
+	 * @param string $analysisType Analysis type.
+	 *
+	 * @return int Number of newly queued jobs.
+	 */
+	public function queueAll(string $analysisType): int
+	{
+		$analysisType = strtolower(trim($analysisType));
+
+		if (!in_array($analysisType, ['waveform', 'spectrogram'], true))
+		{
+			throw new \InvalidArgumentException(Text::_('COM_AUDIOARCHIVE_ANALYSIS_ERROR_UNSUPPORTED_BULK_TYPE'));
+		}
+
+		$query = $this->database->getQuery(true)
+			->select('DISTINCT ' . $this->database->quoteName('a.id'))
+			->from($this->database->quoteName('#__audioarchive_clips', 'a'))
+			->innerJoin(
+				$this->database->quoteName('#__audioarchive_files', 'f')
+					. ' ON ' . $this->database->quoteName('f.clip_id') . ' = ' . $this->database->quoteName('a.id')
+					. ' AND ' . $this->database->quoteName('f.file_role') . ' = ' . $this->database->quote('original')
+					. ' AND ' . $this->database->quoteName('f.is_available') . ' = 1'
+			)
+			->order($this->database->quoteName('a.id') . ' ASC');
+		$clipIds = array_map('intval', $this->database->setQuery($query)->loadColumn() ?: []);
+		$queued = 0;
+
+		foreach ($clipIds as $clipId)
+		{
+			if ($this->queueAnalysis($analysisType, $clipId))
+			{
+				$queued++;
+			}
+		}
+
+		return $queued;
+	}
+
 	/**
 	 * @brief Return waveform status and queue counts for maintenance UI.
 	 *

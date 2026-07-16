@@ -266,16 +266,34 @@
                 <option value="1">JYES</option>
             </field>
 
+        </fieldset>
+
+        <fieldset name="spectrum_generation" label="COM_AUDIOARCHIVE_CONFIG_SPECTRUM_GENERATION_SECTION_LABEL">
             <field name="enable_spectrogram_generation" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_ENABLE_SPECTROGRAMS_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ENABLE_SPECTROGRAMS_DESC" default="1">
                 <option value="0">JNO</option>
                 <option value="1">JYES</option>
             </field>
-            <field name="spectrogram_detail" type="list" label="COM_AUDIOARCHIVE_CONFIG_SPECTROGRAM_DETAIL_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SPECTROGRAM_DETAIL_DESC" default="standard" showon="enable_spectrogram_generation:1">
+            <field name="spectrogram_detail" type="list" label="COM_AUDIOARCHIVE_CONFIG_SPECTROGRAM_DETAIL_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SPECTROGRAM_DETAIL_DESC" default="standard" validate="options" showon="enable_spectrogram_generation:1">
                 <option value="low">COM_AUDIOARCHIVE_SPECTROGRAM_DETAIL_LOW</option>
                 <option value="standard">COM_AUDIOARCHIVE_SPECTROGRAM_DETAIL_STANDARD</option>
                 <option value="high">COM_AUDIOARCHIVE_SPECTROGRAM_DETAIL_HIGH</option>
                 <option value="very_high">COM_AUDIOARCHIVE_SPECTROGRAM_DETAIL_VERY_HIGH</option>
             </field>
+            <field name="spectrogram_intensity_scale" type="list" label="COM_AUDIOARCHIVE_CONFIG_SPECTROGRAM_INTENSITY_SCALE_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SPECTROGRAM_INTENSITY_SCALE_DESC" default="cbrt" validate="options" showon="enable_spectrogram_generation:1">
+                <option value="lin">COM_AUDIOARCHIVE_SPECTROGRAM_SCALE_LINEAR</option>
+                <option value="sqrt">COM_AUDIOARCHIVE_SPECTROGRAM_SCALE_SQUARE_ROOT</option>
+                <option value="cbrt">COM_AUDIOARCHIVE_SPECTROGRAM_SCALE_CUBE_ROOT</option>
+                <option value="log">COM_AUDIOARCHIVE_SPECTROGRAM_SCALE_LOGARITHMIC</option>
+                <option value="4thrt">COM_AUDIOARCHIVE_SPECTROGRAM_SCALE_FOURTH_ROOT</option>
+                <option value="5thrt">COM_AUDIOARCHIVE_SPECTROGRAM_SCALE_FIFTH_ROOT</option>
+            </field>
+            <field name="spectrogram_frequency_scale" type="list" label="COM_AUDIOARCHIVE_CONFIG_SPECTROGRAM_FREQUENCY_SCALE_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SPECTROGRAM_FREQUENCY_SCALE_DESC" default="log" validate="options" showon="enable_spectrogram_generation:1">
+                <option value="lin">COM_AUDIOARCHIVE_SPECTROGRAM_SCALE_LINEAR</option>
+                <option value="log">COM_AUDIOARCHIVE_SPECTROGRAM_SCALE_LOGARITHMIC</option>
+            </field>
+            <field name="spectrogram_start_frequency" type="number" label="COM_AUDIOARCHIVE_CONFIG_SPECTROGRAM_START_FREQUENCY_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SPECTROGRAM_START_FREQUENCY_DESC" default="30" min="0" max="200000" step="1" filter="integer" showon="enable_spectrogram_generation:1" />
+            <field name="spectrogram_stop_frequency" type="number" label="COM_AUDIOARCHIVE_CONFIG_SPECTROGRAM_STOP_FREQUENCY_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SPECTROGRAM_STOP_FREQUENCY_DESC" default="8000" min="0" max="200000" step="1" filter="integer" showon="enable_spectrogram_generation:1" />
+            <field name="spectrogram_dynamic_range" type="number" label="COM_AUDIOARCHIVE_CONFIG_SPECTROGRAM_DYNAMIC_RANGE_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SPECTROGRAM_DYNAMIC_RANGE_DESC" default="80" min="10" max="200" step="1" filter="integer" showon="enable_spectrogram_generation:1" />
             <field name="queue_spectrogram_after_upload" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_QUEUE_SPECTROGRAM_UPLOAD_LABEL" description="COM_AUDIOARCHIVE_CONFIG_QUEUE_SPECTROGRAM_UPLOAD_DESC" default="1" showon="enable_spectrogram_generation:1">
                 <option value="0">JNO</option>
                 <option value="1">JYES</option>

@@ -79,6 +79,7 @@ final class SpectrogramGeneratorService implements AnalysisGeneratorInterface
 		}
 
 		[$width, $height, $detail] = $this->resolveDimensions($options);
+		$generation = $this->resolveGenerationSettings($options);
 		$locator = new ExecutableLocatorService($this->params);
 		$ffmpeg = $locator->locate('ffmpeg');
 		$root = $this->storage->ensureDirectory('analysis');
@@ -91,9 +92,14 @@ final class SpectrogramGeneratorService implements AnalysisGeneratorInterface
 
 		$timeout = max(1, min(3600, (int) $this->params->get('process_timeout', 120)));
 		$filter = sprintf(
-			'showspectrumpic=s=%dx%d:legend=disabled:color=intensity:scale=log:fscale=log',
+			'showspectrumpic=s=%dx%d:legend=disabled:color=intensity:scale=%s:fscale=%s:start=%d:stop=%d:drange=%d',
 			$width,
-			$height
+			$height,
+			$generation['intensity_scale'],
+			$generation['frequency_scale'],
+			$generation['start_frequency'],
+			$generation['stop_frequency'],
+			$generation['dynamic_range']
 		);
 
 		try
@@ -160,8 +166,11 @@ final class SpectrogramGeneratorService implements AnalysisGeneratorInterface
 					'width' => $width,
 					'height' => $height,
 					'colour_mode' => 'intensity',
-					'amplitude_scale' => 'log',
-					'frequency_scale' => 'log',
+					'amplitude_scale' => $generation['intensity_scale'],
+					'frequency_scale' => $generation['frequency_scale'],
+					'start_frequency_hz' => $generation['start_frequency'],
+					'stop_frequency_hz' => $generation['stop_frequency'],
+					'dynamic_range_db' => $generation['dynamic_range'],
 				],
 				'ffmpeg',
 				$version,
@@ -200,6 +209,58 @@ final class SpectrogramGeneratorService implements AnalysisGeneratorInterface
 		}
 
 		return [$dimensions[0], $dimensions[1], $detail];
+	}
+
+	/**
+	 * @brief Resolve and validate configurable FFmpeg spectrum-generation settings.
+	 *
+	 * @param array<string, mixed> $options Generator options.
+	 *
+	 * @return array{intensity_scale:string,frequency_scale:string,start_frequency:int,stop_frequency:int,dynamic_range:int} Sanitised generation settings.
+	 */
+	private function resolveGenerationSettings(array $options): array
+	{
+		$intensityScale = strtolower(trim((string) (
+			$options['intensity_scale'] ?? $this->params->get('spectrogram_intensity_scale', 'cbrt')
+		)));
+		$frequencyScale = strtolower(trim((string) (
+			$options['frequency_scale'] ?? $this->params->get('spectrogram_frequency_scale', 'log')
+		)));
+		$intensityScales = ['lin', 'sqrt', 'cbrt', 'log', '4thrt', '5thrt'];
+		$frequencyScales = ['lin', 'log'];
+
+		if (!in_array($intensityScale, $intensityScales, true))
+		{
+			$intensityScale = 'cbrt';
+		}
+
+		if (!in_array($frequencyScale, $frequencyScales, true))
+		{
+			$frequencyScale = 'log';
+		}
+
+		$startFrequency = max(0, min(200000, (int) (
+			$options['start_frequency'] ?? $this->params->get('spectrogram_start_frequency', 30)
+		)));
+		$stopFrequency = max(0, min(200000, (int) (
+			$options['stop_frequency'] ?? $this->params->get('spectrogram_stop_frequency', 8000)
+		)));
+		$dynamicRange = max(10, min(200, (int) (
+			$options['dynamic_range'] ?? $this->params->get('spectrogram_dynamic_range', 80)
+		)));
+
+		if ($stopFrequency > 0 && $stopFrequency <= $startFrequency)
+		{
+			throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_SPECTROGRAM_INVALID_FREQUENCY_RANGE'));
+		}
+
+		return [
+			'intensity_scale' => $intensityScale,
+			'frequency_scale' => $frequencyScale,
+			'start_frequency' => $startFrequency,
+			'stop_frequency' => $stopFrequency,
+			'dynamic_range' => $dynamicRange,
+		];
 	}
 
 	/**

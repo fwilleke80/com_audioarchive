@@ -2,9 +2,9 @@
 
 Audio Archive is a native Joomla! 6 extension package for managing and publishing collections of audio clips.
 
-It is intended for archives ranging from a small collection to several thousand files. Administrators can upload or import clips, organise them with Joomla categories and tags, edit metadata, replace source files in bulk, inspect archive integrity, generate waveform analysis with the optional FFmpeg support, control publication and access, and review playback and download statistics. Visitors can search and filter the archive, browse a tag directory, use consistent responsive players throughout the site, open clip detail pages, and — where permitted — download the protected original files.
+It is intended for archives ranging from a small collection to several thousand files. Administrators can upload or import clips, organise them with Joomla categories and tags, edit metadata, replace source files in bulk, inspect archive integrity, generate waveform and spectral analyses with optional FFmpeg support, control publication and access, and review playback and download statistics. Visitors can search and filter the archive, browse a tag directory, use consistent responsive players throughout the site, open clip detail pages, and — where permitted — download the protected original files.
 
-> **Current version:** `0.7.10`  
+> **Current version:** `0.8.4`  
 > **Package:** `pkg_audioarchive`
 
 ## Table of contents
@@ -24,7 +24,10 @@ It is intended for archives ranging from a small collection to several thousand 
     - [Bulk replacement of existing files](#bulk-replacement-of-existing-files)
   - [Managing clips](#managing-clips)
   - [Integrity and maintenance](#integrity-and-maintenance)
-  - [Audio analysis and waveforms](#audio-analysis-and-waveforms)
+  - [Audio analyses](#audio-analyses)
+    - [Waveform generation](#waveform-generation)
+    - [Spectrum generation](#spectrum-generation)
+    - [Analysis queues and regeneration](#analysis-queues-and-regeneration)
   - [Publishing the public archive](#publishing-the-public-archive)
   - [Publishing a tag directory](#publishing-a-tag-directory)
   - [Frontend access control](#frontend-access-control)
@@ -54,7 +57,7 @@ It is intended for archives ranging from a small collection to several thousand 
 
 ### Administrator features
 
-- Dashboard with clip, publication, storage, playback, download, waveform, and system information
+- Dashboard with clip, publication, storage, playback, download, analysis, and system information
 - Dashboard display of the installed component version
 - System checks for configured storage paths, PHP capabilities, FFmpeg, and FFprobe
 - Absolute or Joomla-root-relative FFmpeg and FFprobe paths, automatic executable detection, version probing, and detailed failure reporting
@@ -74,10 +77,11 @@ It is intended for archives ranging from a small collection to several thousand 
 - Optional retention of previous original files for later review and cleanup
 - Protected audio preview in the clip editor using the shared player system
 - Configurable backend player presentation
-- Manual waveform generation or regeneration from the clip editor
-- Database-backed waveform queue with missing, pending, failed, stale, available, and queued status counts
-- Incremental FFmpeg waveform processing with visible progress and retry handling
-- Generic derived-analysis storage and job infrastructure prepared for future analysis types
+- Manual waveform and spectral-analysis generation or regeneration from the clip editor
+- Database-backed analysis queues with missing, pending, failed, stale, available, and queued status counts
+- Incremental FFmpeg waveform and spectrum processing with visible progress and retry handling
+- One-click regeneration of every eligible spectral analysis after generation settings change
+- Generic derived-analysis storage and job infrastructure shared by waveform and spectral analyses
 - Batch category assignment
 - Batch tag addition, replacement, and clearing
 - Searchable tag selection in batch operations
@@ -109,10 +113,13 @@ It is intended for archives ranging from a small collection to several thousand 
 - Protected inline playback with HTTP byte-range seeking
 - One shared player implementation used by archive rows, clip pages, modules, content embeds, and backend previews
 - Four player presentations: Minimal, Compact, Default, and Featured
-- Featured player with waveform seeking, played/unplayed colouring, and a moving playhead
-- Automatic controls-only fallback when waveform data is unavailable
+- Featured player with switchable waveform and spectrum views
+- Waveform seeking with played/unplayed colouring and a moving playhead
+- Spectrum view with playback-position marker and click-to-seek interaction
+- Configurable preferred Featured-player data view with automatic fallback to whichever analysis is available
+- Automatic controls-only fallback when neither waveform nor spectrum data is available
 - Native browser audio controls when JavaScript is disabled or fails
-- Configurable player colours, corner radius, button sizes, and waveform height
+- Configurable player colours, corner radius, button sizes, waveform height, and preferred analysis view
 - One-player-at-a-time behaviour
 - Clean, menu-aware SEF clip detail URLs
 - Breadcrumb integration
@@ -137,17 +144,17 @@ The package installs the following Joomla extensions:
 
 | Extension | Type | Purpose |
 | --- | --- | --- |
-| `com_audioarchive` | Component | Administration, importing, replacement, integrity maintenance, FFmpeg system checks, waveform analysis, shared players, public archive, tag directory, clip pages, playback, downloads, routing, access control, and statistics |
+| `com_audioarchive` | Component | Administration, importing, replacement, integrity maintenance, FFmpeg system checks, waveform and spectral analyses, shared players, public archive, tag directory, clip pages, playback, downloads, routing, access control, and statistics |
 | `mod_audioarchive` | Site module | Displays selected clips using latest, random, daily, popular, downloaded, or specific-clip modes |
 | `mod_audioarchive_tags` | Site module | Displays Audio Archive tags with descriptions, optional clip counts, and links to a filtered Archive |
 | `plg_finder_audioarchive` | Smart Search plugin | Adds eligible Audio Archive clips to Joomla Smart Search |
 | `plg_quickicon_audioarchive` | Quick Icons plugin | Adds an Audio Archive shortcut to the administrator Home Dashboard |
-| `plg_content_audioarchive` | Content plugin | Embeds random, specific, longest, or shortest eligible clips with any shared player presentation and inserts aggregate clip counts or playtime into prepared content |
+| `plg_content_audioarchive` | Content plugin | Embeds random, specific, longest, or shortest eligible clips with configurable Featured-player data views and inserts aggregate clip counts or playtime into prepared content |
 
 Install the package ZIP rather than installing its individual extension ZIP files separately.
 
 ```text
-pkg_audioarchive_v0-7-10.zip
+pkg_audioarchive_v0-8-4.zip
 ```
 
 ## Installing and updating the package
@@ -155,7 +162,7 @@ pkg_audioarchive_v0-7-10.zip
 To install Audio Archive:
 
 1. Open **System → Install → Extensions** in the Joomla administrator.
-2. Upload `pkg_audioarchive_v0-7-10.zip`.
+2. Upload `pkg_audioarchive_v0-8-4.zip`.
 3. Open **Components → Audio Archive**.
 4. Review the dashboard and component options before importing files.
 
@@ -194,13 +201,26 @@ Review the following settings before importing the archive:
 - Playback and download settings
 - Clip detail-page fields
 - FFmpeg and FFprobe paths
-- Waveform generation, detail level, automatic queueing, process timeout, and retry limit
+- Waveform and spectrum generation, detail levels, automatic queueing, process timeout, and retry limit
 - Uninstallation media-retention policy
 
-The **Processing** tab is divided into two groups:
+The **Processing** tab is divided into three groups:
 
 - **Clip analysis** — waveform generation, waveform detail, and automatic waveform queueing after upload, import, or replacement
+- **Spectrum generation** — spectral-analysis generation, output detail, intensity scale, frequency scale, minimum and maximum frequency, dynamic range, and automatic queueing
 - **Processing** — explicit FFmpeg and FFprobe paths, external-process timeout, and maximum processing attempts
+
+The default spectrum-generation values are:
+
+```text
+Intensity scale:   Cube root
+Frequency scale:   Logarithmic
+Minimum frequency: 30 Hz
+Maximum frequency: 8000 Hz
+Dynamic range:     80 dB
+```
+
+Changing spectrum-generation options does not silently replace existing spectrum images. Use **Regenerate all spectral analyses** on the Integrity & Maintenance page to rebuild them.
 
 The same component configuration is also available through Joomla's Global Configuration.
 
@@ -233,7 +253,7 @@ For FFmpeg and FFprobe, the system check reports:
 
 Audio Archive checks explicitly configured paths first and can also search common executable locations when automatic detection is enabled. If an uploaded executable lacks Unix execute bits, Audio Archive attempts to add them when the hosting account has sufficient permission. Otherwise, the dashboard reports the permission problem explicitly.
 
-FFmpeg is required for waveform generation. FFprobe is currently diagnosed and available to future media-analysis features.
+FFmpeg is required for waveform and spectral-analysis generation. FFprobe is currently diagnosed and available to future media-analysis features.
 
 The dashboard also displays the installed Audio Archive version and provides actions for resetting all recorded play counts or all recorded download counts.
 
@@ -257,13 +277,13 @@ A clip can contain:
 - Original audio file
 - Extracted technical metadata
 - Play and download counts
-- Generated waveform analysis
+- Generated waveform and spectral analyses
 
 Existing clips include a protected administrator preview using the shared player presentation selected in the component options. Playback from the editor does not increase public play statistics.
 
-When waveform generation is enabled, the edit form provides **Generate waveform** or **Regenerate waveform**. New uploads can also queue waveform generation automatically.
+When analysis generation is enabled, the edit form provides **Generate waveform** or **Regenerate waveform**, plus **Generate spectral analysis** or **Regenerate spectral analysis**. New uploads can queue either or both analyses automatically.
 
-An existing clip can receive a replacement original file from its edit form. The replacement preserves the clip ID, title, alias, category, tags, counters, access level, and public route. Technical metadata is recalculated, and existing previews and analysis derivatives are marked stale where applicable. When automatic waveform queueing is enabled, a replacement queues a new waveform job.
+An existing clip can receive a replacement original file from its edit form. The replacement preserves the clip ID, title, alias, category, tags, counters, access level, and public route. Technical metadata is recalculated, and existing previews and analysis derivatives are marked stale where applicable. When automatic analysis queueing is enabled, a replacement can queue new waveform and spectral-analysis jobs.
 
 #### Browser bulk upload
 
@@ -277,7 +297,7 @@ The upload view processes files individually and supports shared settings for:
 - Publication state
 - Recording-date override
 
-Each file receives its own progress, result, duplicate warning, and edit link. One failed upload does not stop the remaining queue. When automatic waveform queueing is enabled, each successfully added clip receives a waveform job.
+Each file receives its own progress, result, duplicate warning, and edit link. One failed upload does not stop the remaining queue. When automatic analysis queueing is enabled, each successfully added clip receives the configured waveform and spectral-analysis jobs.
 
 #### Server inbox import
 
@@ -295,7 +315,7 @@ In **Import new clips** mode, the importer can:
 - Override the component duplicate policy for the current import
 - Remove an inbox file after a successful transfer into managed storage
 
-The importer only works inside the configured inbox and does not provide arbitrary filesystem browsing. When automatic waveform queueing is enabled, successfully imported clips receive waveform jobs.
+The importer only works inside the configured inbox and does not provide arbitrary filesystem browsing. When automatic analysis queueing is enabled, successfully imported clips receive the configured waveform and spectral-analysis jobs.
 
 #### Bulk replacement of existing files
 
@@ -319,7 +339,7 @@ A successful bulk replacement preserves:
 - Play and download counters
 - Public URL
 
-The old original can either be deleted immediately or retained. Retention is enabled by default because it is safer for large migration runs. Retained originals become unreferenced cleanup candidates on the **Integrity & Maintenance** page. Existing waveform analysis is marked stale, and automatic waveform queueing can schedule regeneration for the replacement.
+The old original can either be deleted immediately or retained. Retention is enabled by default because it is safer for large migration runs. Retained originals become unreferenced cleanup candidates on the **Integrity & Maintenance** page. Existing waveform and spectral analyses are marked stale, and automatic analysis queueing can schedule regeneration for the replacement.
 
 Audio Archive does not transcode files itself in this workflow. Conversion is performed externally; the resulting files are then placed in the import inbox and assigned through replacement mode.
 
@@ -387,7 +407,7 @@ Selecting a codec displays every matching clip. This is useful for locating form
 The stale-file section lists only cleanup candidates, including:
 
 - Stale compatibility previews
-- Stale waveform or other analysis files
+- Stale waveform, spectral-analysis, or other derived-analysis files
 - Unreferenced managed files
 - Abandoned temporary files
 
@@ -396,11 +416,17 @@ Current referenced originals are never eligible for stale-file cleanup. Every se
 Large cleanup selections are processed automatically in sequential AJAX batches of at most 200 files. This avoids PHP input limits and oversized single requests while preserving the server-side safety limit and per-batch validation.
 
 
-### Audio analysis and waveforms
+### Audio analyses
 
-Audio Archive 0.7 introduced a generic derived-analysis subsystem. Waveforms are the first implemented analysis type; future frequency spectra, spectrograms, loudness data, or other analyses can use the same protected storage, database records, job queue, and delivery endpoints.
+Audio Archive uses a generic derived-analysis subsystem for waveform and spectral data. Both analysis types share protected managed storage, database status records, processing jobs, retry handling, and access-controlled delivery endpoints.
 
-Waveform generation requires FFmpeg. For each clip, Audio Archive decodes the first audio stream to mono PCM and stores compact minimum/maximum peak data rather than a pre-rendered image. Available waveform detail levels are:
+FFmpeg is required for generating either analysis type. Missing or failed analyses never prevent publication, playback, or downloads.
+
+#### Waveform generation
+
+For each clip, Audio Archive decodes the first audio stream to mono PCM and stores compact minimum/maximum peak data rather than a pre-rendered image.
+
+Available waveform detail levels are:
 
 ```text
 256
@@ -412,7 +438,64 @@ Waveform generation requires FFmpeg. For each clip, Audio Archive decodes the fi
 
 `1024` peak pairs is the default.
 
-The **Waveforms** card on the Integrity & Maintenance page displays:
+Waveforms support:
+
+- Manual generation and regeneration from the clip editor
+- Automatic queueing after upload, import, or replacement
+- Missing, pending, available, failed, and stale states
+- Protected frontend and backend delivery
+- Played and unplayed colouring
+- Moving playback position
+- Click-to-seek interaction in the Featured player
+
+#### Spectrum generation
+
+Spectral analysis is generated by FFmpeg as a protected PNG spectrogram. Time runs horizontally and frequency runs vertically.
+
+Available spectrum detail levels are:
+
+| Detail | Output size |
+| --- | --- |
+| Low | 512 × 128 |
+| Standard | 1024 × 192 |
+| High | 1536 × 256 |
+| Very high | 2048 × 320 |
+
+The **Spectrum generation** options control:
+
+- Enable spectral analysis
+- Spectral-analysis detail
+- Intensity scale
+- Frequency scale
+- Minimum frequency
+- Maximum frequency
+- Dynamic range
+- Queue spectral analysis after upload
+
+The default FFmpeg spectrum parameters are equivalent to:
+
+```text
+scale=cbrt
+fscale=log
+start=30
+stop=8000
+drange=80
+```
+
+The cube-root intensity scale preserves visible structure without exaggerating very quiet noise. The logarithmic frequency scale allocates more vertical space to musically useful low and mid frequencies. A maximum frequency of `0` uses the source Nyquist frequency.
+
+Spectra support:
+
+- Manual generation and regeneration from the clip editor
+- Automatic queueing after upload, import, or replacement
+- Missing, pending, available, failed, and stale states
+- Protected frontend and backend delivery
+- Moving playback-position marker
+- Click-to-seek interaction in the Featured player
+
+#### Analysis queues and regeneration
+
+The **Audio analyses** section on the Integrity & Maintenance page displays separate waveform and spectral-analysis statistics, including:
 
 - Available
 - Missing
@@ -421,16 +504,24 @@ The **Waveforms** card on the Integrity & Maintenance page displays:
 - Stale
 - Queued jobs
 
-Available actions are:
+Waveform actions include:
 
 - **Queue missing waveforms**
 - **Queue stale waveforms**
 - **Retry failed waveforms**
-- **Process waveform queue**
 
-The browser starts one processing request at a time and displays progress. The queue itself is stored in the database. Closing or reloading the page stops the browser loop but does not discard untouched jobs. Reopen the maintenance page and click **Process waveform queue** again to continue. Interrupted running jobs are recovered after their processing lock expires and are retried up to the configured maximum attempt count.
+Spectral-analysis actions include:
 
-Waveform files are delivered through protected component controllers. Public waveform requests must pass the same publication, category, language, and access checks as playback. The backend uses a separate authorised endpoint so editors can preview waveforms for unpublished or restricted clips.
+- **Queue missing spectral analyses**
+- **Queue stale spectral analyses**
+- **Retry failed spectral analyses**
+- **Regenerate all spectral analyses**
+
+**Regenerate all spectral analyses** queues every clip with an available original file, skips duplicate pending or running jobs, and immediately starts the existing incremental processor. Use it after changing spectrum-generation parameters.
+
+The shared **Process analysis queue** action processes jobs incrementally and displays progress. Closing or reloading the page stops the browser loop but does not discard untouched jobs. Reopen the maintenance page and start processing again to continue. Interrupted running jobs are recovered after their processing lock expires and are retried up to the configured maximum attempt count.
+
+Waveform and spectral files are delivered through protected component controllers. Public requests must pass the same publication, category, language, and access checks as playback. The backend uses a separate authorised endpoint so editors can preview analyses for unpublished or restricted clips.
 
 ### Publishing the public archive
 
@@ -557,17 +648,20 @@ Audio Archive has one shared player renderer with four presentations:
 | **Minimal** | Play/pause button only |
 | **Compact** | Play/pause, seek bar, current time, and duration |
 | **Default** | Compact controls plus mute and volume controls |
-| **Featured** | Default controls plus waveform, played-region colouring, moving playhead, and click-to-seek waveform interaction |
+| **Featured** | Default controls plus switchable waveform and spectrum views with moving playback position and click-to-seek interaction |
 
 The archive table and mobile archive cards use the Minimal player. Clip detail pages, backend previews, modules, and content-plugin embeds can use any presentation permitted by their settings.
 
-The Featured player requests waveform data only when an available waveform exists. If no waveform exists or the data cannot be loaded, its waveform area disappears and the controls remain usable.
+The Featured player can display waveform data, spectral data, or both. When both analyses are available, compact **Waveform** and **Spectrum** controls let the visitor switch views. When only one is available, that view is shown directly. When neither is available, the analysis area is omitted and the controls remain usable.
+
+A preferred default data view can be set globally. If the preferred analysis is unavailable for a clip, the player automatically falls back to the other available analysis.
 
 All shared players use progressive enhancement. The generated HTML contains native browser `<audio controls>` first. JavaScript hides those controls only after the custom player has initialised successfully. Audio therefore remains playable when JavaScript is disabled or fails.
 
 Under **Playback and Downloads → Player style**, global options control:
 
 - Default module and embedded-player presentation
+- Preferred default data view: Waveform or Spectrum
 - Backend preview presentation
 - Player background colour
 - Player text colour
@@ -632,6 +726,14 @@ When **Show player** is enabled, the module offers:
 - **Featured**
 
 The inherited value comes from **Playback and Downloads → Player style → Default module and embedded-player presentation**.
+
+The module also provides **Preferred data view**:
+
+- **Use component default**
+- **Waveform**
+- **Spectrum**
+
+This option affects Featured players only. If the selected analysis is unavailable, the player uses the other available analysis automatically.
 
 Wide players receive their own full-width row in the module layout. Metadata settings such as **Show duration** therefore do not change the player's internal appearance or proportions.
 
@@ -853,6 +955,25 @@ When `layout` is omitted, the plugin uses its configured presentation. That sett
 
 The plugin's surrounding clip metadata layout remains consistent; the `layout` attribute changes the player presentation, not the module template.
 
+For the Featured presentation, `dataview` selects the preferred initial analysis:
+
+```text
+{audioarchive random layout=featured dataview=waveform}
+{audioarchive random layout=featured dataview=spectrum}
+{audioarchive clip=123 layout=featured dataview=spectrum}
+{audioarchive longest count=3 layout=featured dataview=spectrum}
+```
+
+Supported values are:
+
+```text
+waveform
+spectrum
+spectrogram
+```
+
+When `dataview` is omitted, the content plugin uses its own **Preferred data view** option. That option can inherit the component default. If the preferred analysis is unavailable, the player automatically uses the other available analysis.
+
 ### Archive clip counts
 
 Insert the total number of eligible clips in the archive:
@@ -887,7 +1008,7 @@ The durations of clips in the selected categories are summed and inserted as one
 
 ### Content-plugin behaviour
 
-Random, specific, longest, and shortest embedded clips reuse the module's shared clip-selection and eligibility logic, but use the player presentation selected by the placeholder or plugin configuration. They inherit the component's publication, category, clip-access, language, file-availability, routing, playback, protected analysis, download, and counting logic. Links and protected media endpoints are additionally subject to the component-wide frontend access setting.
+Random, specific, longest, and shortest embedded clips reuse the module's shared clip-selection and eligibility logic, but use the player presentation and preferred Featured-player data view selected by the placeholder or plugin configuration. They inherit the component's publication, category, clip-access, language, file-availability, routing, playback, protected analysis, download, and counting logic. Links and protected media endpoints are additionally subject to the component-wide frontend access setting.
 
 The plugin has independent options for showing or hiding:
 

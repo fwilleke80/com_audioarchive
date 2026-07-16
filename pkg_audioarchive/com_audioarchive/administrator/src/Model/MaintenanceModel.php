@@ -70,6 +70,23 @@ class MaintenanceModel extends BaseDatabaseModel
 		return $this->queueAnalysis('spectrogram', $mode);
 	}
 
+
+	/**
+	 * @brief Queue spectral-analysis regeneration for every eligible clip.
+	 *
+	 * @return int Number of newly queued jobs.
+	 */
+	public function queueAllSpectrograms(): int
+	{
+		$service = new AnalysisJobService(
+			$this->getDatabase(),
+			ComponentHelper::getParams('com_audioarchive'),
+			Factory::getApplication()->getIdentity()
+		);
+
+		return $service->queueAll('spectrogram');
+	}
+
 	/**
 	 * @brief Process the next pending analysis job.
 	 *
