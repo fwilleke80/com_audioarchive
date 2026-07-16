@@ -164,6 +164,25 @@ const initialiseAudioArchivePlayers = () =>
 			panel.hidden = panel !== selected;
 		});
 
+		if (selected.dataset.audioarchiveAnalysisPanel === 'waveform')
+		{
+			requestAnimationFrame(() =>
+			{
+				const audio = getCustomPlayerAudio(player);
+				const waveform = player.querySelector('[data-audioarchive-player-waveform]');
+				const state = waveform instanceof HTMLElement ? waveformStates.get(waveform) : null;
+
+				if (!(audio instanceof HTMLAudioElement) || !state)
+				{
+					return;
+				}
+
+				state.width = 0;
+				state.height = 0;
+				drawPlayerWaveform(player, audio);
+			});
+		}
+
 		if (switcher instanceof HTMLElement)
 		{
 			switcher.hidden = panels.length < 2;
@@ -226,14 +245,34 @@ const initialiseAudioArchivePlayers = () =>
 	const prepareWaveformLayers = (player, state) =>
 	{
 		const canvas = state.canvas;
+		const waveform = canvas.closest('[data-audioarchive-player-waveform]');
+
+		if (!(waveform instanceof HTMLElement) || waveform.hidden)
+		{
+			return false;
+		}
+
+		/*
+		 * CSS owns the visible canvas dimensions. Never write a measured hidden
+		 * width back as an inline style: a hidden panel measures zero pixels and
+		 * would otherwise remain collapsed after it is shown again.
+		 */
+		canvas.style.removeProperty('width');
+		canvas.style.removeProperty('height');
 		const bounds = canvas.getBoundingClientRect();
-		const width = Math.max(1, Math.round(bounds.width));
-		const height = Math.max(56, Math.round(bounds.height));
+		const width = Math.round(bounds.width);
+		const height = Math.round(bounds.height);
+
+		if (width <= 1 || height <= 1)
+		{
+			return false;
+		}
+
 		const ratio = Math.max(1, window.devicePixelRatio || 1);
 
 		if (state.width === width && state.height === height && state.ratio === ratio)
 		{
-			return;
+			return true;
 		}
 
 		state.width = width;
@@ -241,13 +280,13 @@ const initialiseAudioArchivePlayers = () =>
 		state.ratio = ratio;
 		canvas.width = Math.max(1, Math.round(width * ratio));
 		canvas.height = Math.max(1, Math.round(height * ratio));
-		canvas.style.width = `${width}px`;
-		canvas.style.height = `${height}px`;
 		const styles = getComputedStyle(player);
 		const unplayed = styles.getPropertyValue('--audioarchive-waveform-unplayed').trim() || '#6c757d';
 		const played = styles.getPropertyValue('--audioarchive-waveform-played').trim() || '#0d6efd';
 		drawPeakLayer(state.unplayedLayer, state.peaks, unplayed, width, height, ratio);
 		drawPeakLayer(state.playedLayer, state.peaks, played, width, height, ratio);
+
+		return true;
 	};
 
 	const drawPlayerWaveform = (player, audio) =>
@@ -260,7 +299,11 @@ const initialiseAudioArchivePlayers = () =>
 			return;
 		}
 
-		prepareWaveformLayers(player, state);
+		if (waveform.hidden || !prepareWaveformLayers(player, state))
+		{
+			return;
+		}
+
 		const context = state.canvas.getContext('2d');
 
 		if (!context)
@@ -365,7 +408,13 @@ const initialiseAudioArchivePlayers = () =>
 
 				if ('ResizeObserver' in window)
 				{
-					new ResizeObserver(() => drawPlayerWaveform(player, audio)).observe(waveform);
+					new ResizeObserver(() =>
+					{
+						if (!waveform.hidden)
+						{
+							drawPlayerWaveform(player, audio);
+						}
+					}).observe(waveform);
 				}
 				else
 				{
@@ -484,7 +533,7 @@ const initialiseAudioArchivePlayers = () =>
 			});
 		});
 
-		selectAnalysisPanel(player, 'waveform');
+		selectAnalysisPanel(player, player.dataset.preferredAnalysisView || 'waveform');
 	};
 
 	const updateCustomPlayerProgress = (player, audio) =>

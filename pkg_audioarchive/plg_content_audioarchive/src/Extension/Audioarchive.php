@@ -143,6 +143,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 	 * Supported forms:
 	 * {audioarchive random}
 	 * {audioarchive random layout=compact}
+	 * {audioarchive random layout=featured dataview=spectrum}
 	 * {audioarchive longest}
 	 * {audioarchive longest count=3 layout=compact}
 	 * {audioarchive shortest}
@@ -155,7 +156,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 	 *
 	 * @param string $arguments Placeholder arguments.
 	 *
-	 * @return array{mode:string, clip:string, layout:string, categories:string[], count:int}|null Parsed options or null.
+	 * @return array{mode:string, clip:string, layout:string, dataView:string, categories:string[], count:int}|null Parsed options or null.
 	 */
 	private function parseArguments(string $arguments): ?array
 	{
@@ -197,7 +198,9 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 
 		$aggregateMode = in_array($mode, ['count', 'playtime'], true);
 		$orderedMode = in_array($mode, ['longest', 'shortest'], true);
-		$allowed = $aggregateMode ? ['category'] : ($orderedMode ? ['layout', 'count'] : ['clip', 'layout']);
+		$allowed = $aggregateMode
+			? ['category']
+			: ($orderedMode ? ['layout', 'count', 'dataview'] : ['clip', 'layout', 'dataview']);
 
 		foreach (array_keys($attributes) as $key)
 		{
@@ -217,6 +220,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 				'mode' => $mode,
 				'clip' => '',
 				'layout' => '',
+				'dataView' => '',
 				'categories' => $categories,
 				'count' => 1,
 			];
@@ -259,10 +263,36 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 			return null;
 		}
 
+		$configuredDataView = strtolower(trim((string) $this->params->get('preferred_data_view', 'inherit')));
+
+		if ($configuredDataView === 'inherit')
+		{
+			$configuredDataView = strtolower(trim((string) ComponentHelper::getParams('com_audioarchive')->get(
+				'player_preferred_data_view',
+				'waveform'
+			)));
+		}
+
+		$configuredDataView = in_array($configuredDataView, ['waveform', 'spectrogram'], true)
+			? $configuredDataView
+			: 'waveform';
+		$dataView = strtolower(trim((string) ($attributes['dataview'] ?? $configuredDataView)));
+
+		if (in_array($dataView, ['spectrum', 'spetrum'], true))
+		{
+			$dataView = 'spectrogram';
+		}
+
+		if (!in_array($dataView, ['waveform', 'spectrogram'], true))
+		{
+			return null;
+		}
+
 		return [
 			'mode' => $mode,
 			'clip' => $clip,
 			'layout' => $layout,
+			'dataView' => $dataView,
 			'categories' => [],
 			'count' => $orderedMode ? $count : 1,
 		];
@@ -292,7 +322,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 	/**
 	 * @brief Render an archive count or total playtime placeholder.
 	 *
-	 * @param array{mode:string, clip:string, layout:string, categories:string[], count:int} $options Parsed placeholder options.
+	 * @param array{mode:string, clip:string, layout:string, dataView:string, categories:string[], count:int} $options Parsed placeholder options.
 	 *
 	 * @return string Aggregate value formatted for inline content.
 	 */
@@ -526,7 +556,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 	/**
 	 * @brief Create module-compatible rendering parameters.
 	 *
-	 * @param array{mode:string, clip:string, layout:string, categories:string[], count:int} $options Parsed placeholder options.
+	 * @param array{mode:string, clip:string, layout:string, dataView:string, categories:string[], count:int} $options Parsed placeholder options.
 	 *
 	 * @return Registry Module-compatible parameters.
 	 */
@@ -538,6 +568,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 			'specific_clip' => 0,
 			'presentation' => 'default',
 			'player_presentation' => $options['layout'],
+			'preferred_data_view' => $options['dataView'],
 			'show_title' => (int) $this->params->get('show_title', 1),
 			'link_title' => (int) $this->params->get('link_title', 1),
 			'show_player' => 1,

@@ -16,6 +16,9 @@ $modulePresentation = in_array((string) $params->get('presentation', 'default'),
 $playerPresentation = in_array((string) $params->get('player_presentation', 'default'), ['minimal', 'compact', 'default', 'featured'], true)
 	? (string) $params->get('player_presentation', 'default')
 	: 'default';
+$preferredDataView = in_array((string) $params->get('preferred_data_view', 'waveform'), ['waveform', 'spectrogram'], true)
+	? (string) $params->get('preferred_data_view', 'waveform')
+	: 'waveform';
 $moduleClass = trim(
 	'mod-audioarchive mod-audioarchive--' . $modulePresentation . ' '
 	. htmlspecialchars((string) $params->get('moduleclass_sfx', ''), ENT_QUOTES, 'UTF-8')
@@ -89,6 +92,7 @@ $componentParams = ComponentHelper::getParams('com_audioarchive');
 								'mime' => $mime,
 								'params' => $componentParams,
 								'presentation' => $playerPresentation,
+								'preferredAnalysisView' => $preferredDataView,
 								'labels' => [
 									'play' => Text::sprintf('MOD_AUDIOARCHIVE_PLAY_LABEL', $item->title),
 									'pause' => Text::sprintf('MOD_AUDIOARCHIVE_PAUSE_LABEL', $item->title),

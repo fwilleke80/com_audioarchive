@@ -25,8 +25,19 @@ if ($playerPresentation === 'inherit')
 $playerPresentation = in_array($playerPresentation, ['minimal', 'compact', 'default', 'featured'], true)
 	? $playerPresentation
 	: 'default';
+$preferredDataView = strtolower(trim((string) $params->get('preferred_data_view', 'inherit')));
+
+if ($preferredDataView === 'inherit')
+{
+	$preferredDataView = strtolower(trim((string) $componentParams->get('player_preferred_data_view', 'waveform')));
+}
+
+$preferredDataView = in_array($preferredDataView, ['waveform', 'spectrogram'], true)
+	? $preferredDataView
+	: 'waveform';
 $params->set('presentation', $modulePresentation);
 $params->set('player_presentation', $playerPresentation);
+$params->set('preferred_data_view', $preferredDataView);
 $items = AudioarchiveHelper::getItems($params, $module);
 
 if ($items === [])

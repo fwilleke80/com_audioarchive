@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <extension type="module" client="site" method="upgrade">
 	<name>MOD_AUDIOARCHIVE</name>
-	<version>0.5.0</version>
-	<creationDate>2026-07-15</creationDate>
+	<version>0.5.1</version>
+	<creationDate>2026-07-16</creationDate>
 	<author>Frank Willeke</author>
 	<copyright>Copyright (C) 2026 Frank Willeke.</copyright>
 	<license>GNU General Public License version 2 or later</license>
@@ -63,6 +63,11 @@
 					<option value="compact">MOD_AUDIOARCHIVE_PLAYER_PRESENTATION_COMPACT</option>
 					<option value="default">MOD_AUDIOARCHIVE_PLAYER_PRESENTATION_DEFAULT</option>
 					<option value="featured">MOD_AUDIOARCHIVE_PLAYER_PRESENTATION_FEATURED</option>
+				</field>
+				<field name="preferred_data_view" type="list" default="inherit" label="MOD_AUDIOARCHIVE_FIELD_PREFERRED_DATA_VIEW_LABEL" description="MOD_AUDIOARCHIVE_FIELD_PREFERRED_DATA_VIEW_DESC" showon="show_player:1" validate="options">
+					<option value="inherit">MOD_AUDIOARCHIVE_DATA_VIEW_INHERIT</option>
+					<option value="waveform">MOD_AUDIOARCHIVE_ANALYSIS_WAVEFORM</option>
+					<option value="spectrogram">MOD_AUDIOARCHIVE_ANALYSIS_SPECTRUM</option>
 				</field>
 				<field name="show_duration" type="radio" layout="joomla.form.field.radio.switcher" default="1" label="MOD_AUDIOARCHIVE_FIELD_SHOW_DURATION_LABEL"><option value="0">JNO</option><option value="1">JYES</option></field>
 				<field name="show_date" type="radio" layout="joomla.form.field.radio.switcher" default="1" label="MOD_AUDIOARCHIVE_FIELD_SHOW_DATE_LABEL"><option value="0">JNO</option><option value="1">JYES</option></field>

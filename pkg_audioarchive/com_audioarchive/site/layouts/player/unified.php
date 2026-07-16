@@ -41,6 +41,20 @@ $spectrogramUrl = $showAnalysis ? trim((string) ($data['spectrogramUrl'] ?? ''))
 $hasWaveform = $waveformUrl !== '';
 $hasSpectrogram = $spectrogramUrl !== '';
 $hasAnalysis = $hasWaveform || $hasSpectrogram;
+$preferredAnalysisView = strtolower(trim((string) (
+	$data['preferredAnalysisView']
+	?? $params->get('player_preferred_data_view', 'waveform')
+)));
+$preferredAnalysisView = in_array($preferredAnalysisView, ['waveform', 'spectrogram'], true)
+	? $preferredAnalysisView
+	: 'waveform';
+$initialAnalysisView = match (true)
+{
+	$preferredAnalysisView === 'spectrogram' && $hasSpectrogram => 'spectrogram',
+	$hasWaveform => 'waveform',
+	$hasSpectrogram => 'spectrogram',
+	default => '',
+};
 $mime = trim((string) ($data['mime'] ?? '')) ?: 'application/octet-stream';
 $clipId = max(0, (int) ($data['clipId'] ?? 0));
 $labels = is_array($data['labels'] ?? null) ? $data['labels'] : [];
@@ -90,6 +104,7 @@ $style = implode(';', [
 	style="<?php echo $escape($style); ?>"
 	data-audioarchive-custom-player
 	data-player-presentation="<?php echo $escape($presentation); ?>"
+	data-preferred-analysis-view="<?php echo $escape($initialAnalysisView); ?>"
 >
 	<audio
 		id="<?php echo $escape($audioId); ?>"
@@ -184,10 +199,18 @@ $style = implode(';', [
 			<div class="audioarchive-custom-player-analysis" data-audioarchive-player-analysis>
 				<?php if ($hasWaveform && $hasSpectrogram) : ?>
 					<div class="audioarchive-custom-player-analysis-switch" role="group" aria-label="<?php echo $escape((string) ($labels['analysisView'] ?? 'Analysis view')); ?>">
-						<button type="button" class="is-active" aria-pressed="true" data-audioarchive-analysis-switch="waveform">
+						<button
+							type="button"
+							<?php echo $initialAnalysisView === 'waveform' ? 'class="is-active" aria-pressed="true"' : 'aria-pressed="false"'; ?>
+							data-audioarchive-analysis-switch="waveform"
+						>
 							<?php echo $escape($waveformLabel); ?>
 						</button>
-						<button type="button" aria-pressed="false" data-audioarchive-analysis-switch="spectrogram">
+						<button
+							type="button"
+							<?php echo $initialAnalysisView === 'spectrogram' ? 'class="is-active" aria-pressed="true"' : 'aria-pressed="false"'; ?>
+							data-audioarchive-analysis-switch="spectrogram"
+						>
 							<?php echo $escape($spectrumLabel); ?>
 						</button>
 					</div>
@@ -199,6 +222,7 @@ $style = implode(';', [
 						data-audioarchive-analysis-panel="waveform"
 						data-audioarchive-player-waveform
 						data-waveform-url="<?php echo $escape($waveformUrl); ?>"
+						<?php echo $initialAnalysisView !== 'waveform' ? 'hidden' : ''; ?>
 					>
 						<canvas aria-hidden="true"></canvas>
 						<p class="audioarchive-custom-player-analysis-status" data-audioarchive-waveform-status>
@@ -213,7 +237,7 @@ $style = implode(';', [
 						data-audioarchive-analysis-panel="spectrogram"
 						data-audioarchive-player-spectrogram
 						data-spectrogram-url="<?php echo $escape($spectrogramUrl); ?>"
-						<?php echo $hasWaveform ? 'hidden' : ''; ?>
+						<?php echo $initialAnalysisView !== 'spectrogram' ? 'hidden' : ''; ?>
 					>
 						<img alt="" aria-hidden="true" data-audioarchive-spectrogram-image>
 						<span class="audioarchive-custom-player-spectrogram-playhead" aria-hidden="true" data-audioarchive-spectrogram-playhead></span>

@@ -2,7 +2,7 @@
 
 Audio Archive is a native Joomla! 6 extension package for managing and publishing collections of audio clips.
 
-It is intended for archives ranging from a small collection to several thousand files. Administrators can upload or import clips, organise them with Joomla categories and tags, edit metadata, replace source files in bulk, inspect archive integrity, generate waveform analysis with FFmpeg, control publication and access, and review playback and download statistics. Visitors can search and filter the archive, browse a tag directory, use consistent responsive players throughout the site, open clip detail pages, and—where permitted—download the protected original files.
+It is intended for archives ranging from a small collection to several thousand files. Administrators can upload or import clips, organise them with Joomla categories and tags, edit metadata, replace source files in bulk, inspect archive integrity, generate waveform analysis with the optional FFmpeg support, control publication and access, and review playback and download statistics. Visitors can search and filter the archive, browse a tag directory, use consistent responsive players throughout the site, open clip detail pages, and — where permitted — download the protected original files.
 
 > **Current version:** `0.7.10`  
 > **Package:** `pkg_audioarchive`

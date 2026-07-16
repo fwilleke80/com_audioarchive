@@ -185,6 +185,17 @@
                 <option value="featured">COM_AUDIOARCHIVE_PRESENTATION_FEATURED</option>
             </field>
             <field
+                name="player_preferred_data_view"
+                type="list"
+                label="COM_AUDIOARCHIVE_CONFIG_PLAYER_PREFERRED_DATA_VIEW_LABEL"
+                description="COM_AUDIOARCHIVE_CONFIG_PLAYER_PREFERRED_DATA_VIEW_DESC"
+                default="waveform"
+                validate="options"
+            >
+                <option value="waveform">COM_AUDIOARCHIVE_ANALYSIS_WAVEFORM</option>
+                <option value="spectrogram">COM_AUDIOARCHIVE_ANALYSIS_SPECTRUM</option>
+            </field>
+            <field
                 name="admin_player_presentation"
                 type="list"
                 label="COM_AUDIOARCHIVE_CONFIG_ADMIN_PLAYER_PRESENTATION_LABEL"
