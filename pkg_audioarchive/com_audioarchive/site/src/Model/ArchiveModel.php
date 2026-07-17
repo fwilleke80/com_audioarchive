@@ -45,6 +45,9 @@ class ArchiveModel extends ListModel
 	/** @var int */
 	private int $sessionItemId = 0;
 
+	/** @var int */
+	private int $contextItemId = 0;
+
 	/**
 	 * @brief Construct the public list model.
 	 *
@@ -52,6 +55,8 @@ class ArchiveModel extends ListModel
 	 */
 	public function __construct($config = [])
 	{
+		$this->contextItemId = max(0, (int) ($config['item_id'] ?? 0));
+
 		if (empty($config['filter_fields']))
 		{
 			$config['filter_fields'] = [
@@ -323,6 +328,100 @@ class ArchiveModel extends ListModel
 		$query->order($db->quoteName('a.id') . ' ' . $direction);
 
 		return $query;
+	}
+
+	/**
+	 * @brief Return the clips immediately before and after one clip in the current archive result set.
+	 *
+	 * The same menu restrictions, visitor filters, ordering, publication rules,
+	 * category rules, and access-level checks as the public archive are applied.
+	 *
+	 * @param int $currentId Current clip identifier.
+	 *
+	 * @return array{previous: object|null, next: object|null}
+	 */
+	public function getAdjacentItems(int $currentId): array
+	{
+		$result = [
+			'previous' => null,
+			'next' => null,
+		];
+
+		if ($currentId <= 0)
+		{
+			return $result;
+		}
+
+		$items = $this->loadOrderedNavigationItems(false);
+		$currentIndex = $this->findNavigationItemIndex($items, $currentId);
+
+		if ($currentIndex === null)
+		{
+			$items = $this->loadOrderedNavigationItems(true);
+			$currentIndex = $this->findNavigationItemIndex($items, $currentId);
+		}
+
+		if ($currentIndex === null)
+		{
+			return $result;
+		}
+
+		$result['previous'] = $currentIndex > 0 ? $items[$currentIndex - 1] : null;
+		$result['next'] = isset($items[$currentIndex + 1]) ? $items[$currentIndex + 1] : null;
+
+		return $result;
+	}
+
+	/**
+	 * @brief Load ordered clip identifiers and titles for detail navigation.
+	 *
+	 * @param bool $ignoreVisitorFilters Whether to ignore visitor-entered filters while retaining menu restrictions.
+	 *
+	 * @return object[] Ordered navigation items.
+	 */
+	private function loadOrderedNavigationItems(bool $ignoreVisitorFilters): array
+	{
+		$db = $this->getDatabase();
+		$this->ignoreVisitorFiltersForMaximum = $ignoreVisitorFilters;
+
+		try
+		{
+			$query = $this->getListQuery();
+		}
+		finally
+		{
+			$this->ignoreVisitorFiltersForMaximum = false;
+		}
+
+		$query
+			->clear('select')
+			->select([
+				$db->quoteName('a.id'),
+				$db->quoteName('a.title'),
+			]);
+
+		return (array) $db->setQuery($query)->loadObjectList();
+	}
+
+	/**
+	 * @brief Find one clip within an ordered navigation item list.
+	 *
+	 * @param object[] $items Ordered navigation items.
+	 * @param int $currentId Current clip identifier.
+	 *
+	 * @return int|null Zero-based item index or null when absent.
+	 */
+	private function findNavigationItemIndex(array $items, int $currentId): ?int
+	{
+		foreach ($items as $index => $item)
+		{
+			if ((int) $item->id === $currentId)
+			{
+				return $index;
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -778,7 +877,10 @@ class ArchiveModel extends ListModel
 		}
 
 		$params = clone ComponentHelper::getParams('com_audioarchive');
-		$item = Factory::getApplication()->getMenu()->getActive();
+		$application = Factory::getApplication();
+		$item = $this->contextItemId > 0
+			? $application->getMenu()->getItem($this->contextItemId)
+			: $application->getMenu()->getActive();
 		if ($item)
 		{
 			$menuParams = $item->getParams();
@@ -833,7 +935,9 @@ class ArchiveModel extends ListModel
 		$input = $app->getInput();
 		$params = $this->getResolvedParams();
 		$request = $input->getArray();
-		$itemId = $input->getInt('Itemid', 0);
+		$itemId = $this->contextItemId > 0
+			? $this->contextItemId
+			: $input->getInt('Itemid', 0);
 
 		if ($itemId <= 0)
 		{

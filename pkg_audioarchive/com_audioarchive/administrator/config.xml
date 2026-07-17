@@ -163,6 +163,7 @@
 
         <fieldset name="archive_pagination" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_SECTION_PAGINATION_LABEL">
             <field name="archive_show_pagination" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_PAGINATION_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+            <field name="archive_pagination_edge_pages" type="number" label="COM_AUDIOARCHIVE_CONFIG_PAGINATION_EDGE_PAGES_LABEL" description="COM_AUDIOARCHIVE_CONFIG_PAGINATION_EDGE_PAGES_DESC" default="5" min="1" max="20" step="1" filter="integer" showon="archive_show_pagination:1" />
             <field name="archive_show_page_size" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_PAGE_SIZE_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
             <field name="archive_allowed_page_sizes" type="text" label="COM_AUDIOARCHIVE_CONFIG_ALLOWED_PAGE_SIZES_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ALLOWED_PAGE_SIZES_DESC" default="10,20,50,100" />
             <field name="archive_maximum_page_size" type="number" label="COM_AUDIOARCHIVE_CONFIG_MAXIMUM_PAGE_SIZE_LABEL" description="COM_AUDIOARCHIVE_CONFIG_MAXIMUM_PAGE_SIZE_DESC" default="200" min="1" max="1000" step="1" />
@@ -240,6 +241,7 @@
         <field name="detail_show_play_count" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_PLAY_COUNT_LABEL" default="0"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
         <field name="detail_show_download_count" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_COUNT_LABEL" default="0"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
         <field name="detail_show_download" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_LABEL" description="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_DESC" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        <field name="detail_show_navigation" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_NAVIGATION_LABEL" description="COM_AUDIOARCHIVE_CONFIG_DETAIL_NAVIGATION_DESC" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
         <field name="detail_presentation" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_PRESENTATION_LABEL" description="COM_AUDIOARCHIVE_CONFIG_DETAIL_PRESENTATION_DESC" default="featured" validate="options">
             <option value="minimal">COM_AUDIOARCHIVE_PRESENTATION_MINIMAL</option>
             <option value="compact">COM_AUDIOARCHIVE_PRESENTATION_COMPACT</option>

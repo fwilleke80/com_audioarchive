@@ -11,7 +11,9 @@ use Joomla\CMS\Session\Session;
 HTMLHelper::_('behavior.multiselect');
 
 $checkedSection = (string) ($this->report['checked_section'] ?? '');
-$canManageFiles = Factory::getApplication()->getIdentity()->authorise('audioarchive.managefiles', 'com_audioarchive');
+$identity = Factory::getApplication()->getIdentity();
+$canManageFiles = $identity->authorise('audioarchive.managefiles', 'com_audioarchive');
+$canArchive = $canManageFiles && $identity->authorise('audioarchive.process', 'com_audioarchive');
 $summary = (array) ($this->report['summary'] ?? []);
 $issues = (array) ($this->report['issues'] ?? []);
 $actionableClips = (array) ($this->report['actionable_clips'] ?? []);
@@ -21,6 +23,12 @@ $codecClips = (array) ($this->report['codec_clips'] ?? []);
 $staleItems = (array) ($this->report['stale_items'] ?? []);
 $waveforms = (array) ($this->report['waveforms'] ?? []);
 $spectrograms = (array) ($this->report['spectrograms'] ?? []);
+$archiveZipSupported = (bool) ($this->report['archive_zip_supported'] ?? false);
+$archiveInboxFiles = (array) ($this->report['archive_inbox_files'] ?? []);
+$archiveInspectionState = (array) ($this->report['archive_inspection'] ?? []);
+$archiveInspection = (array) ($archiveInspectionState['inspection'] ?? []);
+$archiveManifest = (array) ($archiveInspection['manifest'] ?? []);
+$archiveCounts = (array) ($archiveInspection['counts'] ?? []);
 $analysisProcessUrl = Route::_('index.php?option=com_audioarchive&task=maintenance.processAnalysisJob&format=json', false);
 $analysisToken = Session::getFormToken();
 $formatBytes = static function (int $bytes): string
@@ -52,6 +60,157 @@ $checkUrl = static fn(string $check): string => Route::_('index.php?option=com_a
 		<h2 class="h5 alert-heading"><?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_MANUAL_CHECKS_TITLE'); ?></h2>
 		<p class="mb-0"><?php echo Text::_('COM_AUDIOARCHIVE_MAINTENANCE_MANUAL_CHECKS_TEXT'); ?></p>
 	</div>
+
+	<?php if ($canArchive) : ?>
+		<div class="card mb-4">
+			<div class="card-header">
+				<h2 class="h4 mb-1"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_MAINTENANCE_TITLE'); ?></h2>
+				<p class="mb-0 text-body-secondary"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_MAINTENANCE_TEXT'); ?></p>
+			</div>
+			<div class="card-body">
+				<?php if (!$archiveZipSupported) : ?>
+					<div class="alert alert-warning mb-0"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_ZIP_UNAVAILABLE'); ?></div>
+				<?php else : ?>
+					<div class="row g-4">
+						<section class="col-12 col-xl-6">
+							<h3 class="h5"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_EXPORT_TITLE'); ?></h3>
+							<p class="text-body-secondary"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_EXPORT_TEXT'); ?></p>
+							<form action="<?php echo Route::_('index.php?option=com_audioarchive'); ?>" method="post">
+								<div class="mb-3">
+									<label class="form-label" for="audioarchive-archive-scope"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_EXPORT_SCOPE_LABEL'); ?></label>
+									<select class="form-select" id="audioarchive-archive-scope" name="archive_scope">
+										<option value="metadata"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_EXPORT_SCOPE_METADATA'); ?></option>
+										<option value="analyses"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_EXPORT_SCOPE_ANALYSES'); ?></option>
+										<option value="complete"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_EXPORT_SCOPE_COMPLETE'); ?></option>
+									</select>
+									<div class="form-text"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_EXPORT_SCOPE_DESC'); ?></div>
+								</div>
+								<input type="hidden" name="task" value="maintenance.exportArchive">
+								<button type="submit" class="btn btn-primary">
+									<span class="icon-download" aria-hidden="true"></span>
+									<?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_EXPORT_BUTTON'); ?>
+								</button>
+								<?php echo HTMLHelper::_('form.token'); ?>
+							</form>
+						</section>
+
+						<section class="col-12 col-xl-6 border-start-xl">
+							<h3 class="h5"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_TITLE'); ?></h3>
+							<p class="text-body-secondary"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_TEXT'); ?></p>
+							<form action="<?php echo Route::_('index.php?option=com_audioarchive'); ?>" method="post" enctype="multipart/form-data">
+								<div class="mb-3">
+									<label class="form-label" for="audioarchive-archive-file"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_UPLOAD_LABEL'); ?></label>
+									<input class="form-control" id="audioarchive-archive-file" type="file" name="archive_file" accept="application/zip,.zip">
+									<div class="form-text"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_UPLOAD_DESC'); ?></div>
+								</div>
+								<?php if ($archiveInboxFiles !== []) : ?>
+									<div class="mb-3">
+										<label class="form-label" for="audioarchive-inbox-archive"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_INBOX_LABEL'); ?></label>
+										<select class="form-select" id="audioarchive-inbox-archive" name="inbox_archive">
+											<option value=""><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_INBOX_NONE'); ?></option>
+											<?php foreach ($archiveInboxFiles as $archiveFile) : ?>
+												<option value="<?php echo htmlspecialchars((string) $archiveFile['name'], ENT_QUOTES, 'UTF-8'); ?>">
+													<?php echo htmlspecialchars((string) $archiveFile['name'], ENT_QUOTES, 'UTF-8'); ?>
+													(<?php echo htmlspecialchars($formatBytes((int) $archiveFile['size']), ENT_QUOTES, 'UTF-8'); ?>)
+												</option>
+											<?php endforeach; ?>
+										</select>
+										<div class="form-text"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_INBOX_DESC'); ?></div>
+									</div>
+								<?php endif; ?>
+								<input type="hidden" name="task" value="maintenance.inspectArchive">
+								<button type="submit" class="btn btn-outline-primary">
+									<span class="icon-search" aria-hidden="true"></span>
+									<?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_INSPECT_BUTTON'); ?>
+								</button>
+								<?php echo HTMLHelper::_('form.token'); ?>
+							</form>
+						</section>
+					</div>
+
+					<?php if ($archiveInspection !== []) : ?>
+						<hr class="my-4">
+						<section>
+							<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+								<div>
+									<h3 class="h5 mb-1"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_INSPECTION_TITLE'); ?></h3>
+									<p class="mb-0 text-body-secondary"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_INSPECTION_TEXT'); ?></p>
+								</div>
+								<form action="<?php echo Route::_('index.php?option=com_audioarchive'); ?>" method="post">
+									<input type="hidden" name="task" value="maintenance.clearArchiveInspection">
+									<button type="submit" class="btn btn-sm btn-outline-secondary"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_CLEAR_BUTTON'); ?></button>
+									<?php echo HTMLHelper::_('form.token'); ?>
+								</form>
+							</div>
+
+							<div class="row g-3 mb-4">
+								<?php foreach ([
+									[Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_CREATED_AT'), (string) ($archiveManifest['created_at_utc'] ?? '—')],
+									[Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_COMPONENT_VERSION'), (string) ($archiveManifest['component_version'] ?? '—')],
+									[Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_SCOPE'), Text::_('COM_AUDIOARCHIVE_ARCHIVE_EXPORT_SCOPE_' . strtoupper((string) ($archiveInspection['scope'] ?? 'metadata')))],
+									[Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_CLIPS'), (string) (int) ($archiveCounts['clips'] ?? 0)],
+									[Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_ARCHIVE_SIZE'), $formatBytes((int) ($archiveInspection['archive_size'] ?? 0))],
+									[Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_UNCOMPRESSED_SIZE'), $formatBytes((int) ($archiveInspection['uncompressed_size'] ?? 0))],
+								] as [$label, $value]) : ?>
+									<div class="col-6 col-lg-4 col-xxl-2">
+										<div class="border rounded p-3 h-100">
+											<div class="small text-body-secondary mb-1"><?php echo htmlspecialchars($label, ENT_QUOTES, 'UTF-8'); ?></div>
+											<div class="fw-semibold text-break"><?php echo htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); ?></div>
+										</div>
+									</div>
+								<?php endforeach; ?>
+							</div>
+
+							<div class="alert alert-success">
+								<?php echo Text::sprintf('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_CHECKSUMS_VERIFIED', (int) ($archiveInspection['checksums_verified'] ?? 0)); ?>
+							</div>
+							<?php foreach ((array) ($archiveInspection['warnings'] ?? []) as $warning) : ?>
+								<div class="alert alert-warning"><?php echo htmlspecialchars((string) $warning, ENT_QUOTES, 'UTF-8'); ?></div>
+							<?php endforeach; ?>
+
+							<form action="<?php echo Route::_('index.php?option=com_audioarchive'); ?>" method="post">
+								<div class="row g-3">
+									<div class="col-12 col-lg-6">
+										<label class="form-label" for="audioarchive-restore-mode"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_MODE_LABEL'); ?></label>
+										<select class="form-select" id="audioarchive-restore-mode" name="restore_mode">
+											<option value="empty"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_MODE_EMPTY'); ?></option>
+											<option value="merge"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_MODE_MERGE'); ?></option>
+											<option value="replace"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_MODE_REPLACE'); ?></option>
+										</select>
+										<div class="form-text"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_MODE_DESC'); ?></div>
+									</div>
+									<div class="col-12 col-lg-6">
+										<label class="form-label" for="audioarchive-conflict-policy"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_CONFLICT_LABEL'); ?></label>
+										<select class="form-select" id="audioarchive-conflict-policy" name="conflict_policy">
+											<option value="skip"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_CONFLICT_SKIP'); ?></option>
+											<option value="metadata"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_CONFLICT_METADATA'); ?></option>
+											<option value="all"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_CONFLICT_ALL'); ?></option>
+										</select>
+										<div class="form-text"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_CONFLICT_DESC'); ?></div>
+									</div>
+								</div>
+								<div class="form-check mt-3">
+									<input class="form-check-input" type="checkbox" value="1" id="audioarchive-restore-configuration" name="restore_configuration">
+									<label class="form-check-label" for="audioarchive-restore-configuration"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_CONFIGURATION_LABEL'); ?></label>
+									<div class="form-text"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_CONFIGURATION_DESC'); ?></div>
+								</div>
+								<div class="form-check mt-3 mb-3">
+									<input class="form-check-input" type="checkbox" value="1" id="audioarchive-confirm-restore" name="confirm_restore" required>
+									<label class="form-check-label fw-semibold" for="audioarchive-confirm-restore"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_CONFIRM_LABEL'); ?></label>
+								</div>
+								<input type="hidden" name="task" value="maintenance.restoreArchive">
+								<button type="submit" class="btn btn-danger" onclick="return confirm(<?php echo htmlspecialchars(json_encode(Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_CONFIRM_DIALOG')), ENT_QUOTES, 'UTF-8'); ?>);">
+									<span class="icon-upload" aria-hidden="true"></span>
+									<?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_RESTORE_BUTTON'); ?>
+								</button>
+								<?php echo HTMLHelper::_('form.token'); ?>
+							</form>
+						</section>
+					<?php endif; ?>
+				<?php endif; ?>
+			</div>
+		</div>
+	<?php endif; ?>
 
 	<div
 		class="card mb-4"

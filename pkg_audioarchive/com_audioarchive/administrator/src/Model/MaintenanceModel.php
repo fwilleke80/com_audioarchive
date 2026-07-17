@@ -8,6 +8,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\Database\ParameterType;
 use Willeke\Component\Audioarchive\Administrator\Service\Analysis\AnalysisJobService;
+use Willeke\Component\Audioarchive\Administrator\Service\ArchiveImportService;
 use Willeke\Component\Audioarchive\Administrator\Service\IntegrityService;
 use Willeke\Component\Audioarchive\Administrator\Service\ManagedStorageService;
 use Willeke\Component\Audioarchive\Administrator\Service\MediaMaintenanceService;
@@ -49,6 +50,12 @@ class MaintenanceModel extends BaseDatabaseModel
 			$params,
 			$application->getIdentity()
 		);
+		$archiveImport = new ArchiveImportService(
+			$this->getDatabase(),
+			$params,
+			$application->getIdentity()
+		);
+		$stagedInspection = $application->getSession()->get('com_audioarchive.restore_inspection', []);
 		$report = [
 			'checked_section' => $check,
 			'checked_at' => '',
@@ -61,6 +68,9 @@ class MaintenanceModel extends BaseDatabaseModel
 			'stale_items' => [],
 			'waveforms' => $analysisJobs->getWaveformSummary(),
 			'spectrograms' => $analysisJobs->getSpectrogramSummary(),
+			'archive_zip_supported' => ArchiveImportService::isSupported(),
+			'archive_inbox_files' => ArchiveImportService::isSupported() ? $archiveImport->listInboxArchives() : [],
+			'archive_inspection' => is_array($stagedInspection) ? $stagedInspection : [],
 		];
 
 		if ($check === 'integrity')

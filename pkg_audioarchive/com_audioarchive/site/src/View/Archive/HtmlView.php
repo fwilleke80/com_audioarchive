@@ -297,6 +297,85 @@ class HtmlView extends BaseHtmlView
 	}
 
 	/**
+	 * @brief Return a compact set of page numbers for long archive result sets.
+	 *
+	 * The configured edge size controls how many page links remain visible at
+	 * the beginning and end. A compact three-page window keeps the current page
+	 * visible when it lies between those edge ranges. Null entries represent an
+	 * ellipsis between non-contiguous page ranges.
+	 *
+	 * @return array<int|null> Page numbers and ellipsis markers.
+	 */
+	public function getCompactPaginationPages(): array
+	{
+		$total = max(1, (int) $this->pagination->pagesTotal);
+		$current = max(1, min($total, (int) $this->pagination->pagesCurrent));
+		$edgeSize = max(
+			1,
+			min(20, (int) $this->params->get('archive_pagination_edge_pages', 5))
+		);
+
+		if ($total <= ($edgeSize * 2) + 1)
+		{
+			return range(1, $total);
+		}
+
+		$pages = array_merge(
+			range(1, min($edgeSize, $total)),
+			range(max(1, $current - 1), min($total, $current + 1)),
+			range(max(1, $total - $edgeSize + 1), $total)
+		);
+		$pages = array_values(array_unique(array_map('intval', $pages)));
+		sort($pages, SORT_NUMERIC);
+
+		$result = [];
+		$previous = null;
+
+		foreach ($pages as $page)
+		{
+			if ($previous !== null && $page > $previous + 1)
+			{
+				$result[] = null;
+			}
+
+			$result[] = $page;
+			$previous = $page;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @brief Build a routed URL for one archive page.
+	 *
+	 * @param int $page One-based page number.
+	 *
+	 * @return string Routed page URL.
+	 */
+	public function getPaginationPageUrl(int $page): string
+	{
+		$total = max(1, (int) $this->pagination->pagesTotal);
+		$page = max(1, min($total, $page));
+		$query = $this->getQueryValues();
+		$limit = max(1, (int) $this->state->get('list.limit', 20));
+		$offset = ($page - 1) * $limit;
+
+		if ($offset > 0)
+		{
+			$query['limitstart'] = $offset;
+		}
+		else
+		{
+			unset($query['limitstart']);
+		}
+
+		$query = $this->removeDefaultListValues($query);
+		$itemId = Factory::getApplication()->getInput()->getInt('Itemid', 0);
+
+		return Route::_(RouteHelper::getArchiveRoute($itemId, $query));
+	}
+
+	/**
 	 * @brief Return the reset URL for the active menu item.
 	 *
 	 * @return string

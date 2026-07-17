@@ -45,6 +45,18 @@ class HtmlView extends BaseHtmlView
 	/** @var string */
 	public string $archiveUrl = '';
 
+	/** @var object|null */
+	public ?object $previousClip = null;
+
+	/** @var object|null */
+	public ?object $nextClip = null;
+
+	/** @var string */
+	public string $previousUrl = '';
+
+	/** @var string */
+	public string $nextUrl = '';
+
 	/** @var string */
 	public string $editUrl = '';
 
@@ -137,6 +149,39 @@ class HtmlView extends BaseHtmlView
 		$this->archiveUrl = Route::_(
 			RouteHelper::getArchiveRoute($routeItemId, $storedArchiveQuery)
 		);
+
+		if ((int) $this->params->get('detail_show_navigation', 1) === 1)
+		{
+			$archiveModel = $application
+				->bootComponent('com_audioarchive')
+				->getMVCFactory()
+				->createModel('Archive', 'Site', [
+					'ignore_request' => false,
+					'item_id' => $routeItemId,
+				]);
+
+			if ($archiveModel instanceof ArchiveModel)
+			{
+				$archiveModel->setUseExceptions(true);
+				$adjacentItems = $archiveModel->getAdjacentItems((int) $item->id);
+				$this->previousClip = $adjacentItems['previous'];
+				$this->nextClip = $adjacentItems['next'];
+
+				if ($this->previousClip !== null)
+				{
+					$this->previousUrl = Route::_(
+						RouteHelper::getClipRoute((int) $this->previousClip->id, $routeItemId)
+					);
+				}
+
+				if ($this->nextClip !== null)
+				{
+					$this->nextUrl = Route::_(
+						RouteHelper::getClipRoute((int) $this->nextClip->id, $routeItemId)
+					);
+				}
+			}
+		}
 
 		if ((int) $this->params->get('enable_play_counts', 1) === 1)
 		{

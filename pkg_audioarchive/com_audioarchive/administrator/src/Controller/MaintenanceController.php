@@ -11,6 +11,8 @@ use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
 use Joomla\Database\DatabaseInterface;
 use Willeke\Component\Audioarchive\Administrator\Model\MaintenanceModel;
+use Willeke\Component\Audioarchive\Administrator\Service\ArchiveExportService;
+use Willeke\Component\Audioarchive\Administrator\Service\ArchiveImportService;
 use Willeke\Component\Audioarchive\Administrator\Service\AudioUploadService;
 
 \defined('_JEXEC') or die;
@@ -409,6 +411,219 @@ class MaintenanceController extends BaseController
     }
 
     /**
+     * @brief Create and download a portable Audio Archive ZIP export.
+     *
+     * @return void
+     */
+    public function exportArchive(): void
+    {
+        Session::checkToken('post') or jexit(Text::_('JINVALID_TOKEN'));
+        $this->assertArchivePermission();
+        $application = Factory::getApplication();
+        $scope = $application->getInput()->post->getCmd('archive_scope', 'metadata');
+        $service = new ArchiveExportService(
+            Factory::getContainer()->get(DatabaseInterface::class),
+            ComponentHelper::getParams('com_audioarchive'),
+            $application->getIdentity()
+        );
+        $export = null;
+
+        try
+        {
+            if (function_exists('set_time_limit'))
+            {
+                @set_time_limit(0);
+            }
+
+            $export = $service->create($scope, $this->getInstalledComponentVersion());
+            $path = (string) $export['path'];
+            $filename = (string) $export['filename'];
+            $application->setHeader('Content-Type', 'application/zip', true);
+            $application->setHeader('Content-Disposition', 'attachment; filename="' . addcslashes($filename, '"\\') . '"', true);
+            $application->setHeader('Content-Length', (string) filesize($path), true);
+            $application->setHeader('Cache-Control', 'no-store, no-cache, must-revalidate', true);
+            $application->setHeader('Pragma', 'no-cache', true);
+            $application->sendHeaders();
+            $stream = fopen($path, 'rb');
+
+            if (!is_resource($stream))
+            {
+                throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_ARCHIVE_EXPORT_ERROR_STREAM'));
+            }
+
+            while (!feof($stream))
+            {
+                $chunk = fread($stream, 1048576);
+
+                if ($chunk === false)
+                {
+                    fclose($stream);
+                    throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_ARCHIVE_EXPORT_ERROR_STREAM'));
+                }
+
+                echo $chunk;
+            }
+
+            fclose($stream);
+            @unlink($path);
+            $application->close();
+        }
+        catch (\Throwable $exception)
+        {
+            if (is_array($export) && isset($export['path']))
+            {
+                @unlink((string) $export['path']);
+            }
+
+            $application->enqueueMessage(
+                Text::sprintf('COM_AUDIOARCHIVE_ARCHIVE_EXPORT_FAILED', $exception->getMessage()),
+                'error'
+            );
+            $this->setRedirect($this->maintenanceUrl());
+        }
+    }
+
+    /**
+     * @brief Stage and inspect a portable Audio Archive ZIP without restoring it.
+     *
+     * @return void
+     */
+    public function inspectArchive(): void
+    {
+        Session::checkToken('post') or jexit(Text::_('JINVALID_TOKEN'));
+        $this->assertArchivePermission();
+        $application = Factory::getApplication();
+        $service = $this->createArchiveImportService();
+        $files = $application->getInput()->files->get('archive_file', null, 'array');
+        $upload = is_array($files) ? $files : null;
+        $inboxArchive = $application->getInput()->post->getString('inbox_archive', '');
+        $session = $application->getSession();
+        $previous = $session->get('com_audioarchive.restore_inspection', []);
+
+        if (is_array($previous) && trim((string) ($previous['token'] ?? '')) !== '')
+        {
+            $service->deleteStaged((string) $previous['token']);
+        }
+
+        try
+        {
+            $token = $service->stage($upload, $inboxArchive);
+            $inspection = $service->inspect($service->getStagedPath($token));
+            $session->set('com_audioarchive.restore_inspection', [
+                'token' => $token,
+                'inspection' => $inspection,
+            ]);
+            $application->enqueueMessage(Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_INSPECTION_COMPLETE'), 'success');
+        }
+        catch (\Throwable $exception)
+        {
+            $session->clear('com_audioarchive.restore_inspection');
+            $application->enqueueMessage(
+                Text::sprintf('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_INSPECTION_FAILED', $exception->getMessage()),
+                'error'
+            );
+        }
+
+        $this->setRedirect($this->maintenanceUrl());
+    }
+
+    /**
+     * @brief Restore the currently inspected Audio Archive ZIP.
+     *
+     * @return void
+     */
+    public function restoreArchive(): void
+    {
+        Session::checkToken('post') or jexit(Text::_('JINVALID_TOKEN'));
+        $this->assertArchivePermission();
+        $application = Factory::getApplication();
+        $session = $application->getSession();
+        $staged = $session->get('com_audioarchive.restore_inspection', []);
+        $token = is_array($staged) ? trim((string) ($staged['token'] ?? '')) : '';
+
+        if ($token === '')
+        {
+            $application->enqueueMessage(Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_ERROR_NO_INSPECTION'), 'error');
+            $this->setRedirect($this->maintenanceUrl());
+            return;
+        }
+
+        if ($application->getInput()->post->getInt('confirm_restore', 0) !== 1)
+        {
+            $application->enqueueMessage(Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_CONFIRM_REQUIRED'), 'warning');
+            $this->setRedirect($this->maintenanceUrl());
+            return;
+        }
+
+        $restoreMode = $application->getInput()->post->getCmd('restore_mode', 'empty');
+        $conflictPolicy = $application->getInput()->post->getCmd('conflict_policy', 'skip');
+        $restoreConfiguration = $application->getInput()->post->getInt('restore_configuration', 0) === 1;
+        $service = $this->createArchiveImportService();
+
+        try
+        {
+            if (function_exists('set_time_limit'))
+            {
+                @set_time_limit(0);
+            }
+
+            $result = $service->restore(
+                $service->getStagedPath($token),
+                $restoreMode,
+                $conflictPolicy,
+                $restoreConfiguration
+            );
+            $service->deleteStaged($token);
+            $session->clear('com_audioarchive.restore_inspection');
+            $application->enqueueMessage(
+                Text::sprintf(
+                    'COM_AUDIOARCHIVE_ARCHIVE_IMPORT_RESTORE_COMPLETE',
+                    (int) ($result['created'] ?? 0),
+                    (int) ($result['updated'] ?? 0),
+                    (int) ($result['skipped'] ?? 0),
+                    (int) ($result['files_restored'] ?? 0),
+                    (int) ($result['analyses_restored'] ?? 0)
+                ),
+                'success'
+            );
+            $application->enqueueMessage(Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_REINDEX_NOTICE'), 'info');
+        }
+        catch (\Throwable $exception)
+        {
+            $application->enqueueMessage(
+                Text::sprintf('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_RESTORE_FAILED', $exception->getMessage()),
+                'error'
+            );
+        }
+
+        $this->setRedirect($this->maintenanceUrl());
+    }
+
+    /**
+     * @brief Discard the currently inspected staged archive.
+     *
+     * @return void
+     */
+    public function clearArchiveInspection(): void
+    {
+        Session::checkToken('post') or jexit(Text::_('JINVALID_TOKEN'));
+        $this->assertArchivePermission();
+        $application = Factory::getApplication();
+        $session = $application->getSession();
+        $staged = $session->get('com_audioarchive.restore_inspection', []);
+        $token = is_array($staged) ? trim((string) ($staged['token'] ?? '')) : '';
+
+        if ($token !== '')
+        {
+            $this->createArchiveImportService()->deleteStaged($token);
+        }
+
+        $session->clear('com_audioarchive.restore_inspection');
+        $application->enqueueMessage(Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_INSPECTION_CLEARED'), 'info');
+        $this->setRedirect($this->maintenanceUrl());
+    }
+
+    /**
      * @brief Execute one maintenance operation for selected clip identifiers.
      *
      * @param callable $operation Operation receiving service and clip ID.
@@ -563,6 +778,55 @@ class MaintenanceController extends BaseController
         }
 
         $this->setRedirect($this->maintenanceUrl());
+    }
+
+    /**
+     * @brief Require both processing and managed-file permissions for archive backup operations.
+     *
+     * @return void
+     */
+    private function assertArchivePermission(): void
+    {
+        $this->assertProcessPermission();
+
+        if (!Factory::getApplication()->getIdentity()->authorise('audioarchive.managefiles', 'com_audioarchive'))
+        {
+            throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+        }
+    }
+
+    /**
+     * @brief Create the archive import service for the current request.
+     *
+     * @return ArchiveImportService Import service.
+     */
+    private function createArchiveImportService(): ArchiveImportService
+    {
+        return new ArchiveImportService(
+            Factory::getContainer()->get(DatabaseInterface::class),
+            ComponentHelper::getParams('com_audioarchive'),
+            Factory::getApplication()->getIdentity()
+        );
+    }
+
+    /**
+     * @brief Read the installed component version from Joomla's extension manifest cache.
+     *
+     * @return string Installed component version.
+     */
+    private function getInstalledComponentVersion(): string
+    {
+        $database = Factory::getContainer()->get(DatabaseInterface::class);
+        $query = $database->getQuery(true)
+            ->select($database->quoteName('manifest_cache'))
+            ->from($database->quoteName('#__extensions'))
+            ->where($database->quoteName('type') . ' = ' . $database->quote('component'))
+            ->where($database->quoteName('element') . ' = ' . $database->quote('com_audioarchive'));
+        $manifest = json_decode((string) $database->setQuery($query, 0, 1)->loadResult(), true);
+
+        return is_array($manifest) && trim((string) ($manifest['version'] ?? '')) !== ''
+            ? trim((string) $manifest['version'])
+            : '0.9.2';
     }
 
     /**

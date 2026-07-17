@@ -852,7 +852,15 @@
 
 .com-audioarchive-pagination .pagination
 {
+	flex-wrap: wrap;
+	justify-content: flex-end;
 	margin: 0;
+}
+
+.com-audioarchive-pagination-ellipsis .page-link
+{
+	min-width: 2.4rem;
+	text-align: center;
 }
 
 .com-audioarchive-clip
@@ -1016,6 +1024,50 @@
 	justify-content: center;
 	gap: .5rem;
 	width: 100%;
+}
+
+.com-audioarchive-clip-navigation
+{
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 1rem;
+	margin-top: clamp(2rem, 5vw, 3.5rem);
+	padding-top: 1.25rem;
+	border-top: 1px solid var(--audioarchive-border);
+}
+
+.com-audioarchive-clip-navigation-link
+{
+	display: flex;
+	flex-direction: column;
+	gap: .25rem;
+	min-width: 0;
+	padding: .8rem 1rem;
+	border: 1px solid var(--audioarchive-border);
+	border-radius: var(--audioarchive-radius);
+	background: var(--audioarchive-surface);
+	text-decoration: none;
+}
+
+.com-audioarchive-clip-navigation-link.is-next
+{
+	grid-column: 2;
+	text-align: right;
+}
+
+.com-audioarchive-clip-navigation-direction
+{
+	font-size: .78rem;
+	font-weight: 800;
+	letter-spacing: .05em;
+	text-transform: uppercase;
+	color: var(--audioarchive-accent);
+}
+
+.com-audioarchive-clip-navigation-title
+{
+	font-weight: 700;
+	overflow-wrap: anywhere;
 }
 
 @media (max-width: 64rem)
@@ -1273,6 +1325,16 @@
 	.com-audioarchive-clip-layout
 	{
 		grid-template-columns: 1fr;
+	}
+
+	.com-audioarchive-clip-navigation
+	{
+		grid-template-columns: 1fr;
+	}
+
+	.com-audioarchive-clip-navigation-link.is-next
+	{
+		grid-column: 1;
 	}
 
 	.com-audioarchive-detail-player

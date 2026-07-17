@@ -58,4 +58,6 @@ $hasDescription = trim((string) $this->item->description) !== '';
 			<?php echo $this->loadTemplate('download'); ?>
 		</aside>
 	</div>
+
+	<?php echo $this->loadTemplate('navigation'); ?>
 </article>
