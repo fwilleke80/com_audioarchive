@@ -4,7 +4,7 @@ Audio Archive is a native Joomla! 6 extension package for managing and publishin
 
 It is intended for archives ranging from a small collection to several thousand files. Administrators can upload or import clips, organise them with Joomla categories and tags, edit metadata, replace source files in bulk, inspect archive integrity, generate waveform and spectral analyses with optional FFmpeg support, control publication and access, and review playback and download statistics. Visitors can search and filter the archive, browse a tag directory, use consistent responsive players throughout the site, open clip detail pages, and — where permitted — download the protected original files.
 
-> **Current version:** `0.8.4`  
+> **Current version:** `0.8.9`
 > **Package:** `pkg_audioarchive`
 
 ## Table of contents
@@ -31,10 +31,12 @@ It is intended for archives ranging from a small collection to several thousand 
   - [Publishing the public archive](#publishing-the-public-archive)
   - [Publishing a tag directory](#publishing-a-tag-directory)
   - [Frontend access control](#frontend-access-control)
+  - [Frontend clip editing](#frontend-clip-editing)
   - [Public filtering](#public-filtering)
   - [Tags and tag descriptions](#tags-and-tag-descriptions)
   - [Playback and downloads](#playback-and-downloads)
     - [Shared player presentations](#shared-player-presentations)
+    - [Template overrides and custom styling](#template-overrides-and-custom-styling)
 - [Using the Audio Archive module](#using-the-audio-archive-module)
   - [Selection modes](#selection-modes)
   - [Module layouts](#module-layouts)
@@ -59,6 +61,7 @@ It is intended for archives ranging from a small collection to several thousand 
 
 - Dashboard with clip, publication, storage, playback, download, analysis, and system information
 - Dashboard display of the installed component version
+- Dashboard storage summary with combined and separate original-clip, waveform, and spectral-analysis sizes
 - System checks for configured storage paths, PHP capabilities, FFmpeg, and FFprobe
 - Absolute or Joomla-root-relative FFmpeg and FFprobe paths, automatic executable detection, version probing, and detailed failure reporting
 - Automatic addition of Unix execute permission to explicitly configured binaries when the hosting account permits it
@@ -80,12 +83,14 @@ It is intended for archives ranging from a small collection to several thousand 
 - Manual waveform and spectral-analysis generation or regeneration from the clip editor
 - Database-backed analysis queues with missing, pending, failed, stale, available, and queued status counts
 - Incremental FFmpeg waveform and spectrum processing with visible progress and retry handling
-- One-click regeneration of every eligible spectral analysis after generation settings change
+- Queue-based full regeneration of every eligible waveform or spectral analysis after generation settings change
+- Deletion of all generated waveform or spectral-analysis data while retaining processing-job history
+- Separate recorded disk-usage totals for waveform and spectral-analysis data
 - Generic derived-analysis storage and job infrastructure shared by waveform and spectral analyses
 - Batch category assignment
 - Batch tag addition, replacement, and clearing
 - Searchable tag selection in batch operations
-- Integrity report with repair and verification actions
+- On-demand integrity, codec-inventory, and stale-file checks so the maintenance page opens without scanning the archive
 - Original-file codec, container, extension, clip-count, and storage-size inventory
 - Filtering of maintenance results by audio codec
 - Review and removal of stale derivatives, abandoned temporary files, and unreferenced managed files
@@ -98,6 +103,7 @@ It is intended for archives ranging from a small collection to several thousand 
 
 - Searchable and filterable Archive menu-item type
 - Configurable Tag Directory menu-item type
+- Optional menu-item introductory text above Archive filters and Tag Directory contents
 - Text search across clip metadata
 - Category filtering
 - Multiple-tag filtering using selectable logical **AND** or **OR**
@@ -108,6 +114,8 @@ It is intended for archives ranging from a small collection to several thousand 
 - Sortable result columns
 - Server-side Joomla pagination
 - Configurable page sizes, filters, columns, and detail-page fields
+- Category names are shown in archive results only when the **Show category** list-column option is enabled
+- Session persistence for the last-used filters, sorting, and page size, stored independently for each Archive menu item
 - Responsive desktop table and mobile card presentation
 - Mobile cards that preserve readable tag and duration layouts on narrow screens
 - Protected inline playback with HTTP byte-range seeking
@@ -120,6 +128,7 @@ It is intended for archives ranging from a small collection to several thousand 
 - Automatic controls-only fallback when neither waveform nor spectrum data is available
 - Native browser audio controls when JavaScript is disabled or fails
 - Configurable player colours, corner radius, button sizes, waveform height, and preferred analysis view
+- Joomla template override support for the shared player markup
 - One-player-at-a-time behaviour
 - Clean, menu-aware SEF clip detail URLs
 - Breadcrumb integration
@@ -132,7 +141,7 @@ It is intended for archives ranging from a small collection to several thousand 
 - Aggregate play and download counters
 - Clickable category and tag links
 - Tag descriptions exposed through standard browser hover tooltips
-- An ACL-protected **Edit clip** link on frontend detail pages that opens the backend editor in a new tab
+- Native frontend clip editing for authorised users when Joomla frontend editing is enabled
 - Joomla publication-date, category, language, and access-level enforcement
 - English and German site interfaces
 
@@ -145,7 +154,7 @@ The package installs the following Joomla extensions:
 | Extension | Type | Purpose |
 | --- | --- | --- |
 | `com_audioarchive` | Component | Administration, importing, replacement, integrity maintenance, FFmpeg system checks, waveform and spectral analyses, shared players, public archive, tag directory, clip pages, playback, downloads, routing, access control, and statistics |
-| `mod_audioarchive` | Site module | Displays selected clips using latest, random, daily, popular, downloaded, or specific-clip modes |
+| `mod_audioarchive` | Site module | Displays selected clips using latest, longest, shortest, random, daily, most-played, most-downloaded, or specific-clip modes |
 | `mod_audioarchive_tags` | Site module | Displays Audio Archive tags with descriptions, optional clip counts, and links to a filtered Archive |
 | `plg_finder_audioarchive` | Smart Search plugin | Adds eligible Audio Archive clips to Joomla Smart Search |
 | `plg_quickicon_audioarchive` | Quick Icons plugin | Adds an Audio Archive shortcut to the administrator Home Dashboard |
@@ -154,7 +163,7 @@ The package installs the following Joomla extensions:
 Install the package ZIP rather than installing its individual extension ZIP files separately.
 
 ```text
-pkg_audioarchive_v0-8-4.zip
+pkg_audioarchive_v0-8-5.zip
 ```
 
 ## Installing and updating the package
@@ -162,7 +171,7 @@ pkg_audioarchive_v0-8-4.zip
 To install Audio Archive:
 
 1. Open **System → Install → Extensions** in the Joomla administrator.
-2. Upload `pkg_audioarchive_v0-8-4.zip`.
+2. Upload `pkg_audioarchive_v0-8-5.zip`.
 3. Open **Components → Audio Archive**.
 4. Review the dashboard and component options before importing files.
 
@@ -188,7 +197,7 @@ Review the following settings before importing the archive:
 - Default publication state
 - Original-file storage directory
 - Preview-file storage directory
-- Waveform and derived-analysis storage directory
+- Analysis-data storage directory for waveform and spectral-analysis files
 - Import inbox directory
 - Permitted extensions and MIME types
 - Maximum file size and duration
@@ -220,7 +229,7 @@ Maximum frequency: 8000 Hz
 Dynamic range:     80 dB
 ```
 
-Changing spectrum-generation options does not silently replace existing spectrum images. Use **Regenerate all spectral analyses** on the Integrity & Maintenance page to rebuild them.
+Changing waveform or spectrum-generation options does not silently replace existing generated data. Use **Regenerate all waveforms** or **Regenerate all spectral analyses** on the Integrity & Maintenance page to queue a complete rebuild through the normal analysis job system.
 
 The same component configuration is also available through Joomla's Global Configuration.
 
@@ -241,7 +250,7 @@ Open:
 Components → Audio Archive
 ```
 
-The dashboard provides archive statistics and verifies the database, configured directories, PHP capabilities, and optional FFmpeg or FFprobe executables. Where supported, missing managed-storage directories can be created from the system check.
+The dashboard provides archive statistics and verifies the database, configured directories, PHP capabilities, and optional FFmpeg or FFprobe executables. The shared waveform and spectral-analysis location is reported as **Analysis data storage**. Where supported, missing managed-storage directories can be created from the system check.
 
 For FFmpeg and FFprobe, the system check reports:
 
@@ -255,7 +264,7 @@ Audio Archive checks explicitly configured paths first and can also search commo
 
 FFmpeg is required for waveform and spectral-analysis generation. FFprobe is currently diagnosed and available to future media-analysis features.
 
-The dashboard also displays the installed Audio Archive version and provides actions for resetting all recorded play counts or all recorded download counts.
+The dashboard also displays the installed Audio Archive version, provides actions for resetting all recorded play counts or all recorded download counts, and shows the combined managed-storage size with separate totals for current original clip files, waveform data, and spectral analyses. These totals use the recorded sizes of currently referenced files and therefore do not require a filesystem scan; stale or unreferenced files remain part of the manual maintenance checks.
 
 ### Adding clips
 
@@ -356,7 +365,7 @@ Select clips and use **Batch** to move them to another category or add, replace,
 
 The list supports Joomla access levels and category permissions. Individual clip access is also enforced by archive queries, clip detail pages, playback, analysis delivery, downloads, modules, content placeholders, tag counts, and Smart Search.
 
-On a frontend clip detail page, a user who has `core.edit` permission for the clip—or `core.edit.own` for a clip they created—sees an **Edit clip** button. It opens the Joomla backend clip editor in a new tab, leaving the public page open.
+On a frontend clip detail page, an authorised user sees an **Edit clip** button when Joomla's global frontend-editing option is enabled. The button opens a native site-side form for title, alias, category, tags, description, recording date, and—when `core.edit.state` is granted—publication state, access level, and publication dates. Original-file replacement, analysis generation, and other technical actions remain administrator-only.
 
 ### Integrity and maintenance
 
@@ -366,9 +375,17 @@ Open:
 Components → Audio Archive → Integrity & Maintenance
 ```
 
-The integrity scan is non-destructive. It inspects database relationships, managed paths, file records, lightweight file properties, metadata state, analysis state, and storage consistency without deleting or moving files.
+The page opens without scanning the archive or managed storage. This keeps it responsive as the collection grows. Database-only analysis status counts and recorded disk-usage totals remain immediately available.
 
-The report can identify issues such as:
+Run one of the three checks explicitly when current results are needed:
+
+- **Integrity check** — inspects database relationships, managed paths, lightweight file state, tags, duplicate checksums, and abandoned jobs
+- **Codec inventory** — groups original files by detected codec, container, and extension and provides lists of matching clips
+- **Stale-file check** — scans managed storage for stale derivatives, unreferenced files, and abandoned temporary files
+
+Each result records when the check was performed and can be refreshed with **Run check again**.
+
+The non-destructive integrity report can identify issues such as:
 
 - Missing categories
 - Missing or orphaned original-file records
@@ -386,7 +403,7 @@ The report can identify issues such as:
 
 The report can be exported as UTF-8 CSV.
 
-For selected clips, the maintenance page provides:
+For selected clips, the integrity results provide:
 
 - **Verify selected** — checks existence, file size, and SHA-256
 - **Reanalyse selected** — refreshes technical media metadata
@@ -394,7 +411,7 @@ For selected clips, the maintenance page provides:
 
 Clip repair operations process at most 50 selected clips per request.
 
-The **Original-file codec inventory** groups current originals by:
+The codec inventory reports:
 
 - Audio codec
 - Container format
@@ -404,14 +421,14 @@ The **Original-file codec inventory** groups current originals by:
 
 Selecting a codec displays every matching clip. This is useful for locating formats such as ALAC before preparing a bulk replacement run.
 
-The stale-file section lists only cleanup candidates, including:
+The stale-file results contain only cleanup candidates, including:
 
 - Stale compatibility previews
 - Stale waveform, spectral-analysis, or other derived-analysis files
 - Unreferenced managed files
 - Abandoned temporary files
 
-Current referenced originals are never eligible for stale-file cleanup. Every selected candidate is regenerated and revalidated immediately before deletion so that files which changed after the page was loaded are not removed.
+Current referenced originals are never eligible for stale-file cleanup. Every selected candidate is regenerated and revalidated immediately before deletion so that files which changed after the check are not removed.
 
 Large cleanup selections are processed automatically in sequential AJAX batches of at most 200 files. This avoids PHP input limits and oversized single requests while preserving the server-side safety limit and per-batch validation.
 
@@ -495,7 +512,7 @@ Spectra support:
 
 #### Analysis queues and regeneration
 
-The **Audio analyses** section on the Integrity & Maintenance page displays separate waveform and spectral-analysis statistics, including:
+The **Audio analyses** section on the Integrity & Maintenance page displays separate waveform and spectral-analysis summaries. Each summary includes:
 
 - Available
 - Missing
@@ -503,12 +520,15 @@ The **Audio analyses** section on the Integrity & Maintenance page displays sepa
 - Failed
 - Stale
 - Queued jobs
+- Disk space occupied by the generated data recorded in the analysis table
 
 Waveform actions include:
 
 - **Queue missing waveforms**
 - **Queue stale waveforms**
 - **Retry failed waveforms**
+- **Regenerate all waveforms**
+- **Delete all waveform data**
 
 Spectral-analysis actions include:
 
@@ -516,8 +536,11 @@ Spectral-analysis actions include:
 - **Queue stale spectral analyses**
 - **Retry failed spectral analyses**
 - **Regenerate all spectral analyses**
+- **Delete all spectral-analysis data**
 
-**Regenerate all spectral analyses** queues every clip with an available original file, skips duplicate pending or running jobs, and immediately starts the existing incremental processor. Use it after changing spectrum-generation parameters.
+Both **Regenerate all** actions queue every eligible clip with an available original file through the normal database-backed job system. Duplicate pending or running jobs are skipped. Processing uses the same queue list, progress display, retry handling, and **Process analysis queue** control as all other analysis operations.
+
+The delete-all actions permanently remove the generated files and analysis database records for the selected type, reset every corresponding clip status to missing, and cancel pending or running jobs. Existing job rows are retained as history; active jobs are marked cancelled rather than deleted. Original audio files and the other analysis type are not affected.
 
 The shared **Process analysis queue** action processes jobs incrementally and displays progress. Closing or reloading the page stops the browser loop but does not discard untouched jobs. Reopen the maintenance page and start processing again to continue. Interrupted running jobs are recovered after their processing lock expires and are retried up to the configured maximum attempt count.
 
@@ -530,7 +553,7 @@ Create a Joomla menu item:
 1. Open the Joomla menu manager.
 2. Create a new menu item.
 3. Choose **Audio Archive → Audio Archive** as the menu-item type.
-4. Configure its category or tag restrictions, filters, columns, ordering, pagination, clip-detail settings, and download policy.
+4. Configure its optional introductory text, category or tag restrictions, filters, columns, ordering, pagination, clip-detail settings, and download policy.
 5. Set the menu item's Joomla access level as required.
 6. Publish the menu item.
 
@@ -548,6 +571,7 @@ Audio Archive → Tag Directory
 
 The Tag Directory can:
 
+- Display optional introductory text above the directory
 - Display all accessible Audio Archive tags or only selected tags
 - Link each tag to a chosen Archive menu item
 - Choose a suitable Archive menu item automatically
@@ -587,6 +611,24 @@ Guests who do not satisfy the configured access level are redirected to Joomla's
 
 Menu-item access levels, category access, and individual clip access remain additional restrictions. The visitor must satisfy all applicable rules.
 
+### Frontend clip editing
+
+Frontend editing is available only when Joomla's global **Frontend Editing** option is enabled. Audio Archive then displays **Edit clip** on a detail page only when the current user has effective `core.edit` permission for that clip, or `core.edit.own` for a clip they created.
+
+The frontend form supports:
+
+- Title
+- Alias
+- Category
+- Tags
+- Description
+- Recording date
+- Publication state, access level, and publication dates when `core.edit.state` is granted
+
+The edit controller repeats the global-setting and item-level ACL checks for direct edit requests and saves. It uses Joomla form validation, CSRF protection, checkout and check-in handling, filtered editor content, and internal return-URL validation. Moving a clip to another category additionally requires suitable create or edit permission in the target category.
+
+Frontend editing does not expose original-file replacement, media inspection, waveform or spectrum generation, counters, or other technical maintenance controls. **Save & Close** and **Cancel** return to the clip detail page from which editing was opened; **Apply** saves while keeping the edit form open.
+
 ### Public filtering
 
 The public filter form uses HTTP GET, so filtered archive URLs can be bookmarked or shared.
@@ -616,6 +658,10 @@ Duration values can be entered as seconds or as formatted times:
 ```
 
 With JavaScript enabled, the duration fields are accompanied by a two-handle slider. The text fields remain the submitted values and continue to work without JavaScript.
+
+Audio Archive stores the visitor's last-used filter values, tag mode, sorting, sort direction, and page size in the Joomla session. Returning to the same Archive menu item restores that state when no explicit filter state is present in the URL. The **Back to the archive** link on clip detail pages includes the canonical filter and sorting query, so the restored archive state remains visible, bookmarkable, and shareable. Guest visitors are supported through Joomla's anonymous session cookie; the state is temporary and tied to that browser session.
+
+State is stored independently for each Archive menu item, so differently configured archive pages do not overwrite one another. The **Reset** action clears the stored state for the current menu item and returns to its configured defaults.
 
 ### Tags and tag descriptions
 
@@ -674,6 +720,29 @@ Under **Playback and Downloads → Player style**, global options control:
 
 Clip detail pages have their own global presentation setting, which Archive menu items can override.
 
+#### Template overrides and custom styling
+
+The shared player markup can be replaced with a Joomla template override:
+
+```text
+templates/<template>/html/layouts/com_audioarchive/player/unified.php
+```
+
+The override is used by archive rows and cards, clip detail pages, Audio Archive modules, content-plugin embeds, and backend previews. When no override exists, Audio Archive uses its bundled component layout.
+
+A structural override should preserve the `data-audioarchive-*` attributes and the essential player class names expected by the bundled JavaScript. Visual changes that do not require different markup can instead be placed in the site's template CSS by targeting classes such as:
+
+```text
+.audioarchive-custom-player
+.audioarchive-custom-player-toggle
+.audioarchive-custom-player-seek
+.audioarchive-custom-player-times
+.audioarchive-custom-player-volume-controls
+.audioarchive-custom-player-analysis
+```
+
+The built-in stylesheet also exposes player CSS custom properties, including colours, corner radius, button size, waveform height, and played or unplayed waveform colours. Template CSS can override these globally or within a specific module or page context.
+
 ## Using the Audio Archive module
 
 The package contains one configurable clip module:
@@ -695,13 +764,15 @@ Depending on the Joomla administrator menu configuration, modules may also be av
 The module can display:
 
 - Latest clips
+- Longest clips
+- Shortest clips
 - Random clips
 - A stable clip of the day
 - Most-played clips
 - Most-downloaded clips
 - A specific clip
 
-The result can be restricted by category and tags. Multiple selected tags can use logical **ALL** or **ANY**, and the number of displayed clips is configurable where the selected mode permits several results.
+Longest and shortest mode order eligible clips by duration and use recording date and clip ID as stable tie-breakers. The result can be restricted by category and tags. Multiple selected tags can use logical **ALL** or **ANY**, and the number of displayed clips is configurable where the selected mode permits several results.
 
 ### Module layouts
 
