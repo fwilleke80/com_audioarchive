@@ -13,6 +13,8 @@ It is intended for archives ranging from a small collection to several thousand 
   - [Administrator features](#administrator-features)
   - [Public website features](#public-website-features)
 - [Package contents](#package-contents)
+- [Requirements and external tools](#requirements-and-external-tools)
+  - [FFmpeg and FFprobe binaries](#ffmpeg-and-ffprobe-binaries)
 - [Installing and updating the package](#installing-and-updating-the-package)
 - [Using the Audio Archive component](#using-the-audio-archive-component)
   - [Initial configuration](#initial-configuration)
@@ -62,8 +64,8 @@ It is intended for archives ranging from a small collection to several thousand 
 - Dashboard with clip, publication, storage, playback, download, analysis, and system information
 - Dashboard display of the installed component version
 - Dashboard storage summary with combined and separate original-clip, waveform, and spectral-analysis sizes
-- System checks for configured storage paths, PHP capabilities, FFmpeg, and FFprobe
-- Absolute or Joomla-root-relative FFmpeg and FFprobe paths, automatic executable detection, version probing, and detailed failure reporting
+- System checks for configured storage paths, PHP capabilities, FFmpeg availability, and optional FFprobe availability
+- Absolute or Joomla-root-relative FFmpeg and FFprobe paths, fallback executable searches, version probing, and detailed failure reporting
 - Automatic addition of Unix execute permission to explicitly configured binaries when the hosting account permits it
 - ACL-protected buttons for resetting all play counts or all download counts
 - Joomla-style clip management with publication states, access levels, categories, tags, sorting, and filtering
@@ -128,7 +130,7 @@ It is intended for archives ranging from a small collection to several thousand 
 - Automatic controls-only fallback when neither waveform nor spectrum data is available
 - Native browser audio controls when JavaScript is disabled or fails
 - Configurable player colours, corner radius, button sizes, waveform height, and preferred analysis view
-- Joomla template override support for the shared player markup
+- Joomla template override support for the shared frontend player markup
 - One-player-at-a-time behaviour
 - Clean, menu-aware SEF clip detail URLs
 - Breadcrumb integration
@@ -139,10 +141,10 @@ It is intended for archives ranging from a small collection to several thousand 
 - Configurable protected downloads of original files
 - Optional restriction of detail-page downloads to selected Joomla access levels
 - Aggregate play and download counters
-- Clickable category and tag links
+- Clickable tag links, with category names available as archive metadata and breadcrumb context
 - Tag descriptions exposed through standard browser hover tooltips
 - Native frontend clip editing for authorised users when Joomla frontend editing is enabled
-- Joomla publication-date, category, language, and access-level enforcement
+- Joomla publication-date, category, and access-level enforcement
 - English and German site interfaces
 
 The component keeps original audio files and generated analysis files in managed storage and never exposes their filesystem paths. Browser playback support depends on the container and codec supported by the visitor's browser; authorised original files remain downloadable when downloads are enabled for that visitor.
@@ -163,15 +165,44 @@ The package installs the following Joomla extensions:
 Install the package ZIP rather than installing its individual extension ZIP files separately.
 
 ```text
-pkg_audioarchive_v0-8-5.zip
+pkg_audioarchive_v0-8-9.zip
 ```
+
+## Requirements and external tools
+
+Audio Archive 0.8.9 requires:
+
+- Joomla! 6.x
+- PHP 8.3 or later
+- MySQL or MariaDB
+- PHP Fileinfo for reliable MIME-type inspection
+- Writable configured storage and import directories
+
+Core archive features—including metadata editing, filters, protected playback, downloads, modules, plugins, imports, and non-generation maintenance checks—work without FFmpeg or FFprobe. Waveform and spectral-analysis generation requires FFmpeg.
+
+`proc_open()` must be available when Audio Archive is expected to execute FFmpeg or FFprobe. Some hosting providers disable external process execution; the dashboard System Check reports this explicitly.
+
+### FFmpeg and FFprobe binaries
+
+Audio Archive does not bundle FFmpeg or FFprobe executables.
+
+FFmpeg is optional but required for generating waveform peak data and spectral-analysis images. FFprobe is also detected by the System Check, but **Audio Archive 0.8.9 does not use FFprobe for metadata extraction or any other production operation**. Duration, container, codec, embedded title, recording date, and related technical metadata are read by the bundled PHP media inspector.
+
+Recommended sources:
+
+- [Official FFmpeg download page](https://ffmpeg.org/download.html) — the preferred starting point; FFmpeg publishes source code and links to third-party providers of ready-to-use builds.
+- [FFbinaries downloads](https://ffbinaries.com/downloads) — a convenient unofficial source of separately packaged FFmpeg and FFprobe executables for several platforms.
+
+FFbinaries is an open-source, unofficial repackaging service. Its documentation identifies the upstream build providers and stores the packaged binaries on GitHub. However, its latest listed release is FFmpeg 6.1 from December 2023, and the reviewed download pages do not present a prominent signature or checksum-verification workflow. Treat it as a convenient compatibility source rather than the primary source for a current production binary. Prefer a recent build linked from the official FFmpeg download page when the hosting platform allows it.
+
+Store uploaded executables outside the public web root where possible. When that is impossible, place them in a server-protected directory. Configure the complete executable path under **Components → Audio Archive → Options → Processing** and confirm it through the dashboard System Check.
 
 ## Installing and updating the package
 
 To install Audio Archive:
 
 1. Open **System → Install → Extensions** in the Joomla administrator.
-2. Upload `pkg_audioarchive_v0-8-5.zip`.
+2. Upload `pkg_audioarchive_v0-8-9.zip`.
 3. Open **Components → Audio Archive**.
 4. Review the dashboard and component options before importing files.
 
@@ -196,7 +227,7 @@ Review the following settings before importing the archive:
 - Default access level for new clips
 - Default publication state
 - Original-file storage directory
-- Preview-file storage directory
+- Reserved compatibility-preview storage directory (0.8.9 does not generate playback previews)
 - Analysis-data storage directory for waveform and spectral-analysis files
 - Import inbox directory
 - Permitted extensions and MIME types
@@ -209,7 +240,7 @@ Review the following settings before importing the archive:
 - Backend preview player presentation
 - Playback and download settings
 - Clip detail-page fields
-- FFmpeg and FFprobe paths
+- FFmpeg path and optional FFprobe diagnostic path
 - Waveform and spectrum generation, detail levels, automatic queueing, process timeout, and retry limit
 - Uninstallation media-retention policy
 
@@ -233,7 +264,7 @@ Changing waveform or spectrum-generation options does not silently replace exist
 
 The same component configuration is also available through Joomla's Global Configuration.
 
-Paths to FFmpeg and FFprobe may be absolute server paths or paths relative to the Joomla root. For example:
+Configured FFmpeg and FFprobe paths may be absolute server paths or paths relative to the Joomla root. For example:
 
 ```text
 audioarchive/ffbin/ffmpeg
@@ -250,7 +281,7 @@ Open:
 Components → Audio Archive
 ```
 
-The dashboard provides archive statistics and verifies the database, configured directories, PHP capabilities, and optional FFmpeg or FFprobe executables. The shared waveform and spectral-analysis location is reported as **Analysis data storage**. Where supported, missing managed-storage directories can be created from the system check.
+The dashboard provides archive statistics and checks the database schema, configured directories, PHP capabilities, FFmpeg, and optional FFprobe. The shared waveform and spectral-analysis location is reported as **Analysis data storage**. Where supported, missing managed-storage directories can be created from the System Check.
 
 For FFmpeg and FFprobe, the system check reports:
 
@@ -260,11 +291,13 @@ For FFmpeg and FFprobe, the system check reports:
 - Its reported version
 - Whether execute permission was added automatically
 
-Audio Archive checks explicitly configured paths first and can also search common executable locations when automatic detection is enabled. If an uploaded executable lacks Unix execute bits, Audio Archive attempts to add them when the hosting account has sufficient permission. Otherwise, the dashboard reports the permission problem explicitly.
+Audio Archive checks an explicitly configured path first. It then tries the executable name through the server's `PATH`, followed by `/usr/bin` and `/usr/local/bin`. If an explicitly configured Unix executable lacks execute bits, Audio Archive attempts to add them when the hosting account has sufficient permission. Otherwise, the dashboard reports the permission problem explicitly.
 
-FFmpeg is required for waveform and spectral-analysis generation. FFprobe is currently diagnosed and available to future media-analysis features.
+FFmpeg is required for waveform and spectral-analysis generation. FFprobe is optional and is currently only located and version-tested by the System Check. Audio Archive 0.8.9 performs media metadata extraction with its bundled PHP inspector, whether or not FFprobe is installed. The 0.8.9 System Check may nevertheless display FFprobe as the metadata-extraction method when it is detected; that status label is inaccurate and does not reflect the actual extraction path.
 
 The dashboard also displays the installed Audio Archive version, provides actions for resetting all recorded play counts or all recorded download counts, and shows the combined managed-storage size with separate totals for current original clip files, waveform data, and spectral analyses. These totals use the recorded sizes of currently referenced files and therefore do not require a filesystem scan; stale or unreferenced files remain part of the manual maintenance checks.
+
+Audio Archive 0.8.9 does not generate compatibility playback files and does not transcode originals. Public playback streams the current original file. The preview directory, preview status column, and stale-preview maintenance support remain as compatibility scaffolding for legacy or manually created preview records.
 
 ### Adding clips
 
@@ -292,7 +325,7 @@ Existing clips include a protected administrator preview using the shared player
 
 When analysis generation is enabled, the edit form provides **Generate waveform** or **Regenerate waveform**, plus **Generate spectral analysis** or **Regenerate spectral analysis**. New uploads can queue either or both analyses automatically.
 
-An existing clip can receive a replacement original file from its edit form. The replacement preserves the clip ID, title, alias, category, tags, counters, access level, and public route. Technical metadata is recalculated, and existing previews and analysis derivatives are marked stale where applicable. When automatic analysis queueing is enabled, a replacement can queue new waveform and spectral-analysis jobs.
+An existing clip can receive a replacement original file from its edit form. The replacement preserves the clip ID, title, alias, category, tags, counters, access level, and public route. Technical metadata is recalculated. Existing waveform and spectral-analysis derivatives are marked stale; a legacy preview record is also marked stale if one exists. When automatic analysis queueing is enabled, a replacement can queue new waveform and spectral-analysis jobs.
 
 #### Browser bulk upload
 
@@ -383,7 +416,7 @@ Run one of the three checks explicitly when current results are needed:
 - **Codec inventory** — groups original files by detected codec, container, and extension and provides lists of matching clips
 - **Stale-file check** — scans managed storage for stale derivatives, unreferenced files, and abandoned temporary files
 
-Each result records when the check was performed and can be refreshed with **Run check again**.
+The page displays when the current check was performed. Results can be refreshed with **Run check again**; they are not stored as a historical report.
 
 The non-destructive integrity report can identify issues such as:
 
@@ -423,12 +456,12 @@ Selecting a codec displays every matching clip. This is useful for locating form
 
 The stale-file results contain only cleanup candidates, including:
 
-- Stale compatibility previews
+- Stale legacy compatibility previews
 - Stale waveform, spectral-analysis, or other derived-analysis files
 - Unreferenced managed files
 - Abandoned temporary files
 
-Current referenced originals are never eligible for stale-file cleanup. Every selected candidate is regenerated and revalidated immediately before deletion so that files which changed after the check are not removed.
+Current referenced originals are never eligible for stale-file cleanup. Before deletion, Audio Archive regenerates the current candidate list and revalidates every selected item so that files whose status changed after the check are not removed.
 
 Large cleanup selections are processed automatically in sequential AJAX batches of at most 200 files. This avoids PHP input limits and oversized single requests while preserving the server-side safety limit and per-batch validation.
 
@@ -544,7 +577,7 @@ The delete-all actions permanently remove the generated files and analysis datab
 
 The shared **Process analysis queue** action processes jobs incrementally and displays progress. Closing or reloading the page stops the browser loop but does not discard untouched jobs. Reopen the maintenance page and start processing again to continue. Interrupted running jobs are recovered after their processing lock expires and are retried up to the configured maximum attempt count.
 
-Waveform and spectral files are delivered through protected component controllers. Public requests must pass the same publication, category, language, and access checks as playback. The backend uses a separate authorised endpoint so editors can preview analyses for unpublished or restricted clips.
+Waveform and spectral files are delivered through protected component controllers. Public requests must pass the same publication, category, and access checks as playback. The backend uses a separate authorised endpoint so editors can preview analyses for unpublished or restricted clips.
 
 ### Publishing the public archive
 
@@ -603,6 +636,7 @@ The selected Joomla access level is checked before any frontend Audio Archive co
 - Tag Directory views
 - Clip detail pages
 - Playback streams
+- Waveform and spectral-analysis streams
 - Original-file downloads
 - Play-count requests
 - Direct non-menu component URLs
@@ -677,7 +711,6 @@ Playback, analysis, and download requests pass through component controllers tha
 - Clip publication state and dates
 - Category publication and access
 - Joomla access levels
-- Language eligibility
 - Managed-file availability and path containment
 - Download configuration and permitted Joomla access level where applicable
 
@@ -728,7 +761,9 @@ The shared player markup can be replaced with a Joomla template override:
 templates/<template>/html/layouts/com_audioarchive/player/unified.php
 ```
 
-The override is used by archive rows and cards, clip detail pages, Audio Archive modules, content-plugin embeds, and backend previews. When no override exists, Audio Archive uses its bundled component layout.
+The override is used by archive rows and cards, clip detail pages, Audio Archive modules, and content-plugin embeds. When no override exists, Audio Archive uses its bundled component layout.
+
+The administrator clip preview uses the same bundled player renderer, but the site-template override above does not currently replace the backend preview layout.
 
 A structural override should preserve the `data-audioarchive-*` attributes and the essential player class names expected by the bundled JavaScript. Visual changes that do not require different markup can instead be placed in the site's template CSS by targeting classes such as:
 
@@ -824,7 +859,7 @@ The module can independently show or hide:
 - Clip detail link
 - Original download link
 
-The module uses the component's protected playback, analysis, and download endpoints, clip access and publication checks, playback counting, shared player JavaScript and styling, and menu-aware SEF routing. Access to links and media endpoints is additionally governed by the component-wide frontend access setting. Category and tag links lead back to the appropriate Archive menu item, and tag descriptions are available as native hover tooltips.
+The module uses the component's protected playback, analysis, and download endpoints, clip access and publication checks, playback counting, shared player JavaScript and styling, and menu-aware SEF routing. Access to links and media endpoints is additionally governed by the component-wide frontend access setting. Tag links lead back to the appropriate Archive menu item, and tag descriptions are available as native hover tooltips. The optional category value is displayed as metadata rather than as a link.
 
 Random mode should normally be used without module caching when a new random selection is expected on each request. Clip-of-the-day mode produces a stable daily selection.
 
@@ -882,13 +917,11 @@ The package includes:
 plg_finder_audioarchive
 ```
 
-Enable it under:
+On a fresh package installation, the **Smart Search - Audio Archive** plugin is enabled automatically. Package updates preserve the administrator's existing enabled or disabled state. It can be reviewed under:
 
 ```text
 System → Manage → Plugins
 ```
-
-Search for **Audio Archive** and enable the **Smart Search - Audio Archive** plugin.
 
 For the initial index:
 
@@ -1093,7 +1126,7 @@ The plugin has independent options for showing or hiding:
 - Download link
 - Play and download counts
 
-Category and tag links retain the appropriate Archive menu context, and tag descriptions are available through standard browser tooltips.
+Tag links retain the appropriate Archive menu context, and tag descriptions are available through standard browser tooltips. Category output is plain metadata rather than a link.
 
 Count and playtime placeholders use the same public eligibility rules so that unpublished, inaccessible, or otherwise unavailable clips are not exposed through aggregate values.
 
