@@ -15,6 +15,7 @@ use Willeke\Component\Audioarchive\Site\Model\ArchiveModel;
 use Willeke\Component\Audioarchive\Site\Model\ClipModel;
 use Willeke\Component\Audioarchive\Site\Service\ArchiveMenuItemResolver;
 use Willeke\Component\Audioarchive\Site\Service\DownloadAccessService;
+use Willeke\Component\Audioarchive\Site\Service\FrontendEditingService;
 
 \defined('_JEXEC') or die;
 
@@ -145,12 +146,19 @@ class HtmlView extends BaseHtmlView
 
 		$canonicalInternal = RouteHelper::getClipRoute((int) $item->id, $routeItemId);
 		$canonical = Route::_($canonicalInternal, false, Route::TLS_IGNORE, true);
-		$this->canEdit = $this->canEditClip($identity, $item);
+		$this->canEdit = FrontendEditingService::isEnabled($application)
+			&& FrontendEditingService::canEdit($identity, $item);
 
 		if ($this->canEdit)
 		{
-			$this->editUrl = Uri::root()
-				. 'administrator/index.php?option=com_audioarchive&task=clip.edit&id=' . (int) $item->id;
+			$returnUrl = Route::_($canonicalInternal, false);
+			$this->editUrl = Route::_(
+				RouteHelper::getEditRoute(
+					(int) $item->id,
+					$routeItemId,
+					base64_encode($returnUrl)
+				)
+			);
 		}
 
 		$this->redirectLegacyOrStaleRoute($canonicalInternal, $routeItemId, $currentItemId);
@@ -163,35 +171,6 @@ class HtmlView extends BaseHtmlView
 			->useScript('com_audioarchive.player');
 
 		parent::display($tpl);
-	}
-
-	/**
-	 * @brief Check whether the current user may edit this clip in the administrator interface.
-	 *
-	 * @param \Joomla\CMS\User\User $user Current user.
-	 * @param object $item Clip record.
-	 *
-	 * @return bool True when the administrator edit page is accessible.
-	 */
-	private function canEditClip(\Joomla\CMS\User\User $user, object $item): bool
-	{
-		if (
-			!$user->authorise('core.login.admin')
-			|| !$user->authorise('core.manage', 'com_audioarchive')
-		)
-		{
-			return false;
-		}
-
-		$asset = 'com_audioarchive.clip.' . (int) $item->id;
-
-		if ($user->authorise('core.edit', $asset))
-		{
-			return true;
-		}
-
-		return (int) $item->created_by === (int) $user->id
-			&& $user->authorise('core.edit.own', $asset);
 	}
 
 

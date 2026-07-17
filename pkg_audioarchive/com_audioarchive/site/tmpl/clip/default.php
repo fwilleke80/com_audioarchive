@@ -23,7 +23,7 @@ $hasDescription = trim((string) $this->item->description) !== '';
 		<a class="com-audioarchive-back-link" href="<?php echo $this->archiveUrl; ?>">← <?php echo Text::_('COM_AUDIOARCHIVE_BACK_TO_ARCHIVE'); ?></a>
 
 		<?php if ($this->canEdit && $this->editUrl !== '') : ?>
-			<a class="btn btn-sm btn-outline-secondary com-audioarchive-edit-link" href="<?php echo $this->escape($this->editUrl); ?>" target="_blank" rel="noopener noreferrer">
+			<a class="btn btn-sm btn-outline-secondary com-audioarchive-edit-link" href="<?php echo $this->escape($this->editUrl); ?>">
 				<span class="icon-edit" aria-hidden="true"></span>
 				<?php echo Text::_('COM_AUDIOARCHIVE_EDIT_CLIP'); ?>
 			</a>

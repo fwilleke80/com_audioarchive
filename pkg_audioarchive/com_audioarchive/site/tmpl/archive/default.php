@@ -20,6 +20,13 @@ use Joomla\CMS\Language\Text;
 		<?php endif; ?>
 	</header>
 
+	<?php $introText = trim((string) $this->params->get('archive_intro_text', '')); ?>
+	<?php if ($introText !== '') : ?>
+		<div class="com-audioarchive-intro">
+			<?php echo $introText; ?>
+		</div>
+	<?php endif; ?>
+
 	<div class="visually-hidden" aria-live="polite" aria-atomic="true" data-audioarchive-status></div>
 
 	<?php if ($this->filterErrors) : ?>

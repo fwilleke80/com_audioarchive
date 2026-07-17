@@ -1517,3 +1517,16 @@
 	font-size: .85rem;
 	color: var(--audioarchive-muted, currentColor);
 }
+
+
+.com-audioarchive-intro {
+	margin-block: 0 1.5rem;
+}
+
+.com-audioarchive-intro > :last-child {
+	margin-bottom: 0;
+}
+
+.com-audioarchive-edit .options-form {
+	height: 100%;
+}

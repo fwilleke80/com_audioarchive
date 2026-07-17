@@ -6,6 +6,14 @@
 	<fields name="params">
 		<fieldset name="basic" label="JGLOBAL_FIELDSET_BASIC">
 			<field
+				name="tag_directory_intro_text"
+				type="editor"
+				label="COM_AUDIOARCHIVE_MENU_INTRO_TEXT_LABEL"
+				description="COM_AUDIOARCHIVE_TAG_DIRECTORY_INTRO_TEXT_DESC"
+				buttons="true"
+				filter="\Joomla\CMS\Component\ComponentHelper::filterText"
+			/>
+			<field
 				name="tag_directory_tags"
 				type="tag"
 				multiple="true"

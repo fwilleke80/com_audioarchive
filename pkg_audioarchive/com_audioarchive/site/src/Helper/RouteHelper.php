@@ -77,6 +77,32 @@ abstract class RouteHelper
 	}
 
 	/**
+	 * @brief Return the frontend edit-controller route for one clip.
+	 *
+	 * @param int $id Clip identifier.
+	 * @param int $itemId Optional Archive menu item identifier.
+	 * @param string $return Optional base64-encoded return URL.
+	 *
+	 * @return string Internal Joomla route.
+	 */
+	public static function getEditRoute(int $id, int $itemId = 0, string $return = ''): string
+	{
+		$link = 'index.php?option=com_audioarchive&task=edit.edit&id=' . $id;
+
+		if ($itemId > 0)
+		{
+			$link .= '&Itemid=' . $itemId;
+		}
+
+		if ($return !== '')
+		{
+			$link .= '&return=' . rawurlencode($return);
+		}
+
+		return $link;
+	}
+
+	/**
 	 * @brief Return the protected playback route for one clip.
 	 *
 	 * @param int $id Clip identifier.

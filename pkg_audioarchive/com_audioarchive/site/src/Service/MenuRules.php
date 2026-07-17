@@ -24,7 +24,7 @@ class MenuRules extends CoreMenuRules
 	 */
 	public function preprocess(&$query)
 	{
-		if (($query['view'] ?? '') === 'clip' && (int) ($query['Itemid'] ?? 0) > 0)
+		if (in_array(($query['view'] ?? ''), ['clip', 'edit'], true) && (int) ($query['Itemid'] ?? 0) > 0)
 		{
 			$item = $this->router->menu->getItem((int) $query['Itemid']);
 

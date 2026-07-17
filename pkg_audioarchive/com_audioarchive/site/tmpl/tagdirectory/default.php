@@ -16,6 +16,13 @@ $layout = new FileLayout(
 		<?php endif; ?>
 	</header>
 
+	<?php $introText = trim((string) $this->params->get('tag_directory_intro_text', '')); ?>
+	<?php if ($introText !== '') : ?>
+		<div class="com-audioarchive-intro">
+			<?php echo $introText; ?>
+		</div>
+	<?php endif; ?>
+
 	<?php
 	echo $layout->render([
 		'items' => $this->items,

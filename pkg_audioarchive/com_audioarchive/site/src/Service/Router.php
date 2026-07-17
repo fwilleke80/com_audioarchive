@@ -50,6 +50,10 @@ class Router extends RouterView
 		$clip->setKey('id')->setParent($archive);
 		$this->registerView($clip);
 
+		$edit = new RouterViewConfiguration('edit');
+		$edit->setParent($clip);
+		$this->registerView($edit);
+
 		parent::__construct($application, $menu);
 
 		$preprocess = new PreprocessRules($clip, '#__audioarchive_clips', 'id');
@@ -90,6 +94,7 @@ class Router extends RouterView
 		return [$id => $segment];
 	}
 
+
 	/**
 	 * @brief Parse one ID-and-alias segment back to its clip identifier.
 	 *
@@ -127,4 +132,5 @@ class Router extends RouterView
 
 		return $id;
 	}
+
 }

@@ -5,6 +5,14 @@
 	</layout>
 	<fields name="params">
 		<fieldset name="basic" label="JGLOBAL_FIELDSET_BASIC">
+			<field
+				name="archive_intro_text"
+				type="editor"
+				label="COM_AUDIOARCHIVE_MENU_INTRO_TEXT_LABEL"
+				description="COM_AUDIOARCHIVE_MENU_INTRO_TEXT_DESC"
+				buttons="true"
+				filter="\Joomla\CMS\Component\ComponentHelper::filterText"
+			/>
 			<field name="archive_category_restriction" type="category" extension="com_audioarchive" published="1" label="COM_AUDIOARCHIVE_MENU_CATEGORY_RESTRICTION_LABEL" default="0">
 				<option value="0">JALL</option>
 			</field>
