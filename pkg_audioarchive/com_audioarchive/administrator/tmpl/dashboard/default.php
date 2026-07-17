@@ -39,6 +39,18 @@ $translateValue = static function (string $value): string
 
     return $value;
 };
+$formatBytes = static function (int $bytes): string
+{
+    if ($bytes <= 0)
+    {
+        return '0 B';
+    }
+
+    $units = ['B', 'KiB', 'MiB', 'GiB', 'TiB'];
+    $index = min((int) floor(log($bytes, 1024)), count($units) - 1);
+
+    return number_format($bytes / (1024 ** $index), $index === 0 ? 0 : 1) . ' ' . $units[$index];
+};
 ?>
 <div class="com-audioarchive-dashboard">
     <div class="row g-3 mb-4">
@@ -52,6 +64,22 @@ $translateValue = static function (string $value): string
                 </a>
             </div>
         <?php endforeach; ?>
+        <div class="col-12 col-xl-8 col-xxl-4">
+            <a class="card h-100 text-decoration-none" href="<?php echo Route::_('index.php?option=com_audioarchive&view=maintenance'); ?>">
+                <div class="card-body">
+                    <div class="display-6"><?php echo htmlspecialchars($formatBytes((int) $this->counts['total_storage']), ENT_QUOTES, 'UTF-8'); ?></div>
+                    <div class="mb-2"><?php echo Text::_('COM_AUDIOARCHIVE_DASHBOARD_STORAGE_TOTAL'); ?></div>
+                    <div class="small text-body-secondary">
+                        <?php echo Text::sprintf(
+                            'COM_AUDIOARCHIVE_DASHBOARD_STORAGE_BREAKDOWN',
+                            htmlspecialchars($formatBytes((int) $this->counts['clip_storage']), ENT_QUOTES, 'UTF-8'),
+                            htmlspecialchars($formatBytes((int) $this->counts['waveform_storage']), ENT_QUOTES, 'UTF-8'),
+                            htmlspecialchars($formatBytes((int) $this->counts['spectrogram_storage']), ENT_QUOTES, 'UTF-8')
+                        ); ?>
+                    </div>
+                </div>
+            </a>
+        </div>
     </div>
 
     <?php

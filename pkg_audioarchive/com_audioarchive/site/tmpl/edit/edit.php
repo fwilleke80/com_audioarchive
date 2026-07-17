@@ -26,7 +26,7 @@ if ($this->itemId > 0)
 			</button>
 			<button type="submit" name="task" value="edit.save" class="btn btn-success">
 				<span class="icon-save" aria-hidden="true"></span>
-				<?php echo Text::_('JSAVE'); ?>
+				<?php echo Text::_('COM_AUDIOARCHIVE_SAVE_AND_CLOSE'); ?>
 			</button>
 			<button type="submit" name="task" value="edit.cancel" class="btn btn-secondary" formnovalidate>
 				<span class="icon-cancel" aria-hidden="true"></span>
@@ -45,7 +45,7 @@ if ($this->itemId > 0)
 			<?php if ($this->form->getFieldset('publishing') !== []) : ?>
 				<div class="col-12 col-xl-4">
 					<fieldset class="options-form">
-						<legend><?php echo Text::_('JGLOBAL_FIELDSET_PUBLISHING'); ?></legend>
+						<legend><?php echo Text::_('COM_AUDIOARCHIVE_FIELDSET_PUBLISHING'); ?></legend>
 						<?php echo $this->form->renderFieldset('publishing'); ?>
 					</fieldset>
 				</div>

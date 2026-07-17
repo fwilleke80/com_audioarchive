@@ -18,7 +18,7 @@
 		<field name="description" type="editor" label="JGLOBAL_DESCRIPTION" buttons="true" filter="\Joomla\CMS\Component\ComponentHelper::filterText" />
 		<field name="recorded_at" type="calendar" label="COM_AUDIOARCHIVE_FIELD_RECORDING_DATE" translateformat="true" showtime="true" filter="user_utc" />
 	</fieldset>
-	<fieldset name="publishing" label="JGLOBAL_FIELDSET_PUBLISHING">
+	<fieldset name="publishing" label="COM_AUDIOARCHIVE_FIELDSET_PUBLISHING">
 		<field name="state" type="list" label="JSTATUS" default="0" validate="options">
 			<option value="1">JPUBLISHED</option>
 			<option value="0">JUNPUBLISHED</option>

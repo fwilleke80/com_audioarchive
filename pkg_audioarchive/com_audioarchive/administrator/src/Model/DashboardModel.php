@@ -38,6 +38,31 @@ class DashboardModel extends BaseDatabaseModel
 
         $row = $db->setQuery($query)->loadAssoc() ?: [];
 
+        $originalRole = 'original';
+        $query = $db->getQuery(true)
+            ->select('COALESCE(SUM(' . $db->quoteName('file_size') . '), 0)')
+            ->from($db->quoteName('#__audioarchive_files'))
+            ->where($db->quoteName('file_role') . ' = :originalRole')
+            ->where($db->quoteName('storage_key') . ' <> ' . $db->quote(''))
+            ->bind(':originalRole', $originalRole, ParameterType::STRING);
+        $clipStorage = (int) $db->setQuery($query)->loadResult();
+
+        $query = $db->getQuery(true)
+            ->select([
+                $db->quoteName('analysis_type'),
+                'COALESCE(SUM(' . $db->quoteName('file_size') . '), 0) AS ' . $db->quoteName('storage_size'),
+            ])
+            ->from($db->quoteName('#__audioarchive_analyses'))
+            ->where($db->quoteName('analysis_type') . ' IN (' . implode(',', [
+                $db->quote('waveform'),
+                $db->quote('spectrogram'),
+            ]) . ')')
+            ->where($db->quoteName('storage_key') . ' <> ' . $db->quote(''))
+            ->group($db->quoteName('analysis_type'));
+        $analysisStorageRows = $db->setQuery($query)->loadAssocList('analysis_type') ?: [];
+        $waveformStorage = (int) ($analysisStorageRows['waveform']['storage_size'] ?? 0);
+        $spectrogramStorage = (int) ($analysisStorageRows['spectrogram']['storage_size'] ?? 0);
+
         return [
             'total' => (int) ($row['total'] ?? 0),
             'published' => (int) ($row['published'] ?? 0),
@@ -48,6 +73,10 @@ class DashboardModel extends BaseDatabaseModel
             'missing_metadata' => (int) ($row['missing_metadata'] ?? 0),
             'preview_attention' => (int) ($row['preview_attention'] ?? 0),
             'waveform_attention' => (int) ($row['waveform_attention'] ?? 0),
+            'clip_storage' => $clipStorage,
+            'waveform_storage' => $waveformStorage,
+            'spectrogram_storage' => $spectrogramStorage,
+            'total_storage' => $clipStorage + $waveformStorage + $spectrogramStorage,
         ];
     }
 

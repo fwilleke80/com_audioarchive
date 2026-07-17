@@ -3,6 +3,9 @@
 namespace Willeke\Component\Audioarchive\Site\Controller;
 
 use Joomla\CMS\MVC\Controller\FormController;
+use Joomla\CMS\Router\Route;
+use Joomla\CMS\Uri\Uri;
+use Willeke\Component\Audioarchive\Site\Helper\RouteHelper;
 use Willeke\Component\Audioarchive\Site\Model\EditModel;
 use Willeke\Component\Audioarchive\Site\Service\FrontendEditingService;
 
@@ -24,6 +27,69 @@ class EditController extends FormController
 
 	/** @var string */
 	protected $text_prefix = 'COM_AUDIOARCHIVE';
+
+	/**
+	 * @brief Cancel editing and return to the originating clip detail page.
+	 *
+	 * @param string|null $key Primary-key field name.
+	 *
+	 * @return bool True when the edit was cancelled successfully.
+	 */
+	public function cancel($key = null)
+	{
+		$result = parent::cancel($key);
+
+		if ($result)
+		{
+			$this->setRedirect(Route::_($this->resolveReturnUrl($this->input->getInt('id')), false));
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @brief Save a clip and explicitly return Save & Close to the detail page.
+	 *
+	 * @param string|null $key Primary-key field name.
+	 * @param string|null $urlVar URL variable used for the primary key.
+	 *
+	 * @return bool True when the clip was saved successfully.
+	 */
+	public function save($key = null, $urlVar = null)
+	{
+		$task = $this->getTask();
+		$result = parent::save($key, $urlVar);
+
+		if ($result && $task !== 'apply')
+		{
+			$this->setRedirect(Route::_($this->resolveReturnUrl($this->input->getInt('id')), false));
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @brief Resolve a validated detail-page return URL for frontend editing.
+	 *
+	 * @param int $recordId Clip identifier.
+	 *
+	 * @return string Internal URL to the originating clip detail page.
+	 */
+	private function resolveReturnUrl(int $recordId): string
+	{
+		$return = $this->input->get('return', '', 'base64');
+		$decodedReturn = $return !== '' ? base64_decode($return, true) : false;
+
+		if (is_string($decodedReturn) && $decodedReturn !== '' && Uri::isInternal($decodedReturn))
+		{
+			return $decodedReturn;
+		}
+
+		return RouteHelper::getClipRoute(
+			$recordId,
+			$this->input->getInt('Itemid', 0)
+		);
+	}
 
 	/**
 	 * @brief Check whether the current user may edit the requested clip.
