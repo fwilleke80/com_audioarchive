@@ -41,7 +41,11 @@ $title = (string) $this->item->title;
 				'spectrum' => Text::_('COM_AUDIOARCHIVE_ANALYSIS_SPECTRUM'),
 			],
 		],
-		JPATH_ROOT . '/components/com_audioarchive/layouts'
+		null,
+		[
+			'component' => 'com_audioarchive',
+			'client' => 0,
+		]
 	);
 	?>
 </section>

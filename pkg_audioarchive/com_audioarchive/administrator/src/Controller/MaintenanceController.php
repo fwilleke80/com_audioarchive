@@ -104,14 +104,14 @@ class MaintenanceController extends BaseController
         if ($tokens === [])
         {
             $application->enqueueMessage(Text::_('COM_AUDIOARCHIVE_MAINTENANCE_STALE_NO_SELECTION'), 'warning');
-            $this->setRedirect($this->maintenanceUrl());
+            $this->setRedirect($this->maintenanceUrl('stale'));
             return;
         }
 
         if (count($tokens) > 200)
         {
             $application->enqueueMessage(Text::sprintf('COM_AUDIOARCHIVE_MAINTENANCE_STALE_BATCH_LIMIT', 200), 'warning');
-            $this->setRedirect($this->maintenanceUrl());
+            $this->setRedirect($this->maintenanceUrl('stale'));
             return;
         }
 
@@ -138,7 +138,7 @@ class MaintenanceController extends BaseController
             ),
             $failed > 0 ? 'warning' : 'success'
         );
-        $this->setRedirect($this->maintenanceUrl());
+        $this->setRedirect($this->maintenanceUrl('stale'));
     }
 
     /**
@@ -274,7 +274,7 @@ class MaintenanceController extends BaseController
 
         try
         {
-            $queued = $model->queueAllSpectrograms();
+            $queued = $model->queueSpectrograms('all');
             $application->setHeader('Content-Type', 'application/json; charset=utf-8', true);
             echo new JsonResponse(['queued' => $queued]);
         }
@@ -285,6 +285,26 @@ class MaintenanceController extends BaseController
         }
 
         $application->close();
+    }
+
+    /**
+     * @brief Delete every generated waveform data file and reset waveform states.
+     *
+     * @return void
+     */
+    public function deleteWaveforms(): void
+    {
+        $this->deleteAnalysisData('waveform');
+    }
+
+    /**
+     * @brief Delete every generated spectral-analysis file and reset its states.
+     *
+     * @return void
+     */
+    public function deleteSpectrograms(): void
+    {
+        $this->deleteAnalysisData('spectrogram');
     }
 
     /**
@@ -335,7 +355,7 @@ class MaintenanceController extends BaseController
             throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_MAINTENANCE_ERROR_MODEL'), 500);
         }
 
-        $report = $model->getReport();
+        $report = $model->getIntegrityReport();
         $application = Factory::getApplication();
         $filename = 'audioarchive-integrity-' . gmdate('Y-m-d-His') . '.csv';
         $application->setHeader('Content-Type', 'text/csv; charset=utf-8', true);
@@ -493,6 +513,59 @@ class MaintenanceController extends BaseController
     }
 
     /**
+     * @brief Delete all generated data for one analysis type.
+     *
+     * @param string $analysisType Waveform or spectrogram.
+     *
+     * @return void
+     */
+    private function deleteAnalysisData(string $analysisType): void
+    {
+        Session::checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+        $this->assertProcessPermission();
+        $application = Factory::getApplication();
+
+        if (!$application->getIdentity()->authorise('audioarchive.managefiles', 'com_audioarchive'))
+        {
+            throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+        }
+
+        $model = $this->getModel('Maintenance');
+
+        if (!$model instanceof MaintenanceModel)
+        {
+            throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_MAINTENANCE_ERROR_MODEL'), 500);
+        }
+
+        try
+        {
+            $result = $model->deleteAllAnalysis($analysisType);
+            $key = $analysisType === 'waveform'
+                ? 'COM_AUDIOARCHIVE_WAVEFORM_DELETE_ALL_COMPLETE'
+                : 'COM_AUDIOARCHIVE_SPECTROGRAM_DELETE_ALL_COMPLETE';
+            $application->enqueueMessage(
+                Text::sprintf(
+                    $key,
+                    (int) ($result['records'] ?? 0),
+                    (int) ($result['deleted'] ?? 0),
+                    (int) ($result['cancelled'] ?? 0),
+                    (int) ($result['failed'] ?? 0)
+                ),
+                (int) ($result['failed'] ?? 0) > 0 ? 'warning' : 'success'
+            );
+        }
+        catch (\Throwable $exception)
+        {
+            $key = $analysisType === 'waveform'
+                ? 'COM_AUDIOARCHIVE_WAVEFORM_DELETE_ALL_FAILED'
+                : 'COM_AUDIOARCHIVE_SPECTROGRAM_DELETE_ALL_FAILED';
+            $application->enqueueMessage(Text::sprintf($key, $exception->getMessage()), 'error');
+        }
+
+        $this->setRedirect($this->maintenanceUrl());
+    }
+
+    /**
      * @brief Require technical-processing permission.
      *
      * @return void
@@ -510,8 +583,15 @@ class MaintenanceController extends BaseController
      *
      * @return string Routed administrator URL.
      */
-    private function maintenanceUrl(): string
+    private function maintenanceUrl(string $check = ''): string
     {
-        return Route::_('index.php?option=com_audioarchive&view=maintenance', false);
+        $url = 'index.php?option=com_audioarchive&view=maintenance';
+
+        if (in_array($check, ['integrity', 'codecs', 'stale'], true))
+        {
+            $url .= '&check=' . $check;
+        }
+
+        return Route::_($url, false);
     }
 }

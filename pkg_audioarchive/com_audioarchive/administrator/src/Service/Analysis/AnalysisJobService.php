@@ -241,6 +241,14 @@ final class AnalysisJobService
 			->bind(':jobType', $jobType, ParameterType::STRING);
 		$queued = (int) $this->database->setQuery($query)->loadResult();
 
+		$query = $this->database->getQuery(true)
+			->select('COALESCE(SUM(' . $this->database->quoteName('file_size') . '), 0)')
+			->from($this->database->quoteName('#__audioarchive_analyses'))
+			->where($this->database->quoteName('analysis_type') . ' = :analysisType')
+			->where($this->database->quoteName('storage_key') . ' <> ' . $this->database->quote(''))
+			->bind(':analysisType', $analysisType, ParameterType::STRING);
+		$diskUsage = (int) $this->database->setQuery($query)->loadResult();
+
 		return [
 			'available' => (int) ($row['available_count'] ?? 0),
 			'missing' => (int) ($row['missing_count'] ?? 0),
@@ -248,7 +256,46 @@ final class AnalysisJobService
 			'failed' => (int) ($row['failed_count'] ?? 0),
 			'stale' => (int) ($row['stale_count'] ?? 0),
 			'queued' => $queued,
+			'disk_usage' => $diskUsage,
 		];
+	}
+
+	/**
+	 * @brief Cancel active jobs for one analysis type while retaining their history rows.
+	 *
+	 * @param string $analysisType Stable analysis type.
+	 *
+	 * @return int Number of cancelled jobs.
+	 */
+	public function cancelActive(string $analysisType): int
+	{
+		$analysisType = strtolower(trim($analysisType));
+
+		if (!in_array($analysisType, ['waveform', 'spectrogram'], true))
+		{
+			throw new \InvalidArgumentException(Text::_('COM_AUDIOARCHIVE_ANALYSIS_ERROR_UNSUPPORTED_BULK_TYPE'));
+		}
+
+		$jobType = $this->jobType($analysisType);
+		$cancelled = 'cancelled';
+		$finished = Factory::getDate()->toSql();
+		$message = Text::_('COM_AUDIOARCHIVE_ANALYSIS_JOB_CANCELLED_DATA_DELETED');
+		$query = $this->database->getQuery(true)
+			->update($this->database->quoteName('#__audioarchive_jobs'))
+			->set($this->database->quoteName('state') . ' = :cancelled')
+			->set($this->database->quoteName('last_error') . ' = :message')
+			->set($this->database->quoteName('finished') . ' = :finished')
+			->set($this->database->quoteName('locked_by') . ' = ' . $this->database->quote(''))
+			->set($this->database->quoteName('locked_until') . ' = NULL')
+			->where($this->database->quoteName('job_type') . ' = :jobType')
+			->whereIn($this->database->quoteName('state'), ['pending', 'running'], ParameterType::STRING)
+			->bind(':cancelled', $cancelled, ParameterType::STRING)
+			->bind(':message', $message, ParameterType::STRING)
+			->bind(':finished', $finished, ParameterType::STRING)
+			->bind(':jobType', $jobType, ParameterType::STRING);
+		$this->database->setQuery($query)->execute();
+
+		return $this->database->getAffectedRows();
 	}
 
 	/**

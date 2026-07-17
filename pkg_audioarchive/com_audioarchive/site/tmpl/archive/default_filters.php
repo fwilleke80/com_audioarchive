@@ -52,7 +52,7 @@ $tagListId = 'audioarchive-filter-tag-list';
 		</header>
 
 		<div id="<?php echo $filterContentId; ?>" data-audioarchive-filter-content>
-			<form class="com-audioarchive-filters" method="get" action="<?php echo $this->getResetUrl(); ?>">
+			<form class="com-audioarchive-filters" method="get" action="<?php echo $this->getArchiveUrl(); ?>">
 				<input type="hidden" name="task" value="archive.applyFilters">
 
 				<div class="com-audioarchive-filter-grid">

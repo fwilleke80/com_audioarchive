@@ -6,8 +6,10 @@ use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
+use Joomla\Database\ParameterType;
 use Willeke\Component\Audioarchive\Administrator\Service\Analysis\AnalysisJobService;
 use Willeke\Component\Audioarchive\Administrator\Service\IntegrityService;
+use Willeke\Component\Audioarchive\Administrator\Service\ManagedStorageService;
 use Willeke\Component\Audioarchive\Administrator\Service\MediaMaintenanceService;
 
 \defined('_JEXEC') or die;
@@ -18,38 +20,90 @@ use Willeke\Component\Audioarchive\Administrator\Service\MediaMaintenanceService
 class MaintenanceModel extends BaseDatabaseModel
 {
 	/**
-	 * @brief Generate the current integrity and media report.
+	 * @brief Build the maintenance page report without automatic filesystem scans.
 	 *
-	 * @return array<string, mixed> Combined report.
+	 * Expensive integrity, codec, and stale-file checks run only when selected
+	 * explicitly through the maintenance page.
+	 *
+	 * @return array<string, mixed> Current maintenance data.
 	 */
 	public function getReport(): array
 	{
 		$params = ComponentHelper::getParams('com_audioarchive');
-		$integrity = new IntegrityService($this->getDatabase(), $params);
-		$media = new MediaMaintenanceService($this->getDatabase(), $params);
-		$codecFilter = (string) Factory::getApplication()->getInput()->getString('codec', '');
-		$report = $integrity->run();
-		$staleItems = $media->getStaleItems();
-		$report['codec_inventory'] = $media->getCodecInventory();
-		$report['codec_filter'] = $codecFilter;
-		$report['codec_clips'] = $media->getClipsByCodec($codecFilter);
-		$report['stale_items'] = $staleItems;
+		$application = Factory::getApplication();
+		$check = strtolower($application->getInput()->getCmd('check', ''));
+		$codecFilter = (string) $application->getInput()->getString('codec', '');
+
+		if ($codecFilter !== '')
+		{
+			$check = 'codecs';
+		}
+
+		if (!in_array($check, ['', 'integrity', 'codecs', 'stale'], true))
+		{
+			$check = '';
+		}
+
 		$analysisJobs = new AnalysisJobService(
 			$this->getDatabase(),
 			$params,
-			Factory::getApplication()->getIdentity()
+			$application->getIdentity()
 		);
-		$report['waveforms'] = $analysisJobs->getWaveformSummary();
-		$report['spectrograms'] = $analysisJobs->getSpectrogramSummary();
-		$report['summary']['stale_files'] = count($staleItems);
+		$report = [
+			'checked_section' => $check,
+			'checked_at' => '',
+			'summary' => $this->getBasicSummary(),
+			'issues' => [],
+			'actionable_clips' => [],
+			'codec_inventory' => [],
+			'codec_filter' => $codecFilter,
+			'codec_clips' => [],
+			'stale_items' => [],
+			'waveforms' => $analysisJobs->getWaveformSummary(),
+			'spectrograms' => $analysisJobs->getSpectrogramSummary(),
+		];
+
+		if ($check === 'integrity')
+		{
+			$integrityReport = (new IntegrityService($this->getDatabase(), $params))->run();
+			$report = array_replace($report, $integrityReport);
+			$report['checked_section'] = 'integrity';
+		}
+		elseif ($check === 'codecs')
+		{
+			$media = new MediaMaintenanceService($this->getDatabase(), $params);
+			$report['codec_inventory'] = $media->getCodecInventory();
+			$report['codec_clips'] = $media->getClipsByCodec($codecFilter);
+			$report['checked_at'] = Factory::getDate()->format('Y-m-d H:i:s');
+		}
+		elseif ($check === 'stale')
+		{
+			$staleItems = (new MediaMaintenanceService($this->getDatabase(), $params))->getStaleItems();
+			$report['stale_items'] = $staleItems;
+			$report['summary']['stale_files'] = count($staleItems);
+			$report['checked_at'] = Factory::getDate()->format('Y-m-d H:i:s');
+		}
 
 		return $report;
 	}
 
 	/**
-	 * @brief Queue waveform jobs for one status group.
+	 * @brief Generate a complete integrity report for explicit export requests.
 	 *
-	 * @param string $mode Missing, stale, or failed.
+	 * @return array<string, mixed> Complete integrity report.
+	 */
+	public function getIntegrityReport(): array
+	{
+		return (new IntegrityService(
+			$this->getDatabase(),
+			ComponentHelper::getParams('com_audioarchive')
+		))->run();
+	}
+
+	/**
+	 * @brief Queue waveform jobs for one status group or every eligible clip.
+	 *
+	 * @param string $mode Missing, stale, failed, or all.
 	 *
 	 * @return int Number of newly queued jobs.
 	 */
@@ -59,32 +113,15 @@ class MaintenanceModel extends BaseDatabaseModel
 	}
 
 	/**
-	 * @brief Queue spectrogram jobs for one status group.
+	 * @brief Queue spectrogram jobs for one status group or every eligible clip.
 	 *
-	 * @param string $mode Missing, stale, or failed.
+	 * @param string $mode Missing, stale, failed, or all.
 	 *
 	 * @return int Number of newly queued jobs.
 	 */
 	public function queueSpectrograms(string $mode): int
 	{
 		return $this->queueAnalysis('spectrogram', $mode);
-	}
-
-
-	/**
-	 * @brief Queue spectral-analysis regeneration for every eligible clip.
-	 *
-	 * @return int Number of newly queued jobs.
-	 */
-	public function queueAllSpectrograms(): int
-	{
-		$service = new AnalysisJobService(
-			$this->getDatabase(),
-			ComponentHelper::getParams('com_audioarchive'),
-			Factory::getApplication()->getIdentity()
-		);
-
-		return $service->queueAll('spectrogram');
 	}
 
 	/**
@@ -101,6 +138,76 @@ class MaintenanceModel extends BaseDatabaseModel
 		);
 
 		return $service->processNext();
+	}
+
+	/**
+	 * @brief Delete all generated data for one supported analysis type.
+	 *
+	 * Completed and failed job rows remain as history. Pending and running jobs
+	 * are retained but marked cancelled.
+	 *
+	 * @param string $analysisType Waveform or spectrogram.
+	 *
+	 * @return array{records:int,cancelled:int,deleted:int,bytes:int,failed:int} Deletion summary.
+	 */
+	public function deleteAllAnalysis(string $analysisType): array
+	{
+		$analysisType = strtolower(trim($analysisType));
+
+		if (!in_array($analysisType, ['waveform', 'spectrogram'], true))
+		{
+			throw new \InvalidArgumentException(Text::_('COM_AUDIOARCHIVE_ANALYSIS_ERROR_UNSUPPORTED_BULK_TYPE'));
+		}
+
+		$database = $this->getDatabase();
+		$params = ComponentHelper::getParams('com_audioarchive');
+		$statusField = $analysisType === 'waveform' ? 'waveform_status' : 'spectrogram_status';
+		$query = $database->getQuery(true)
+			->select('COUNT(*)')
+			->from($database->quoteName('#__audioarchive_analyses'))
+			->where($database->quoteName('analysis_type') . ' = :analysisType')
+			->bind(':analysisType', $analysisType, ParameterType::STRING);
+		$records = (int) $database->setQuery($query)->loadResult();
+		$jobs = new AnalysisJobService($database, $params, Factory::getApplication()->getIdentity());
+		$database->transactionStart();
+
+		try
+		{
+			$cancelled = $jobs->cancelActive($analysisType);
+			$query = $database->getQuery(true)
+				->delete($database->quoteName('#__audioarchive_analyses'))
+				->where($database->quoteName('analysis_type') . ' = :analysisType')
+				->bind(':analysisType', $analysisType, ParameterType::STRING);
+			$database->setQuery($query)->execute();
+
+			if ($analysisType === 'waveform')
+			{
+				$database->setQuery(
+					$database->getQuery(true)->delete($database->quoteName('#__audioarchive_waveforms'))
+				)->execute();
+			}
+
+			$query = $database->getQuery(true)
+				->update($database->quoteName('#__audioarchive_clips'))
+				->set($database->quoteName($statusField) . ' = ' . $database->quote('missing'));
+			$database->setQuery($query)->execute();
+			$database->transactionCommit();
+		}
+		catch (\Throwable $exception)
+		{
+			$database->transactionRollback();
+			throw $exception;
+		}
+
+		$files = (new ManagedStorageService($params))->deleteAnalysisTypeFiles($analysisType);
+
+		return [
+			'records' => $records,
+			'cancelled' => $cancelled,
+			'deleted' => (int) ($files['deleted'] ?? 0),
+			'bytes' => (int) ($files['bytes'] ?? 0),
+			'failed' => (int) ($files['failed'] ?? 0),
+		];
 	}
 
 	/**
@@ -121,15 +228,26 @@ class MaintenanceModel extends BaseDatabaseModel
 	}
 
 	/**
-	 * @brief Queue analysis jobs for one status group.
+	 * @brief Queue analysis jobs for one status group or every eligible clip.
 	 *
 	 * @param string $analysisType Analysis type.
-	 * @param string $mode Missing, stale, or failed.
+	 * @param string $mode Missing, stale, failed, or all.
 	 *
 	 * @return int Number of newly queued jobs.
 	 */
 	private function queueAnalysis(string $analysisType, string $mode): int
 	{
+		$service = new AnalysisJobService(
+			$this->getDatabase(),
+			ComponentHelper::getParams('com_audioarchive'),
+			Factory::getApplication()->getIdentity()
+		);
+
+		if ($mode === 'all')
+		{
+			return $service->queueAll($analysisType);
+		}
+
 		$statuses = match ($mode)
 		{
 			'missing' => ['missing'],
@@ -143,12 +261,35 @@ class MaintenanceModel extends BaseDatabaseModel
 			throw new \InvalidArgumentException(Text::_('COM_AUDIOARCHIVE_ANALYSIS_ERROR_INVALID_QUEUE_MODE'));
 		}
 
-		$service = new AnalysisJobService(
-			$this->getDatabase(),
-			ComponentHelper::getParams('com_audioarchive'),
-			Factory::getApplication()->getIdentity()
-		);
-
 		return $service->queueByStatuses($analysisType, $statuses);
+	}
+
+	/**
+	 * @brief Return inexpensive database-only summary counts.
+	 *
+	 * @return array<string, int> Basic summary.
+	 */
+	private function getBasicSummary(): array
+	{
+		$database = $this->getDatabase();
+		$query = $database->getQuery(true)
+			->select('COUNT(*)')
+			->from($database->quoteName('#__audioarchive_clips'));
+		$clips = (int) $database->setQuery($query)->loadResult();
+		$query = $database->getQuery(true)
+			->select('COUNT(*)')
+			->from($database->quoteName('#__audioarchive_files'))
+			->where($database->quoteName('file_role') . ' = ' . $database->quote('original'));
+		$originalRecords = (int) $database->setQuery($query)->loadResult();
+
+		return [
+			'clips' => $clips,
+			'original_records' => $originalRecords,
+			'managed_original_files' => 0,
+			'errors' => 0,
+			'warnings' => 0,
+			'issues' => 0,
+			'stale_files' => 0,
+		];
 	}
 }

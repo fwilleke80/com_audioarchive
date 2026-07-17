@@ -11,17 +11,13 @@ const initialiseAudioArchiveAnalysisMaintenance = () =>
 	}
 
 	const processButton = root.querySelector('[data-audioarchive-process-analyses]');
-	const regenerateSpectrogramsButton = root.querySelector('[data-audioarchive-regenerate-spectrograms]');
 	const progress = root.querySelector('[data-audioarchive-analysis-progress]');
 	const progressBar = root.querySelector('[data-audioarchive-analysis-progress-bar]');
 	const status = root.querySelector('[data-audioarchive-analysis-status]');
 	const processUrl = root.dataset.processUrl || '';
-	const regenerateSpectrogramsUrl = root.dataset.regenerateSpectrogramsUrl || '';
 	const tokenName = root.dataset.tokenName || '';
 	const progressTemplate = root.dataset.progressTemplate || '';
 	const failureText = root.dataset.failureText || '';
-	const regenerateSpectrogramsConfirm = root.dataset.regenerateSpectrogramsConfirm || '';
-	const regenerateSpectrogramsQueued = root.dataset.regenerateSpectrogramsQueued || '';
 	let processing = false;
 
 	if (
@@ -51,36 +47,6 @@ const initialiseAudioArchiveAnalysisMaintenance = () =>
 	};
 
 	/**
-	 * @brief Submit a CSRF-protected maintenance request and decode its JSON response.
-	 *
-	 * @param {string} url Request URL.
-	 *
-	 * @return {Promise<object>} Decoded response data.
-	 */
-	const postMaintenanceRequest = async (url) =>
-	{
-		const body = new URLSearchParams();
-		body.set(tokenName, '1');
-		const response = await fetch(url, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-				'X-Requested-With': 'XMLHttpRequest',
-			},
-			credentials: 'same-origin',
-			body: body.toString(),
-		});
-		const payload = await response.json();
-
-		if (!response.ok || payload.success === false)
-		{
-			throw new Error(payload.message || failureText);
-		}
-
-		return payload.data || {};
-	};
-
-	/**
 	 * @brief Process every currently queued analysis job.
 	 *
 	 * @return {Promise<void>}
@@ -94,12 +60,6 @@ const initialiseAudioArchiveAnalysisMaintenance = () =>
 
 		processing = true;
 		processButton.disabled = true;
-
-		if (regenerateSpectrogramsButton instanceof HTMLButtonElement)
-		{
-			regenerateSpectrogramsButton.disabled = true;
-		}
-
 		let processed = 0;
 		let initialTotal = 0;
 
@@ -118,7 +78,25 @@ const initialiseAudioArchiveAnalysisMaintenance = () =>
 		{
 			while (true)
 			{
-				const result = await postMaintenanceRequest(processUrl);
+				const body = new URLSearchParams();
+				body.set(tokenName, '1');
+				const response = await fetch(processUrl, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+						'X-Requested-With': 'XMLHttpRequest',
+					},
+					credentials: 'same-origin',
+					body: body.toString(),
+				});
+				const payload = await response.json();
+
+				if (!response.ok || payload.success === false)
+				{
+					throw new Error(payload.message || failureText);
+				}
+
+				const result = payload.data || {};
 
 				if (result.processed !== true)
 				{
@@ -166,12 +144,6 @@ const initialiseAudioArchiveAnalysisMaintenance = () =>
 		{
 			processing = false;
 			processButton.disabled = false;
-
-			if (regenerateSpectrogramsButton instanceof HTMLButtonElement)
-			{
-				regenerateSpectrogramsButton.disabled = false;
-			}
-
 			setStatus(error instanceof Error ? error.message : String(error));
 		}
 	};
@@ -180,39 +152,6 @@ const initialiseAudioArchiveAnalysisMaintenance = () =>
 	{
 		void processQueue();
 	});
-
-	if (
-		regenerateSpectrogramsButton instanceof HTMLButtonElement
-		&& regenerateSpectrogramsUrl !== ''
-		&& regenerateSpectrogramsConfirm !== ''
-		&& regenerateSpectrogramsQueued !== ''
-	)
-	{
-		regenerateSpectrogramsButton.addEventListener('click', async () =>
-		{
-			if (!window.confirm(regenerateSpectrogramsConfirm))
-			{
-				return;
-			}
-
-			regenerateSpectrogramsButton.disabled = true;
-			processButton.disabled = true;
-
-			try
-			{
-				const result = await postMaintenanceRequest(regenerateSpectrogramsUrl);
-				const queued = Number.parseInt(String(result.queued || 0), 10) || 0;
-				setStatus(regenerateSpectrogramsQueued.replace('{queued}', String(queued)));
-				await processQueue();
-			}
-			catch (error)
-			{
-				regenerateSpectrogramsButton.disabled = false;
-				processButton.disabled = false;
-				setStatus(error instanceof Error ? error.message : String(error));
-			}
-		});
-	}
 };
 
 document.addEventListener('DOMContentLoaded', initialiseAudioArchiveAnalysisMaintenance);

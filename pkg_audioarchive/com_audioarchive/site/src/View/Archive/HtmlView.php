@@ -225,6 +225,11 @@ class HtmlView extends BaseHtmlView
 		$query = $this->removeDefaultListValues($query);
 		$itemId = Factory::getApplication()->getInput()->getInt('Itemid', 0);
 
+		if ($query === [])
+		{
+			return $this->getResetUrl();
+		}
+
 		return Route::_(RouteHelper::getArchiveRoute($itemId, $query));
 	}
 
@@ -299,6 +304,19 @@ class HtmlView extends BaseHtmlView
 	public function getResetUrl(): string
 	{
 		$itemId = Factory::getApplication()->getInput()->getInt('Itemid', 0);
+
+		return Route::_(RouteHelper::getArchiveRoute($itemId, ['audioarchive_reset' => 1]));
+	}
+
+	/**
+	 * @brief Return the unfiltered archive URL used as a GET form target.
+	 *
+	 * @return string
+	 */
+	public function getArchiveUrl(): string
+	{
+		$itemId = Factory::getApplication()->getInput()->getInt('Itemid', 0);
+
 		return Route::_(RouteHelper::getArchiveRoute($itemId));
 	}
 

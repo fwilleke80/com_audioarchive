@@ -335,6 +335,77 @@ class ManagedStorageService
     }
 
     /**
+     * @brief Delete every managed file beneath one analysis-type directory.
+     *
+     * The analysis type is validated and remains contained beneath the shared
+     * analysis-data root. Symbolic links are removed but never followed.
+     *
+     * @param string $analysisType Stable analysis type.
+     *
+     * @return array{deleted:int,bytes:int,failed:int} Deletion summary.
+     */
+    public function deleteAnalysisTypeFiles(string $analysisType): array
+    {
+        $analysisType = strtolower(trim($analysisType));
+
+        if (!preg_match('/^[a-z0-9][a-z0-9_-]{0,31}$/', $analysisType))
+        {
+            throw new \InvalidArgumentException(Text::_('COM_AUDIOARCHIVE_ANALYSIS_ERROR_INVALID_TYPE'));
+        }
+
+        $root = $this->ensureDirectory('analysis');
+        $directory = Path::clean($root . DIRECTORY_SEPARATOR . $analysisType);
+        $this->assertContainedPath($root, $directory);
+
+        if (!is_dir($directory))
+        {
+            return ['deleted' => 0, 'bytes' => 0, 'failed' => 0];
+        }
+
+        $deleted = 0;
+        $bytes = 0;
+        $failed = 0;
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($iterator as $item)
+        {
+            $path = $item->getPathname();
+
+            if ($item->isLink() || $item->isFile())
+            {
+                $size = $item->isFile() ? max(0, (int) $item->getSize()) : 0;
+
+                if (@unlink($path))
+                {
+                    $deleted++;
+                    $bytes += $size;
+                }
+                else
+                {
+                    $failed++;
+                }
+
+                continue;
+            }
+
+            if ($item->isDir() && !@rmdir($path) && is_dir($path))
+            {
+                $failed++;
+            }
+        }
+
+        if (!@rmdir($directory) && is_dir($directory))
+        {
+            $failed++;
+        }
+
+        return ['deleted' => $deleted, 'bytes' => $bytes, 'failed' => $failed];
+    }
+
+    /**
      * @brief Resolve a managed storage key safely.
      *
      * @param string $role Storage role.

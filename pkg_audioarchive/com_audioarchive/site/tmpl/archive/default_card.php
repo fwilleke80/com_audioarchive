@@ -41,7 +41,11 @@ $hasMetadata = $columns['category'] || $columns['duration'] || $columns['recorde
 							'waveformLoading' => Text::_('COM_AUDIOARCHIVE_WAVEFORM_LOADING'),
 						],
 					],
-					JPATH_ROOT . '/components/com_audioarchive/layouts'
+					null,
+					[
+						'component' => 'com_audioarchive',
+						'client' => 0,
+					]
 				);
 				?>
 			</div>

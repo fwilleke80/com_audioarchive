@@ -17,7 +17,7 @@ unset($queryValues['limit']);
 ?>
 <div class="com-audioarchive-pagination-bar">
 	<?php if ($showPageSize) : ?>
-		<form class="com-audioarchive-page-size" method="get" action="<?php echo $this->getResetUrl(); ?>">
+		<form class="com-audioarchive-page-size" method="get" action="<?php echo $this->getArchiveUrl(); ?>">
 			<input type="hidden" name="task" value="archive.applyFilters">
 			<?php foreach ($queryValues as $key => $value) : ?>
 				<?php if (is_array($value)) : ?>

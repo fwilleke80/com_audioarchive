@@ -42,6 +42,9 @@ class ArchiveModel extends ListModel
 	/** @var array<string, mixed>|null */
 	private ?array $canonicalQueryCache = null;
 
+	/** @var int */
+	private int $sessionItemId = 0;
+
 	/**
 	 * @brief Construct the public list model.
 	 *
@@ -598,6 +601,10 @@ class ArchiveModel extends ListModel
 		}
 
 		$this->canonicalQueryCache = $values;
+		Factory::getApplication()->setUserState(
+			self::getQuerySessionKey($this->sessionItemId),
+			$this->canonicalQueryCache
+		);
 
 		return $this->canonicalQueryCache;
 	}
@@ -789,6 +796,30 @@ class ArchiveModel extends ListModel
 	}
 
 	/**
+	 * @brief Return the per-menu session key for resolved archive state.
+	 *
+	 * @param int $itemId Archive menu item identifier.
+	 *
+	 * @return string
+	 */
+	public static function getStateSessionKey(int $itemId): string
+	{
+		return 'com_audioarchive.archive.state.' . max(0, $itemId);
+	}
+
+	/**
+	 * @brief Return the per-menu session key for the canonical archive query.
+	 *
+	 * @param int $itemId Archive menu item identifier.
+	 *
+	 * @return string
+	 */
+	public static function getQuerySessionKey(int $itemId): string
+	{
+		return 'com_audioarchive.archive.query.' . max(0, $itemId);
+	}
+
+	/**
 	 * @brief Populate state from bookmarkable GET parameters.
 	 *
 	 * @param string|null $ordering Default ordering.
@@ -801,15 +832,58 @@ class ArchiveModel extends ListModel
 		$app = Factory::getApplication();
 		$input = $app->getInput();
 		$params = $this->getResolvedParams();
+		$request = $input->getArray();
+		$itemId = $input->getInt('Itemid', 0);
 
-		$search = trim($input->getString('q', ''));
-		$category = $input->getInt('category', 0);
-		$durationMinimumInput = trim($input->getString('duration_min', ''));
-		$durationMaximumInput = trim($input->getString('duration_max', ''));
-		$recordedFromInput = trim($input->getString('recorded_from', ''));
-		$recordedToInput = trim($input->getString('recorded_to', ''));
-		$uploadedFromInput = trim($input->getString('uploaded_from', ''));
-		$uploadedToInput = trim($input->getString('uploaded_to', ''));
+		if ($itemId <= 0)
+		{
+			$itemId = (int) ($app->getMenu()->getActive()?->id ?? 0);
+		}
+
+		$this->sessionItemId = max(0, $itemId);
+		$sessionKey = self::getStateSessionKey($this->sessionItemId);
+		$querySessionKey = self::getQuerySessionKey($this->sessionItemId);
+		$reset = (int) ($request['audioarchive_reset'] ?? 0) === 1;
+		$stateKeys = [
+			'q', 'category', 'tags', 'tag_mode', 'duration_min', 'duration_max',
+			'recorded_from', 'recorded_to', 'uploaded_from', 'uploaded_to',
+			'sort', 'direction', 'limit', 'limitstart', 'audioarchive_state',
+		];
+		$hasExplicitState = $input->getCmd('task') === 'archive.applyFilters';
+
+		foreach ($stateKeys as $key)
+		{
+			if (array_key_exists($key, $request))
+			{
+				$hasExplicitState = true;
+				break;
+			}
+		}
+
+		if ($reset)
+		{
+			$app->setUserState($sessionKey, null);
+			$app->setUserState($querySessionKey, null);
+			$source = [];
+		}
+		elseif ($hasExplicitState)
+		{
+			$source = $request;
+		}
+		else
+		{
+			$stored = $app->getUserState($sessionKey, []);
+			$source = is_array($stored) ? $stored : [];
+		}
+
+		$search = trim((string) ($source['q'] ?? ''));
+		$category = max(0, (int) ($source['category'] ?? 0));
+		$durationMinimumInput = trim((string) ($source['duration_min'] ?? ''));
+		$durationMaximumInput = trim((string) ($source['duration_max'] ?? ''));
+		$recordedFromInput = trim((string) ($source['recorded_from'] ?? ''));
+		$recordedToInput = trim((string) ($source['recorded_to'] ?? ''));
+		$uploadedFromInput = trim((string) ($source['uploaded_from'] ?? ''));
+		$uploadedToInput = trim((string) ($source['uploaded_to'] ?? ''));
 
 		$this->setState('filter.search', $search);
 		$this->setState('filter.category', $category);
@@ -820,23 +894,24 @@ class ArchiveModel extends ListModel
 		$this->setState('filter.uploaded_from', $uploadedFromInput);
 		$this->setState('filter.uploaded_to', $uploadedToInput);
 
-		$requestedTags = $this->resolveVisitorTagIdentifiers($input->get('tags', [], 'raw'));
+		$requestedTags = $this->resolveVisitorTagIdentifiers($source['tags'] ?? []);
 		$menuTags = $this->normaliseIntegerList($params->get('archive_tag_restriction', []));
 		$this->menuTags = $menuTags;
 		$this->selectedTags = $requestedTags;
 		$this->setState('filter.tags', $requestedTags);
-		$tagMode = strtolower($input->getCmd('tag_mode', 'and'));
+		$tagMode = strtolower(trim((string) ($source['tag_mode'] ?? 'and')));
 		$this->setState('filter.tag_mode', $tagMode === 'or' ? 'or' : 'and');
 
 		$minimum = $this->parseDuration($durationMinimumInput, 'COM_AUDIOARCHIVE_FILTER_DURATION_MIN_INVALID');
 		$maximum = $this->parseDuration($durationMaximumInput, 'COM_AUDIOARCHIVE_FILTER_DURATION_MAX_INVALID');
+
 		if ($minimum !== null && $maximum !== null && $minimum > $maximum)
 		{
 			[$minimum, $maximum] = [$maximum, $minimum];
 		}
+
 		$this->setState('filter.duration_min_ms', $minimum);
 		$this->setState('filter.duration_max_ms', $maximum);
-
 		$this->setState('filter.recorded_from_sql', $this->parseDate($recordedFromInput, false, 'COM_AUDIOARCHIVE_FILTER_RECORDED_FROM_INVALID'));
 		$this->setState('filter.recorded_to_sql', $this->parseDate($recordedToInput, true, 'COM_AUDIOARCHIVE_FILTER_RECORDED_TO_INVALID'));
 		$this->setState('filter.uploaded_from_sql', $this->parseDate($uploadedFromInput, false, 'COM_AUDIOARCHIVE_FILTER_UPLOADED_FROM_INVALID'));
@@ -844,20 +919,41 @@ class ArchiveModel extends ListModel
 
 		$allowedOrdering = ['title', 'duration', 'recorded', 'uploaded'];
 		$defaultOrdering = $this->getDefaultOrdering($params);
-		$requestedOrdering = $input->getCmd('sort', $defaultOrdering);
-		$this->setState('list.ordering', in_array($requestedOrdering, $allowedOrdering, true) ? $requestedOrdering : $defaultOrdering);
+		$requestedOrdering = trim((string) ($source['sort'] ?? $defaultOrdering));
+		$resolvedOrdering = in_array($requestedOrdering, $allowedOrdering, true) ? $requestedOrdering : $defaultOrdering;
+		$this->setState('list.ordering', $resolvedOrdering);
 
 		$defaultDirection = $this->getDefaultDirection($params);
-		$requestedDirection = strtoupper($input->getCmd('direction', $defaultDirection));
-		$this->setState('list.direction', $requestedDirection === 'ASC' ? 'ASC' : 'DESC');
+		$requestedDirection = strtoupper(trim((string) ($source['direction'] ?? $defaultDirection)));
+		$resolvedDirection = $requestedDirection === 'ASC' ? 'ASC' : 'DESC';
+		$this->setState('list.direction', $resolvedDirection);
 
 		$maximumLimit = max(1, min(1000, (int) $params->get('archive_maximum_page_size', 200)));
 		$allowedLimits = $this->getPageSizeOptions();
 		$defaultLimit = $this->getDefaultLimit($params);
-		$requestedLimit = max(1, min($maximumLimit, $input->getInt('limit', $defaultLimit)));
+		$requestedLimit = max(1, min($maximumLimit, (int) ($source['limit'] ?? $defaultLimit)));
 		$limit = in_array($requestedLimit, $allowedLimits, true) ? $requestedLimit : $defaultLimit;
 		$this->setState('list.limit', $limit);
-		$this->setState('list.start', max(0, $input->getInt('limitstart', 0)));
+		$this->setState('list.start', max(0, (int) ($source['limitstart'] ?? 0)));
+
+		if (!$reset)
+		{
+			$app->setUserState($sessionKey, [
+				'q' => $search,
+				'category' => $category,
+				'tags' => $requestedTags,
+				'tag_mode' => $tagMode === 'or' ? 'or' : 'and',
+				'duration_min' => $durationMinimumInput,
+				'duration_max' => $durationMaximumInput,
+				'recorded_from' => $recordedFromInput,
+				'recorded_to' => $recordedToInput,
+				'uploaded_from' => $uploadedFromInput,
+				'uploaded_to' => $uploadedToInput,
+				'sort' => $resolvedOrdering,
+				'direction' => strtolower($resolvedDirection),
+				'limit' => $limit,
+			]);
+		}
 	}
 
 	/**

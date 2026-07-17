@@ -108,7 +108,11 @@ $componentParams = ComponentHelper::getParams('com_audioarchive');
 									'spectrum' => Text::_('MOD_AUDIOARCHIVE_ANALYSIS_SPECTRUM'),
 								],
 							],
-							JPATH_ROOT . '/components/com_audioarchive/layouts'
+							null,
+							[
+								'component' => 'com_audioarchive',
+								'client' => 0,
+							]
 						);
 						?>
 					</div>

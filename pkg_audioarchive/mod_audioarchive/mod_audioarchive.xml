@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <extension type="module" client="site" method="upgrade">
 	<name>MOD_AUDIOARCHIVE</name>
-	<version>0.5.1</version>
-	<creationDate>2026-07-16</creationDate>
+	<version>0.5.2</version>
+	<creationDate>2026-07-17</creationDate>
 	<author>Frank Willeke</author>
 	<copyright>Copyright (C) 2026 Frank Willeke.</copyright>
 	<license>GNU General Public License version 2 or later</license>
@@ -30,6 +30,8 @@
 					<option value="latest">MOD_AUDIOARCHIVE_MODE_LATEST</option>
 					<option value="random">MOD_AUDIOARCHIVE_MODE_RANDOM</option>
 					<option value="daily">MOD_AUDIOARCHIVE_MODE_DAILY</option>
+					<option value="longest">MOD_AUDIOARCHIVE_MODE_LONGEST</option>
+					<option value="shortest">MOD_AUDIOARCHIVE_MODE_SHORTEST</option>
 					<option value="most_played">MOD_AUDIOARCHIVE_MODE_MOST_PLAYED</option>
 					<option value="most_downloaded">MOD_AUDIOARCHIVE_MODE_MOST_DOWNLOADED</option>
 					<option value="specific">MOD_AUDIOARCHIVE_MODE_SPECIFIC</option>

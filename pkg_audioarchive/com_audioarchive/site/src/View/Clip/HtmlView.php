@@ -11,6 +11,7 @@ use Joomla\CMS\Uri\Uri;
 use Joomla\Registry\Registry;
 use Joomla\Database\DatabaseInterface;
 use Willeke\Component\Audioarchive\Site\Helper\RouteHelper;
+use Willeke\Component\Audioarchive\Site\Model\ArchiveModel;
 use Willeke\Component\Audioarchive\Site\Model\ClipModel;
 use Willeke\Component\Audioarchive\Site\Service\ArchiveMenuItemResolver;
 use Willeke\Component\Audioarchive\Site\Service\DownloadAccessService;
@@ -127,9 +128,14 @@ class HtmlView extends BaseHtmlView
 				);
 			}
 		}
-		$this->archiveUrl = $routeItemId > 0
-			? Route::_('index.php?Itemid=' . $routeItemId)
-			: Route::_('index.php?option=com_audioarchive&view=archive');
+		$storedArchiveQuery = $application->getUserState(
+			ArchiveModel::getQuerySessionKey($routeItemId),
+			[]
+		);
+		$storedArchiveQuery = is_array($storedArchiveQuery) ? $storedArchiveQuery : [];
+		$this->archiveUrl = Route::_(
+			RouteHelper::getArchiveRoute($routeItemId, $storedArchiveQuery)
+		);
 
 		if ((int) $this->params->get('enable_play_counts', 1) === 1)
 		{
