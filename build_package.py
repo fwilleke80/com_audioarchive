@@ -22,6 +22,7 @@ from typing import Iterable, Sequence
 PACKAGE_DIRECTORY_NAME = "pkg_audioarchive"
 PACKAGE_MANIFEST_NAME = "pkg_audioarchive.xml"
 PACKAGE_INSTALL_SCRIPT_NAME = "install.php"
+PACKAGE_LANGUAGE_DIRECTORY_NAME = "language"
 
 IGNORED_DIRECTORY_NAMES = frozenset(
     (
@@ -221,6 +222,71 @@ def collect_source_files(source_directory: Path) -> tuple[Path, ...]:
     )
 
 
+def collect_package_language_files(
+    package_directory: Path,
+) -> tuple[Path, ...]:
+    """
+    @brief Collect package-level language files for the outer package ZIP.
+    @param package_directory pkg_audioarchive source directory.
+    @return Sorted tuple of package-level language files.
+    @throws BuildError If the language directory is missing or empty.
+    """
+
+    language_directory = (
+        package_directory / PACKAGE_LANGUAGE_DIRECTORY_NAME
+    )
+
+    if not language_directory.is_dir():
+        raise BuildError(
+            "Package language directory does not exist: '%s'."
+            % language_directory
+        )
+
+    language_files = collect_source_files(language_directory)
+
+    if not language_files:
+        raise BuildError(
+            "Package language directory contains no packageable files: '%s'."
+            % language_directory
+        )
+
+    return language_files
+
+
+def validate_archive_entries(
+    archive_path: Path,
+    expected_entries: Iterable[str],
+) -> None:
+    """
+    @brief Verify that required entries exist in a ZIP archive.
+    @param archive_path ZIP archive to inspect.
+    @param expected_entries Archive entry names that must be present.
+    @throws BuildError If the ZIP cannot be read or an entry is missing.
+    """
+
+    try:
+        with zipfile.ZipFile(archive_path, "r") as archive:
+            archive_entries = frozenset(archive.namelist())
+    except (OSError, zipfile.BadZipFile) as error:
+        raise BuildError(
+            "Cannot inspect ZIP archive '%s': %s" % (archive_path, error)
+        ) from error
+
+    missing_entries = tuple(
+        sorted(
+            entry
+            for entry in expected_entries
+            if entry not in archive_entries
+        )
+    )
+
+    if missing_entries:
+        raise BuildError(
+            "ZIP archive '%s' is missing required entries: %s"
+            % (archive_path, ", ".join(missing_entries))
+        )
+
+
 def validate_archive(archive_path: Path) -> None:
     """
     @brief Test the CRC data of every entry in a ZIP archive.
@@ -292,18 +358,25 @@ def build_extension_archive(
 
 
 def build_outer_package(
+    package_directory: Path,
     manifest_path: Path,
     install_script_path: Path,
+    package_language_files: Iterable[Path],
     extension_archives: Iterable[Path],
     output_path: Path,
 ) -> None:
     """
     @brief Assemble the final Joomla package ZIP.
+    @param package_directory pkg_audioarchive source directory.
     @param manifest_path Package XML manifest.
     @param install_script_path Package installation script.
+    @param package_language_files Package-level language files.
     @param extension_archives Nested extension ZIP archives.
     @param output_path Destination package ZIP.
     """
+
+    package_language_files = tuple(package_language_files)
+    extension_archives = tuple(extension_archives)
 
     try:
         with zipfile.ZipFile(
@@ -326,6 +399,17 @@ def build_outer_package(
                 compresslevel=9,
             )
 
+            for language_file in package_language_files:
+                archive_name = language_file.relative_to(
+                    package_directory
+                ).as_posix()
+                archive.write(
+                    language_file,
+                    archive_name,
+                    compress_type=zipfile.ZIP_DEFLATED,
+                    compresslevel=9,
+                )
+
             for extension_archive in extension_archives:
                 archive.write(
                     extension_archive,
@@ -338,6 +422,17 @@ def build_outer_package(
         ) from error
 
     validate_archive(output_path)
+
+    required_entries = (
+        PACKAGE_MANIFEST_NAME,
+        PACKAGE_INSTALL_SCRIPT_NAME,
+        *(
+            language_file.relative_to(package_directory).as_posix()
+            for language_file in package_language_files
+        ),
+        *(extension_archive.name for extension_archive in extension_archives),
+    )
+    validate_archive_entries(output_path, required_entries)
 
 
 def resolve_paths(
@@ -399,6 +494,9 @@ def build_package(
         )
 
     version, extension_archive_names = parse_package_manifest(manifest_path)
+    package_language_files = collect_package_language_files(
+        package_directory
+    )
 
     output_path = (
         explicit_output_path
@@ -409,6 +507,9 @@ def build_package(
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     print("Package version: %s" % version)
+    print(
+        "Package language files: %d" % len(package_language_files)
+    )
     print("Building nested extension archives:")
 
     with tempfile.TemporaryDirectory(
@@ -436,8 +537,10 @@ def build_package(
         temporary_package_path = temporary_directory / output_path.name
 
         build_outer_package(
+            package_directory,
             manifest_path,
             install_script_path,
+            package_language_files,
             extension_archives,
             temporary_package_path,
         )
