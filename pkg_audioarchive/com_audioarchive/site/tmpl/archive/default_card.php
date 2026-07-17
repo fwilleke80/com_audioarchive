@@ -56,9 +56,6 @@ $hasMetadata = $columns['category'] || $columns['duration'] || $columns['recorde
 				<a class="com-audioarchive-mobile-card-title" href="<?php echo $item->detail_url; ?>">
 					<?php echo $this->escape($item->title); ?>
 				</a>
-				<?php if (!$columns['category'] && trim((string) $item->category_title) !== '') : ?>
-					<span class="com-audioarchive-mobile-card-category"><?php echo $this->escape($item->category_title); ?></span>
-				<?php endif; ?>
 			</div>
 		<?php endif; ?>
 	</header>

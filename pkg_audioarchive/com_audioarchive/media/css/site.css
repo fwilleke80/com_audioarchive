@@ -659,15 +659,6 @@
 	text-underline-offset: .16em;
 }
 
-.com-audioarchive-row-category
-{
-	display: block;
-	margin-top: .2rem;
-	font-size: .78rem;
-	font-weight: 500;
-	color: var(--audioarchive-muted);
-}
-
 .com-audioarchive-duration-cell,
 .com-audioarchive-date-cell
 {
@@ -1196,16 +1187,6 @@
 		text-underline-offset: .16em;
 		overflow-wrap: break-word;
 		word-break: normal;
-	}
-
-	.com-audioarchive-mobile-card-category
-	{
-		display: block;
-		margin-top: .2rem;
-		font-size: .78rem;
-		font-weight: 500;
-		color: var(--audioarchive-muted);
-		overflow-wrap: break-word;
 	}
 
 	.com-audioarchive-mobile-card-metadata

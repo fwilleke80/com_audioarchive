@@ -51,9 +51,6 @@ $mime = trim((string) $item->mime_type) ?: 'application/octet-stream';
 	<?php if ($columns['title']) : ?>
 		<th class="com-audioarchive-title-cell" scope="row" data-label="<?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_TITLE'); ?>">
 			<a class="com-audioarchive-title-link" href="<?php echo $item->detail_url; ?>"><?php echo $this->escape($item->title); ?></a>
-			<?php if (!$columns['category'] && trim((string) $item->category_title) !== '') : ?>
-				<span class="com-audioarchive-row-category"><?php echo $this->escape($item->category_title); ?></span>
-			<?php endif; ?>
 		</th>
 	<?php endif; ?>
 	<?php if ($columns['category']) : ?><td class="com-audioarchive-category-cell" data-label="<?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_CATEGORY'); ?>"><?php echo $this->escape($item->category_title); ?></td><?php endif; ?>
