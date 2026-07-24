@@ -128,7 +128,7 @@ class StreamController extends BaseController
 		if ($counted)
 		{
 			$service->incrementPlayCount($id);
-			$this->recordSimpleStatsEvent('audio.play', $clip);
+			$this->recordPungaAnalyticsEvent('audio.play', $clip);
 		}
 
 		$this->sendJson(200, ['success' => true, 'counted' => $counted]);
@@ -197,28 +197,28 @@ class StreamController extends BaseController
 				// A counter failure must never prevent an authorised download.
 			}
 
-			$this->recordSimpleStatsEvent('audio.download', $clip);
+			$this->recordPungaAnalyticsEvent('audio.download', $clip);
 		}
 
 		$this->sendFile($path, $clip, $download, $method === 'HEAD');
 	}
 
 	/**
-	 * @brief Dispatch one optional Simple Stats custom event.
+	 * @brief Dispatch one optional Punga Analytics custom event.
 	 *
 	 * The event uses only Joomla's generic dispatcher contract, so Audio
-	 * Archive does not depend on Simple Stats being installed or enabled.
+	 * Archive does not depend on Punga Analytics being installed or enabled.
 	 * Listener failures are isolated because statistics must never interrupt
 	 * playback or an authorised download.
 	 *
-	 * @param string $eventType Stable Simple Stats event type.
+	 * @param string $eventType Stable Punga Analytics event type.
 	 * @param object $clip Public clip associated with the event.
 	 *
 	 * @return void
 	 */
-	private function recordSimpleStatsEvent(string $eventType, object $clip): void
+	private function recordPungaAnalyticsEvent(string $eventType, object $clip): void
 	{
-		$eventName = 'onSimpleStatsRecord';
+		$eventName = 'onPungaAnalyticsRecord';
 
 		try
 		{

@@ -914,7 +914,7 @@ class MaintenanceController extends BaseController
 
         return is_array($manifest) && trim((string) ($manifest['version'] ?? '')) !== ''
             ? trim((string) $manifest['version'])
-            : '0.9.4';
+            : '0.9.5';
     }
 
     /**
