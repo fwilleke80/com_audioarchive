@@ -2,9 +2,9 @@
 
 Audio Archive is a native Joomla! 6 extension package for managing and publishing collections of audio clips.
 
-It is intended for archives ranging from a small collection to several thousand files. Administrators can upload or import clips, organise them with Joomla categories and tags, edit metadata, replace source files in bulk, inspect archive integrity, generate waveform and spectral analyses with optional FFmpeg support, control publication and access, and review playback and download statistics. Visitors can search and filter the archive, browse a tag directory, use consistent responsive players throughout the site, open clip detail pages, and — where permitted — download the protected original files.
+It is intended for archives ranging from a small collection to several thousand files. Administrators can upload or import clips, organise them with Joomla categories and tags, edit metadata, replace source files in bulk, inspect archive integrity, create portable archive exports, restore or migrate collections, generate waveform and spectral analyses with optional FFmpeg support, control publication and access, and review playback and download statistics. Visitors can search and filter the archive, browse a tag directory, use consistent responsive players throughout the site, move between neighbouring clips, and — where permitted — download the protected original files.
 
-> **Current version:** `0.8.9`  
+> **Current version:** `0.9.5`  
 > **Package:** `pkg_audioarchive`
 
 ## Table of contents
@@ -26,6 +26,7 @@ It is intended for archives ranging from a small collection to several thousand 
     - [Bulk replacement of existing files](#bulk-replacement-of-existing-files)
   - [Managing clips](#managing-clips)
   - [Integrity and maintenance](#integrity-and-maintenance)
+  - [Archive export and restore](#archive-export-and-restore)
   - [Audio analyses](#audio-analyses)
     - [Waveform generation](#waveform-generation)
     - [Spectrum generation](#spectrum-generation)
@@ -35,8 +36,11 @@ It is intended for archives ranging from a small collection to several thousand 
   - [Frontend access control](#frontend-access-control)
   - [Frontend clip editing](#frontend-clip-editing)
   - [Public filtering](#public-filtering)
+  - [Archive pagination](#archive-pagination)
+  - [Previous and next clip navigation](#previous-and-next-clip-navigation)
   - [Tags and tag descriptions](#tags-and-tag-descriptions)
   - [Playback and downloads](#playback-and-downloads)
+    - [Punga Analytics integration](#punga-analytics-integration)
     - [Shared player presentations](#shared-player-presentations)
     - [Template overrides and custom styling](#template-overrides-and-custom-styling)
 - [Using the Audio Archive module](#using-the-audio-archive-module)
@@ -56,6 +60,7 @@ It is intended for archives ranging from a small collection to several thousand 
   - [Archive clip counts](#archive-clip-counts)
   - [Archive playtime](#archive-playtime)
   - [Content-plugin behaviour](#content-plugin-behaviour)
+- [Release history: 0.9.0–0.9.5](#release-history-090095)
 
 ## What Audio Archive offers
 
@@ -98,6 +103,10 @@ It is intended for archives ranging from a small collection to several thousand 
 - Review and removal of stale derivatives, abandoned temporary files, and unreferenced managed files
 - Automatic batched stale-file cleanup for large selections
 - CSV export of integrity findings
+- Portable versioned ZIP exports containing metadata, analyses, or the complete archive
+- Protected inspection and checksum verification before an archive restore
+- Empty-archive, merge, and replace restore modes with UUID-based clip matching
+- Transactional restore with rollback and safe staging of included media files
 - Joomla ACL and category-based permission inheritance
 - English and German administrator interfaces
 
@@ -114,7 +123,8 @@ It is intended for archives ranging from a small collection to several thousand 
 - JavaScript-enhanced duration slider with text-field fallback
 - Recording-date and upload-date ranges
 - Sortable result columns
-- Server-side Joomla pagination
+- Compact server-side Joomla pagination with ellipses for long page ranges
+- Configurable number of page links retained at both edges of compact pagination
 - Configurable page sizes, filters, columns, and detail-page fields
 - Category names are shown in archive results only when the **Show category** list-column option is enabled
 - Session persistence for the last-used filters, sorting, and page size, stored independently for each Archive menu item
@@ -136,11 +146,13 @@ It is intended for archives ranging from a small collection to several thousand 
 - Breadcrumb integration
 - Page titles, metadata, canonical routes, and redirects from stale aliases or legacy URLs
 - Correct routing when several Audio Archive menu items exist
+- Configurable Previous and Next links that follow the active Archive menu item's filters, restrictions, and sorting
 - Component-wide frontend access control independent of menu-item access
 - Login redirection for guests when the archive requires authentication
 - Configurable protected downloads of original files
 - Optional restriction of detail-page downloads to selected Joomla access levels
 - Aggregate play and download counters
+- Optional `audio.play` and `audio.download` event dispatch for Punga Analytics without a hard dependency
 - Clickable tag links, with category names available as archive metadata and breadcrumb context
 - Tag descriptions exposed through standard browser hover tooltips
 - Native frontend clip editing for authorised users when Joomla frontend editing is enabled
@@ -155,7 +167,7 @@ The package installs the following Joomla extensions:
 
 | Extension | Type | Purpose |
 | --- | --- | --- |
-| `com_audioarchive` | Component | Administration, importing, replacement, integrity maintenance, FFmpeg system checks, waveform and spectral analyses, shared players, public archive, tag directory, clip pages, playback, downloads, routing, access control, and statistics |
+| `com_audioarchive` | Component | Administration, importing, replacement, integrity maintenance, archive export and restore, FFmpeg system checks, waveform and spectral analyses, shared players, public archive, tag directory, clip pages, playback, downloads, routing, access control, and statistics events |
 | `mod_audioarchive` | Site module | Displays selected clips using latest, longest, shortest, random, daily, most-played, most-downloaded, or specific-clip modes |
 | `mod_audioarchive_tags` | Site module | Displays Audio Archive tags with descriptions, optional clip counts, and links to a filtered Archive |
 | `plg_finder_audioarchive` | Smart Search plugin | Adds eligible Audio Archive clips to Joomla Smart Search |
@@ -165,12 +177,12 @@ The package installs the following Joomla extensions:
 Install the package ZIP rather than installing its individual extension ZIP files separately.
 
 ```text
-pkg_audioarchive_v0-8-9.zip
+pkg_audioarchive_v0-9-5.zip
 ```
 
 ## Requirements and external tools
 
-Audio Archive 0.8.9 requires:
+Audio Archive 0.9.5 requires:
 
 - Joomla! 6.x
 - PHP 8.3 or later
@@ -182,11 +194,13 @@ Core archive features—including metadata editing, filters, protected playback,
 
 `proc_open()` must be available when Audio Archive is expected to execute FFmpeg or FFprobe. Some hosting providers disable external process execution; the dashboard System Check reports this explicitly.
 
+Archive export and restore require the PHP ZIP extension and its `ZipArchive` class. The rest of Audio Archive remains available when that optional PHP extension is missing.
+
 ### FFmpeg and FFprobe binaries
 
 Audio Archive does not bundle FFmpeg or FFprobe executables.
 
-FFmpeg is optional but required for generating waveform peak data and spectral-analysis images. FFprobe is also detected by the System Check, but **Audio Archive 0.8.9 does not use FFprobe for metadata extraction or any other production operation**. Duration, container, codec, embedded title, recording date, and related technical metadata are read by the bundled PHP media inspector.
+FFmpeg is optional but required for generating waveform peak data and spectral-analysis images. FFprobe is also detected by the System Check, but **Audio Archive 0.9.5 does not use FFprobe for metadata extraction or any other production operation**. Duration, container, codec, embedded title, recording date, and related technical metadata are read by the bundled PHP media inspector.
 
 Recommended sources:
 
@@ -202,7 +216,7 @@ Store uploaded executables outside the public web root where possible. When that
 To install Audio Archive:
 
 1. Open **System → Install → Extensions** in the Joomla administrator.
-2. Upload `pkg_audioarchive_v0-8-9.zip`.
+2. Upload `pkg_audioarchive_v0-9-5.zip`.
 3. Open **Components → Audio Archive**.
 4. Review the dashboard and component options before importing files.
 
@@ -227,7 +241,7 @@ Review the following settings before importing the archive:
 - Default access level for new clips
 - Default publication state
 - Original-file storage directory
-- Reserved compatibility-preview storage directory (0.8.9 does not generate playback previews)
+- Reserved compatibility-preview storage directory (Audio Archive does not currently generate playback previews)
 - Analysis-data storage directory for waveform and spectral-analysis files
 - Import inbox directory
 - Permitted extensions and MIME types
@@ -235,8 +249,10 @@ Review the following settings before importing the archive:
 - Duplicate policy
 - Recording-date policy
 - Public filters, result columns, ordering, and pagination
+- Number of page-number links retained at each edge of compact pagination
 - Shared player defaults and styling
 - Clip-detail player presentation
+- Previous and next clip navigation
 - Backend preview player presentation
 - Playback and download settings
 - Clip detail-page fields
@@ -293,11 +309,11 @@ For FFmpeg and FFprobe, the system check reports:
 
 Audio Archive checks an explicitly configured path first. It then tries the executable name through the server's `PATH`, followed by `/usr/bin` and `/usr/local/bin`. If an explicitly configured Unix executable lacks execute bits, Audio Archive attempts to add them when the hosting account has sufficient permission. Otherwise, the dashboard reports the permission problem explicitly.
 
-FFmpeg is required for waveform and spectral-analysis generation. FFprobe is optional and is currently only located and version-tested by the System Check. Audio Archive 0.8.9 performs media metadata extraction with its bundled PHP inspector, whether or not FFprobe is installed. The 0.8.9 System Check may nevertheless display FFprobe as the metadata-extraction method when it is detected; that status label is inaccurate and does not reflect the actual extraction path.
+FFmpeg is required for waveform and spectral-analysis generation. FFprobe is optional and is currently only located and version-tested by the System Check. Audio Archive 0.9.5 performs media metadata extraction with its bundled PHP inspector, whether or not FFprobe is installed.
 
 The dashboard also displays the installed Audio Archive version, provides actions for resetting all recorded play counts or all recorded download counts, and shows the combined managed-storage size with separate totals for current original clip files, waveform data, and spectral analyses. These totals use the recorded sizes of currently referenced files and therefore do not require a filesystem scan; stale or unreferenced files remain part of the manual maintenance checks.
 
-Audio Archive 0.8.9 does not generate compatibility playback files and does not transcode originals. Public playback streams the current original file. The preview directory, preview status column, and stale-preview maintenance support remain as compatibility scaffolding for legacy or manually created preview records.
+Audio Archive 0.9.5 does not generate compatibility playback files and does not transcode originals. Public playback streams the current original file. The preview directory, preview status column, and stale-preview maintenance support remain as compatibility scaffolding for legacy or manually created preview records.
 
 ### Adding clips
 
@@ -465,6 +481,50 @@ Current referenced originals are never eligible for stale-file cleanup. Before d
 
 Large cleanup selections are processed automatically in sequential AJAX batches of at most 200 files. This avoids PHP input limits and oversized single requests while preserving the server-side safety limit and per-batch validation.
 
+### Archive export and restore
+
+The **Archive export and restore** section on the Integrity & Maintenance page creates portable Audio Archive backups and restores them on the same or another Joomla installation.
+
+Three export scopes are available:
+
+| Scope | Contents |
+| --- | --- |
+| **Metadata only** | Versioned JSON data for clips, categories, tags, tag relations, ACL, Custom Fields, counters, file and analysis records, and portable component configuration |
+| **Metadata and analyses** | Metadata plus generated waveform and spectral-analysis files |
+| **Complete archive** | Metadata, analyses, original audio files, and any legacy compatibility-preview files |
+
+Every export is a ZIP with a manifest and recorded SHA-256 checksum for each included entry. Transient processing jobs are intentionally not exported.
+
+Audio Archive finishes and reopens the complete ZIP before sending it to the browser. It validates the required documents and ZIP structure, refuses to silently omit a requested original or analysis file, clears response buffering and compression that could corrupt binary output, sends the exact completed file length, and removes the protected temporary file afterwards. If a requested managed file cannot be included, the export stops with an error so the integrity issue can be corrected first.
+
+An export can be selected either through a browser upload or from the configured import inbox. Inbox selection is useful when a complete archive exceeds browser or PHP upload limits. Before any archive data changes, Audio Archive copies the ZIP into protected staging storage and verifies:
+
+- The export format and supported format version
+- Required manifest and data documents
+- Every archive entry path
+- Symbolic-link and traversal protection
+- The recorded SHA-256 checksum of every included entry
+- Compressed and uncompressed sizes
+
+Inspection and restoration are separate confirmed actions. The inspected summary reports the source component version, scope, clip count, ZIP size, uncompressed size, and number of verified entries.
+
+Restore modes are:
+
+- **Restore into empty archive** — refuses to run if the current installation already contains clips
+- **Merge into current archive** — matches clips by persistent UUID
+- **Replace current archive** — removes the current Audio Archive clip data after explicit confirmation and restores the inspected export
+
+Merge mode provides three conflict policies:
+
+- **Skip existing clips**
+- **Update public metadata only** — keeps the current media, technical state, and counters
+- **Update metadata and included files** — also restores files present in the selected export scope
+
+Portable component configuration can be restored optionally. Storage directories, the import path, and explicit FFmpeg or FFprobe paths always remain those of the destination Joomla installation.
+
+Categories, tags, Custom Field definitions and values, ACL rules, access levels, user groups, and authors are mapped to the destination installation rather than relying on numeric database IDs. Clip identity is carried by a persistent UUID.
+
+Restore uses a database transaction and protected file staging. New managed files are removed again if restoration fails, database changes are rolled back, and superseded files are deleted only after a successful commit. After a successful restore, rebuild the Joomla Smart Search index.
 
 ### Audio analyses
 
@@ -697,6 +757,32 @@ Audio Archive stores the visitor's last-used filter values, tag mode, sorting, s
 
 State is stored independently for each Archive menu item, so differently configured archive pages do not overwrite one another. The **Reset** action clears the stored state for the current menu item and returns to its configured defaults.
 
+### Archive pagination
+
+Archive results use compact server-side pagination. Long page ranges keep a configurable number of links visible at both the beginning and end, show the current page with its immediate neighbours, and insert ellipses wherever pages are omitted.
+
+With the default edge size of `5`, a 42-page archive begins as:
+
+```text
+« ‹ 1 2 3 4 5 … 38 39 40 41 42 › »
+```
+
+Near the middle it becomes:
+
+```text
+« ‹ 1 2 3 4 5 … 19 20 21 … 38 39 40 41 42 › »
+```
+
+If the full range contains at most twice the configured edge size plus one page, every page number is shown.
+
+The global **Public Archive → Pagination → Page links at each edge** setting accepts values from `1` to `20` and defaults to `5`. Each Archive menu item can inherit the global value or override it. Page links retain the active filters, tag mode, sorting, and page size.
+
+### Previous and next clip navigation
+
+Clip detail pages can show **Previous** and **Next** links at the bottom of the page. The links include the neighbouring clip titles and follow the active Archive menu item's filters, category and tag restrictions, access rules, and sorting. The first result has no Previous link and the last result has no Next link.
+
+The global **Clip detail → Previous and next clip navigation** setting defaults to **Show**. Each Archive menu item can select **Use Global**, **Show**, or **Hide**.
+
 ### Tags and tag descriptions
 
 Tags displayed in the Archive, Tag Directory, modules, embedded clips, and clip detail pages link back to the appropriate Archive menu item with the corresponding tag filter applied.
@@ -717,6 +803,33 @@ Playback, analysis, and download requests pass through component controllers tha
 Playback supports byte-range requests for seeking. Downloads use the original filename while keeping the internal managed filename and filesystem path private.
 
 The detail-page download button can be configured globally and overridden by an Archive menu item. It can be hidden completely or limited to the selected Joomla access level.
+
+#### Punga Analytics integration
+
+Audio Archive can report confirmed plays and downloads to the optional Punga Analytics extension through Joomla's generic event dispatcher. No Punga Analytics class is imported and there is no hard package dependency.
+
+Audio Archive dispatches `onPungaAnalyticsRecord` with these event types:
+
+| Event type | Dispatch point |
+| --- | --- |
+| `audio.play` | After the protected play-counter request accepts and counts the first play for that clip during the current page view |
+| `audio.download` | After a GET download request has passed clip, access, and file validation and the download is about to be delivered |
+
+The payload identifies:
+
+```text
+component:  com_audioarchive
+view_name:  clip
+item_type:  audioarchive.clip
+item_id:    stable clip ID
+item_title: current clip title
+```
+
+This lets Punga Analytics present overall Audio plays and Audio downloads as well as item rankings such as Most played clips and Most downloaded clips. The corresponding `audio.play` and `audio.download` event definitions must be enabled in Punga Analytics when its recording policy accepts configured events only.
+
+The corresponding Audio Archive aggregate counter must also be enabled: disabling play counts suppresses `audio.play`, and disabling download counts suppresses `audio.download`. Repeated pause and resume actions do not generate repeated play events during the same page view. HEAD requests and playback streams do not generate download events.
+
+Listener failures are isolated: Punga Analytics can never block playback or an authorised download, and Audio Archive continues normally when the analytics extension is absent or disabled.
 
 #### Shared player presentations
 
@@ -1137,3 +1250,45 @@ The plugin can be configured under:
 ```text
 System → Manage → Plugins → Content - Audio Archive
 ```
+
+## Release history: 0.9.0–0.9.5
+
+### 0.9.0
+
+- Added portable, versioned archive exports with **Metadata only**, **Metadata and analyses**, and **Complete archive** scopes.
+- Added protected ZIP staging and preflight inspection with manifest, entry-path, and SHA-256 validation.
+- Added restore into an empty archive, merge by persistent clip UUID, and complete archive replacement.
+- Added merge conflict policies for skipping existing clips, updating public metadata only, or updating metadata and included files.
+- Added portable restoration of categories, tags, Custom Fields, ACL, counters, and component configuration with semantic destination-site mapping.
+- Added transactional restore, file rollback, delayed cleanup of superseded files, and a Smart Search reindex reminder.
+
+### 0.9.1
+
+- Added compact Archive pagination with ellipses instead of rendering every page number in a long archive.
+- Added Previous and Next navigation with neighbouring clip titles on clip detail pages.
+
+### 0.9.2
+
+- Refined compact pagination to retain only the configured number of page links at each edge plus the current page and its immediate neighbours.
+- Added **Public Archive → Pagination → Page links at each edge**, defaulting to `5` with a permitted range of `1`–`20`.
+- Added global and per-Archive-menu-item control of **Previous and next clip navigation**, enabled by default.
+- Made detail navigation follow the active Archive menu item's filters, restrictions, and sorting.
+
+### 0.9.3
+
+- Repaired complete archive downloads that could previously be truncated or corrupted by active Joomla or PHP response buffering and compression.
+- Finalised and validated the complete ZIP before beginning the download response.
+- Made missing requested originals or analysis files fail the export explicitly instead of producing an incomplete backup.
+- Preserved the exact content length and protected temporary-file cleanup for successful and failed export streams.
+
+### 0.9.4
+
+- Added an optional Joomla custom-event bridge for semantic `audio.play` and `audio.download` statistics.
+- Added stable component, view, item type, clip ID, and clip title fields for item-level analytics.
+- Isolated statistics listeners so analytics failures cannot interrupt playback or downloads.
+
+### 0.9.5
+
+- Updated the statistics bridge to the current Punga Analytics contract and `onPungaAnalyticsRecord` event name.
+- Renamed the internal integration helper and documentation from SimpleStats to Punga Analytics.
+- Updated package, component, media asset, and export fallback version references to `0.9.5`.
