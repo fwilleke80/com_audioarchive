@@ -3,6 +3,7 @@
 namespace Willeke\Component\Audioarchive\Site\Controller;
 
 use Joomla\CMS\Component\ComponentHelper;
+use Joomla\CMS\Event\GenericEvent;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
@@ -115,7 +116,9 @@ class StreamController extends BaseController
 			$application->getIdentity()
 		);
 
-		if ($service->getPublicClip($id, false) === null)
+		$clip = $service->getPublicClip($id, false);
+
+		if ($clip === null)
 		{
 			$this->sendJson(404, ['success' => false]);
 		}
@@ -125,6 +128,7 @@ class StreamController extends BaseController
 		if ($counted)
 		{
 			$service->incrementPlayCount($id);
+			$this->recordSimpleStatsEvent('audio.play', $clip);
 		}
 
 		$this->sendJson(200, ['success' => true, 'counted' => $counted]);
@@ -192,9 +196,52 @@ class StreamController extends BaseController
 			{
 				// A counter failure must never prevent an authorised download.
 			}
+
+			$this->recordSimpleStatsEvent('audio.download', $clip);
 		}
 
 		$this->sendFile($path, $clip, $download, $method === 'HEAD');
+	}
+
+	/**
+	 * @brief Dispatch one optional Simple Stats custom event.
+	 *
+	 * The event uses only Joomla's generic dispatcher contract, so Audio
+	 * Archive does not depend on Simple Stats being installed or enabled.
+	 * Listener failures are isolated because statistics must never interrupt
+	 * playback or an authorised download.
+	 *
+	 * @param string $eventType Stable Simple Stats event type.
+	 * @param object $clip Public clip associated with the event.
+	 *
+	 * @return void
+	 */
+	private function recordSimpleStatsEvent(string $eventType, object $clip): void
+	{
+		$eventName = 'onSimpleStatsRecord';
+
+		try
+		{
+			Factory::getApplication()->getDispatcher()->dispatch(
+				$eventName,
+				new GenericEvent(
+					$eventName,
+					[
+						'subject' => $this,
+						'event_type' => $eventType,
+						'component' => 'com_audioarchive',
+						'view_name' => 'clip',
+						'item_type' => 'audioarchive.clip',
+						'item_id' => (string) ($clip->id ?? ''),
+						'item_title' => (string) ($clip->title ?? ''),
+					]
+				)
+			);
+		}
+		catch (\Throwable)
+		{
+			// Optional statistics listeners must not affect media delivery.
+		}
 	}
 
 	/**

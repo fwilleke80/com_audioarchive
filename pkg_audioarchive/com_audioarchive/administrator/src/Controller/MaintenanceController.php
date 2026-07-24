@@ -427,6 +427,8 @@ class MaintenanceController extends BaseController
             $application->getIdentity()
         );
         $export = null;
+        $stream = null;
+        $size = 0;
 
         try
         {
@@ -438,38 +440,28 @@ class MaintenanceController extends BaseController
             $export = $service->create($scope, $this->getInstalledComponentVersion());
             $path = (string) $export['path'];
             $filename = (string) $export['filename'];
-            $application->setHeader('Content-Type', 'application/zip', true);
-            $application->setHeader('Content-Disposition', 'attachment; filename="' . addcslashes($filename, '"\\') . '"', true);
-            $application->setHeader('Content-Length', (string) filesize($path), true);
-            $application->setHeader('Cache-Control', 'no-store, no-cache, must-revalidate', true);
-            $application->setHeader('Pragma', 'no-cache', true);
-            $application->sendHeaders();
+            clearstatcache(true, $path);
+            $size = filesize($path);
+
+            if (!is_int($size) || $size <= 0)
+            {
+                throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_ARCHIVE_EXPORT_ERROR_STREAM'));
+            }
+
             $stream = fopen($path, 'rb');
 
             if (!is_resource($stream))
             {
                 throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_ARCHIVE_EXPORT_ERROR_STREAM'));
             }
-
-            while (!feof($stream))
-            {
-                $chunk = fread($stream, 1048576);
-
-                if ($chunk === false)
-                {
-                    fclose($stream);
-                    throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_ARCHIVE_EXPORT_ERROR_STREAM'));
-                }
-
-                echo $chunk;
-            }
-
-            fclose($stream);
-            @unlink($path);
-            $application->close();
         }
         catch (\Throwable $exception)
         {
+            if (is_resource($stream))
+            {
+                fclose($stream);
+            }
+
             if (is_array($export) && isset($export['path']))
             {
                 @unlink((string) $export['path']);
@@ -480,7 +472,103 @@ class MaintenanceController extends BaseController
                 'error'
             );
             $this->setRedirect($this->maintenanceUrl());
+            return;
         }
+
+        $this->prepareArchiveDownload();
+        $application->clearHeaders();
+        $application->setHeader('Content-Type', 'application/zip', true);
+        $application->setHeader('Content-Disposition', 'attachment; filename="' . addcslashes($filename, '"\\') . '"', true);
+        $application->setHeader('Content-Length', (string) $size, true);
+        $application->setHeader('Content-Encoding', 'identity', true);
+        $application->setHeader('Content-Transfer-Encoding', 'binary', true);
+        $application->setHeader('Cache-Control', 'no-store, no-cache, must-revalidate', true);
+        $application->setHeader('Pragma', 'no-cache', true);
+        $application->setHeader('X-Content-Type-Options', 'nosniff', true);
+        $application->setHeader('X-Accel-Buffering', 'no', true);
+
+        try
+        {
+            $application->sendHeaders();
+            $this->streamArchive($stream);
+        }
+        finally
+        {
+            fclose($stream);
+            @unlink($path);
+        }
+
+        $application->close();
+    }
+
+    /**
+     * @brief Remove text-response buffering and compression before a ZIP download.
+     *
+     * Joomla administrator output or an active PHP compression handler must not
+     * prefix or transform the already-compressed archive bytes.
+     *
+     * @return void
+     */
+    private function prepareArchiveDownload(): void
+    {
+        if (function_exists('session_status') && session_status() === PHP_SESSION_ACTIVE)
+        {
+            @session_write_close();
+        }
+
+        if (function_exists('ini_set'))
+        {
+            @ini_set('zlib.output_compression', '0');
+        }
+
+        if (function_exists('apache_setenv'))
+        {
+            @apache_setenv('no-gzip', '1');
+        }
+
+        while (ob_get_level() > 0)
+        {
+            $level = ob_get_level();
+
+            if (!@ob_end_clean() || ob_get_level() >= $level)
+            {
+                break;
+            }
+        }
+    }
+
+    /**
+     * @brief Stream an already validated archive without appending error output.
+     *
+     * @param resource $stream Open binary archive stream.
+     *
+     * @return bool True when the complete stream was written.
+     */
+    private function streamArchive($stream): bool
+    {
+        while (!feof($stream))
+        {
+            $chunk = fread($stream, 1048576);
+
+            if ($chunk === false)
+            {
+                return false;
+            }
+
+            if ($chunk === '')
+            {
+                return feof($stream);
+            }
+
+            echo $chunk;
+
+            if (function_exists('flush'))
+            {
+                @flush();
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -826,7 +914,7 @@ class MaintenanceController extends BaseController
 
         return is_array($manifest) && trim((string) ($manifest['version'] ?? '')) !== ''
             ? trim((string) $manifest['version'])
-            : '0.9.2';
+            : '0.9.4';
     }
 
     /**
