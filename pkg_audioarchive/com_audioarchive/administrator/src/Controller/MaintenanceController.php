@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\Controller;
+namespace Punga\Component\Audioarchive\Administrator\Controller;
 
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
@@ -10,10 +10,10 @@ use Joomla\CMS\Response\JsonResponse;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
 use Joomla\Database\DatabaseInterface;
-use Willeke\Component\Audioarchive\Administrator\Model\MaintenanceModel;
-use Willeke\Component\Audioarchive\Administrator\Service\ArchiveExportService;
-use Willeke\Component\Audioarchive\Administrator\Service\ArchiveImportService;
-use Willeke\Component\Audioarchive\Administrator\Service\AudioUploadService;
+use Punga\Component\Audioarchive\Administrator\Model\MaintenanceModel;
+use Punga\Component\Audioarchive\Administrator\Service\ArchiveExportService;
+use Punga\Component\Audioarchive\Administrator\Service\ArchiveImportService;
+use Punga\Component\Audioarchive\Administrator\Service\AudioUploadService;
 
 \defined('_JEXEC') or die;
 
@@ -411,7 +411,7 @@ class MaintenanceController extends BaseController
     }
 
     /**
-     * @brief Create and download a portable Audio Archive ZIP export.
+     * @brief Create and download a portable Punga Audio Archive ZIP export.
      *
      * @return void
      */
@@ -572,7 +572,7 @@ class MaintenanceController extends BaseController
     }
 
     /**
-     * @brief Stage and inspect a portable Audio Archive ZIP without restoring it.
+     * @brief Stage and inspect a portable Punga Audio Archive ZIP without restoring it.
      *
      * @return void
      */
@@ -616,7 +616,7 @@ class MaintenanceController extends BaseController
     }
 
     /**
-     * @brief Restore the currently inspected Audio Archive ZIP.
+     * @brief Restore the currently inspected Punga Audio Archive ZIP.
      *
      * @return void
      */

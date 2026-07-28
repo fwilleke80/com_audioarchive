@@ -8,7 +8,7 @@
  * @license     GNU General Public License version 2 or later
  */
 
-namespace Willeke\Component\Audioarchive\Administrator\Extension;
+namespace Punga\Component\Audioarchive\Administrator\Extension;
 
 use Joomla\CMS\Categories\CategoryServiceInterface;
 use Joomla\CMS\Categories\CategoryServiceTrait;

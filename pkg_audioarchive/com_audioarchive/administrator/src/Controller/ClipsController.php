@@ -1,13 +1,13 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\Controller;
+namespace Punga\Component\Audioarchive\Administrator\Controller;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\AdminController;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
-use Willeke\Component\Audioarchive\Administrator\Model\ClipModel;
+use Punga\Component\Audioarchive\Administrator\Model\ClipModel;
 
 \defined('_JEXEC') or die;
 

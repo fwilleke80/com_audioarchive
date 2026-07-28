@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\Table;
+namespace Punga\Component\Audioarchive\Administrator\Table;
 
 use Joomla\CMS\Access\Rules;
 use Joomla\CMS\Application\ApplicationHelper;

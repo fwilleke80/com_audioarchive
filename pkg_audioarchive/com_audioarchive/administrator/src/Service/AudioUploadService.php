@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\Service;
+namespace Punga\Component\Audioarchive\Administrator\Service;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
@@ -8,8 +8,8 @@ use Joomla\CMS\User\User;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
 use Joomla\Registry\Registry;
-use Willeke\Component\Audioarchive\Administrator\Service\Analysis\AnalysisJobService;
-use Willeke\Component\Audioarchive\Administrator\Service\Analysis\AnalysisRepositoryService;
+use Punga\Component\Audioarchive\Administrator\Service\Analysis\AnalysisJobService;
+use Punga\Component\Audioarchive\Administrator\Service\Analysis\AnalysisRepositoryService;
 
 \defined('_JEXEC') or die;
 

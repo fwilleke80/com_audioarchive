@@ -1,16 +1,16 @@
 <?php
 
-namespace Willeke\Module\AudioarchiveTags\Site\Helper;
+namespace Punga\Module\AudioarchiveTags\Site\Helper;
 
 use Joomla\CMS\Factory;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Registry\Registry;
-use Willeke\Component\Audioarchive\Site\Service\TagDirectoryService;
+use Punga\Component\Audioarchive\Site\Service\TagDirectoryService;
 
 \defined('_JEXEC') or die;
 
 /**
- * @brief Prepare Audio Archive tags for the tag-directory module.
+ * @brief Prepare Punga Audio Archive tags for the tag-directory module.
  */
 abstract class AudioarchiveTagsHelper
 {

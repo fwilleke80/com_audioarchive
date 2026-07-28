@@ -1,17 +1,17 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Site\Model;
+namespace Punga\Component\Audioarchive\Site\Model;
 
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\Registry\Registry;
-use Willeke\Component\Audioarchive\Site\Service\TagDirectoryService;
+use Punga\Component\Audioarchive\Site\Service\TagDirectoryService;
 
 \defined('_JEXEC') or die;
 
 /**
- * @brief Public Audio Archive tag-directory model.
+ * @brief Public Punga Audio Archive tag-directory model.
  */
 class TagdirectoryModel extends BaseDatabaseModel
 {

@@ -1,13 +1,13 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\Service;
+namespace Punga\Component\Audioarchive\Administrator\Service;
 
 use Joomla\Database\DatabaseInterface;
 
 \defined('_JEXEC') or die;
 
 /**
- * @brief Match inbox replacement files to existing Audio Archive originals.
+ * @brief Match inbox replacement files to existing Punga Audio Archive originals.
  */
 class BulkReplacementService
 {

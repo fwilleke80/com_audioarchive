@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\Controller;
+namespace Punga\Component\Audioarchive\Administrator\Controller;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
@@ -8,8 +8,8 @@ use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Response\JsonResponse;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
-use Willeke\Component\Audioarchive\Administrator\Model\ClipModel;
-use Willeke\Component\Audioarchive\Administrator\Model\UploadModel;
+use Punga\Component\Audioarchive\Administrator\Model\ClipModel;
+use Punga\Component\Audioarchive\Administrator\Model\UploadModel;
 
 \defined('_JEXEC') or die;
 

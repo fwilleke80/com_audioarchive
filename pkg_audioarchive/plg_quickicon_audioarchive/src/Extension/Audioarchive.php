@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Plugin\Quickicon\Audioarchive\Extension;
+namespace Punga\Plugin\Quickicon\Audioarchive\Extension;
 
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Plugin\CMSPlugin;
@@ -11,7 +11,7 @@ use Joomla\Module\Quickicon\Administrator\Event\QuickIconsEvent;
 \defined('_JEXEC') or die;
 
 /**
- * @brief Add an Audio Archive shortcut to Joomla's administrator dashboard.
+ * @brief Add an Punga Audio Archive shortcut to Joomla's administrator dashboard.
  */
 final class Audioarchive extends CMSPlugin implements SubscriberInterface
 {
@@ -31,7 +31,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 	}
 
 	/**
-	 * @brief Add the Audio Archive dashboard shortcut.
+	 * @brief Add the Punga Audio Archive dashboard shortcut.
 	 *
 	 * @param QuickIconsEvent $event Joomla Quick Icons event.
 	 *

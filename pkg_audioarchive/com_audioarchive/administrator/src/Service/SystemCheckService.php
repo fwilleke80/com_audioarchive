@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\Service;
+namespace Punga\Component\Audioarchive\Administrator\Service;
 
 use Joomla\CMS\Language\Text;
 use Joomla\Database\DatabaseInterface;
@@ -10,7 +10,7 @@ use Joomla\Registry\Registry;
 \defined('_JEXEC') or die;
 
 /**
- * @brief Collect non-destructive Audio Archive system diagnostics.
+ * @brief Collect non-destructive Punga Audio Archive system diagnostics.
  */
 class SystemCheckService
 {
@@ -33,7 +33,7 @@ class SystemCheckService
      * @brief Construct the diagnostic service.
      *
      * @param DatabaseInterface $database Joomla database connection.
-     * @param Registry $params Audio Archive component parameters.
+     * @param Registry $params Punga Audio Archive component parameters.
      */
     public function __construct(DatabaseInterface $database, Registry $params)
     {

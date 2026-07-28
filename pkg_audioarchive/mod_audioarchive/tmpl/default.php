@@ -6,7 +6,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Router\Route;
 use Joomla\String\StringHelper;
-use Willeke\Component\Audioarchive\Site\Helper\RouteHelper;
+use Punga\Component\Audioarchive\Site\Helper\RouteHelper;
 
 \defined('_JEXEC') or die;
 

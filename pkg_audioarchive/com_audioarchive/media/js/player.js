@@ -1,5 +1,5 @@
 /**
- * @brief Manage all shared Audio Archive player presentations and legacy play buttons.
+ * @brief Manage all shared Punga Audio Archive player presentations and legacy play buttons.
  */
 const initialiseAudioArchivePlayers = () =>
 {

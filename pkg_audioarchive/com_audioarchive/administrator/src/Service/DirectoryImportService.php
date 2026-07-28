@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\Service;
+namespace Punga\Component\Audioarchive\Administrator\Service;
 
 use Joomla\CMS\Language\Text;
 use Joomla\Filesystem\Path;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\Service\Analysis;
+namespace Punga\Component\Audioarchive\Administrator\Service\Analysis;
 
 \defined('_JEXEC') or die;
 

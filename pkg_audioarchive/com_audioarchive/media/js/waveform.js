@@ -1,5 +1,5 @@
 /**
- * @brief Load and render protected Audio Archive waveform peak data.
+ * @brief Load and render protected Punga Audio Archive waveform peak data.
  */
 const initialiseAudioArchiveWaveforms = () =>
 {

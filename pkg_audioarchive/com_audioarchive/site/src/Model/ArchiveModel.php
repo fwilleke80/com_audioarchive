@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Site\Model;
+namespace Punga\Component\Audioarchive\Site\Model;
 
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
@@ -9,7 +9,7 @@ use Joomla\CMS\MVC\Model\ListModel;
 use Joomla\Database\ParameterType;
 use Joomla\Database\QueryInterface;
 use Joomla\Registry\Registry;
-use Willeke\Component\Audioarchive\Site\Helper\TagDescriptionHelper;
+use Punga\Component\Audioarchive\Site\Helper\TagDescriptionHelper;
 
 \defined('_JEXEC') or die;
 
@@ -563,7 +563,7 @@ class ArchiveModel extends ListModel
 	}
 
 	/**
-	 * @brief Return global Joomla tags currently used by Audio Archive clips.
+	 * @brief Return global Joomla tags currently used by Punga Audio Archive clips.
 	 *
 	 * @return object[]
 	 */

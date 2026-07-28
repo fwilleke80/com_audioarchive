@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\Service;
+namespace Punga\Component\Audioarchive\Administrator\Service;
 
 use Joomla\CMS\Language\Text;
 use Joomla\Filesystem\Path;
@@ -9,7 +9,7 @@ use Joomla\Registry\Registry;
 \defined('_JEXEC') or die;
 
 /**
- * @brief Manage protected Audio Archive storage directories and files.
+ * @brief Manage protected Punga Audio Archive storage directories and files.
  */
 class ManagedStorageService
 {

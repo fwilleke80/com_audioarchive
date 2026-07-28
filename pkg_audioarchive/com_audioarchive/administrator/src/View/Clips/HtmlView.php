@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\View\Clips;
+namespace Punga\Component\Audioarchive\Administrator\View\Clips;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;

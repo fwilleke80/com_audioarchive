@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Site\Controller;
+namespace Punga\Component\Audioarchive\Site\Controller;
 
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Event\GenericEvent;
@@ -9,8 +9,8 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Session\Session;
 use Joomla\Database\DatabaseInterface;
-use Willeke\Component\Audioarchive\Site\Service\DownloadAccessService;
-use Willeke\Component\Audioarchive\Site\Service\PublicMediaService;
+use Punga\Component\Audioarchive\Site\Service\DownloadAccessService;
+use Punga\Component\Audioarchive\Site\Service\PublicMediaService;
 
 \defined('_JEXEC') or die;
 

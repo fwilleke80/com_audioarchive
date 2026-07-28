@@ -1,12 +1,12 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Site\Controller;
+namespace Punga\Component\Audioarchive\Site\Controller;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Router\Route;
-use Willeke\Component\Audioarchive\Site\Helper\RouteHelper;
-use Willeke\Component\Audioarchive\Site\Model\ArchiveModel;
+use Punga\Component\Audioarchive\Site\Helper\RouteHelper;
+use Punga\Component\Audioarchive\Site\Model\ArchiveModel;
 
 \defined('_JEXEC') or die;
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\View\Dashboard;
+namespace Punga\Component\Audioarchive\Administrator\View\Dashboard;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
@@ -11,7 +11,7 @@ use Joomla\Database\DatabaseInterface;
 \defined('_JEXEC') or die;
 
 /**
- * @brief Audio Archive dashboard view.
+ * @brief Punga Audio Archive dashboard view.
  */
 class HtmlView extends BaseHtmlView
 {
@@ -82,7 +82,7 @@ class HtmlView extends BaseHtmlView
     }
 
     /**
-     * @brief Determine whether the Audio Archive Smart Search plugin is installed.
+     * @brief Determine whether the Punga Audio Archive Smart Search plugin is installed.
      *
      * @return bool True when the finder plugin extension record exists.
      */

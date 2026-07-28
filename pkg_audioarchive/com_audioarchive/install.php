@@ -14,7 +14,7 @@ use Joomla\Registry\Registry;
 
 return new class () implements InstallerScriptInterface
 {
-	private const SCHEMA_VERSION = '0.10.3';
+	private const SCHEMA_VERSION = '0.10.4';
 
 	private const CATEGORY_MENU_LINK = 'index.php?option=com_categories&view=categories&extension=com_audioarchive';
 
@@ -64,7 +64,7 @@ return new class () implements InstallerScriptInterface
 	 * Joomla itself removes the component files, administrator menu, component
 	 * asset and categories after this method returns. This method removes the
 	 * component-owned tables and Joomla integration rows. Global tag records are
-	 * deliberately retained; only Audio Archive tag associations are removed.
+	 * deliberately retained; only Punga Audio Archive tag associations are removed.
 	 *
 	 * @param InstallerAdapter $adapter Joomla installer adapter.
 	 * @return bool True when database cleanup completed.
@@ -163,7 +163,7 @@ return new class () implements InstallerScriptInterface
 	}
 
 	/**
-	 * @brief Create the initial Audio Archive Uncategorised category once.
+	 * @brief Create the initial Punga Audio Archive Uncategorised category once.
 	 *
 	 * The internal seed flag prevents later component updates from recreating the
 	 * category after an administrator intentionally deletes it. Existing valid
@@ -250,7 +250,7 @@ return new class () implements InstallerScriptInterface
 	}
 
 	/**
-	 * @brief Create a top-level Audio Archive Uncategorised category.
+	 * @brief Create a top-level Punga Audio Archive Uncategorised category.
 	 *
 	 * @param DatabaseInterface $database Joomla database connection.
 	 * @return int Identifier of the new category.
@@ -298,7 +298,7 @@ return new class () implements InstallerScriptInterface
 	}
 
 	/**
-	 * @brief Determine whether a category alias already exists for Audio Archive.
+	 * @brief Determine whether a category alias already exists for Punga Audio Archive.
 	 *
 	 * @param DatabaseInterface $database Joomla database connection.
 	 * @param string $alias Alias to check.
@@ -320,7 +320,7 @@ return new class () implements InstallerScriptInterface
 	 *
 	 * @param DatabaseInterface $database Joomla database connection.
 	 * @param int $categoryId Category identifier.
-	 * @return bool True for a non-trashed Audio Archive category.
+	 * @return bool True for a non-trashed Punga Audio Archive category.
 	 */
 	private function isUsableAudioArchiveCategory(DatabaseInterface $database, int $categoryId): bool
 	{
@@ -372,7 +372,7 @@ return new class () implements InstallerScriptInterface
 	}
 
 	/**
-	 * @brief Ensure all Audio Archive tables and the Joomla content type exist.
+	 * @brief Ensure all Punga Audio Archive tables and the Joomla content type exist.
 	 *
 	 * @return bool True when the schema is complete.
 	 */
@@ -440,14 +440,14 @@ return new class () implements InstallerScriptInterface
 
 		if (!is_file($updatePath) || !is_readable($updatePath))
 		{
-			throw new RuntimeException('The Audio Archive 0.7.0 schema update is missing or unreadable.');
+			throw new RuntimeException('The Punga Audio Archive 0.7.0 schema update is missing or unreadable.');
 		}
 
 		$sql = file_get_contents($updatePath);
 
 		if ($sql === false)
 		{
-			throw new RuntimeException('The Audio Archive 0.7.0 schema update could not be read.');
+			throw new RuntimeException('The Punga Audio Archive 0.7.0 schema update could not be read.');
 		}
 
 		foreach (Installer::splitSql($sql) as $query)
@@ -651,7 +651,7 @@ return new class () implements InstallerScriptInterface
 	}
 
 	/**
-	 * @brief Determine whether every required Audio Archive table exists.
+	 * @brief Determine whether every required Punga Audio Archive table exists.
 	 *
 	 * @param DatabaseInterface $database Joomla database connection.
 	 * @return bool True when all required tables exist.
@@ -700,14 +700,14 @@ return new class () implements InstallerScriptInterface
 
 		if (!is_file($schemaPath) || !is_readable($schemaPath))
 		{
-			throw new RuntimeException('The Audio Archive schema file is missing or unreadable.');
+			throw new RuntimeException('The Punga Audio Archive schema file is missing or unreadable.');
 		}
 
 		$sql = file_get_contents($schemaPath);
 
 		if ($sql === false)
 		{
-			throw new RuntimeException('The Audio Archive schema file could not be read.');
+			throw new RuntimeException('The Punga Audio Archive schema file could not be read.');
 		}
 
 		foreach (Installer::splitSql($sql) as $query)
@@ -745,7 +745,7 @@ return new class () implements InstallerScriptInterface
 	}
 
 	/**
-	 * @brief Register or repair the Audio Archive clip content type with Joomla.
+	 * @brief Register or repair the Punga Audio Archive clip content type with Joomla.
 	 *
 	 * @param DatabaseInterface $database Joomla database connection.
 	 * @return void
@@ -758,7 +758,7 @@ return new class () implements InstallerScriptInterface
 					'dbtable' => '#__audioarchive_clips',
 					'key' => 'id',
 					'type' => 'ClipTable',
-					'prefix' => 'Willeke\\Component\\Audioarchive\\Administrator\\Table\\',
+					'prefix' => 'Punga\\Component\\Audioarchive\\Administrator\\Table\\',
 					'config' => 'array()',
 				],
 				'common' => [
@@ -819,7 +819,7 @@ return new class () implements InstallerScriptInterface
 			$query = $database->getQuery(true)
 				->update($database->quoteName('#__content_types'))
 				->set([
-					$database->quoteName('type_title') . ' = ' . $database->quote('Audio Archive Clip'),
+					$database->quoteName('type_title') . ' = ' . $database->quote('Punga Audio Archive Clip'),
 					$database->quoteName('table') . ' = ' . $database->quote($tableDefinition),
 					$database->quoteName('rules') . ' = ' . $database->quote(''),
 					$database->quoteName('field_mappings') . ' = ' . $database->quote($fieldMappings),
@@ -840,7 +840,7 @@ return new class () implements InstallerScriptInterface
 					$database->quoteName('content_history_options'),
 				])
 				->values(implode(', ', [
-					$database->quote('Audio Archive Clip'),
+					$database->quote('Punga Audio Archive Clip'),
 					$database->quote(self::CONTENT_TYPE_ALIAS),
 					$database->quote($tableDefinition),
 					$database->quote(''),
@@ -978,7 +978,7 @@ return new class () implements InstallerScriptInterface
 	}
 
 	/**
-	 * @brief Remove Audio Archive rows from Joomla integration tables.
+	 * @brief Remove Punga Audio Archive rows from Joomla integration tables.
 	 *
 	 * @param DatabaseInterface $database Joomla database connection.
 	 * @return void

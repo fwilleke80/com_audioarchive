@@ -1,14 +1,14 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Site\Controller;
+namespace Punga\Component\Audioarchive\Site\Controller;
 
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Session\Session;
 use Joomla\Database\DatabaseInterface;
-use Willeke\Component\Audioarchive\Site\Service\PublicMediaService;
-use Willeke\Component\Audioarchive\Site\Service\RatingService;
+use Punga\Component\Audioarchive\Site\Service\PublicMediaService;
+use Punga\Component\Audioarchive\Site\Service\RatingService;
 
 \defined('_JEXEC') or die;
 

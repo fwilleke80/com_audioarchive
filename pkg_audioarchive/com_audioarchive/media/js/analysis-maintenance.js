@@ -1,5 +1,5 @@
 /**
- * @brief Process queued Audio Archive analysis jobs one request at a time.
+ * @brief Process queued Punga Audio Archive analysis jobs one request at a time.
  */
 const initialiseAudioArchiveAnalysisMaintenance = () =>
 {

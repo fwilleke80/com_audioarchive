@@ -1,11 +1,11 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\Model;
+namespace Punga\Component\Audioarchive\Administrator\Model;
 
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\Database\ParameterType;
-use Willeke\Component\Audioarchive\Administrator\Service\SystemCheckService;
+use Punga\Component\Audioarchive\Administrator\Service\SystemCheckService;
 
 \defined('_JEXEC') or die;
 
@@ -91,7 +91,7 @@ class DashboardModel extends BaseDatabaseModel
     {
         if (!in_array($column, ['play_count', 'download_count'], true))
         {
-            throw new \InvalidArgumentException('Unsupported Audio Archive counter.');
+            throw new \InvalidArgumentException('Unsupported Punga Audio Archive counter.');
         }
 
         $database = $this->getDatabase();

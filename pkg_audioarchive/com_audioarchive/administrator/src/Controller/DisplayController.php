@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\Controller;
+namespace Punga\Component\Audioarchive\Administrator\Controller;
 
 use Joomla\CMS\MVC\Controller\BaseController;
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\Controller;
+namespace Punga\Component\Audioarchive\Administrator\Controller;
 
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
@@ -10,7 +10,7 @@ use Joomla\CMS\Session\Session;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
 use Joomla\Filesystem\Path;
-use Willeke\Component\Audioarchive\Administrator\Service\ManagedStorageService;
+use Punga\Component\Audioarchive\Administrator\Service\ManagedStorageService;
 
 \defined('_JEXEC') or die;
 

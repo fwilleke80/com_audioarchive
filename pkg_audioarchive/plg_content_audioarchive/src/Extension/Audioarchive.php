@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Plugin\Content\Audioarchive\Extension;
+namespace Punga\Plugin\Content\Audioarchive\Extension;
 
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Event\Content\ContentPrepareEvent;
@@ -14,13 +14,13 @@ use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
 use Joomla\Event\SubscriberInterface;
 use Joomla\Registry\Registry;
-use Willeke\Component\Audioarchive\Site\Helper\RouteHelper;
-use Willeke\Module\Audioarchive\Site\Helper\AudioarchiveHelper;
+use Punga\Component\Audioarchive\Site\Helper\RouteHelper;
+use Punga\Module\Audioarchive\Site\Helper\AudioarchiveHelper;
 
 \defined('_JEXEC') or die;
 
 /**
- * @brief Replace Audio Archive placeholders with playable clip embeds.
+ * @brief Replace Punga Audio Archive placeholders with playable clip embeds.
  */
 final class Audioarchive extends CMSPlugin implements SubscriberInterface
 {
@@ -43,7 +43,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 	}
 
 	/**
-	 * @brief Replace Audio Archive placeholders in prepared frontend content.
+	 * @brief Replace Punga Audio Archive placeholders in prepared frontend content.
 	 *
 	 * @param ContentPrepareEvent $event Joomla content preparation event.
 	 *
@@ -79,7 +79,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 	}
 
 	/**
-	 * @brief Parse and render one Audio Archive placeholder.
+	 * @brief Parse and render one Punga Audio Archive placeholder.
 	 *
 	 * @param string $placeholder Original placeholder text.
 	 * @param string $arguments Placeholder arguments without braces.
@@ -447,7 +447,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 	}
 
 	/**
-	 * @brief Resolve category references to Audio Archive category identifiers.
+	 * @brief Resolve category references to Punga Audio Archive category identifiers.
 	 *
 	 * @param DatabaseInterface $database Joomla database connection.
 	 * @param string[] $references Numeric identifiers, aliases, or exact titles.
@@ -633,7 +633,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 	}
 
 	/**
-	 * @brief Render one selected item through the Audio Archive module layout.
+	 * @brief Render one selected item through the Punga Audio Archive module layout.
 	 *
 	 * @param object[] $items Prepared clip items.
 	 * @param Registry $params Module-compatible rendering parameters.

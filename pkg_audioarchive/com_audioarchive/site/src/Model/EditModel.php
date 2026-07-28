@@ -1,16 +1,16 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Site\Model;
+namespace Punga\Component\Audioarchive\Site\Model;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Form;
-use Willeke\Component\Audioarchive\Administrator\Model\ClipModel as AdministratorClipModel;
-use Willeke\Component\Audioarchive\Site\Service\FrontendEditingService;
+use Punga\Component\Audioarchive\Administrator\Model\ClipModel as AdministratorClipModel;
+use Punga\Component\Audioarchive\Site\Service\FrontendEditingService;
 
 \defined('_JEXEC') or die;
 
 /**
- * @brief Frontend model for editing existing Audio Archive clips.
+ * @brief Frontend model for editing existing Punga Audio Archive clips.
  */
 class EditModel extends AdministratorClipModel
 {

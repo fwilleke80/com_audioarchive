@@ -8,7 +8,7 @@
  * @license     GNU General Public License version 2 or later
  */
 
-namespace Willeke\Component\Audioarchive\Site\Dispatcher;
+namespace Punga\Component\Audioarchive\Site\Dispatcher;
 
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Dispatcher\ComponentDispatcher;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\View\Clip;
+namespace Punga\Component\Audioarchive\Administrator\View\Clip;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
@@ -9,7 +9,7 @@ use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
 use Joomla\CMS\Toolbar\ToolbarHelper;
 use Joomla\Database\DatabaseInterface;
-use Willeke\Component\Audioarchive\Administrator\Service\Analysis\AnalysisRepositoryService;
+use Punga\Component\Audioarchive\Administrator\Service\Analysis\AnalysisRepositoryService;
 
 \defined('_JEXEC') or die;
 

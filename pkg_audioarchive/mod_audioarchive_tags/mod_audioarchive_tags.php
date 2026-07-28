@@ -2,7 +2,7 @@
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Helper\ModuleHelper;
-use Willeke\Module\AudioarchiveTags\Site\Helper\AudioarchiveTagsHelper;
+use Punga\Module\AudioarchiveTags\Site\Helper\AudioarchiveTagsHelper;
 
 \defined('_JEXEC') or die;
 

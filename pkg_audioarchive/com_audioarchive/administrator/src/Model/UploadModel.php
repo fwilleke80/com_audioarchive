@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\Model;
+namespace Punga\Component\Audioarchive\Administrator\Model;
 
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
@@ -52,7 +52,7 @@ class UploadModel extends FormModel
     }
 
     /**
-     * @brief Validate that a category belongs to Audio Archive.
+     * @brief Validate that a category belongs to Punga Audio Archive.
      *
      * @param int $categoryId Joomla category identifier.
      *

@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Site\Service;
+namespace Punga\Component\Audioarchive\Site\Service;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Helper\TagsHelper;
@@ -9,7 +9,7 @@ use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
 use Joomla\Filesystem\Path;
 use Joomla\Registry\Registry;
-use Willeke\Component\Audioarchive\Site\Helper\TagDescriptionHelper;
+use Punga\Component\Audioarchive\Site\Helper\TagDescriptionHelper;
 
 \defined('_JEXEC') or die;
 

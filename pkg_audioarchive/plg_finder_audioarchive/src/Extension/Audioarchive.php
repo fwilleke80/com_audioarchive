@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Plugin\Finder\Audioarchive\Extension;
+namespace Punga\Plugin\Finder\Audioarchive\Extension;
 
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Event\Finder as FinderEvent;
@@ -13,13 +13,13 @@ use Joomla\Database\ParameterType;
 use Joomla\Database\QueryInterface;
 use Joomla\Event\SubscriberInterface;
 use Joomla\Registry\Registry;
-use Willeke\Component\Audioarchive\Site\Helper\RouteHelper;
-use Willeke\Component\Audioarchive\Site\Service\ArchiveMenuItemResolver;
+use Punga\Component\Audioarchive\Site\Helper\RouteHelper;
+use Punga\Component\Audioarchive\Site\Service\ArchiveMenuItemResolver;
 
 \defined('_JEXEC') or die;
 
 /**
- * @brief Smart Search adapter for Audio Archive clips.
+ * @brief Smart Search adapter for Punga Audio Archive clips.
  */
 final class Audioarchive extends Adapter implements SubscriberInterface
 {
@@ -84,7 +84,7 @@ final class Audioarchive extends Adapter implements SubscriberInterface
 	}
 
 	/**
-	 * @brief Update indexed items after an Audio Archive category state change.
+	 * @brief Update indexed items after an Punga Audio Archive category state change.
 	 *
 	 * @param FinderEvent\AfterCategoryChangeStateEvent $event Finder event.
 	 *
@@ -226,7 +226,7 @@ final class Audioarchive extends Adapter implements SubscriberInterface
 	}
 
 	/**
-	 * @brief Index one Audio Archive clip.
+	 * @brief Index one Punga Audio Archive clip.
 	 *
 	 * @param Result $item Finder result object.
 	 *
@@ -329,7 +329,7 @@ final class Audioarchive extends Adapter implements SubscriberInterface
 	}
 
 	/**
-	 * @brief Build the Finder list query for Audio Archive clips.
+	 * @brief Build the Finder list query for Punga Audio Archive clips.
 	 *
 	 * @param mixed $query Existing query or null.
 	 *
@@ -459,7 +459,7 @@ final class Audioarchive extends Adapter implements SubscriberInterface
 	/**
 	 * @brief Translate Joomla states to published-only Finder visibility.
 	 *
-	 * Archived Audio Archive Clips are not public Archive results and therefore
+	 * Archived Punga Audio Archive Clips are not public Archive results and therefore
 	 * remain hidden from Smart Search as well.
 	 *
 	 * @param int $item Item state.
@@ -476,7 +476,7 @@ final class Audioarchive extends Adapter implements SubscriberInterface
 	}
 
 	/**
-	 * @brief Cache all published tag assignments for Audio Archive clips.
+	 * @brief Cache all published tag assignments for Punga Audio Archive clips.
 	 *
 	 * @return void
 	 */

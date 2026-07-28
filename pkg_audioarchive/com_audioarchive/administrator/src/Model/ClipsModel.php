@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\Model;
+namespace Punga\Component\Audioarchive\Administrator\Model;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Helper\TagsHelper;

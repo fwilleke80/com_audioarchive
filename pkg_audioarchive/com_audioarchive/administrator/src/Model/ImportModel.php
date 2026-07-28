@@ -1,14 +1,14 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\Model;
+namespace Punga\Component\Audioarchive\Administrator\Model;
 
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Form\Form;
 use Joomla\Registry\Registry;
-use Willeke\Component\Audioarchive\Administrator\Service\AudioUploadService;
-use Willeke\Component\Audioarchive\Administrator\Service\BulkReplacementService;
-use Willeke\Component\Audioarchive\Administrator\Service\DirectoryImportService;
-use Willeke\Component\Audioarchive\Administrator\Service\ImportCategoryService;
+use Punga\Component\Audioarchive\Administrator\Service\AudioUploadService;
+use Punga\Component\Audioarchive\Administrator\Service\BulkReplacementService;
+use Punga\Component\Audioarchive\Administrator\Service\DirectoryImportService;
+use Punga\Component\Audioarchive\Administrator\Service\ImportCategoryService;
 
 \defined('_JEXEC') or die;
 

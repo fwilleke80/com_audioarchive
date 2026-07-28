@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\Controller;
+namespace Punga\Component\Audioarchive\Administrator\Controller;
 
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
@@ -8,7 +8,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
-use Willeke\Component\Audioarchive\Administrator\Service\ManagedStorageService;
+use Punga\Component\Audioarchive\Administrator\Service\ManagedStorageService;
 
 \defined('_JEXEC') or die;
 
@@ -92,7 +92,7 @@ class DashboardController extends BaseController
 
         try
         {
-            /** @var \Willeke\Component\Audioarchive\Administrator\Model\DashboardModel $model */
+            /** @var \Punga\Component\Audioarchive\Administrator\Model\DashboardModel $model */
             $model = $this->getModel('Dashboard');
             $changed = $model->resetCounter($column);
             $application->enqueueMessage(Text::sprintf($messageKey, $changed), 'success');

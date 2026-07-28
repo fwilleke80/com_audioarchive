@@ -1,13 +1,13 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Site\Controller;
+namespace Punga\Component\Audioarchive\Site\Controller;
 
 use Joomla\CMS\MVC\Controller\FormController;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
-use Willeke\Component\Audioarchive\Site\Helper\RouteHelper;
-use Willeke\Component\Audioarchive\Site\Model\EditModel;
-use Willeke\Component\Audioarchive\Site\Service\FrontendEditingService;
+use Punga\Component\Audioarchive\Site\Helper\RouteHelper;
+use Punga\Component\Audioarchive\Site\Model\EditModel;
+use Punga\Component\Audioarchive\Site\Service\FrontendEditingService;
 
 \defined('_JEXEC') or die;
 

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <extension type="plugin" group="content" method="upgrade">
 	<name>PLG_CONTENT_AUDIOARCHIVE</name>
-	<version>0.3.1</version>
-	<creationDate>2026-07-16</creationDate>
+	<version>0.10.4</version>
+	<creationDate>2026-07-28</creationDate>
 	<author>Frank Willeke</author>
 	<copyright>Copyright (C) 2026 Frank Willeke.</copyright>
 	<license>GNU General Public License version 2 or later</license>
 	<description>PLG_CONTENT_AUDIOARCHIVE_XML_DESCRIPTION</description>
-	<namespace path="src">Willeke\Plugin\Content\Audioarchive</namespace>
+	<namespace path="src">Punga\Plugin\Content\Audioarchive</namespace>
 	<scriptfile>install.php</scriptfile>
 	<files>
 		<folder plugin="audioarchive">services</folder>

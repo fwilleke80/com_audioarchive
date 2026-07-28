@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\Service;
+namespace Punga\Component\Audioarchive\Administrator\Service;
 
 use Joomla\CMS\Application\ApplicationHelper;
 use Joomla\CMS\Language\Text;
@@ -13,7 +13,7 @@ use Joomla\String\StringHelper;
 \defined('_JEXEC') or die;
 
 /**
- * @brief Resolve inbox folder paths to Joomla Audio Archive categories.
+ * @brief Resolve inbox folder paths to Joomla Punga Audio Archive categories.
  */
 class ImportCategoryService
 {
@@ -255,7 +255,7 @@ class ImportCategoryService
 	}
 
 	/**
-	 * @brief Load one usable Audio Archive category.
+	 * @brief Load one usable Punga Audio Archive category.
 	 *
 	 * @param int $categoryId Category identifier.
 	 *

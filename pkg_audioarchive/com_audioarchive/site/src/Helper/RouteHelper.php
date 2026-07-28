@@ -1,11 +1,11 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Site\Helper;
+namespace Punga\Component\Audioarchive\Site\Helper;
 
 \defined('_JEXEC') or die;
 
 /**
- * @brief Build internal routes for Audio Archive site views.
+ * @brief Build internal routes for Punga Audio Archive site views.
  */
 abstract class RouteHelper
 {

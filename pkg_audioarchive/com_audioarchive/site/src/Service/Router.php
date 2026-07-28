@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Site\Service;
+namespace Punga\Component\Audioarchive\Site\Service;
 
 use Joomla\CMS\Application\SiteApplication;
 use Joomla\CMS\Categories\CategoryFactoryInterface;
@@ -16,7 +16,7 @@ use Joomla\Database\ParameterType;
 \defined('_JEXEC') or die;
 
 /**
- * @brief Site router for Audio Archive archive, tag-directory, soundboard, and clip views.
+ * @brief Site router for Punga Audio Archive archive, tag-directory, soundboard, and clip views.
  */
 class Router extends RouterView
 {

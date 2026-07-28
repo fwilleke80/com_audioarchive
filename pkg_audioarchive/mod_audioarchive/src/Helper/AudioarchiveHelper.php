@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Module\Audioarchive\Site\Helper;
+namespace Punga\Module\Audioarchive\Site\Helper;
 
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
@@ -9,15 +9,15 @@ use Joomla\CMS\Router\Route;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
 use Joomla\Registry\Registry;
-use Willeke\Component\Audioarchive\Site\Helper\RouteHelper;
-use Willeke\Component\Audioarchive\Site\Helper\TagDescriptionHelper;
-use Willeke\Component\Audioarchive\Site\Service\ArchiveMenuItemResolver;
-use Willeke\Component\Audioarchive\Site\Service\DownloadAccessService;
+use Punga\Component\Audioarchive\Site\Helper\RouteHelper;
+use Punga\Component\Audioarchive\Site\Helper\TagDescriptionHelper;
+use Punga\Component\Audioarchive\Site\Service\ArchiveMenuItemResolver;
+use Punga\Component\Audioarchive\Site\Service\DownloadAccessService;
 
 \defined('_JEXEC') or die;
 
 /**
- * @brief Select and prepare public Audio Archive clips for the module.
+ * @brief Select and prepare public Punga Audio Archive clips for the module.
  */
 abstract class AudioarchiveHelper
 {

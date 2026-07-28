@@ -1,5 +1,5 @@
 /**
- * @brief Browser queue for Audio Archive bulk uploads.
+ * @brief Browser queue for Punga Audio Archive bulk uploads.
  */
 (() =>
 {

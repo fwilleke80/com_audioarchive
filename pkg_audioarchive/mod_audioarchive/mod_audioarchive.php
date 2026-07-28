@@ -5,8 +5,8 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Helper\ModuleHelper;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
-use Willeke\Component\Audioarchive\Site\Helper\RouteHelper;
-use Willeke\Module\Audioarchive\Site\Helper\AudioarchiveHelper;
+use Punga\Component\Audioarchive\Site\Helper\RouteHelper;
+use Punga\Module\Audioarchive\Site\Helper\AudioarchiveHelper;
 
 \defined('_JEXEC') or die;
 

@@ -1,19 +1,19 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Site\View\Tagdirectory;
+namespace Punga\Component\Audioarchive\Site\View\Tagdirectory;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
 use Joomla\Registry\Registry;
-use Willeke\Component\Audioarchive\Site\Helper\RouteHelper;
-use Willeke\Component\Audioarchive\Site\Model\TagdirectoryModel;
+use Punga\Component\Audioarchive\Site\Helper\RouteHelper;
+use Punga\Component\Audioarchive\Site\Model\TagdirectoryModel;
 
 \defined('_JEXEC') or die;
 
 /**
- * @brief Public Audio Archive tag-directory view.
+ * @brief Public Punga Audio Archive tag-directory view.
  */
 class HtmlView extends BaseHtmlView
 {

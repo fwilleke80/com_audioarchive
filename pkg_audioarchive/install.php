@@ -103,7 +103,7 @@ return new class () implements InstallerScriptInterface
 	}
 
 	/**
-	 * @brief Find the installed Audio Archive Finder plugin.
+	 * @brief Find the installed Punga Audio Archive Finder plugin.
 	 *
 	 * @param DatabaseInterface $database Joomla database connection.
 	 *

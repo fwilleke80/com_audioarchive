@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\Service;
+namespace Punga\Component\Audioarchive\Administrator\Service;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
@@ -12,7 +12,7 @@ use Joomla\Registry\Registry;
 \defined('_JEXEC') or die;
 
 /**
- * @brief Create portable, versioned Audio Archive ZIP exports.
+ * @brief Create portable, versioned Punga Audio Archive ZIP exports.
  */
 final class ArchiveExportService
 {
@@ -38,7 +38,7 @@ final class ArchiveExportService
 	 * @brief Construct the export service.
 	 *
 	 * @param DatabaseInterface $database Joomla database connection.
-	 * @param Registry $params Audio Archive component parameters.
+	 * @param Registry $params Punga Audio Archive component parameters.
 	 * @param User $user Current administrator.
 	 */
 	public function __construct(DatabaseInterface $database, Registry $params, User $user)
@@ -327,7 +327,7 @@ final class ArchiveExportService
 	}
 
 	/**
-	 * @brief Load Audio Archive categories as portable path-based records.
+	 * @brief Load Punga Audio Archive categories as portable path-based records.
 	 *
 	 * @return array{rows:array<int,array<string,mixed>>,id_to_key:array<int,string>}
 	 */
@@ -383,7 +383,7 @@ final class ArchiveExportService
 	}
 
 	/**
-	 * @brief Load tags used by Audio Archive clips.
+	 * @brief Load tags used by Punga Audio Archive clips.
 	 *
 	 * @return array{rows:array<int,array<string,mixed>>,id_to_key:array<int,string>}
 	 */

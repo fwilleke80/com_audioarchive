@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <extension type="module" client="site" method="upgrade">
 	<name>MOD_AUDIOARCHIVE</name>
-	<version>0.5.2</version>
-	<creationDate>2026-07-17</creationDate>
+	<version>0.10.4</version>
+	<creationDate>2026-07-28</creationDate>
 	<author>Frank Willeke</author>
 	<copyright>Copyright (C) 2026 Frank Willeke.</copyright>
 	<license>GNU General Public License version 2 or later</license>
 	<description>MOD_AUDIOARCHIVE_XML_DESCRIPTION</description>
-	<namespace path="src">Willeke\Module\Audioarchive</namespace>
+	<namespace path="src">Punga\Module\Audioarchive</namespace>
 	<files>
 		<filename module="mod_audioarchive">mod_audioarchive.php</filename>
 		<folder>src</folder>

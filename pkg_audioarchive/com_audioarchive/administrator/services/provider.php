@@ -19,7 +19,7 @@ use Joomla\CMS\Extension\Service\Provider\ComponentDispatcherFactory;
 use Joomla\CMS\Extension\Service\Provider\MVCFactory;
 use Joomla\CMS\Extension\Service\Provider\RouterFactory;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
-use Willeke\Component\Audioarchive\Administrator\Extension\AudioarchiveComponent;
+use Punga\Component\Audioarchive\Administrator\Extension\AudioarchiveComponent;
 use Joomla\DI\Container;
 use Joomla\DI\ServiceProviderInterface;
 
@@ -34,10 +34,10 @@ return new class () implements ServiceProviderInterface
      */
     public function register(Container $container)
     {
-        $container->registerServiceProvider(new CategoryFactory('\\Willeke\\Component\\Audioarchive'));
-        $container->registerServiceProvider(new MVCFactory('\\Willeke\\Component\\Audioarchive'));
-        $container->registerServiceProvider(new ComponentDispatcherFactory('\\Willeke\\Component\\Audioarchive'));
-        $container->registerServiceProvider(new RouterFactory('\\Willeke\\Component\\Audioarchive'));
+        $container->registerServiceProvider(new CategoryFactory('\\Punga\\Component\\Audioarchive'));
+        $container->registerServiceProvider(new MVCFactory('\\Punga\\Component\\Audioarchive'));
+        $container->registerServiceProvider(new ComponentDispatcherFactory('\\Punga\\Component\\Audioarchive'));
+        $container->registerServiceProvider(new RouterFactory('\\Punga\\Component\\Audioarchive'));
 
         $container->set(
             ComponentInterface::class,

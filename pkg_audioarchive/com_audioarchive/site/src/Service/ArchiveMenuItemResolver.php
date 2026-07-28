@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Site\Service;
+namespace Punga\Component\Audioarchive\Site\Service;
 
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
@@ -122,7 +122,7 @@ class ArchiveMenuItemResolver
 	}
 
 	/**
-	 * @brief Load published site menu items belonging to Audio Archive.
+	 * @brief Load published site menu items belonging to Punga Audio Archive.
 	 *
 	 * @param string $language Requested content language.
 	 * @param int[] $authorisedViewLevels Allowed menu access levels.

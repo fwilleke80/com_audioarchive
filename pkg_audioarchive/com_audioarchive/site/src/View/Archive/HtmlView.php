@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Site\View\Archive;
+namespace Punga\Component\Audioarchive\Site\View\Archive;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
@@ -9,9 +9,9 @@ use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
 use Joomla\Registry\Registry;
 use Joomla\Database\DatabaseInterface;
-use Willeke\Component\Audioarchive\Site\Helper\RouteHelper;
-use Willeke\Component\Audioarchive\Site\Model\ArchiveModel;
-use Willeke\Component\Audioarchive\Site\Service\RatingService;
+use Punga\Component\Audioarchive\Site\Helper\RouteHelper;
+use Punga\Component\Audioarchive\Site\Model\ArchiveModel;
+use Punga\Component\Audioarchive\Site\Service\RatingService;
 
 \defined('_JEXEC') or die;
 

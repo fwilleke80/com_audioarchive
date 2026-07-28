@@ -1,17 +1,17 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Site\Model;
+namespace Punga\Component\Audioarchive\Site\Model;
 
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\Registry\Registry;
-use Willeke\Component\Audioarchive\Site\Service\PublicMediaService;
+use Punga\Component\Audioarchive\Site\Service\PublicMediaService;
 
 \defined('_JEXEC') or die;
 
 /**
- * @brief Public model for one Audio Archive clip.
+ * @brief Public model for one Punga Audio Archive clip.
  */
 class ClipModel extends BaseDatabaseModel
 {

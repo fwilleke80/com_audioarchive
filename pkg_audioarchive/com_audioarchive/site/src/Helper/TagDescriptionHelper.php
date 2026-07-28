@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Site\Helper;
+namespace Punga\Component\Audioarchive\Site\Helper;
 
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;

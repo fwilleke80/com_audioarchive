@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\View\Upload;
+namespace Punga\Component\Audioarchive\Administrator\View\Upload;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Form;

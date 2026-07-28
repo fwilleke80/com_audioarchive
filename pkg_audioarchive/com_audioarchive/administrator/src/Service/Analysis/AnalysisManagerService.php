@@ -1,12 +1,12 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\Service\Analysis;
+namespace Punga\Component\Audioarchive\Administrator\Service\Analysis;
 
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\User\User;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Registry\Registry;
-use Willeke\Component\Audioarchive\Administrator\Service\ManagedStorageService;
+use Punga\Component\Audioarchive\Administrator\Service\ManagedStorageService;
 
 \defined('_JEXEC') or die;
 

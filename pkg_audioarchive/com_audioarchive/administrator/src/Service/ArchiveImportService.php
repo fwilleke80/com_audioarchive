@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\Service;
+namespace Punga\Component\Audioarchive\Administrator\Service;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Helper\TagsHelper;
@@ -14,12 +14,12 @@ use Joomla\Filesystem\Path;
 use Joomla\Registry\Registry;
 use Joomla\Component\Fields\Administrator\Table\FieldTable;
 use Joomla\Component\Fields\Administrator\Table\GroupTable;
-use Willeke\Component\Audioarchive\Administrator\Table\ClipTable;
+use Punga\Component\Audioarchive\Administrator\Table\ClipTable;
 
 \defined('_JEXEC') or die;
 
 /**
- * @brief Inspect, stage, and restore portable Audio Archive exports.
+ * @brief Inspect, stage, and restore portable Punga Audio Archive exports.
  */
 final class ArchiveImportService
 {
@@ -57,7 +57,7 @@ final class ArchiveImportService
 	 * @brief Construct the import service.
 	 *
 	 * @param DatabaseInterface $database Joomla database connection.
-	 * @param Registry $params Audio Archive component parameters.
+	 * @param Registry $params Punga Audio Archive component parameters.
 	 * @param User $user Current administrator.
 	 */
 	public function __construct(DatabaseInterface $database, Registry $params, User $user)

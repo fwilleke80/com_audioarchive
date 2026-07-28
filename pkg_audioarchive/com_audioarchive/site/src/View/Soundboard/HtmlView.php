@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Site\View\Soundboard;
+namespace Punga\Component\Audioarchive\Site\View\Soundboard;
 
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
@@ -8,7 +8,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
 use Joomla\Registry\Registry;
-use Willeke\Component\Audioarchive\Site\Helper\RouteHelper;
+use Punga\Component\Audioarchive\Site\Helper\RouteHelper;
 
 \defined('_JEXEC') or die;
 

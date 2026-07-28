@@ -1,17 +1,17 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\Model;
+namespace Punga\Component\Audioarchive\Administrator\Model;
 
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\Database\ParameterType;
-use Willeke\Component\Audioarchive\Administrator\Service\Analysis\AnalysisJobService;
-use Willeke\Component\Audioarchive\Administrator\Service\ArchiveImportService;
-use Willeke\Component\Audioarchive\Administrator\Service\IntegrityService;
-use Willeke\Component\Audioarchive\Administrator\Service\ManagedStorageService;
-use Willeke\Component\Audioarchive\Administrator\Service\MediaMaintenanceService;
+use Punga\Component\Audioarchive\Administrator\Service\Analysis\AnalysisJobService;
+use Punga\Component\Audioarchive\Administrator\Service\ArchiveImportService;
+use Punga\Component\Audioarchive\Administrator\Service\IntegrityService;
+use Punga\Component\Audioarchive\Administrator\Service\ManagedStorageService;
+use Punga\Component\Audioarchive\Administrator\Service\MediaMaintenanceService;
 
 \defined('_JEXEC') or die;
 

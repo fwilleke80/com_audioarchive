@@ -6,7 +6,7 @@ use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\Database\DatabaseInterface;
 use Joomla\DI\Container;
 use Joomla\DI\ServiceProviderInterface;
-use Willeke\Plugin\Finder\Audioarchive\Extension\Audioarchive;
+use Punga\Plugin\Finder\Audioarchive\Extension\Audioarchive;
 
 \defined('_JEXEC') or die;
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\Model;
+namespace Punga\Component\Audioarchive\Administrator\Model;
 
 use Joomla\CMS\Application\ApplicationHelper;
 use Joomla\CMS\Component\ComponentHelper;
@@ -16,7 +16,7 @@ use Joomla\CMS\Table\Table;
 use Joomla\Registry\Registry;
 use Joomla\Database\ParameterType;
 use Joomla\Utilities\ArrayHelper;
-use Willeke\Component\Audioarchive\Administrator\Service\AudioUploadService;
+use Punga\Component\Audioarchive\Administrator\Service\AudioUploadService;
 
 \defined('_JEXEC') or die;
 
@@ -42,7 +42,7 @@ class ClipModel extends AdminModel
      * @brief Generate a globally unique alias for a new or copied clip.
      *
      * Joomla's default implementation scopes duplicate aliases to a category.
-     * Audio Archive uses alias-only public routes, so the alias must be unique
+     * Punga Audio Archive uses alias-only public routes, so the alias must be unique
      * across every category.
      *
      * @param int $categoryId Category identifier retained for API compatibility.
@@ -904,7 +904,7 @@ class ClipModel extends AdminModel
     }
 
     /**
-     * @brief Validate that a category belongs to the Audio Archive component.
+     * @brief Validate that a category belongs to the Punga Audio Archive component.
      *
      * @param int $categoryId Proposed Joomla category identifier.
      *

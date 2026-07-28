@@ -1,18 +1,18 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Site\Service;
+namespace Punga\Component\Audioarchive\Site\Service;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Router\Route;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
 use Joomla\Registry\Registry;
-use Willeke\Component\Audioarchive\Site\Helper\RouteHelper;
+use Punga\Component\Audioarchive\Site\Helper\RouteHelper;
 
 \defined('_JEXEC') or die;
 
 /**
- * @brief Build the public Audio Archive tag directory.
+ * @brief Build the public Punga Audio Archive tag directory.
  */
 class TagDirectoryService
 {

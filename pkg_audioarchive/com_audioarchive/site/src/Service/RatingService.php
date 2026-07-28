@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Site\Service;
+namespace Punga\Component\Audioarchive\Site\Service;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\User\User;

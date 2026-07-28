@@ -1,6 +1,6 @@
 <?php
 
-namespace Willeke\Component\Audioarchive\Administrator\Service;
+namespace Punga\Component\Audioarchive\Administrator\Service;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
@@ -11,7 +11,7 @@ use Joomla\Registry\Registry;
 \defined('_JEXEC') or die;
 
 /**
- * @brief Perform non-destructive integrity checks for Audio Archive data and storage.
+ * @brief Perform non-destructive integrity checks for Punga Audio Archive data and storage.
  */
 class IntegrityService
 {
