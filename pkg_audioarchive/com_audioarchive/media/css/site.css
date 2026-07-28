@@ -1777,6 +1777,44 @@
 	border-top: 1px solid var(--audioarchive-border);
 }
 
+.com-audioarchive-soundboard-shared
+{
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-bottom: 1rem;
+	padding: 1rem;
+	border: 1px solid color-mix(in srgb, currentColor 24%, transparent);
+	border-radius: 0.75rem;
+	background: color-mix(in srgb, currentColor 6%, Canvas);
+}
+
+.com-audioarchive-soundboard-shared[hidden]
+{
+	display: none;
+}
+
+.com-audioarchive-soundboard-shared-copy
+{
+	display: flex;
+	align-items: flex-start;
+	gap: 0.65rem;
+}
+
+.com-audioarchive-soundboard-shared-copy p
+{
+	margin: 0;
+}
+
+.com-audioarchive-soundboard-shared-actions
+{
+	display: flex;
+	flex: 0 0 auto;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
 .com-audioarchive-soundboard-grid
 {
 	display: grid;
@@ -1849,6 +1887,7 @@
 	text-overflow: ellipsis;
 }
 
+.com-audioarchive-soundboard-detail,
 .com-audioarchive-soundboard-remove
 {
 	position: absolute;
@@ -1865,9 +1904,27 @@
 	color: CanvasText;
 	font-size: 1.25rem;
 	line-height: 1;
+	text-decoration: none;
 	cursor: pointer;
 }
 
+.com-audioarchive-soundboard-detail
+{
+	top: auto;
+	bottom: 0.35rem;
+	font-size: 1rem;
+}
+
+.com-audioarchive-soundboard-detail:hover,
+.com-audioarchive-soundboard-detail:focus-visible,
+.com-audioarchive-soundboard-remove:hover,
+.com-audioarchive-soundboard-remove:focus-visible
+{
+	background: Canvas;
+	color: CanvasText;
+}
+
+.com-audioarchive-soundboard-pad.is-empty .com-audioarchive-soundboard-detail,
 .com-audioarchive-soundboard-pad.is-empty .com-audioarchive-soundboard-remove
 {
 	display: none;
@@ -1903,6 +1960,22 @@
 
 @media (max-width: 767.98px)
 {
+	.com-audioarchive-soundboard-shared
+	{
+		align-items: stretch;
+		flex-direction: column;
+	}
+
+	.com-audioarchive-soundboard-shared-actions
+	{
+		width: 100%;
+	}
+
+	.com-audioarchive-soundboard-shared-actions .btn
+	{
+		flex: 1 1 12rem;
+	}
+
 	.com-audioarchive-mobile-card-actions
 	{
 		justify-content: space-between;

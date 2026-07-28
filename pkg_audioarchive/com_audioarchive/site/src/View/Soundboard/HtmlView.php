@@ -27,6 +27,9 @@ class HtmlView extends BaseHtmlView
 	public string $streamTemplate = '';
 
 	/** @var string */
+	public string $clipTemplate = '';
+
+	/** @var string */
 	public string $canonicalUrl = '';
 
 	/** @var int */
@@ -68,6 +71,7 @@ class HtmlView extends BaseHtmlView
 			$item?->title ?? Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_TITLE')
 		);
 		$this->streamTemplate = Route::_(RouteHelper::getPlaybackRoute(987654321, $itemId));
+		$this->clipTemplate = Route::_(RouteHelper::getClipRoute(987654321));
 		$this->canonicalUrl = Route::_(
 			RouteHelper::getSoundboardRoute($itemId),
 			false,

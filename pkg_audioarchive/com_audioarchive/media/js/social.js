@@ -463,6 +463,49 @@ function decodeBoard(encoded)
 }
 
 /**
+ * Merge shared soundboard entries into a personal board without duplicates.
+ *
+ * @param {Array<{id:number,title:string}|null>} personalBoard Personal board.
+ * @param {Array<{id:number,title:string}|null>} sharedBoard Shared board.
+ * @param {number} padCount Maximum pad count.
+ * @returns {{board:Array<{id:number,title:string}|null>,added:number,full:boolean}} Merge result.
+ */
+function mergeBoards(personalBoard, sharedBoard, padCount)
+{
+	const merged = normaliseBoard(personalBoard, padCount);
+	const existingIds = new Set(merged.filter(Boolean).map((entry) => entry.id));
+	let added = 0;
+	let full = false;
+
+	for (const entry of normaliseBoard(sharedBoard, padCount))
+	{
+		if (!entry || existingIds.has(entry.id))
+		{
+			continue;
+		}
+
+		let slot = merged.findIndex((candidate) => candidate === null);
+
+		if (slot < 0 && merged.length < padCount)
+		{
+			slot = merged.length;
+		}
+
+		if (slot < 0)
+		{
+			full = true;
+			break;
+		}
+
+		merged[slot] = entry;
+		existingIds.add(entry.id);
+		added++;
+	}
+
+	return {board: merged, added, full};
+}
+
+/**
  * Initialise the soundboard page.
  *
  * @returns {void}
@@ -478,11 +521,14 @@ function initialiseSoundboard()
 
 	const padCount = Math.max(4, Number.parseInt(root.dataset.audioarchivePadCount || '12', 10));
 	const streamTemplate = root.dataset.audioarchiveStreamTemplate || '';
+	const clipTemplate = root.dataset.audioarchiveClipTemplate || '';
 	const canonicalUrl = root.dataset.audioarchiveCanonicalUrl || window.location.href.split('#')[0];
 	const status = root.querySelector('[data-audioarchive-soundboard-status]');
 	const audio = root.querySelector('[data-audioarchive-soundboard-audio]');
 	const pads = Array.from(root.querySelectorAll('[data-audioarchive-soundboard-pad]'));
+	const sharedPanel = root.querySelector('[data-audioarchive-soundboard-shared]');
 	let board = readBoard().slice(0, padCount);
+	let temporarySharedBoard = false;
 
 	const fragment = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('board');
 
@@ -493,9 +539,36 @@ function initialiseSoundboard()
 		if (imported)
 		{
 			board = normaliseBoard(imported, padCount);
-			writeStorage(BOARD_STORAGE_KEY, board);
+			temporarySharedBoard = true;
+		}
+		else if (status)
+		{
+			status.textContent = root.dataset.audioarchiveLabelInvalid;
 		}
 	}
+
+	const setTemporarySharedBoard = (enabled) =>
+	{
+		temporarySharedBoard = enabled;
+		root.classList.toggle('is-shared-board', enabled);
+
+		if (sharedPanel)
+		{
+			sharedPanel.hidden = !enabled;
+		}
+	};
+
+	const leaveSharedUrl = () =>
+	{
+		const url = new URL(window.location.href);
+		url.hash = '';
+		window.history.replaceState(window.history.state, '', url.toString());
+	};
+
+	const saveCurrentBoard = () =>
+	{
+		return temporarySharedBoard || writeStorage(BOARD_STORAGE_KEY, board);
+	};
 
 	const render = () =>
 	{
@@ -503,9 +576,18 @@ function initialiseSoundboard()
 		{
 			const entry = board[index] || null;
 			const title = pad.querySelector('[data-audioarchive-soundboard-title]');
+			const detail = pad.querySelector('[data-audioarchive-soundboard-detail]');
 			pad.classList.toggle('is-empty', !entry);
 			pad.classList.remove('is-playing');
 			title.textContent = entry ? entry.title : root.dataset.audioarchiveLabelEmpty;
+
+			if (detail)
+			{
+				detail.hidden = !entry || clipTemplate === '';
+				detail.href = entry && clipTemplate !== ''
+					? clipTemplate.replace('987654321', String(entry.id))
+					: '#';
+			}
 		});
 	};
 
@@ -543,7 +625,7 @@ function initialiseSoundboard()
 		pad.querySelector('[data-audioarchive-soundboard-remove]')?.addEventListener('click', () =>
 		{
 			board[index] = null;
-			writeStorage(BOARD_STORAGE_KEY, board);
+			saveCurrentBoard();
 			render();
 		});
 	});
@@ -551,12 +633,61 @@ function initialiseSoundboard()
 	root.querySelector('[data-audioarchive-soundboard-clear]')?.addEventListener('click', () =>
 	{
 		board = [];
-		writeStorage(BOARD_STORAGE_KEY, board);
+		saveCurrentBoard();
 		if (audio)
 		{
 			audio.pause();
 		}
 		render();
+	});
+
+	root.querySelector('[data-audioarchive-soundboard-shared-add]')?.addEventListener('click', () =>
+	{
+		const result = mergeBoards(readBoard(), board, padCount);
+
+		if (!writeStorage(BOARD_STORAGE_KEY, result.board))
+		{
+			return;
+		}
+
+		board = result.board;
+		setTemporarySharedBoard(false);
+		leaveSharedUrl();
+		render();
+
+		if (status)
+		{
+			status.textContent = String(root.dataset.audioarchiveLabelSharedAdded || '').replace('%d', String(result.added));
+
+			if (result.full)
+			{
+				status.textContent += ` ${root.dataset.audioarchiveLabelSharedFull || ''}`;
+			}
+		}
+	});
+
+	root.querySelector('[data-audioarchive-soundboard-shared-replace]')?.addEventListener('click', () =>
+	{
+		if (!window.confirm(root.dataset.audioarchiveLabelReplaceConfirm || ''))
+		{
+			return;
+		}
+
+		board = normaliseBoard(board, padCount);
+
+		if (!writeStorage(BOARD_STORAGE_KEY, board))
+		{
+			return;
+		}
+
+		setTemporarySharedBoard(false);
+		leaveSharedUrl();
+		render();
+
+		if (status)
+		{
+			status.textContent = root.dataset.audioarchiveLabelSharedReplaced || '';
+		}
 	});
 
 	root.querySelector('[data-audioarchive-soundboard-export]')?.addEventListener('click', () =>
@@ -590,8 +721,16 @@ function initialiseSoundboard()
 				throw new Error('Invalid soundboard');
 			}
 
-			board = normaliseBoard(imported, padCount);
-			writeStorage(BOARD_STORAGE_KEY, board);
+			const importedBoard = normaliseBoard(imported, padCount);
+
+			if (!writeStorage(BOARD_STORAGE_KEY, importedBoard))
+			{
+				throw new Error('Unable to store soundboard');
+			}
+
+			board = importedBoard;
+			setTemporarySharedBoard(false);
+			leaveSharedUrl();
 			status.textContent = root.dataset.audioarchiveLabelImported;
 			render();
 		}
@@ -674,6 +813,7 @@ function initialiseSoundboard()
 	});
 
 	audio?.addEventListener('ended', () => pads.forEach((pad) => pad.classList.remove('is-playing')));
+	setTemporarySharedBoard(temporarySharedBoard);
 	render();
 }
 

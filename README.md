@@ -59,6 +59,7 @@ It is intended for archives ranging from a small collection to several thousand 
   - [Archive clip counts](#archive-clip-counts)
   - [Archive playtime](#archive-playtime)
   - [Content-plugin behaviour](#content-plugin-behaviour)
+- [Release history: 0.10.5](#release-history-0105)
 - [Release history: 0.9.0–0.9.5](#release-history-090095)
 
 ## What Audio Archive offers
@@ -141,6 +142,11 @@ It is intended for archives ranging from a small collection to several thousand 
 - Configurable player colours, corner radius, button sizes, waveform height, and preferred analysis view
 - Joomla template override support for the shared frontend player markup
 - One-player-at-a-time behaviour
+- Browser-local Sound Board with configurable pads and keyboard shortcuts
+- Portable Sound Board export/import and shareable links
+- Shared links open as temporary boards without changing the visitor's personal board
+- Explicit duplicate-safe merge and confirmed replacement actions for shared boards
+- Direct clip-detail links on occupied Sound Board pads
 - Clean, menu-aware SEF clip detail URLs
 - Breadcrumb integration
 - Page titles, metadata, canonical routes, and redirects from stale aliases or legacy URLs
@@ -1249,6 +1255,14 @@ The plugin can be configured under:
 ```text
 System → Manage → Plugins → Content - Audio Archive
 ```
+
+## Release history: 0.10.5
+
+### 0.10.5
+
+- Shared Sound Board links now open as temporary boards and never overwrite the visitor's browser-local personal board merely by being opened.
+- Added explicit actions to merge a shared board into the personal board without duplicate clips, or replace the personal board after confirmation.
+- Added a compact detail-page icon to every occupied Sound Board pad.
 
 ## Release history: 0.9.0–0.9.5
 

@@ -11,12 +11,17 @@ $keys = array_merge(range(1, 9), [0], range('A', 'Z'));
 	data-audioarchive-soundboard
 	data-audioarchive-pad-count="<?php echo $this->padCount; ?>"
 	data-audioarchive-stream-template="<?php echo $this->escape($this->streamTemplate); ?>"
+	data-audioarchive-clip-template="<?php echo $this->escape($this->clipTemplate); ?>"
 	data-audioarchive-canonical-url="<?php echo $this->escape($this->canonicalUrl); ?>"
 	data-audioarchive-label-empty="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_EMPTY_PAD')); ?>"
 	data-audioarchive-label-playing="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_PLAYING')); ?>"
 	data-audioarchive-label-copied="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SHARE_COPIED')); ?>"
 	data-audioarchive-label-imported="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_IMPORTED')); ?>"
 	data-audioarchive-label-invalid="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_INVALID_FILE')); ?>"
+	data-audioarchive-label-shared-added="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_SHARED_ADDED')); ?>"
+	data-audioarchive-label-shared-full="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_SHARED_FULL')); ?>"
+	data-audioarchive-label-shared-replaced="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_SHARED_REPLACED')); ?>"
+	data-audioarchive-label-replace-confirm="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_SHARED_REPLACE_CONFIRM')); ?>"
 >
 	<header class="com-audioarchive-page-header">
 		<?php if ((int) $this->params->get('show_page_heading', 1) === 1) : ?>
@@ -26,6 +31,23 @@ $keys = array_merge(range(1, 9), [0], range('A', 'Z'));
 	</header>
 
 	<p class="visually-hidden" aria-live="polite" data-audioarchive-soundboard-status></p>
+
+	<section class="com-audioarchive-soundboard-shared" data-audioarchive-soundboard-shared hidden>
+		<div class="com-audioarchive-soundboard-shared-copy">
+			<span class="icon-info-circle" aria-hidden="true"></span>
+			<p><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_SHARED_NOTICE'); ?></p>
+		</div>
+		<div class="com-audioarchive-soundboard-shared-actions">
+			<button type="button" class="btn btn-primary" data-audioarchive-soundboard-shared-add>
+				<span class="icon-plus" aria-hidden="true"></span>
+				<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_SHARED_ADD'); ?>
+			</button>
+			<button type="button" class="btn btn-outline-danger" data-audioarchive-soundboard-shared-replace>
+				<span class="icon-refresh" aria-hidden="true"></span>
+				<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_SHARED_REPLACE'); ?>
+			</button>
+		</div>
+	</section>
 
 	<div class="com-audioarchive-soundboard-grid">
 		<?php for ($index = 0; $index < $this->padCount; $index++) : ?>
@@ -40,6 +62,16 @@ $keys = array_merge(range(1, 9), [0], range('A', 'Z'));
 					<span class="com-audioarchive-soundboard-key" aria-hidden="true"><?php echo $this->escape($key); ?></span>
 					<span class="com-audioarchive-soundboard-title" data-audioarchive-soundboard-title><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_EMPTY_PAD'); ?></span>
 				</button>
+				<a
+					class="com-audioarchive-soundboard-detail"
+					data-audioarchive-soundboard-detail
+					href="#"
+					aria-label="<?php echo Text::sprintf('COM_AUDIOARCHIVE_SOUNDBOARD_DETAIL_PAD', $index + 1); ?>"
+					title="<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_DETAIL'); ?>"
+					hidden
+				>
+					<span class="icon-eye" aria-hidden="true"></span>
+				</a>
 				<button
 					type="button"
 					class="com-audioarchive-soundboard-remove"
