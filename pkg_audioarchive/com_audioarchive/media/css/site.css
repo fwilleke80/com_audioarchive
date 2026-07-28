@@ -1777,6 +1777,17 @@
 	border-top: 1px solid var(--audioarchive-border);
 }
 
+.com-audioarchive-soundboard-intro
+{
+	margin-top: .75rem;
+}
+
+.com-audioarchive-soundboard-intro > :last-child
+{
+	margin-bottom: 0;
+}
+
+
 .com-audioarchive-soundboard-shared
 {
 	display: flex;

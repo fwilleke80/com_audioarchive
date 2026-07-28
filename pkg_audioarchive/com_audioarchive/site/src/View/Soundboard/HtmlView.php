@@ -7,7 +7,6 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
-use Joomla\CMS\Uri\Uri;
 use Joomla\Registry\Registry;
 use Punga\Component\Audioarchive\Site\Helper\RouteHelper;
 
@@ -28,7 +27,7 @@ class HtmlView extends BaseHtmlView
 	public string $streamTemplate = '';
 
 	/** @var string */
-	public string $clipTemplate = '';
+	public string $routesUrl = '';
 
 	/** @var string */
 	public string $canonicalUrl = '';
@@ -36,23 +35,6 @@ class HtmlView extends BaseHtmlView
 	/** @var int */
 	public int $padCount = 12;
 
-
-	/**
-	 * @brief Build a client-side clip-detail URL template.
-	 *
-	 * Joomla's SEF router cannot resolve the deliberately nonexistent placeholder
-	 * clip identifier and therefore reduces that route to the parent Archive page.
-	 * Keeping the placeholder in a direct component URL lets JavaScript substitute
-	 * the real clip identifier without losing the clip view.
-	 *
-	 * @return string Site-relative clip-detail URL containing the placeholder ID.
-	 */
-	private function getClipRouteTemplate(): string
-	{
-		$siteRoot = rtrim(Uri::root(true), '/');
-
-		return $siteRoot . '/index.php?option=com_audioarchive&view=clip&id=987654321';
-	}
 
 	/**
 	 * @brief Display the sound board page.
@@ -90,7 +72,7 @@ class HtmlView extends BaseHtmlView
 			$item?->title ?? Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_TITLE')
 		);
 		$this->streamTemplate = Route::_(RouteHelper::getPlaybackRoute(987654321, $itemId));
-		$this->clipTemplate = $this->getClipRouteTemplate();
+		$this->routesUrl = Route::_(RouteHelper::getSoundboardRoutesRoute($itemId));
 		$this->canonicalUrl = Route::_(
 			RouteHelper::getSoundboardRoute($itemId),
 			false,

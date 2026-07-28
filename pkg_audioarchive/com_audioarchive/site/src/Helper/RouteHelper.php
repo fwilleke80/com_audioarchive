@@ -77,6 +77,25 @@ abstract class RouteHelper
 	}
 
 	/**
+	 * @brief Return the Sound Board clip-route resolution endpoint.
+	 *
+	 * @param int $itemId Optional Sound Board menu item identifier.
+	 *
+	 * @return string Internal Joomla route.
+	 */
+	public static function getSoundboardRoutesRoute(int $itemId = 0): string
+	{
+		$link = 'index.php?option=com_audioarchive&task=soundboard.routes&format=json';
+
+		if ($itemId > 0)
+		{
+			$link .= '&Itemid=' . $itemId;
+		}
+
+		return $link;
+	}
+
+	/**
 	 * @brief Return the internal route for one public clip.
 	 *
 	 * @param int $id Clip identifier.

@@ -1,0 +1,2 @@
+-- Version 0.10.7 has no component table changes.
+-- This marker keeps Joomla's recorded schema and manifest versions aligned.

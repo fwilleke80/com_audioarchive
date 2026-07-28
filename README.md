@@ -59,6 +59,7 @@ It is intended for archives ranging from a small collection to several thousand 
   - [Archive clip counts](#archive-clip-counts)
   - [Archive playtime](#archive-playtime)
   - [Content-plugin behaviour](#content-plugin-behaviour)
+- [Release history: 0.10.7](#release-history-0107)
 - [Release history: 0.10.6](#release-history-0106)
 - [Release history: 0.10.5](#release-history-0105)
 - [Release history: 0.9.0–0.9.5](#release-history-090095)
@@ -1256,6 +1257,15 @@ The plugin can be configured under:
 ```text
 System → Manage → Plugins → Content - Audio Archive
 ```
+
+## Release history: 0.10.7
+
+### 0.10.7
+
+- Sound Board detail icons now resolve all occupied clip IDs through one read-only component request and receive current Joomla-routed detail URLs using the most appropriate public Archive menu item.
+- Shared and personal boards continue to store only clip IDs and titles, so aliases and menu routes remain current without board migration.
+- Added an optional formatted **Header text** field to the Sound Board menu item, replacing the fixed introductory sentence.
+- Added a 0.10.7 schema marker so Joomla's Database maintenance check reports matching schema and manifest versions.
 
 ## Release history: 0.10.6
 

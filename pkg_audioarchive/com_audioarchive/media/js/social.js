@@ -521,7 +521,7 @@ function initialiseSoundboard()
 
 	const padCount = Math.max(4, Number.parseInt(root.dataset.audioarchivePadCount || '12', 10));
 	const streamTemplate = root.dataset.audioarchiveStreamTemplate || '';
-	const clipTemplate = root.dataset.audioarchiveClipTemplate || '';
+	const routesUrl = root.dataset.audioarchiveRoutesUrl || '';
 	const canonicalUrl = root.dataset.audioarchiveCanonicalUrl || window.location.href.split('#')[0];
 	const status = root.querySelector('[data-audioarchive-soundboard-status]');
 	const audio = root.querySelector('[data-audioarchive-soundboard-audio]');
@@ -529,6 +529,9 @@ function initialiseSoundboard()
 	const sharedPanel = root.querySelector('[data-audioarchive-soundboard-shared]');
 	let board = readBoard().slice(0, padCount);
 	let temporarySharedBoard = false;
+	const detailRoutes = new Map();
+	const unavailableDetailIds = new Set();
+	const pendingDetailIds = new Set();
 
 	const fragment = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('board');
 
@@ -570,25 +573,100 @@ function initialiseSoundboard()
 		return temporarySharedBoard || writeStorage(BOARD_STORAGE_KEY, board);
 	};
 
+	const applyDetailRoutes = () =>
+	{
+		pads.forEach((pad, index) =>
+		{
+			const entry = board[index] || null;
+			const detail = pad.querySelector('[data-audioarchive-soundboard-detail]');
+			const route = entry ? detailRoutes.get(entry.id) || '' : '';
+
+			if (detail)
+			{
+				detail.hidden = route === '';
+				detail.href = route !== '' ? route : '#';
+			}
+		});
+	};
+
+	const resolveDetailRoutes = async () =>
+	{
+		if (routesUrl === '')
+		{
+			applyDetailRoutes();
+			return;
+		}
+
+		const ids = Array.from(new Set(board
+			.filter((entry) => entry && Number.isInteger(entry.id) && entry.id > 0)
+			.map((entry) => entry.id)))
+			.filter((id) => !detailRoutes.has(id) && !unavailableDetailIds.has(id) && !pendingDetailIds.has(id));
+
+		if (ids.length === 0)
+		{
+			applyDetailRoutes();
+			return;
+		}
+
+		ids.forEach((id) => pendingDetailIds.add(id));
+
+		try
+		{
+			const requestUrl = new URL(routesUrl, window.location.href);
+			requestUrl.searchParams.set('ids', ids.join(','));
+			const response = await fetch(
+				requestUrl.toString(),
+				{
+					credentials: 'same-origin',
+					headers:
+					{
+						'Accept': 'application/json',
+					},
+				}
+			);
+			const payload = response.ok ? await response.json() : null;
+			const routes = payload && payload.success === true && payload.routes && typeof payload.routes === 'object'
+				? payload.routes
+				: Object.create(null);
+
+			ids.forEach((id) =>
+			{
+				const route = typeof routes[String(id)] === 'string' ? routes[String(id)].trim() : '';
+
+				if (route !== '')
+				{
+					detailRoutes.set(id, route);
+				}
+				else
+				{
+					unavailableDetailIds.add(id);
+				}
+			});
+		}
+		catch (error)
+		{
+			// Keep detail icons hidden when route resolution is temporarily unavailable.
+		}
+		finally
+		{
+			ids.forEach((id) => pendingDetailIds.delete(id));
+			applyDetailRoutes();
+		}
+	};
+
 	const render = () =>
 	{
 		pads.forEach((pad, index) =>
 		{
 			const entry = board[index] || null;
 			const title = pad.querySelector('[data-audioarchive-soundboard-title]');
-			const detail = pad.querySelector('[data-audioarchive-soundboard-detail]');
 			pad.classList.toggle('is-empty', !entry);
 			pad.classList.remove('is-playing');
 			title.textContent = entry ? entry.title : root.dataset.audioarchiveLabelEmpty;
-
-			if (detail)
-			{
-				detail.hidden = !entry || clipTemplate === '';
-				detail.href = entry && clipTemplate !== ''
-					? clipTemplate.replace('987654321', String(entry.id))
-					: '#';
-			}
 		});
+
+		applyDetailRoutes();
+		void resolveDetailRoutes();
 	};
 
 	const play = (index) =>

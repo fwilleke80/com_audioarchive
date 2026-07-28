@@ -5,13 +5,14 @@ use Joomla\CMS\Language\Text;
 \defined('_JEXEC') or die;
 
 $keys = array_merge(range(1, 9), [0], range('A', 'Z'));
+$headerText = trim((string) $this->params->get('soundboard_header_text', ''));
 ?>
 <div
 	class="com-audioarchive com-audioarchive-soundboard"
 	data-audioarchive-soundboard
 	data-audioarchive-pad-count="<?php echo $this->padCount; ?>"
 	data-audioarchive-stream-template="<?php echo $this->escape($this->streamTemplate); ?>"
-	data-audioarchive-clip-template="<?php echo $this->escape($this->clipTemplate); ?>"
+	data-audioarchive-routes-url="<?php echo $this->escape($this->routesUrl); ?>"
 	data-audioarchive-canonical-url="<?php echo $this->escape($this->canonicalUrl); ?>"
 	data-audioarchive-label-empty="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_EMPTY_PAD')); ?>"
 	data-audioarchive-label-playing="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_PLAYING')); ?>"
@@ -27,7 +28,11 @@ $keys = array_merge(range(1, 9), [0], range('A', 'Z'));
 		<?php if ((int) $this->params->get('show_page_heading', 1) === 1) : ?>
 			<h1><?php echo $this->escape($this->pageHeading); ?></h1>
 		<?php endif; ?>
-		<p class="com-audioarchive-soundboard-intro"><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_INTRO'); ?></p>
+		<?php if ($headerText !== '') : ?>
+			<div class="com-audioarchive-soundboard-intro">
+				<?php echo $headerText; ?>
+			</div>
+		<?php endif; ?>
 	</header>
 
 	<p class="visually-hidden" aria-live="polite" data-audioarchive-soundboard-status></p>
