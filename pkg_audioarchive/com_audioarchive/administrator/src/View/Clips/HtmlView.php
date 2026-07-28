@@ -109,12 +109,9 @@ class HtmlView extends BaseHtmlView
             $query['filter_access'] = $access;
         }
 
-        $limitstart = ($page - 1) * $limit;
-
-        if ($limitstart > 0)
-        {
-            $query['limitstart'] = $limitstart;
-        }
+        // Keep the zero offset in first-page links. Omitting it lets Joomla
+        // restore the previous page offset from the administrator session.
+        $query['limitstart'] = ($page - 1) * $limit;
 
         return Route::_('index.php?' . http_build_query($query, '', '&', PHP_QUERY_RFC3986));
     }

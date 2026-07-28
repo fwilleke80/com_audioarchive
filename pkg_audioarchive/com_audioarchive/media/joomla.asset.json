@@ -1,29 +1,33 @@
 {
   "$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
   "name": "com_audioarchive",
-  "version": "0.9.2",
+  "version": "0.9.12",
   "description": "Joomla Audio Archive assets",
   "license": "GPL-2.0-or-later",
   "assets": [
     {
       "name": "com_audioarchive.site",
       "type": "style",
-      "uri": "com_audioarchive/site.css"
+      "uri": "com_audioarchive/site.css",
+      "version": "0.9.12"
     },
     {
       "name": "com_audioarchive.admin",
       "type": "style",
-      "uri": "com_audioarchive/admin.css"
+      "uri": "com_audioarchive/admin.css",
+      "version": "0.9.12"
     },
     {
       "name": "com_audioarchive.player-style",
       "type": "style",
-      "uri": "com_audioarchive/player.css"
+      "uri": "com_audioarchive/player.css",
+      "version": "0.9.12"
     },
     {
       "name": "com_audioarchive.bulk-upload",
       "type": "script",
       "uri": "com_audioarchive/bulk-upload.js",
+      "version": "0.9.12",
       "attributes": {
         "type": "module"
       },
@@ -35,6 +39,7 @@
       "name": "com_audioarchive.directory-import",
       "type": "script",
       "uri": "com_audioarchive/directory-import.js",
+      "version": "0.9.12",
       "attributes": {
         "type": "module"
       },
@@ -46,6 +51,7 @@
       "name": "com_audioarchive.player",
       "type": "script",
       "uri": "com_audioarchive/player.js",
+      "version": "0.9.12",
       "attributes": {
         "type": "module"
       },
@@ -57,6 +63,7 @@
       "name": "com_audioarchive.archive",
       "type": "script",
       "uri": "com_audioarchive/archive.js",
+      "version": "0.9.12",
       "attributes": {
         "type": "module"
       },
@@ -68,6 +75,7 @@
       "name": "com_audioarchive.batch",
       "type": "script",
       "uri": "com_audioarchive/batch.js",
+      "version": "0.9.12",
       "attributes": {
         "type": "module"
       },
@@ -79,6 +87,7 @@
       "name": "com_audioarchive.waveform",
       "type": "script",
       "uri": "com_audioarchive/waveform.js",
+      "version": "0.9.12",
       "attributes": {
         "type": "module"
       },
@@ -90,6 +99,7 @@
       "name": "com_audioarchive.analysis-maintenance",
       "type": "script",
       "uri": "com_audioarchive/analysis-maintenance.js",
+      "version": "0.9.12",
       "attributes": {
         "type": "module"
       },

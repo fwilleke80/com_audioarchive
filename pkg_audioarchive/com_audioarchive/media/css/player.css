@@ -117,8 +117,7 @@
 	color: var(--audioarchive-player-muted);
 }
 
-.audioarchive-custom-player-seek,
-.audioarchive-custom-player-volume
+.audioarchive-custom-player-seek
 {
 	-webkit-appearance: none;
 	appearance: none;
@@ -188,11 +187,10 @@
 	opacity: .58;
 }
 
-.audioarchive-custom-player-volume-controls
+.audioarchive-custom-player-mute-controls
 {
 	display: flex;
 	align-items: center;
-	gap: .48rem;
 }
 
 .audioarchive-custom-player-mute
@@ -221,47 +219,6 @@
 	width: 1.15rem;
 	height: 1.15rem;
 	fill: currentColor;
-}
-
-.audioarchive-custom-player-volume
-{
-	width: 5.2rem;
-	height: 1.2rem;
-}
-
-.audioarchive-custom-player-volume::-webkit-slider-runnable-track
-{
-	height: .32rem;
-	border-radius: 999px;
-	background: var(--audioarchive-player-border);
-}
-
-.audioarchive-custom-player-volume::-moz-range-track
-{
-	height: .32rem;
-	border-radius: 999px;
-	background: var(--audioarchive-player-border);
-}
-
-.audioarchive-custom-player-volume::-webkit-slider-thumb
-{
-	-webkit-appearance: none;
-	appearance: none;
-	width: .82rem;
-	height: .82rem;
-	margin-top: -.25rem;
-	border: 0;
-	border-radius: 50%;
-	background: var(--audioarchive-player-accent);
-}
-
-.audioarchive-custom-player-volume::-moz-range-thumb
-{
-	width: .82rem;
-	height: .82rem;
-	border: 0;
-	border-radius: 50%;
-	background: var(--audioarchive-player-accent);
 }
 
 .audioarchive-custom-player-analysis
@@ -329,12 +286,20 @@
 	height: var(--audioarchive-waveform-height);
 }
 
+.audioarchive-custom-player-waveform-played
+{
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+}
+
 .audioarchive-custom-player-spectrogram img
 {
 	object-fit: fill;
 	background: #000;
 }
 
+.audioarchive-custom-player-waveform-playhead,
 .audioarchive-custom-player-spectrogram-playhead
 {
 	position: absolute;
@@ -475,8 +440,8 @@
 		gap: .8rem;
 	}
 
-	.audioarchive-custom-player--default .audioarchive-custom-player-volume-controls,
-	.audioarchive-custom-player--featured .audioarchive-custom-player-volume-controls
+	.audioarchive-custom-player--default .audioarchive-custom-player-mute-controls,
+	.audioarchive-custom-player--featured .audioarchive-custom-player-mute-controls
 	{
 		grid-column: 2;
 		justify-self: end;
@@ -485,16 +450,12 @@
 
 @media (max-width: 28rem)
 {
-	.audioarchive-custom-player--default .audioarchive-custom-player-volume-controls,
-	.audioarchive-custom-player--featured .audioarchive-custom-player-volume-controls
+	.audioarchive-custom-player--default .audioarchive-custom-player-mute-controls,
+	.audioarchive-custom-player--featured .audioarchive-custom-player-mute-controls
 	{
 		grid-column: 1 / -1;
 		justify-self: stretch;
 		justify-content: flex-end;
 	}
 
-	.audioarchive-custom-player-volume
-	{
-		width: min(7rem, 45vw);
-	}
 }

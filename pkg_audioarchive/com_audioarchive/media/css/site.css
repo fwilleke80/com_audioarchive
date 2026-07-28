@@ -931,6 +931,7 @@
 	grid-template-columns: minmax(0, 1.7fr) minmax(17rem, .8fr);
 	align-items: start;
 	gap: clamp(1.5rem, 4vw, 3rem);
+	max-width: 62rem;
 }
 
 .com-audioarchive-clip-layout.no-description

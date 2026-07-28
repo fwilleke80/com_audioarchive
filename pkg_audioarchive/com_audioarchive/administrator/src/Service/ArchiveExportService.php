@@ -187,11 +187,80 @@ final class ArchiveExportService
 			throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_ARCHIVE_EXPORT_ERROR_FINALISE'));
 		}
 
+		$this->validateArchive($path);
+
 		return [
 			'path' => $path,
 			'filename' => $filename,
 			'manifest' => $manifest,
 		];
+	}
+
+	/**
+	 * @brief Reopen a completed ZIP and verify its required export documents.
+	 *
+	 * This prevents a partial or structurally invalid temporary file from ever
+	 * reaching the download response.
+	 *
+	 * @param string $path Absolute temporary ZIP path.
+	 *
+	 * @return void
+	 */
+	private function validateArchive(string $path): void
+	{
+		clearstatcache(true, $path);
+		$size = filesize($path);
+
+		if (!is_int($size) || $size < 22)
+		{
+			@unlink($path);
+			throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_ARCHIVE_EXPORT_ERROR_FINALISE'));
+		}
+
+		$zip = new \ZipArchive();
+		$openResult = $zip->open($path, \ZipArchive::RDONLY | \ZipArchive::CHECKCONS);
+
+		if ($openResult !== true)
+		{
+			@unlink($path);
+			throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_ARCHIVE_EXPORT_ERROR_FINALISE'));
+		}
+
+		$requiredEntries = [
+			'manifest.json',
+			'checksums.json',
+			'data/categories.json',
+			'data/tags.json',
+			'data/clips.json',
+			'data/files.json',
+			'data/analyses.json',
+		];
+		$valid = $zip->numFiles >= count($requiredEntries);
+
+		foreach ($requiredEntries as $entryName)
+		{
+			if ($zip->locateName($entryName, \ZipArchive::FL_NOCASE) === false)
+			{
+				$valid = false;
+				break;
+			}
+		}
+
+		$manifest = $valid ? $zip->getFromName('manifest.json') : false;
+		$checksums = $valid ? $zip->getFromName('checksums.json') : false;
+		$zip->close();
+
+		if (
+			!$valid
+			|| !is_string($manifest)
+			|| !is_array(json_decode($manifest, true))
+			|| !is_string($checksums)
+			|| !is_array(json_decode($checksums, true))
+		)
+		{
+			@unlink($path);
+			throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_ARCHIVE_EXPORT_ERROR_FINALISE'));
+		}
 	}
 
 	/**
@@ -562,9 +631,20 @@ final class ArchiveExportService
 					$archivePath = 'media/' . $role . '/' . $clipUuid . '.' . $extension;
 					$included = $this->addManagedFile($zip, $sourcePath, $archivePath, $checksums);
 				}
-				catch (\Throwable)
+				catch (\Throwable $exception)
 				{
-					$included = false;
+					throw new \RuntimeException(
+						Text::sprintf('COM_AUDIOARCHIVE_ARCHIVE_EXPORT_ERROR_SOURCE', $role, $clipUuid),
+						0,
+						$exception
+					);
+				}
+
+				if (!$included)
+				{
+					throw new \RuntimeException(
+						Text::sprintf('COM_AUDIOARCHIVE_ARCHIVE_EXPORT_ERROR_SOURCE', $role, $clipUuid)
+					);
 				}
 			}
 
@@ -627,9 +707,20 @@ final class ArchiveExportService
 					$archivePath = 'analyses/' . preg_replace('/[^a-z0-9_-]/', '_', $type) . '/' . $clipUuid . '.' . $extension;
 					$included = $this->addManagedFile($zip, $sourcePath, $archivePath, $checksums);
 				}
-				catch (\Throwable)
+				catch (\Throwable $exception)
 				{
-					$included = false;
+					throw new \RuntimeException(
+						Text::sprintf('COM_AUDIOARCHIVE_ARCHIVE_EXPORT_ERROR_SOURCE', $type, $clipUuid),
+						0,
+						$exception
+					);
+				}
+
+				if (!$included)
+				{
+					throw new \RuntimeException(
+						Text::sprintf('COM_AUDIOARCHIVE_ARCHIVE_EXPORT_ERROR_SOURCE', $type, $clipUuid)
+					);
 				}
 			}
 

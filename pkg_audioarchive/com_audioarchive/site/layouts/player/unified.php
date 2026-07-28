@@ -29,11 +29,10 @@ $presentation = in_array($presentation, ['minimal', 'compact', 'default', 'featu
 	? $presentation
 	: 'default';
 $showSeek = $presentation !== 'minimal';
-$showVolume = in_array($presentation, ['default', 'featured'], true);
+$showMute = in_array($presentation, ['default', 'featured'], true);
 $showAnalysis = $presentation === 'featured';
 $audioId = trim((string) ($data['audioId'] ?? 'audioarchive-player'));
 $seekId = $audioId . '-seek';
-$volumeId = $audioId . '-volume';
 $title = trim((string) ($data['title'] ?? ''));
 $streamUrl = trim((string) ($data['streamUrl'] ?? ''));
 $waveformUrl = $showAnalysis ? trim((string) ($data['waveformUrl'] ?? '')) : '';
@@ -161,8 +160,8 @@ $style = implode(';', [
 				</div>
 			<?php endif; ?>
 
-			<?php if ($showVolume) : ?>
-				<div class="audioarchive-custom-player-volume-controls">
+			<?php if ($showMute) : ?>
+				<div class="audioarchive-custom-player-mute-controls">
 					<button
 						type="button"
 						class="audioarchive-custom-player-mute"
@@ -180,17 +179,6 @@ $style = implode(';', [
 							<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9zm11.7 1.3-1.4 1.4 1.8 1.8-1.8 1.8 1.4 1.4 1.8-1.8 1.8 1.8 1.4-1.4-1.8-1.8 1.8-1.8-1.4-1.4-1.8 1.8z"/></svg>
 						</span>
 					</button>
-					<label class="visually-hidden" for="<?php echo $escape($volumeId); ?>"><?php echo $escape((string) ($labels['volume'] ?? 'Volume')); ?></label>
-					<input
-						id="<?php echo $escape($volumeId); ?>"
-						class="audioarchive-custom-player-volume"
-						type="range"
-						min="0"
-						max="1"
-						step="0.05"
-						value="1"
-						data-audioarchive-custom-volume
-					>
 				</div>
 			<?php endif; ?>
 		</div>
@@ -239,7 +227,7 @@ $style = implode(';', [
 						data-spectrogram-url="<?php echo $escape($spectrogramUrl); ?>"
 						<?php echo $initialAnalysisView !== 'spectrogram' ? 'hidden' : ''; ?>
 					>
-						<img alt="" aria-hidden="true" data-audioarchive-spectrogram-image>
+						<img alt="" aria-hidden="true" decoding="async" fetchpriority="low" data-audioarchive-spectrogram-image>
 						<span class="audioarchive-custom-player-spectrogram-playhead" aria-hidden="true" data-audioarchive-spectrogram-playhead></span>
 						<p class="audioarchive-custom-player-analysis-status" data-audioarchive-spectrogram-status>
 							<?php echo $escape($spectrogramLoadingLabel); ?>

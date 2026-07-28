@@ -79,8 +79,8 @@ const initialiseAudioArchivePlayers = () =>
 		return `${minutes}:${String(remainingSeconds).padStart(2, '0')}`;
 	};
 
-	const getProgress = (audio) => Number.isFinite(audio.duration) && audio.duration > 0
-		? Math.min(1, Math.max(0, audio.currentTime / audio.duration))
+	const getProgress = (audio, currentTime = audio.currentTime) => Number.isFinite(audio.duration) && audio.duration > 0
+		? Math.min(1, Math.max(0, currentTime / audio.duration))
 		: 0;
 
 	const setButtonState = (button, playing) =>
@@ -259,6 +259,8 @@ const initialiseAudioArchivePlayers = () =>
 		 */
 		canvas.style.removeProperty('width');
 		canvas.style.removeProperty('height');
+		state.playedCanvas.style.removeProperty('width');
+		state.playedCanvas.style.removeProperty('height');
 		const bounds = canvas.getBoundingClientRect();
 		const width = Math.round(bounds.width);
 		const height = Math.round(bounds.height);
@@ -283,13 +285,13 @@ const initialiseAudioArchivePlayers = () =>
 		const styles = getComputedStyle(player);
 		const unplayed = styles.getPropertyValue('--audioarchive-waveform-unplayed').trim() || '#6c757d';
 		const played = styles.getPropertyValue('--audioarchive-waveform-played').trim() || '#0d6efd';
-		drawPeakLayer(state.unplayedLayer, state.peaks, unplayed, width, height, ratio);
-		drawPeakLayer(state.playedLayer, state.peaks, played, width, height, ratio);
+		drawPeakLayer(state.canvas, state.peaks, unplayed, width, height, ratio);
+		drawPeakLayer(state.playedCanvas, state.peaks, played, width, height, ratio);
 
 		return true;
 	};
 
-	const drawPlayerWaveform = (player, audio) =>
+	const drawPlayerWaveform = (player, audio, currentTime = audio.currentTime) =>
 	{
 		const waveform = player.querySelector('[data-audioarchive-player-waveform]');
 		const state = waveform instanceof HTMLElement ? waveformStates.get(waveform) : null;
@@ -299,44 +301,20 @@ const initialiseAudioArchivePlayers = () =>
 			return;
 		}
 
-		if (waveform.hidden || !prepareWaveformLayers(player, state))
+		if (waveform.hidden)
 		{
 			return;
 		}
 
-		const context = state.canvas.getContext('2d');
-
-		if (!context)
+		if ((state.width <= 1 || state.height <= 1) && !prepareWaveformLayers(player, state))
 		{
 			return;
 		}
 
-		const progress = getProgress(audio);
-		const progressX = Math.round(progress * state.canvas.width);
-		context.setTransform(1, 0, 0, 1, 0, 0);
-		context.clearRect(0, 0, state.canvas.width, state.canvas.height);
-		context.drawImage(state.unplayedLayer, 0, 0);
-
-		if (progressX > 0)
-		{
-			context.save();
-			context.beginPath();
-			context.rect(0, 0, progressX, state.canvas.height);
-			context.clip();
-			context.drawImage(state.playedLayer, 0, 0);
-			context.restore();
-		}
-
-		if (progress > 0 && progress < 1)
-		{
-			const styles = getComputedStyle(player);
-			context.strokeStyle = styles.getPropertyValue('--audioarchive-waveform-played').trim() || '#0d6efd';
-			context.lineWidth = Math.max(1, state.ratio);
-			context.beginPath();
-			context.moveTo(progressX + 0.5, 0);
-			context.lineTo(progressX + 0.5, state.canvas.height);
-			context.stroke();
-		}
+		const progress = getProgress(audio, currentTime);
+		state.playedCanvas.style.clipPath = `inset(0 ${Math.max(0, (1 - progress) * 100)}% 0 0)`;
+		state.playhead.style.left = `${progress * 100}%`;
+		state.playhead.hidden = !(progress > 0 && progress < 1);
 	};
 
 	const initialisePlayerWaveform = (player, audio) =>
@@ -392,12 +370,25 @@ const initialiseAudioArchivePlayers = () =>
 				waveformStates.set(waveform, {
 					canvas,
 					peaks,
-					unplayedLayer: document.createElement('canvas'),
-					playedLayer: document.createElement('canvas'),
+					playedCanvas: document.createElement('canvas'),
+					playhead: document.createElement('span'),
 					width: 0,
 					height: 0,
 					ratio: 0,
 				});
+				const state = waveformStates.get(waveform);
+
+				if (!state)
+				{
+					throw new Error('Waveform state could not be created.');
+				}
+
+				state.playedCanvas.className = 'audioarchive-custom-player-waveform-played';
+				state.playedCanvas.setAttribute('aria-hidden', 'true');
+				state.playhead.className = 'audioarchive-custom-player-waveform-playhead';
+				state.playhead.setAttribute('aria-hidden', 'true');
+				waveform.insertBefore(state.playedCanvas, status);
+				waveform.insertBefore(state.playhead, status);
 
 				if (status instanceof HTMLElement)
 				{
@@ -412,13 +403,20 @@ const initialiseAudioArchivePlayers = () =>
 					{
 						if (!waveform.hidden)
 						{
+							state.width = 0;
+							state.height = 0;
 							drawPlayerWaveform(player, audio);
 						}
 					}).observe(waveform);
 				}
 				else
 				{
-					window.addEventListener('resize', () => drawPlayerWaveform(player, audio));
+					window.addEventListener('resize', () =>
+					{
+						state.width = 0;
+						state.height = 0;
+						drawPlayerWaveform(player, audio);
+					});
 				}
 
 				canvas.addEventListener('click', (event) =>
@@ -444,7 +442,7 @@ const initialiseAudioArchivePlayers = () =>
 			});
 	};
 
-	const drawPlayerSpectrogram = (player, audio) =>
+	const drawPlayerSpectrogram = (player, audio, currentTime = audio.currentTime) =>
 	{
 		const spectrogram = player.querySelector('[data-audioarchive-player-spectrogram]');
 		const state = spectrogram instanceof HTMLElement ? spectrogramStates.get(spectrogram) : null;
@@ -454,7 +452,7 @@ const initialiseAudioArchivePlayers = () =>
 			return;
 		}
 
-		const progress = getProgress(audio);
+		const progress = getProgress(audio, currentTime);
 		state.playhead.style.left = `${progress * 100}%`;
 		state.playhead.hidden = !(progress > 0 && progress < 1);
 	};
@@ -536,13 +534,11 @@ const initialiseAudioArchivePlayers = () =>
 		selectAnalysisPanel(player, player.dataset.preferredAnalysisView || 'waveform');
 	};
 
-	const updateCustomPlayerProgress = (player, audio) =>
+	const updateCustomPlayerVisualProgress = (player, audio, currentTime = audio.currentTime) =>
 	{
 		const seek = player.querySelector('[data-audioarchive-custom-seek]');
-		const currentTime = player.querySelector('[data-audioarchive-current-time]');
-		const duration = player.querySelector('[data-audioarchive-duration]');
 		const hasDuration = Number.isFinite(audio.duration) && audio.duration > 0;
-		const progress = getProgress(audio);
+		const progress = getProgress(audio, currentTime);
 
 		player.style.setProperty('--audioarchive-player-progress', `${progress * 100}%`);
 
@@ -550,6 +546,21 @@ const initialiseAudioArchivePlayers = () =>
 		{
 			seek.disabled = !hasDuration;
 			seek.value = String(Math.round(progress * 1000));
+		}
+
+		drawPlayerWaveform(player, audio, currentTime);
+		drawPlayerSpectrogram(player, audio, currentTime);
+	};
+
+	const updateCustomPlayerTimeDisplay = (player, audio) =>
+	{
+		const seek = player.querySelector('[data-audioarchive-custom-seek]');
+		const currentTime = player.querySelector('[data-audioarchive-current-time]');
+		const duration = player.querySelector('[data-audioarchive-duration]');
+		const hasDuration = Number.isFinite(audio.duration) && audio.duration > 0;
+
+		if (seek instanceof HTMLInputElement)
+		{
 			seek.setAttribute('aria-valuetext', `${formatTime(audio.currentTime)} / ${hasDuration ? formatTime(audio.duration) : '0:00'}`);
 		}
 
@@ -562,9 +573,12 @@ const initialiseAudioArchivePlayers = () =>
 		{
 			duration.textContent = hasDuration ? formatTime(audio.duration) : '0:00';
 		}
+	};
 
-		drawPlayerWaveform(player, audio);
-		drawPlayerSpectrogram(player, audio);
+	const updateCustomPlayerProgress = (player, audio) =>
+	{
+		updateCustomPlayerVisualProgress(player, audio);
+		updateCustomPlayerTimeDisplay(player, audio);
 	};
 
 	const stopProgressAnimation = (player) =>
@@ -583,28 +597,30 @@ const initialiseAudioArchivePlayers = () =>
 		stopProgressAnimation(player);
 		const step = () =>
 		{
-			updateCustomPlayerProgress(player, audio);
-
-			if (!audio.paused && !audio.ended)
+			if (audio.paused || audio.ended)
 			{
-				animationFrames.set(player, requestAnimationFrame(step));
+				animationFrames.delete(player);
+				updateCustomPlayerProgress(player, audio);
+				return;
 			}
+
+			/*
+			 * HTMLMediaElement.currentTime is the browser's authoritative media
+			 * clock and is synchronized with audible playback. The animation
+			 * frame only determines when the visual position is repainted.
+			 */
+			updateCustomPlayerVisualProgress(player, audio);
+			animationFrames.set(player, requestAnimationFrame(step));
 		};
 		animationFrames.set(player, requestAnimationFrame(step));
 	};
 
-	const updateCustomPlayerVolume = (player, audio) =>
+	const updateCustomPlayerMuteState = (player, audio) =>
 	{
-		const volume = player.querySelector('[data-audioarchive-custom-volume]');
 		const mute = player.querySelector('[data-audioarchive-custom-mute]');
 		const volumeIcon = player.querySelector('[data-audioarchive-icon-volume]');
 		const mutedIcon = player.querySelector('[data-audioarchive-icon-muted]');
 		const isMuted = audio.muted || audio.volume <= 0;
-
-		if (volume instanceof HTMLInputElement && !audio.muted)
-		{
-			volume.value = String(audio.volume);
-		}
 
 		if (mute instanceof HTMLButtonElement)
 		{
@@ -752,7 +768,6 @@ const initialiseAudioArchivePlayers = () =>
 		const ui = player.querySelector('[data-audioarchive-custom-ui]');
 		const toggle = player.querySelector('[data-audioarchive-custom-toggle]');
 		const seek = player.querySelector('[data-audioarchive-custom-seek]');
-		const volume = player.querySelector('[data-audioarchive-custom-volume]');
 		const mute = player.querySelector('[data-audioarchive-custom-mute]');
 
 		if (!(audio instanceof HTMLAudioElement) || !(ui instanceof HTMLElement) || !(toggle instanceof HTMLButtonElement))
@@ -768,7 +783,7 @@ const initialiseAudioArchivePlayers = () =>
 		const title = audio.dataset.clipTitle || '';
 		const clipId = audio.dataset.clipId || '';
 		updateCustomPlayerProgress(player, audio);
-		updateCustomPlayerVolume(player, audio);
+		updateCustomPlayerMuteState(player, audio);
 		initialisePlayerWaveform(player, audio);
 		initialisePlayerSpectrogram(player, audio);
 		initialiseAnalysisSwitcher(player);
@@ -814,17 +829,6 @@ const initialiseAudioArchivePlayers = () =>
 			});
 		}
 
-		if (volume instanceof HTMLInputElement)
-		{
-			volume.addEventListener('input', () =>
-			{
-				const nextVolume = Math.min(1, Math.max(0, Number.parseFloat(volume.value)));
-				audio.volume = Number.isFinite(nextVolume) ? nextVolume : 1;
-				audio.muted = false;
-				player.dataset.audioarchiveLastVolume = String(audio.volume || 1);
-			});
-		}
-
 		if (mute instanceof HTMLButtonElement)
 		{
 			mute.addEventListener('click', () =>
@@ -844,9 +848,25 @@ const initialiseAudioArchivePlayers = () =>
 		}
 
 		audio.addEventListener('loadedmetadata', () => updateCustomPlayerProgress(player, audio));
-		audio.addEventListener('durationchange', () => updateCustomPlayerProgress(player, audio));
-		audio.addEventListener('timeupdate', () => updateCustomPlayerProgress(player, audio));
-		audio.addEventListener('volumechange', () => updateCustomPlayerVolume(player, audio));
+		audio.addEventListener('durationchange', () =>
+		{
+			updateCustomPlayerTimeDisplay(player, audio);
+
+			if (!animationFrames.has(player))
+			{
+				updateCustomPlayerVisualProgress(player, audio);
+			}
+		});
+		audio.addEventListener('timeupdate', () =>
+		{
+			updateCustomPlayerTimeDisplay(player, audio);
+
+			if (!animationFrames.has(player))
+			{
+				updateCustomPlayerVisualProgress(player, audio);
+			}
+		});
+		audio.addEventListener('volumechange', () => updateCustomPlayerMuteState(player, audio));
 
 		audio.addEventListener('play', () =>
 		{
@@ -856,9 +876,31 @@ const initialiseAudioArchivePlayers = () =>
 			activeCustomPlayer = player;
 			player.classList.remove('has-error');
 			setCustomPlayerState(player, true);
-			startProgressAnimation(player, audio);
 			recordPlay(player, clipId);
 			announce(player, 'Playing', title);
+		});
+
+		audio.addEventListener('playing', () => startProgressAnimation(player, audio));
+
+		audio.addEventListener('waiting', () =>
+		{
+			updateCustomPlayerTimeDisplay(player, audio);
+		});
+
+		audio.addEventListener('seeking', () =>
+		{
+			stopProgressAnimation(player);
+			updateCustomPlayerProgress(player, audio);
+		});
+
+		audio.addEventListener('seeked', () =>
+		{
+			updateCustomPlayerProgress(player, audio);
+
+			if (!audio.paused && !audio.ended)
+			{
+				startProgressAnimation(player, audio);
+			}
 		});
 
 		audio.addEventListener('pause', () =>
