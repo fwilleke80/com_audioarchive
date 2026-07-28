@@ -95,6 +95,8 @@ class PublicMediaService
 				$database->quoteName('f.audio_codec'),
 				$database->quoteName('f.file_size'),
 				$database->quoteName('f.checksum_sha256'),
+				'(SELECT COUNT(*) FROM ' . $database->quoteName('#__audioarchive_ratings', 'ru') . ' WHERE ' . $database->quoteName('ru.clip_id') . ' = ' . $database->quoteName('a.id') . ' AND ' . $database->quoteName('ru.vote') . ' = 1) AS ' . $database->quoteName('rating_up'),
+				'(SELECT COUNT(*) FROM ' . $database->quoteName('#__audioarchive_ratings', 'rd') . ' WHERE ' . $database->quoteName('rd.clip_id') . ' = ' . $database->quoteName('a.id') . ' AND ' . $database->quoteName('rd.vote') . ' = -1) AS ' . $database->quoteName('rating_down'),
 			])
 			->from($database->quoteName('#__audioarchive_clips', 'a'))
 			->innerJoin(

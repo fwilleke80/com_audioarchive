@@ -27,6 +27,8 @@ $columns = [
 	'recorded' => (int) $this->params->get('archive_column_recorded', 1) === 1,
 	'uploaded' => (int) $this->params->get('archive_column_uploaded', 1) === 1,
 	'tags' => (int) $this->params->get('archive_column_tags', 1) === 1,
+	'rating' => (int) $this->params->get('archive_column_rating', 1) === 1 && (int) $this->params->get('enable_ratings', 1) === 1,
+	'actions' => (int) $this->params->get('archive_column_actions', 1) === 1 && ((int) $this->params->get('archive_show_share', 1) === 1 || (int) $this->params->get('enable_soundboard', 1) === 1),
 ];
 $currentSort = (string) $this->state->get('list.ordering', 'uploaded');
 $currentDirection = strtoupper((string) $this->state->get('list.direction', 'DESC'));
@@ -124,6 +126,8 @@ $mobileSortFields = array_filter($mobileSortFields);
 					</th>
 				<?php endif; ?>
 				<?php if ($columns['tags']) : ?><th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_TAGS'); ?></th><?php endif; ?>
+				<?php if ($columns['rating']) : ?><th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_RATING'); ?></th><?php endif; ?>
+				<?php if ($columns['actions']) : ?><th scope="col"><span class="visually-hidden"><?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_ACTIONS'); ?></span></th><?php endif; ?>
 			</tr>
 		</thead>
 		<tbody>

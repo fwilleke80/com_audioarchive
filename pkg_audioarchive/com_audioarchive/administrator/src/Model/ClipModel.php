@@ -2,6 +2,7 @@
 
 namespace Willeke\Component\Audioarchive\Administrator\Model;
 
+use Joomla\CMS\Application\ApplicationHelper;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Event\Finder\AfterDeleteEvent;
 use Joomla\CMS\Event\Finder\AfterSaveEvent;
@@ -36,6 +37,49 @@ class ClipModel extends AdminModel
 
     /** @var array<string, mixed>|null */
     private ?array $pendingPreparedUpload = null;
+
+    /**
+     * @brief Generate a globally unique alias for a new or copied clip.
+     *
+     * Joomla's default implementation scopes duplicate aliases to a category.
+     * Audio Archive uses alias-only public routes, so the alias must be unique
+     * across every category.
+     *
+     * @param int $categoryId Category identifier retained for API compatibility.
+     * @param string $alias Requested alias.
+     * @param string $title Requested title.
+     *
+     * @return array{0:string,1:string} Unique title and alias pair.
+     */
+    protected function generateNewTitle($categoryId, $alias, $title)
+    {
+        $title = trim((string) $title);
+        $baseTitle = $title !== '' ? $title : Text::_('COM_AUDIOARCHIVE_DEFAULT_CLIP_TITLE');
+        $baseAlias = ApplicationHelper::stringURLSafe(
+            trim((string) $alias) !== '' ? (string) $alias : $baseTitle
+        );
+        $baseAlias = $baseAlias !== '' ? $baseAlias : Factory::getDate()->format('Y-m-d-H-i-s');
+        $candidateAlias = $baseAlias;
+        $suffix = 2;
+        $database = $this->getDatabase();
+
+        while (true)
+        {
+            $query = $database->getQuery(true)
+                ->select('COUNT(*)')
+                ->from($database->quoteName('#__audioarchive_clips'))
+                ->where($database->quoteName('alias') . ' = :alias')
+                ->bind(':alias', $candidateAlias, ParameterType::STRING);
+
+            if ((int) $database->setQuery($query)->loadResult() === 0)
+            {
+                return [$baseTitle, $candidateAlias];
+            }
+
+            $suffixText = '-' . $suffix++;
+            $candidateAlias = mb_substr($baseAlias, 0, 400 - mb_strlen($suffixText)) . $suffixText;
+        }
+    }
 
     /**
      * @brief Return the edit form.

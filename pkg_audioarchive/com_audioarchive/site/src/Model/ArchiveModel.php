@@ -100,6 +100,8 @@ class ArchiveModel extends ListModel
 				$db->quoteName('c.title', 'category_title'),
 				$db->quoteName('c.lft', 'category_lft'),
 				$db->quoteName('c.rgt', 'category_rgt'),
+				'(SELECT COUNT(*) FROM ' . $db->quoteName('#__audioarchive_ratings', 'ru') . ' WHERE ' . $db->quoteName('ru.clip_id') . ' = ' . $db->quoteName('a.id') . ' AND ' . $db->quoteName('ru.vote') . ' = 1) AS ' . $db->quoteName('rating_up'),
+				'(SELECT COUNT(*) FROM ' . $db->quoteName('#__audioarchive_ratings', 'rd') . ' WHERE ' . $db->quoteName('rd.clip_id') . ' = ' . $db->quoteName('a.id') . ' AND ' . $db->quoteName('rd.vote') . ' = -1) AS ' . $db->quoteName('rating_down'),
 			])
 			->from($db->quoteName('#__audioarchive_clips', 'a'))
 			->innerJoin(

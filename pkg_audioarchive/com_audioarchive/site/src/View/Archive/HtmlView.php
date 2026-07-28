@@ -8,8 +8,10 @@ use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
 use Joomla\Registry\Registry;
+use Joomla\Database\DatabaseInterface;
 use Willeke\Component\Audioarchive\Site\Helper\RouteHelper;
 use Willeke\Component\Audioarchive\Site\Model\ArchiveModel;
+use Willeke\Component\Audioarchive\Site\Service\RatingService;
 
 \defined('_JEXEC') or die;
 
@@ -53,6 +55,18 @@ class HtmlView extends BaseHtmlView
 
 	/** @var string */
 	public string $playCountToken = '';
+
+	/** @var string */
+	public string $ratingUrl = '';
+
+	/** @var string */
+	public string $ratingToken = '';
+
+	/** @var bool */
+	public bool $canRate = false;
+
+	/** @var string */
+	public string $soundboardUrl = '';
 	/** @var object|null */
 	public ?object $item = null;
 
@@ -97,6 +111,7 @@ class HtmlView extends BaseHtmlView
 		{
 			$clip->detail_url = Route::_(RouteHelper::getClipRoute((int) $clip->id, $itemId));
 			$clip->stream_url = Route::_(RouteHelper::getPlaybackRoute((int) $clip->id, $itemId));
+			$clip->share_url = Route::_(RouteHelper::getClipRoute((int) $clip->id, $itemId), false, Route::TLS_IGNORE, true);
 		}
 
 		if ((int) $this->params->get('enable_play_counts', 1) === 1)
@@ -105,6 +120,22 @@ class HtmlView extends BaseHtmlView
 			$this->playCountToken = Session::getFormToken();
 		}
 
+		if ((int) $this->params->get('enable_ratings', 1) === 1)
+		{
+			$ratingService = new RatingService(
+				Factory::getContainer()->get(DatabaseInterface::class),
+				$this->params,
+				$app->getIdentity()
+			);
+			$this->ratingUrl = Route::_(RouteHelper::getRatingRoute($itemId));
+			$this->ratingToken = Session::getFormToken();
+			$this->canRate = $ratingService->canVote();
+		}
+
+		$this->soundboardUrl = (int) $this->params->get('enable_soundboard', 1) === 1
+			? Route::_(RouteHelper::getSoundboardRoute())
+			: '';
+
 		$item = $app->getMenu()->getActive();
 		$this->pageHeading = (string) $this->params->get('page_heading', $item?->title ?? Text::_('COM_AUDIOARCHIVE_ARCHIVE_TITLE'));
 		$this->prepareDocument($itemId, $item);
@@ -112,7 +143,8 @@ class HtmlView extends BaseHtmlView
 			->useStyle('com_audioarchive.site')
 			->useStyle('com_audioarchive.player-style')
 			->useScript('com_audioarchive.player')
-			->useScript('com_audioarchive.archive');
+			->useScript('com_audioarchive.archive')
+			->useScript('com_audioarchive.social');
 
 		parent::display($tpl);
 	}

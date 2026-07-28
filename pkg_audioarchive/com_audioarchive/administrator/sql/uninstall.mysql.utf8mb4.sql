@@ -17,6 +17,7 @@ WHERE `item_id` LIKE 'com_audioarchive.clip.%';
 DELETE FROM `#__content_types`
 WHERE `type_alias` = 'com_audioarchive.clip';
 
+DROP TABLE IF EXISTS `#__audioarchive_ratings`;
 DROP TABLE IF EXISTS `#__audioarchive_jobs`;
 DROP TABLE IF EXISTS `#__audioarchive_analyses`;
 DROP TABLE IF EXISTS `#__audioarchive_waveforms`;

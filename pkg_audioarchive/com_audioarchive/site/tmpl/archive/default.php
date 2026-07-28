@@ -9,14 +9,29 @@ use Joomla\CMS\Language\Text;
 	data-audioarchive-status-playing="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_PLAYING')); ?>"
 	data-audioarchive-status-paused="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_PAUSED')); ?>"
 	data-audioarchive-status-error="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_ERROR')); ?>"
+	data-audioarchive-soundboard-pad-count="<?php echo max(4, min(36, (int) $this->params->get('soundboard_pad_count', 12))); ?>"
+	data-audioarchive-soundboard-full-label="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_FULL')); ?>"
+	data-audioarchive-share-copied-label="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SHARE_COPIED')); ?>"
 	<?php if ($this->playCountUrl !== '') : ?>
 		data-audioarchive-play-count-url="<?php echo $this->escape($this->playCountUrl); ?>"
 		data-audioarchive-token-name="<?php echo $this->escape($this->playCountToken); ?>"
+	<?php endif; ?>
+	<?php if ($this->ratingUrl !== '') : ?>
+		data-audioarchive-rating-endpoint="<?php echo $this->escape($this->ratingUrl); ?>"
+		data-audioarchive-rating-token="<?php echo $this->escape($this->ratingToken); ?>"
+		data-audioarchive-rating-success="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_RATING_SAVED')); ?>"
+		data-audioarchive-rating-error="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_RATING_ERROR')); ?>"
 	<?php endif; ?>
 >
 	<header class="com-audioarchive-page-header">
 		<?php if ((int) $this->params->get('show_page_heading', 1) === 1) : ?>
 			<h1><?php echo $this->escape($this->pageHeading); ?></h1>
+		<?php endif; ?>
+		<?php if ($this->soundboardUrl !== '') : ?>
+			<a class="btn btn-outline-secondary com-audioarchive-soundboard-open" href="<?php echo $this->escape($this->soundboardUrl); ?>">
+				<span class="icon-grid-2" aria-hidden="true"></span>
+				<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_OPEN'); ?>
+			</a>
 		<?php endif; ?>
 	</header>
 

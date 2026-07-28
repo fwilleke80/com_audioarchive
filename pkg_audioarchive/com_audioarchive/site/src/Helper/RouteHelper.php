@@ -56,6 +56,26 @@ abstract class RouteHelper
 		return $link;
 	}
 
+
+	/**
+	 * @brief Return the public soundboard route.
+	 *
+	 * @param int $itemId Optional Sound Board menu item identifier.
+	 *
+	 * @return string Internal Joomla route.
+	 */
+	public static function getSoundboardRoute(int $itemId = 0): string
+	{
+		$link = 'index.php?option=com_audioarchive&view=soundboard';
+
+		if ($itemId > 0)
+		{
+			$link .= '&Itemid=' . $itemId;
+		}
+
+		return $link;
+	}
+
 	/**
 	 * @brief Return the internal route for one public clip.
 	 *
@@ -132,6 +152,26 @@ abstract class RouteHelper
 	public static function getPlayCountRoute(int $itemId = 0): string
 	{
 		$link = 'index.php?option=com_audioarchive&task=stream.countPlay&format=json';
+
+		if ($itemId > 0)
+		{
+			$link .= '&Itemid=' . $itemId;
+		}
+
+		return $link;
+	}
+
+
+	/**
+	 * @brief Return the endpoint used to store a rating.
+	 *
+	 * @param int $itemId Optional active menu item identifier.
+	 *
+	 * @return string Internal Joomla route.
+	 */
+	public static function getRatingRoute(int $itemId = 0): string
+	{
+		$link = 'index.php?option=com_audioarchive&task=rating.vote&format=json';
 
 		if ($itemId > 0)
 		{

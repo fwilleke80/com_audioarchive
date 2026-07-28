@@ -136,7 +136,7 @@ class ClipTable extends Table implements TaggableTableInterface, CurrentUserInte
 
         $existing = new self($this->getDatabase(), $this->getDispatcher());
 
-        if ($existing->load(['alias' => $this->alias, 'catid' => (int) $this->catid]) && (int) $existing->id !== (int) $this->id)
+        if ($existing->load(['alias' => $this->alias]) && (int) $existing->id !== (int) $this->id)
         {
             $this->setError(Text::_('COM_AUDIOARCHIVE_ERROR_ALIAS_EXISTS'));
             return false;

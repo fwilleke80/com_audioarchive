@@ -39,6 +39,24 @@
         </field>
     </fieldset>
 
+
+    <fieldset name="engagement" label="COM_AUDIOARCHIVE_CONFIG_ENGAGEMENT_LABEL">
+        <field name="enable_ratings" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_ENABLE_RATINGS_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ENABLE_RATINGS_DESC" default="1">
+            <option value="0">JNO</option>
+            <option value="1">JYES</option>
+        </field>
+        <field name="rating_permission" type="list" label="COM_AUDIOARCHIVE_CONFIG_RATING_PERMISSION_LABEL" description="COM_AUDIOARCHIVE_CONFIG_RATING_PERMISSION_DESC" default="all" validate="options" showon="enable_ratings:1">
+            <option value="all">COM_AUDIOARCHIVE_RATING_PERMISSION_ALL</option>
+            <option value="registered">COM_AUDIOARCHIVE_RATING_PERMISSION_REGISTERED</option>
+            <option value="disabled">COM_AUDIOARCHIVE_RATING_PERMISSION_DISABLED</option>
+        </field>
+        <field name="enable_soundboard" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_ENABLE_SOUNDBOARD_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ENABLE_SOUNDBOARD_DESC" default="1">
+            <option value="0">JNO</option>
+            <option value="1">JYES</option>
+        </field>
+        <field name="soundboard_pad_count" type="number" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_PAD_COUNT_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_PAD_COUNT_DESC" default="12" min="4" max="36" step="1" showon="enable_soundboard:1" />
+    </fieldset>
+
     <fieldset name="storage" label="COM_AUDIOARCHIVE_CONFIG_STORAGE_LABEL">
         <field name="original_directory" type="text" label="COM_AUDIOARCHIVE_CONFIG_ORIGINAL_DIRECTORY_LABEL" description="COM_AUDIOARCHIVE_CONFIG_PATH_DESC" default="audioarchive/originals" />
         <field name="preview_directory" type="text" label="COM_AUDIOARCHIVE_CONFIG_PREVIEW_DIRECTORY_LABEL" description="COM_AUDIOARCHIVE_CONFIG_PATH_DESC" default="audioarchive/previews" />
@@ -159,6 +177,9 @@
             <field name="archive_column_recorded" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_RECORDED" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
             <field name="archive_column_uploaded" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_UPLOADED" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
             <field name="archive_column_tags" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_TAGS" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+            <field name="archive_column_rating" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_RATING" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+            <field name="archive_column_actions" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_ACTIONS" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+            <field name="archive_show_share" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_SHOW_SHARE_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
         </fieldset>
 
         <fieldset name="archive_pagination" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_SECTION_PAGINATION_LABEL">
@@ -242,6 +263,8 @@
         <field name="detail_show_download_count" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_COUNT_LABEL" default="0"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
         <field name="detail_show_download" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_LABEL" description="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_DESC" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
         <field name="detail_show_navigation" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_NAVIGATION_LABEL" description="COM_AUDIOARCHIVE_CONFIG_DETAIL_NAVIGATION_DESC" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        <field name="detail_show_rating" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_RATING_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        <field name="detail_show_share" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_SHARE_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
         <field name="detail_presentation" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_PRESENTATION_LABEL" description="COM_AUDIOARCHIVE_CONFIG_DETAIL_PRESENTATION_DESC" default="featured" validate="options">
             <option value="minimal">COM_AUDIOARCHIVE_PRESENTATION_MINIMAL</option>
             <option value="compact">COM_AUDIOARCHIVE_PRESENTATION_COMPACT</option>

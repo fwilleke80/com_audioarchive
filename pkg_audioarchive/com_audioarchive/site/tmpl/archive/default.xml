@@ -61,6 +61,8 @@
 			<field name="detail_show_download_count" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_COUNT_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
 			<field name="detail_show_download" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_LABEL" description="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_DESC" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
 			<field name="detail_show_navigation" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_NAVIGATION_LABEL" description="COM_AUDIOARCHIVE_CONFIG_DETAIL_NAVIGATION_DESC" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
+			<field name="detail_show_rating" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_RATING_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
+			<field name="detail_show_share" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_SHARE_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
 			<field name="detail_presentation" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_PRESENTATION_LABEL" description="COM_AUDIOARCHIVE_CONFIG_DETAIL_PRESENTATION_DESC" default="" validate="options">
 				<option value="">JGLOBAL_USE_GLOBAL</option>
 				<option value="minimal">COM_AUDIOARCHIVE_PRESENTATION_MINIMAL</option>
@@ -78,6 +80,9 @@
 			<field name="archive_column_recorded" type="list" label="COM_AUDIOARCHIVE_COLUMN_RECORDED" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
 			<field name="archive_column_uploaded" type="list" label="COM_AUDIOARCHIVE_COLUMN_UPLOADED" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
 			<field name="archive_column_tags" type="list" label="COM_AUDIOARCHIVE_COLUMN_TAGS" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
+			<field name="archive_column_rating" type="list" label="COM_AUDIOARCHIVE_COLUMN_RATING" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
+			<field name="archive_column_actions" type="list" label="COM_AUDIOARCHIVE_COLUMN_ACTIONS" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
+			<field name="archive_show_share" type="list" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_SHOW_SHARE_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
 		</fieldset>
 	</fields>
 </metadata>

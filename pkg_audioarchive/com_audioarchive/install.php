@@ -14,7 +14,7 @@ use Joomla\Registry\Registry;
 
 return new class () implements InstallerScriptInterface
 {
-	private const SCHEMA_VERSION = '0.8.0';
+	private const SCHEMA_VERSION = '0.10.3';
 
 	private const CATEGORY_MENU_LINK = 'index.php?option=com_categories&view=categories&extension=com_audioarchive';
 
@@ -31,6 +31,7 @@ return new class () implements InstallerScriptInterface
 		'audioarchive_waveforms',
 		'audioarchive_analyses',
 		'audioarchive_jobs',
+		'audioarchive_ratings',
 	];
 
 	/**
@@ -391,6 +392,7 @@ return new class () implements InstallerScriptInterface
 			$this->ensureSpectrogramStatusColumn($database);
 			$this->repairCheckoutColumns($database);
 			$this->ensureFileRoleUniqueIndex($database);
+			$this->ensureGloballyUniqueAliases($database);
 			$this->ensureContentType($database);
 			$this->recordSchemaVersion($database);
 
@@ -509,6 +511,143 @@ return new class () implements InstallerScriptInterface
 			. ' ADD UNIQUE KEY ' . $database->quoteName('idx_audioarchive_file_clip_role')
 			. ' (' . $database->quoteName('clip_id') . ', ' . $database->quoteName('file_role') . ')';
 		$database->setQuery($query)->execute();
+	}
+
+
+	/**
+	 * @brief Make aliases globally unique and enforce the public-route invariant.
+	 *
+	 * Older releases allowed the same alias in different categories because the
+	 * numeric clip ID was part of the URL. Alias-only routes require one alias to
+	 * identify exactly one clip across the entire component.
+	 *
+	 * @param DatabaseInterface $database Joomla database connection.
+	 * @return void
+	 */
+	private function ensureGloballyUniqueAliases(DatabaseInterface $database): void
+	{
+		if (!$this->tableExists($database, 'audioarchive_clips'))
+		{
+			return;
+		}
+
+		$table = $database->replacePrefix('#__audioarchive_clips');
+		$indexQuery = 'SHOW INDEX FROM ' . $database->quoteName($table)
+			. ' WHERE ' . $database->quoteName('Key_name')
+			. ' = ' . $database->quote('idx_audioarchive_alias');
+		$aliasIndexRows = (array) $database->setQuery($indexQuery)->loadObjectList();
+		$hasExpectedUniqueIndex = count($aliasIndexRows) === 1
+			&& (int) ($aliasIndexRows[0]->Non_unique ?? 1) === 0
+			&& (string) ($aliasIndexRows[0]->Column_name ?? '') === 'alias';
+
+		if ($aliasIndexRows !== [] && !$hasExpectedUniqueIndex)
+		{
+			$database->setQuery(
+				'ALTER TABLE ' . $database->quoteName($table)
+				. ' DROP INDEX ' . $database->quoteName('idx_audioarchive_alias')
+			)->execute();
+		}
+
+		$query = $database->getQuery(true)
+			->select($database->quoteName('id'))
+			->from($database->quoteName('#__audioarchive_clips'))
+			->where('TRIM(' . $database->quoteName('alias') . ") = ''")
+			->order($database->quoteName('id') . ' ASC');
+
+		foreach (array_map('intval', (array) $database->setQuery($query)->loadColumn()) as $id)
+		{
+			$replacement = $this->createUniqueAlias($database, 'clip-' . $id, $id);
+			$query = $database->getQuery(true)
+				->update($database->quoteName('#__audioarchive_clips'))
+				->set($database->quoteName('alias') . ' = ' . $database->quote($replacement))
+				->where($database->quoteName('id') . ' = ' . $id);
+			$database->setQuery($query)->execute();
+		}
+
+		$query = $database->getQuery(true)
+			->select([
+				$database->quoteName('alias'),
+				'COUNT(*) AS ' . $database->quoteName('duplicate_count'),
+			])
+			->from($database->quoteName('#__audioarchive_clips'))
+			->where($database->quoteName('alias') . " <> ''")
+			->group($database->quoteName('alias'))
+			->having('COUNT(*) > 1');
+		$duplicateAliases = (array) $database->setQuery($query)->loadColumn();
+
+		foreach ($duplicateAliases as $alias)
+		{
+			$query = $database->getQuery(true)
+				->select($database->quoteName('id'))
+				->from($database->quoteName('#__audioarchive_clips'))
+				->where($database->quoteName('alias') . ' = ' . $database->quote((string) $alias))
+				->order($database->quoteName('id') . ' ASC');
+			$ids = array_map('intval', (array) $database->setQuery($query)->loadColumn());
+
+			foreach (array_slice($ids, 1) as $id)
+			{
+				$replacement = $this->createUniqueAlias(
+					$database,
+					mb_substr((string) $alias, 0, 380) . '-' . $id,
+					$id
+				);
+				$query = $database->getQuery(true)
+					->update($database->quoteName('#__audioarchive_clips'))
+					->set($database->quoteName('alias') . ' = ' . $database->quote($replacement))
+					->where($database->quoteName('id') . ' = ' . (int) $id);
+				$database->setQuery($query)->execute();
+			}
+		}
+
+		if (!$hasExpectedUniqueIndex)
+		{
+			$query = 'ALTER TABLE ' . $database->quoteName($table)
+				. ' ADD UNIQUE KEY ' . $database->quoteName('idx_audioarchive_alias')
+				. ' (' . $database->quoteName('alias') . ')';
+			$database->setQuery($query)->execute();
+		}
+	}
+
+	/**
+	 * @brief Create an alias that is unique across the complete clip table.
+	 *
+	 * @param DatabaseInterface $database Joomla database connection.
+	 * @param string $preferredAlias Preferred alias base.
+	 * @param int $excludeId Clip identifier excluded from the collision check.
+	 *
+	 * @return string Globally unique alias.
+	 */
+	private function createUniqueAlias(
+		DatabaseInterface $database,
+		string $preferredAlias,
+		int $excludeId = 0
+	): string
+	{
+		$base = mb_substr(trim($preferredAlias), 0, 395);
+		$base = $base !== '' ? $base : 'clip';
+		$candidate = $base;
+		$suffix = 2;
+
+		while (true)
+		{
+			$query = $database->getQuery(true)
+				->select('COUNT(*)')
+				->from($database->quoteName('#__audioarchive_clips'))
+				->where($database->quoteName('alias') . ' = ' . $database->quote($candidate));
+
+			if ($excludeId > 0)
+			{
+				$query->where($database->quoteName('id') . ' <> ' . $excludeId);
+			}
+
+			if ((int) $database->setQuery($query)->loadResult() === 0)
+			{
+				return $candidate;
+			}
+
+			$suffixText = '-' . $suffix++;
+			$candidate = mb_substr($base, 0, 400 - mb_strlen($suffixText)) . $suffixText;
+		}
 	}
 
 	/**
@@ -889,7 +1028,7 @@ return new class () implements InstallerScriptInterface
 	 */
 	private function dropComponentTables(DatabaseInterface $database): void
 	{
-		foreach (['audioarchive_jobs', 'audioarchive_analyses', 'audioarchive_waveforms', 'audioarchive_files', 'audioarchive_clips'] as $tableName)
+		foreach (['audioarchive_ratings', 'audioarchive_jobs', 'audioarchive_analyses', 'audioarchive_waveforms', 'audioarchive_files', 'audioarchive_clips'] as $tableName)
 		{
 			$database->setQuery(
 				'DROP TABLE IF EXISTS ' . $database->quoteName('#__' . $tableName)

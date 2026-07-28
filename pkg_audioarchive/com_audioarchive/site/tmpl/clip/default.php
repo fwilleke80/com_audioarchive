@@ -2,6 +2,7 @@
 
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Layout\LayoutHelper;
 
 \defined('_JEXEC') or die;
 
@@ -12,9 +13,18 @@ $hasDescription = trim((string) $this->item->description) !== '';
 	data-audioarchive-status-playing="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_PLAYING')); ?>"
 	data-audioarchive-status-paused="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_PAUSED')); ?>"
 	data-audioarchive-status-error="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_ERROR')); ?>"
+	data-audioarchive-soundboard-pad-count="<?php echo max(4, min(36, (int) $this->params->get('soundboard_pad_count', 12))); ?>"
+	data-audioarchive-soundboard-full-label="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_FULL')); ?>"
+	data-audioarchive-share-copied-label="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SHARE_COPIED')); ?>"
 	<?php if ($this->playCountUrl !== '') : ?>
 		data-audioarchive-play-count-url="<?php echo $this->escape($this->playCountUrl); ?>"
 		data-audioarchive-token-name="<?php echo $this->escape($this->playCountToken); ?>"
+	<?php endif; ?>
+	<?php if ($this->ratingUrl !== '') : ?>
+		data-audioarchive-rating-endpoint="<?php echo $this->escape($this->ratingUrl); ?>"
+		data-audioarchive-rating-token="<?php echo $this->escape($this->ratingToken); ?>"
+		data-audioarchive-rating-success="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_RATING_SAVED')); ?>"
+		data-audioarchive-rating-error="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_RATING_ERROR')); ?>"
 	<?php endif; ?>
 >
 	<div class="visually-hidden" aria-live="polite" aria-atomic="true" data-audioarchive-status></div>
@@ -39,11 +49,17 @@ $hasDescription = trim((string) $this->item->description) !== '';
 
 	<?php echo $this->loadTemplate('player'); ?>
 
+	<?php if ((int) $this->params->get('detail_show_rating', 1) === 1 && (int) $this->params->get('enable_ratings', 1) === 1) : ?>
+		<div class="com-audioarchive-detail-rating">
+			<?php echo LayoutHelper::render('interaction.rating', ['clipId' => (int) $this->item->id, 'title' => (string) $this->item->title, 'up' => (int) ($this->item->rating_up ?? 0), 'down' => (int) ($this->item->rating_down ?? 0), 'canVote' => $this->canRate], null, ['component' => 'com_audioarchive', 'client' => 0]); ?>
+		</div>
+	<?php endif; ?>
+
 
 	<div class="com-audioarchive-clip-layout <?php echo $hasDescription ? 'has-description' : 'no-description'; ?>">
 		<?php if ($hasDescription) : ?>
 			<div class="com-audioarchive-clip-main">
-				<section class="com-audioarchive-description" aria-labelledby="audioarchive-description-heading">
+				<section class="com-audioarchive-description com-audioarchive-info-card" aria-labelledby="audioarchive-description-heading">
 					<h2 id="audioarchive-description-heading"><?php echo Text::_('COM_AUDIOARCHIVE_DESCRIPTION_HEADING'); ?></h2>
 					<div class="com-audioarchive-prose">
 						<?php echo HTMLHelper::_('content.prepare', (string) $this->item->description, '', 'com_audioarchive.clip'); ?>
@@ -53,6 +69,7 @@ $hasDescription = trim((string) $this->item->description) !== '';
 		<?php endif; ?>
 
 		<aside class="com-audioarchive-clip-sidebar" aria-label="<?php echo Text::_('COM_AUDIOARCHIVE_CLIP_INFORMATION'); ?>">
+			<?php echo $this->loadTemplate('actions'); ?>
 			<?php echo $this->loadTemplate('metadata'); ?>
 			<?php echo $this->loadTemplate('tags'); ?>
 			<?php echo $this->loadTemplate('download'); ?>

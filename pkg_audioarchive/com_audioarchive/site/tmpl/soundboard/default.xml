@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+	<layout title="COM_AUDIOARCHIVE_SOUNDBOARD_MENU_TITLE" option="COM_AUDIOARCHIVE_SOUNDBOARD_MENU_TITLE">
+		<message><![CDATA[COM_AUDIOARCHIVE_SOUNDBOARD_MENU_DESC]]></message>
+	</layout>
+	<fields name="params">
+		<fieldset name="basic" label="JGLOBAL_FIELDSET_BASIC">
+			<field name="show_page_heading" type="list" label="JGLOBAL_SHOW_PAGE_HEADING_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+			<field name="page_heading" type="text" label="JGLOBAL_PAGE_HEADING_LABEL" />
+			<field name="soundboard_pad_count" type="number" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_PAD_COUNT_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_PAD_COUNT_DESC" default="" min="4" max="36" />
+		</fieldset>
+	</fields>
+</metadata>

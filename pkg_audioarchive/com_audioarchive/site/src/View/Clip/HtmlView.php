@@ -16,6 +16,7 @@ use Willeke\Component\Audioarchive\Site\Model\ClipModel;
 use Willeke\Component\Audioarchive\Site\Service\ArchiveMenuItemResolver;
 use Willeke\Component\Audioarchive\Site\Service\DownloadAccessService;
 use Willeke\Component\Audioarchive\Site\Service\FrontendEditingService;
+use Willeke\Component\Audioarchive\Site\Service\RatingService;
 
 \defined('_JEXEC') or die;
 
@@ -65,6 +66,21 @@ class HtmlView extends BaseHtmlView
 
 	/** @var string */
 	public string $playCountToken = '';
+
+	/** @var string */
+	public string $ratingUrl = '';
+
+	/** @var string */
+	public string $ratingToken = '';
+
+	/** @var string */
+	public string $shareUrl = '';
+
+	/** @var string */
+	public string $soundboardUrl = '';
+
+	/** @var bool */
+	public bool $canRate = false;
 
 	/** @var bool */
 	public bool $canDownload = false;
@@ -189,8 +205,24 @@ class HtmlView extends BaseHtmlView
 			$this->playCountToken = Session::getFormToken();
 		}
 
+		if ((int) $this->params->get('enable_ratings', 1) === 1)
+		{
+			$ratingService = new RatingService(
+				Factory::getContainer()->get(DatabaseInterface::class),
+				$this->params,
+				$identity
+			);
+			$this->ratingUrl = Route::_(RouteHelper::getRatingRoute($routeItemId));
+			$this->ratingToken = Session::getFormToken();
+			$this->canRate = $ratingService->canVote();
+		}
+
 		$canonicalInternal = RouteHelper::getClipRoute((int) $item->id, $routeItemId);
 		$canonical = Route::_($canonicalInternal, false, Route::TLS_IGNORE, true);
+		$this->shareUrl = $canonical;
+		$this->soundboardUrl = (int) $this->params->get('enable_soundboard', 1) === 1
+			? Route::_(RouteHelper::getSoundboardRoute())
+			: '';
 		$this->canEdit = FrontendEditingService::isEnabled($application)
 			&& FrontendEditingService::canEdit($identity, $item);
 
@@ -213,7 +245,8 @@ class HtmlView extends BaseHtmlView
 		$this->getDocument()->getWebAssetManager()
 			->useStyle('com_audioarchive.site')
 			->useStyle('com_audioarchive.player-style')
-			->useScript('com_audioarchive.player');
+			->useScript('com_audioarchive.player')
+			->useScript('com_audioarchive.social');
 
 		parent::display($tpl);
 	}

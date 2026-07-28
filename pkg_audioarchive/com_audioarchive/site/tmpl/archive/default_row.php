@@ -73,4 +73,21 @@ $mime = trim((string) $item->mime_type) ?: 'application/octet-stream';
 			<?php else : ?><span class="com-audioarchive-empty-value">—</span><?php endif; ?>
 		</td>
 	<?php endif; ?>
+	<?php if ($columns['rating']) : ?>
+		<td class="com-audioarchive-rating-cell" data-label="<?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_RATING'); ?>">
+			<?php echo LayoutHelper::render('interaction.rating', ['clipId' => (int) $item->id, 'title' => (string) $item->title, 'up' => (int) ($item->rating_up ?? 0), 'down' => (int) ($item->rating_down ?? 0), 'canVote' => $this->canRate], null, ['component' => 'com_audioarchive', 'client' => 0]); ?>
+		</td>
+	<?php endif; ?>
+	<?php if ($columns['actions']) : ?>
+		<td class="com-audioarchive-actions-cell">
+			<div class="com-audioarchive-inline-actions">
+				<?php if ((int) $this->params->get('archive_show_share', 1) === 1) : ?>
+					<?php echo LayoutHelper::render('interaction.share', ['url' => (string) $item->share_url, 'title' => (string) $item->title], null, ['component' => 'com_audioarchive', 'client' => 0]); ?>
+				<?php endif; ?>
+				<?php if ((int) $this->params->get('enable_soundboard', 1) === 1) : ?>
+					<?php echo LayoutHelper::render('interaction.soundboard_add', ['clipId' => (int) $item->id, 'title' => (string) $item->title], null, ['component' => 'com_audioarchive', 'client' => 0]); ?>
+				<?php endif; ?>
+			</div>
+		</td>
+	<?php endif; ?>
 </tr>

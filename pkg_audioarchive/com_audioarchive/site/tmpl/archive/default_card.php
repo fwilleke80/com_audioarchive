@@ -111,4 +111,22 @@ $hasMetadata = $columns['category'] || $columns['duration'] || $columns['recorde
 			<?php endif; ?>
 		</section>
 	<?php endif; ?>
+
+	<?php if ($columns['rating'] || $columns['actions']) : ?>
+		<footer class="com-audioarchive-mobile-card-actions">
+			<?php if ($columns['rating']) : ?>
+				<?php echo LayoutHelper::render('interaction.rating', ['clipId' => (int) $item->id, 'title' => (string) $item->title, 'up' => (int) ($item->rating_up ?? 0), 'down' => (int) ($item->rating_down ?? 0), 'canVote' => $this->canRate], null, ['component' => 'com_audioarchive', 'client' => 0]); ?>
+			<?php endif; ?>
+			<?php if ($columns['actions']) : ?>
+				<div class="com-audioarchive-inline-actions">
+					<?php if ((int) $this->params->get('archive_show_share', 1) === 1) : ?>
+						<?php echo LayoutHelper::render('interaction.share', ['url' => (string) $item->share_url, 'title' => (string) $item->title], null, ['component' => 'com_audioarchive', 'client' => 0]); ?>
+					<?php endif; ?>
+					<?php if ((int) $this->params->get('enable_soundboard', 1) === 1) : ?>
+						<?php echo LayoutHelper::render('interaction.soundboard_add', ['clipId' => (int) $item->id, 'title' => (string) $item->title], null, ['component' => 'com_audioarchive', 'client' => 0]); ?>
+					<?php endif; ?>
+				</div>
+			<?php endif; ?>
+		</footer>
+	<?php endif; ?>
 </article>

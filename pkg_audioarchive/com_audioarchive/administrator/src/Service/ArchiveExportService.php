@@ -119,6 +119,8 @@ final class ArchiveExportService
 			$this->addJson($zip, 'data/categories.json', $categoryData['rows'], $checksums);
 			$this->addJson($zip, 'data/tags.json', $tagData['rows'], $checksums);
 			$this->addJson($zip, 'data/clips.json', $clips, $checksums);
+			$ratingRows = $this->loadRatings($clipUuidById);
+			$this->addJson($zip, 'data/ratings.json', $ratingRows, $checksums);
 			$this->addJson($zip, 'data/tag-relations.json', $this->loadTagRelations($clipUuidById, $tagData['id_to_key']), $checksums);
 			$this->addJson($zip, 'data/configuration.json', $this->buildConfiguration($categoryData['id_to_key']), $checksums);
 			$this->addJson(
@@ -156,9 +158,11 @@ final class ArchiveExportService
 					'preview_files' => $scope === 'complete',
 					'configuration' => true,
 					'custom_fields' => true,
+					'ratings' => true,
 				],
 				'counts' => [
 					'clips' => count($clips),
+					'ratings' => count($ratingRows),
 					'categories' => count($categoryData['rows']),
 					'tags' => count($tagData['rows']),
 					'files' => count($fileRows),
@@ -513,6 +517,53 @@ final class ArchiveExportService
 				$row['checked_out_time']
 			);
 			$rows[] = $row;
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * @brief Load portable anonymous ratings.
+	 *
+	 * The opaque voter hash is retained so a restored archive preserves rating
+	 * totals without exporting IP addresses or raw browser identifiers. A browser
+	 * remains recognisable after migration only when Joomla's secret is retained.
+	 *
+	 * @param array<int, string> $clipUuidById Clip UUID by source ID.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function loadRatings(array $clipUuidById): array
+	{
+		$query = $this->database->getQuery(true)
+			->select([
+				$this->database->quoteName('clip_id'),
+				$this->database->quoteName('voter_hash'),
+				$this->database->quoteName('vote'),
+				$this->database->quoteName('created'),
+				$this->database->quoteName('modified'),
+			])
+			->from($this->database->quoteName('#__audioarchive_ratings'))
+			->order($this->database->quoteName('clip_id') . ' ASC')
+			->order($this->database->quoteName('id') . ' ASC');
+		$rows = [];
+
+		foreach ($this->database->setQuery($query)->loadAssocList() as $row)
+		{
+			$clipUuid = $clipUuidById[(int) $row['clip_id']] ?? '';
+
+			if ($clipUuid === '')
+			{
+				continue;
+			}
+
+			$rows[] = [
+				'clip_uuid' => $clipUuid,
+				'voter_hash' => (string) $row['voter_hash'],
+				'vote' => (int) $row['vote'],
+				'created' => (string) $row['created'],
+				'modified' => (string) $row['modified'],
+			];
 		}
 
 		return $rows;

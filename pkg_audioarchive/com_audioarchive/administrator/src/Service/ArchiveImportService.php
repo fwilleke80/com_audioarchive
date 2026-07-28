@@ -436,6 +436,7 @@ final class ArchiveImportService
 				'categories',
 				'tags',
 				'clips',
+				'ratings',
 				'tag-relations',
 				'configuration',
 				'acl',
@@ -469,6 +470,7 @@ final class ArchiveImportService
 				'tags_created' => 0,
 				'files_restored' => 0,
 				'analyses_restored' => 0,
+				'ratings_restored' => 0,
 				'custom_field_values_restored' => 0,
 				'configuration_restored' => false,
 				'warnings' => [],
@@ -513,6 +515,11 @@ final class ArchiveImportService
 					(array) $data['tag-relations'],
 					$clipResult['uuid_to_id'],
 					$tagMap,
+					$clipResult['mutable_uuids']
+				);
+				$result['ratings_restored'] = $this->restoreRatings(
+					(array) $data['ratings'],
+					$clipResult['uuid_to_id'],
 					$clipResult['mutable_uuids']
 				);
 				$this->restoreFiles(
@@ -819,9 +826,12 @@ final class ArchiveImportService
 				throw new \RuntimeException(Text::sprintf('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_ERROR_CLIP_CATEGORY', $uuid));
 			}
 
-			if ($isNew && $this->aliasExists((string) ($data['alias'] ?? ''), (int) $data['catid']))
+			if ($isNew)
 			{
-				$data['alias'] = rtrim((string) ($data['alias'] ?? ''), '-') . '-' . substr(str_replace('-', '', $uuid), 0, 8);
+				$data['alias'] = $this->createUniqueAlias(
+					(string) ($data['alias'] ?? ''),
+					substr(str_replace('-', '', $uuid), 0, 8)
+				);
 			}
 
 			if (!$isNew && $restoreMode === 'merge' && $conflictPolicy === 'metadata')
@@ -873,6 +883,61 @@ final class ArchiveImportService
 			'allow_files' => $allowFiles,
 			'new_uuids' => $newUuids,
 		];
+	}
+
+	/**
+	 * @brief Restore anonymous rating rows for mutable clips.
+	 *
+	 * @param array<int,array<string,mixed>> $rows Exported ratings.
+	 * @param array<string,int> $clipMap Clip IDs by UUID.
+	 * @param array<string,bool> $mutable Mutable clip UUID set.
+	 *
+	 * @return int Number of restored rating rows.
+	 */
+	private function restoreRatings(array $rows, array $clipMap, array $mutable): int
+	{
+		$restored = 0;
+
+		foreach ($rows as $row)
+		{
+			$uuid = strtolower(trim((string) ($row['clip_uuid'] ?? '')));
+			$clipId = (int) ($clipMap[$uuid] ?? 0);
+			$voterHash = strtolower(trim((string) ($row['voter_hash'] ?? '')));
+			$vote = (int) ($row['vote'] ?? 0);
+
+			if (
+				$clipId <= 0
+				|| !isset($mutable[$uuid])
+				|| !preg_match('/^[a-f0-9]{64}$/', $voterHash)
+				|| !in_array($vote, [-1, 1], true)
+			)
+			{
+				continue;
+			}
+
+			$created = $this->normaliseSqlDate((string) ($row['created'] ?? '')) ?? Factory::getDate()->toSql();
+			$modified = $this->normaliseSqlDate((string) ($row['modified'] ?? '')) ?? $created;
+			$query = 'INSERT INTO ' . $this->database->quoteName('#__audioarchive_ratings')
+				. ' (' . implode(', ', [
+					$this->database->quoteName('clip_id'),
+					$this->database->quoteName('voter_hash'),
+					$this->database->quoteName('vote'),
+					$this->database->quoteName('created'),
+					$this->database->quoteName('modified'),
+				]) . ') VALUES (' . implode(', ', [
+					(string) $clipId,
+					$this->database->quote($voterHash),
+					(string) $vote,
+					$this->database->quote($created),
+					$this->database->quote($modified),
+				]) . ') ON DUPLICATE KEY UPDATE '
+				. $this->database->quoteName('vote') . ' = VALUES(' . $this->database->quoteName('vote') . '), '
+				. $this->database->quoteName('modified') . ' = VALUES(' . $this->database->quoteName('modified') . ')';
+			$this->database->setQuery($query)->execute();
+			$restored++;
+		}
+
+		return $restored;
 	}
 
 	/**
@@ -1607,7 +1672,7 @@ final class ArchiveImportService
 			}
 		}
 
-		foreach (['#__audioarchive_jobs', '#__audioarchive_waveforms', '#__audioarchive_analyses', '#__audioarchive_files', '#__audioarchive_clips'] as $tableName)
+		foreach (['#__audioarchive_ratings', '#__audioarchive_jobs', '#__audioarchive_waveforms', '#__audioarchive_analyses', '#__audioarchive_files', '#__audioarchive_clips'] as $tableName)
 		{
 			$this->database->setQuery(
 				$this->database->getQuery(true)->delete($this->database->quoteName($tableName))
@@ -1820,14 +1885,44 @@ final class ArchiveImportService
 	}
 
 	/**
-	 * @brief Test an alias/category pair for an existing clip.
+	 * @brief Create a globally unique alias for an imported clip.
+	 *
+	 * @param string $preferredAlias Preferred source alias.
+	 * @param string $stableSuffix Stable UUID-derived suffix.
+	 *
+	 * @return string Available alias.
+	 */
+	private function createUniqueAlias(string $preferredAlias, string $stableSuffix): string
+	{
+		$base = trim($preferredAlias);
+		$base = $base !== '' ? $base : 'clip-' . $stableSuffix;
+
+		if (!$this->aliasExists($base))
+		{
+			return $base;
+		}
+
+		$base = mb_substr(rtrim($base, '-'), 0, 390) . '-' . $stableSuffix;
+		$candidate = $base;
+		$suffix = 2;
+
+		while ($this->aliasExists($candidate))
+		{
+			$suffixText = '-' . $suffix++;
+			$candidate = mb_substr($base, 0, 400 - mb_strlen($suffixText)) . $suffixText;
+		}
+
+		return $candidate;
+	}
+
+	/**
+	 * @brief Test an alias for an existing clip anywhere in the archive.
 	 *
 	 * @param string $alias Alias.
-	 * @param int $categoryId Category ID.
 	 *
 	 * @return bool True when the pair exists.
 	 */
-	private function aliasExists(string $alias, int $categoryId): bool
+	private function aliasExists(string $alias): bool
 	{
 		$alias = trim($alias);
 
@@ -1840,9 +1935,7 @@ final class ArchiveImportService
 			->select('COUNT(*)')
 			->from($this->database->quoteName('#__audioarchive_clips'))
 			->where($this->database->quoteName('alias') . ' = :alias')
-			->where($this->database->quoteName('catid') . ' = :catid')
-			->bind(':alias', $alias, ParameterType::STRING)
-			->bind(':catid', $categoryId, ParameterType::INTEGER);
+			->bind(':alias', $alias, ParameterType::STRING);
 
 		return (int) $this->database->setQuery($query)->loadResult() > 0;
 	}
@@ -2346,6 +2439,32 @@ final class ArchiveImportService
 		}
 
 		return $row;
+	}
+
+	/**
+	 * @brief Normalise an exported date into Joomla's SQL date format.
+	 *
+	 * @param string $value Exported date value.
+	 *
+	 * @return string|null SQL date or null when invalid or empty.
+	 */
+	private function normaliseSqlDate(string $value): ?string
+	{
+		$value = trim($value);
+
+		if ($value === '' || $value === '0000-00-00 00:00:00')
+		{
+			return null;
+		}
+
+		try
+		{
+			return Factory::getDate($value)->toSql();
+		}
+		catch (\Throwable)
+		{
+			return null;
+		}
 	}
 
 	/**
