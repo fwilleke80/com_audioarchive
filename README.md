@@ -59,6 +59,7 @@ It is intended for archives ranging from a small collection to several thousand 
   - [Archive clip counts](#archive-clip-counts)
   - [Archive playtime](#archive-playtime)
   - [Content-plugin behaviour](#content-plugin-behaviour)
+- [Release history: 0.10.6](#release-history-0106)
 - [Release history: 0.10.5](#release-history-0105)
 - [Release history: 0.9.0–0.9.5](#release-history-090095)
 
@@ -1255,6 +1256,13 @@ The plugin can be configured under:
 ```text
 System → Manage → Plugins → Content - Audio Archive
 ```
+
+## Release history: 0.10.6
+
+### 0.10.6
+
+- Fixed the detail-page eye icons on Sound Board pads so they open the corresponding clip instead of the parent Archive page.
+- Clip-detail link templates now bypass Joomla SEF processing until the real clip identifier has been substituted, preventing placeholder routes from collapsing to the Archive route.
 
 ## Release history: 0.10.5
 
