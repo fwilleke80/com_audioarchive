@@ -6,6 +6,8 @@ use Joomla\CMS\Language\Text;
 ?>
 <div
 	class="com-audioarchive com-audioarchive-archive"
+	data-audioarchive-return-origin
+	data-audioarchive-return-title="<?php echo $this->escape($this->returnTitle); ?>"
 	data-audioarchive-status-playing="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_PLAYING')); ?>"
 	data-audioarchive-status-paused="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_PAUSED')); ?>"
 	data-audioarchive-status-error="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_ERROR')); ?>"

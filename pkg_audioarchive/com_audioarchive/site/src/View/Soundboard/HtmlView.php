@@ -35,6 +35,9 @@ class HtmlView extends BaseHtmlView
 	/** @var int */
 	public int $padCount = 12;
 
+	/** @var string */
+	public string $returnTitle = '';
+
 
 	/**
 	 * @brief Display the sound board page.
@@ -71,6 +74,12 @@ class HtmlView extends BaseHtmlView
 			'page_heading',
 			$item?->title ?? Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_TITLE')
 		);
+		$this->returnTitle = trim((string) ($item?->title ?? ''));
+
+		if ($this->returnTitle === '')
+		{
+			$this->returnTitle = $this->pageHeading;
+		}
 		$this->streamTemplate = Route::_(RouteHelper::getPlaybackRoute(987654321, $itemId));
 		$this->routesUrl = Route::_(RouteHelper::getSoundboardRoutesRoute($itemId));
 		$this->canonicalUrl = Route::_(

@@ -50,7 +50,7 @@ $mime = trim((string) $item->mime_type) ?: 'application/octet-stream';
 	<?php endif; ?>
 	<?php if ($columns['title']) : ?>
 		<th class="com-audioarchive-title-cell" scope="row" data-label="<?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_TITLE'); ?>">
-			<a class="com-audioarchive-title-link" href="<?php echo $item->detail_url; ?>"><?php echo $this->escape($item->title); ?></a>
+			<a class="com-audioarchive-title-link" data-audioarchive-detail-link href="<?php echo $item->detail_url; ?>"><?php echo $this->escape($item->title); ?></a>
 		</th>
 	<?php endif; ?>
 	<?php if ($columns['category']) : ?><td class="com-audioarchive-category-cell" data-label="<?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_CATEGORY'); ?>"><?php echo $this->escape($item->category_title); ?></td><?php endif; ?>

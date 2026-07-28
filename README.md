@@ -59,6 +59,9 @@ It is intended for archives ranging from a small collection to several thousand 
   - [Archive clip counts](#archive-clip-counts)
   - [Archive playtime](#archive-playtime)
   - [Content-plugin behaviour](#content-plugin-behaviour)
+- [Release history: 0.10.10](#release-history-01010)
+- [Release history: 0.10.9](#release-history-0109)
+- [Release history: 0.10.8](#release-history-0108)
 - [Release history: 0.10.7](#release-history-0107)
 - [Release history: 0.10.6](#release-history-0106)
 - [Release history: 0.10.5](#release-history-0105)
@@ -760,7 +763,9 @@ Duration values can be entered as seconds or as formatted times:
 
 With JavaScript enabled, the duration fields are accompanied by a two-handle slider. The text fields remain the submitted values and continue to work without JavaScript.
 
-Audio Archive stores the visitor's last-used filter values, tag mode, sorting, sort direction, and page size in the Joomla session. Returning to the same Archive menu item restores that state when no explicit filter state is present in the URL. The **Back to the archive** link on clip detail pages includes the canonical filter and sorting query, so the restored archive state remains visible, bookmarkable, and shareable. Guest visitors are supported through Joomla's anonymous session cookie; the state is temporary and tied to that browser session.
+Audio Archive stores the visitor's last-used filter values, tag mode, sorting, sort direction, and page size in the Joomla session. Returning to the same Archive menu item restores that state when no explicit filter state is present in the URL. Guest visitors are supported through Joomla's anonymous session cookie; the state is temporary and tied to that browser session.
+
+When JavaScript is available, opening a clip from an Archive or Sound Board stores the exact originating URL and active menu-item title in the tab's `sessionStorage`. The clip keeps its clean canonical URL, while its return link restores the exact Archive page, filters, sorting, pagination, or temporary shared Sound Board fragment. Previous/next navigation and frontend editing retain this tab-local origin. The state accepts only same-origin URLs, expires after 24 hours, and falls back to the resolved Archive menu item when JavaScript or browser storage is unavailable.
 
 State is stored independently for each Archive menu item, so differently configured archive pages do not overwrite one another. The **Reset** action clears the stored state for the current menu item and returns to its configured defaults.
 
@@ -1257,6 +1262,36 @@ The plugin can be configured under:
 ```text
 System → Manage → Plugins → Content - Audio Archive
 ```
+
+## Release history: 0.10.10
+
+### 0.10.10
+
+- Generalised detail-page return navigation across all built-in clip links instead of limiting it to Archive and Sound Board views.
+- Audio Archive modules and content-plugin embeds now register their exact originating page before opening a clip detail page.
+- Return labels use the explicit Archive or Sound Board menu title where available, otherwise the originating page heading or document title.
+- Existing return context is retained when navigating from one clip detail page to another, while directly opened clips can return to the immediately preceding clip page.
+- Custom layouts can opt into the same mechanism by adding `data-audioarchive-detail-link` to clip-detail anchors.
+
+## Release history: 0.10.9
+
+### 0.10.9
+
+- Clip detail URLs remain canonical and no longer include `return` or `return_itemid` query parameters.
+- Archive and Sound Board pages store their exact same-tab return URL and active menu-item title in `sessionStorage` only when a clip detail link is opened.
+- The detail-page return link restores the exact Archive page, filters, sorting, pagination, or temporary shared Sound Board fragment from that transient navigation state.
+- Previous/next clip navigation and frontend edit round-trips retain the same return origin without propagating it through URLs.
+- Return state is restricted to same-origin URLs, expires after 24 hours, and falls back to the resolved Archive menu item when JavaScript or browser storage is unavailable.
+- Legacy 0.10.8 clip URLs carrying return parameters redirect to their clean canonical URL.
+
+## Release history: 0.10.8
+
+### 0.10.8
+
+- Clip detail links opened from an Archive now retain the exact originating Archive URL, including pagination, filters, sorting, and page size.
+- Clip detail links opened from a Sound Board now return to that Sound Board; shared-board URL fragments are preserved so the temporary board remains available.
+- The detail-page return label now uses the title of the originating Archive or Sound Board menu item instead of fixed wording.
+- Previous/next clip navigation and frontend edit round-trips preserve the original return target.
 
 ## Release history: 0.10.7
 

@@ -27,7 +27,9 @@ class SoundboardController extends BaseController
 	{
 		$application = Factory::getApplication();
 
-		if (strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET')) !== 'GET')
+		$requestMethod = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+
+		if (!in_array($requestMethod, ['GET', 'POST'], true))
 		{
 			$this->sendJson(405, ['success' => false, 'routes' => []]);
 		}
@@ -91,6 +93,8 @@ class SoundboardController extends BaseController
 			$this->sendJson(500, ['success' => false, 'routes' => []]);
 		}
 	}
+
+
 
 	/**
 	 * @brief Parse, deduplicate, and limit requested clip identifiers.

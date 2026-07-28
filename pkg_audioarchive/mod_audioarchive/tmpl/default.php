@@ -41,6 +41,7 @@ $componentParams = ComponentHelper::getParams('com_audioarchive');
 ?>
 <div
 	class="com-audioarchive <?php echo $moduleClass; ?>"
+	data-audioarchive-return-origin
 	data-audioarchive-play-count-url="<?php echo htmlspecialchars($playCountUrl, ENT_QUOTES, 'UTF-8'); ?>"
 	data-audioarchive-token-name="<?php echo htmlspecialchars($playCountToken, ENT_QUOTES, 'UTF-8'); ?>"
 	data-audioarchive-status-playing="<?php echo htmlspecialchars(Text::_('MOD_AUDIOARCHIVE_STATUS_PLAYING'), ENT_QUOTES, 'UTF-8'); ?>"
@@ -71,7 +72,7 @@ $componentParams = ComponentHelper::getParams('com_audioarchive');
 			<article class="mod-audioarchive-item <?php echo $showPlayer ? 'has-player' : 'no-player'; ?><?php echo $showPlayer && $widePlayer ? ' has-wide-player' : ''; ?> player-presentation-<?php echo htmlspecialchars($playerPresentation, ENT_QUOTES, 'UTF-8'); ?>">
 				<?php if ($showTitle) : ?>
 					<h3 class="mod-audioarchive-title">
-						<?php if ($linkTitle) : ?><a href="<?php echo $item->detail_url; ?>"><?php endif; ?>
+						<?php if ($linkTitle) : ?><a data-audioarchive-detail-link href="<?php echo $item->detail_url; ?>"><?php endif; ?>
 						<?php echo htmlspecialchars((string) $item->title, ENT_QUOTES, 'UTF-8'); ?>
 						<?php if ($linkTitle) : ?></a><?php endif; ?>
 					</h3>
@@ -141,7 +142,7 @@ $componentParams = ComponentHelper::getParams('com_audioarchive');
 
 				<?php if ($showDetailLink || $itemShowDownload) : ?>
 					<div class="mod-audioarchive-actions">
-						<?php if ($showDetailLink) : ?><a href="<?php echo $item->detail_url; ?>"><?php echo Text::_('MOD_AUDIOARCHIVE_OPEN_CLIP'); ?></a><?php endif; ?>
+						<?php if ($showDetailLink) : ?><a data-audioarchive-detail-link href="<?php echo $item->detail_url; ?>"><?php echo Text::_('MOD_AUDIOARCHIVE_OPEN_CLIP'); ?></a><?php endif; ?>
 						<?php if ($itemShowDownload) : ?><a href="<?php echo $item->download_url; ?>"><?php echo Text::_('MOD_AUDIOARCHIVE_DOWNLOAD'); ?></a><?php endif; ?>
 					</div>
 				<?php endif; ?>

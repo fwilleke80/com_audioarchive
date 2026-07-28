@@ -10,6 +10,8 @@ $headerText = trim((string) $this->params->get('soundboard_header_text', ''));
 <div
 	class="com-audioarchive com-audioarchive-soundboard"
 	data-audioarchive-soundboard
+	data-audioarchive-return-origin
+	data-audioarchive-return-title="<?php echo $this->escape($this->returnTitle); ?>"
 	data-audioarchive-pad-count="<?php echo $this->padCount; ?>"
 	data-audioarchive-stream-template="<?php echo $this->escape($this->streamTemplate); ?>"
 	data-audioarchive-routes-url="<?php echo $this->escape($this->routesUrl); ?>"
@@ -70,6 +72,7 @@ $headerText = trim((string) $this->params->get('soundboard_header_text', ''));
 				<a
 					class="com-audioarchive-soundboard-detail"
 					data-audioarchive-soundboard-detail
+					data-audioarchive-detail-link
 					href="#"
 					aria-label="<?php echo Text::sprintf('COM_AUDIOARCHIVE_SOUNDBOARD_DETAIL_PAD', $index + 1); ?>"
 					title="<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_DETAIL'); ?>"

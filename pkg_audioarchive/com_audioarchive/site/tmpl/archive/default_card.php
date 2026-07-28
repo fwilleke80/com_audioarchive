@@ -53,7 +53,7 @@ $hasMetadata = $columns['category'] || $columns['duration'] || $columns['recorde
 
 		<?php if ($columns['title']) : ?>
 			<div class="com-audioarchive-mobile-card-heading">
-				<a class="com-audioarchive-mobile-card-title" href="<?php echo $item->detail_url; ?>">
+				<a class="com-audioarchive-mobile-card-title" data-audioarchive-detail-link href="<?php echo $item->detail_url; ?>">
 					<?php echo $this->escape($item->title); ?>
 				</a>
 			</div>

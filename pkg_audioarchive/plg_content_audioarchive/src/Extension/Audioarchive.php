@@ -662,10 +662,16 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 			$assets->registerScript('com_audioarchive.player', 'com_audioarchive/player.js', [], ['type' => 'module'], ['core']);
 		}
 
+		if (!$assets->assetExists('script', 'com_audioarchive.social'))
+		{
+			$assets->registerScript('com_audioarchive.social', 'com_audioarchive/social.js', [], ['type' => 'module'], ['core']);
+		}
+
 		$assets
 			->useStyle('com_audioarchive.site')
 			->useStyle('com_audioarchive.player-style')
 			->useScript('com_audioarchive.player')
+			->useScript('com_audioarchive.social')
 			->registerAndUseStyle('mod_audioarchive.site', 'mod_audioarchive/module.css');
 
 		$playCountUrl = '';

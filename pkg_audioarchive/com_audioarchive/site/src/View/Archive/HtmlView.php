@@ -67,6 +67,9 @@ class HtmlView extends BaseHtmlView
 
 	/** @var string */
 	public string $soundboardUrl = '';
+
+	/** @var string */
+	public string $returnTitle = '';
 	/** @var object|null */
 	public ?object $item = null;
 
@@ -138,6 +141,12 @@ class HtmlView extends BaseHtmlView
 
 		$item = $app->getMenu()->getActive();
 		$this->pageHeading = (string) $this->params->get('page_heading', $item?->title ?? Text::_('COM_AUDIOARCHIVE_ARCHIVE_TITLE'));
+		$this->returnTitle = trim((string) ($item?->title ?? ''));
+
+		if ($this->returnTitle === '')
+		{
+			$this->returnTitle = $this->pageHeading;
+		}
 		$this->prepareDocument($itemId, $item);
 		$this->getDocument()->getWebAssetManager()
 			->useStyle('com_audioarchive.site')

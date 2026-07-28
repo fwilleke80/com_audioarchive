@@ -1,6 +1,8 @@
 const BOARD_STORAGE_KEY = 'com_audioarchive.soundboard.v1';
 const RATING_CLIENT_KEY = 'com_audioarchive.rating.client.v1';
 const RATING_VOTES_KEY = 'com_audioarchive.rating.votes.v1';
+const RETURN_STORAGE_KEY = 'com_audioarchive.return.v1';
+const RETURN_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Read a JSON value from local storage.
@@ -40,6 +42,262 @@ function writeStorage(key, value)
 	{
 		return false;
 	}
+}
+
+
+/**
+ * Read a JSON value from this tab's session storage.
+ *
+ * @param {string} key Storage key.
+ * @param {*} fallback Fallback value.
+ * @returns {*} Parsed value or fallback.
+ */
+function readSessionStorage(key, fallback)
+{
+	try
+	{
+		const value = window.sessionStorage.getItem(key);
+		return value === null ? fallback : JSON.parse(value);
+	}
+	catch (error)
+	{
+		return fallback;
+	}
+}
+
+/**
+ * Write a JSON value to this tab's session storage.
+ *
+ * @param {string} key Storage key.
+ * @param {*} value Value to store.
+ * @returns {boolean} True on success.
+ */
+function writeSessionStorage(key, value)
+{
+	try
+	{
+		window.sessionStorage.setItem(key, JSON.stringify(value));
+		return true;
+	}
+	catch (error)
+	{
+		return false;
+	}
+}
+
+/**
+ * Remove a value from this tab's session storage.
+ *
+ * @param {string} key Storage key.
+ * @returns {void}
+ */
+function removeSessionStorage(key)
+{
+	try
+	{
+		window.sessionStorage.removeItem(key);
+	}
+	catch (error)
+	{
+		// Storage can be unavailable in restricted browser contexts.
+	}
+}
+
+/**
+ * Convert a same-origin URL into a compact relative return target.
+ *
+ * @param {string} value Candidate URL.
+ * @returns {string} Relative same-origin URL or an empty string.
+ */
+function normaliseReturnUrl(value)
+{
+	try
+	{
+		const url = new URL(value, window.location.href);
+
+		if (url.origin !== window.location.origin)
+		{
+			return '';
+		}
+
+		return `${url.pathname}${url.search}${url.hash}`;
+	}
+	catch (error)
+	{
+		return '';
+	}
+}
+
+/**
+ * Resolve a human-readable title for the current return page.
+ *
+ * Archive and Sound Board views provide the active menu-item title explicitly.
+ * Other pages fall back to their main heading and then the document title.
+ *
+ * @param {HTMLElement|null} root Nearest Audio Archive origin root.
+ * @returns {string} Return-page title or an empty string.
+ */
+function resolveReturnTitle(root)
+{
+	const explicitTitle = String(root?.dataset.audioarchiveReturnTitle || '').trim();
+
+	if (explicitTitle !== '')
+	{
+		return explicitTitle;
+	}
+
+	const clipRoot = document.querySelector('[data-audioarchive-clip-return]');
+	const clipTitle = String(clipRoot?.querySelector('h1')?.textContent || '').trim();
+
+	if (clipTitle !== '')
+	{
+		return clipTitle;
+	}
+
+	const mainTitle = String(
+		document.querySelector('main h1, [role="main"] h1, h1')?.textContent || ''
+	).trim();
+
+	if (mainTitle !== '')
+	{
+		return mainTitle;
+	}
+
+	return String(document.title || '').trim();
+}
+
+/**
+ * Store the current page as the detail-page return origin.
+ *
+ * @param {HTMLElement|null} root Nearest Audio Archive origin root.
+ * @returns {void}
+ */
+function storeReturnOrigin(root)
+{
+	const title = resolveReturnTitle(root);
+	const url = normaliseReturnUrl(window.location.href);
+
+	if (title === '' || url === '')
+	{
+		return;
+	}
+
+	writeSessionStorage(
+		RETURN_STORAGE_KEY,
+		{
+			title,
+			url,
+			timestamp: Date.now(),
+		}
+	);
+}
+
+/**
+ * Return a valid, recent detail-page origin from sessionStorage.
+ *
+ * @returns {{title: string, url: string, timestamp: number}|null} Valid origin.
+ */
+function readReturnOrigin()
+{
+	const origin = readSessionStorage(RETURN_STORAGE_KEY, null);
+
+	if (!origin || typeof origin !== 'object')
+	{
+		return null;
+	}
+
+	const title = String(origin.title || '').trim();
+	const url = normaliseReturnUrl(String(origin.url || ''));
+	const timestamp = Number(origin.timestamp || 0);
+	const age = Date.now() - timestamp;
+
+	if (title === ''
+		|| url === ''
+		|| !Number.isFinite(timestamp)
+		|| age < 0
+		|| age > RETURN_MAX_AGE_MS)
+	{
+		removeSessionStorage(RETURN_STORAGE_KEY);
+		return null;
+	}
+
+	return {title, url, timestamp};
+}
+
+/**
+ * Preserve clean clip URLs while restoring the exact same-tab origin link.
+ *
+ * Every built-in clip-detail link uses data-audioarchive-detail-link. This
+ * allows Archive views, Sound Boards, modules, content-plugin embeds, and
+ * future layouts to use the same navigation mechanism.
+ *
+ * @returns {void}
+ */
+function initialiseReturnNavigation()
+{
+	const captureOrigin = (event) =>
+	{
+		if (!(event.target instanceof Element))
+		{
+			return;
+		}
+
+		const link = event.target.closest('[data-audioarchive-detail-link]');
+
+		if (!link || link.hidden)
+		{
+			return;
+		}
+
+		const target = normaliseReturnUrl(link.href);
+
+		if (target === '')
+		{
+			return;
+		}
+
+		const clipRoot = document.querySelector('[data-audioarchive-clip-return]');
+
+		// Clip-to-clip navigation retains an existing external origin. When a
+		// directly opened clip has no origin, the current clip becomes one.
+		if (clipRoot && readReturnOrigin())
+		{
+			return;
+		}
+
+		storeReturnOrigin(link.closest('[data-audioarchive-return-origin]') || clipRoot);
+	};
+
+	document.addEventListener('click', captureOrigin, true);
+	document.addEventListener('auxclick', captureOrigin, true);
+
+	const clipRoot = document.querySelector('[data-audioarchive-clip-return]');
+	const backLink = clipRoot?.querySelector('[data-audioarchive-return-link]');
+	const backLabel = backLink?.querySelector('[data-audioarchive-return-label]');
+	const origin = readReturnOrigin();
+
+	if (!clipRoot || !backLink || !backLabel || !origin)
+	{
+		return;
+	}
+
+	const labelTemplate = String(clipRoot.dataset.audioarchiveReturnLabelTemplate || '').trim();
+	backLink.href = origin.url;
+	backLabel.textContent = labelTemplate.includes('%s')
+		? labelTemplate.replace('%s', origin.title)
+		: origin.title;
+	backLink.addEventListener('click', (event) =>
+	{
+		if (event.button === 0
+			&& !event.metaKey
+			&& !event.ctrlKey
+			&& !event.shiftKey
+			&& !event.altKey
+			&& backLink.target !== '_blank')
+		{
+			removeSessionStorage(RETURN_STORAGE_KEY);
+		}
+	});
 }
 
 /**
@@ -613,15 +871,19 @@ function initialiseSoundboard()
 		try
 		{
 			const requestUrl = new URL(routesUrl, window.location.href);
-			requestUrl.searchParams.set('ids', ids.join(','));
+			const requestBody = new URLSearchParams();
+			requestBody.set('ids', ids.join(','));
 			const response = await fetch(
 				requestUrl.toString(),
 				{
+					method: 'POST',
 					credentials: 'same-origin',
 					headers:
 					{
 						'Accept': 'application/json',
+						'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
 					},
+					body: requestBody.toString(),
 				}
 			);
 			const payload = response.ok ? await response.json() : null;
@@ -1013,6 +1275,7 @@ function initialiseRatings()
 	});
 }
 
+initialiseReturnNavigation();
 initialiseShareButtons();
 initialiseSoundboardAddButtons();
 initialiseSoundboard();

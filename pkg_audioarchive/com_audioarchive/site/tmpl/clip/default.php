@@ -10,6 +10,8 @@ $hasDescription = trim((string) $this->item->description) !== '';
 ?>
 <article
 	class="com-audioarchive com-audioarchive-clip"
+	data-audioarchive-clip-return
+	data-audioarchive-return-label-template="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_BACK_TO_MENU_ITEM')); ?>"
 	data-audioarchive-status-playing="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_PLAYING')); ?>"
 	data-audioarchive-status-paused="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_PAUSED')); ?>"
 	data-audioarchive-status-error="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_ERROR')); ?>"
@@ -30,7 +32,10 @@ $hasDescription = trim((string) $this->item->description) !== '';
 	<div class="visually-hidden" aria-live="polite" aria-atomic="true" data-audioarchive-status></div>
 
 	<div class="com-audioarchive-clip-actions">
-		<a class="com-audioarchive-back-link" href="<?php echo $this->archiveUrl; ?>">← <?php echo Text::_('COM_AUDIOARCHIVE_BACK_TO_ARCHIVE'); ?></a>
+		<a class="com-audioarchive-back-link" data-audioarchive-return-link href="<?php echo $this->escape($this->backUrl); ?>">
+			<span aria-hidden="true">←</span>
+			<span data-audioarchive-return-label><?php echo $this->escape($this->backLabel); ?></span>
+		</a>
 
 		<?php if ($this->canEdit && $this->editUrl !== '') : ?>
 			<a class="btn btn-sm btn-outline-secondary com-audioarchive-edit-link" href="<?php echo $this->escape($this->editUrl); ?>">

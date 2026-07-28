@@ -46,6 +46,12 @@ class HtmlView extends BaseHtmlView
 	/** @var string */
 	public string $archiveUrl = '';
 
+	/** @var string */
+	public string $backUrl = '';
+
+	/** @var string */
+	public string $backLabel = '';
+
 	/** @var object|null */
 	public ?object $previousClip = null;
 
@@ -165,6 +171,7 @@ class HtmlView extends BaseHtmlView
 		$this->archiveUrl = Route::_(
 			RouteHelper::getArchiveRoute($routeItemId, $storedArchiveQuery)
 		);
+		$this->prepareBackLink($routeItemId);
 
 		if ((int) $this->params->get('detail_show_navigation', 1) === 1)
 		{
@@ -228,7 +235,10 @@ class HtmlView extends BaseHtmlView
 
 		if ($this->canEdit)
 		{
-			$returnUrl = Route::_($canonicalInternal, false);
+			$returnUrl = Route::_(
+				RouteHelper::getClipRoute((int) $item->id, $routeItemId),
+				false
+			);
 			$this->editUrl = Route::_(
 				RouteHelper::getEditRoute(
 					(int) $item->id,
@@ -249,6 +259,32 @@ class HtmlView extends BaseHtmlView
 			->useScript('com_audioarchive.social');
 
 		parent::display($tpl);
+	}
+
+
+
+	/**
+	 * @brief Prepare the server-rendered Archive fallback for the return link.
+	 *
+	 * JavaScript may replace this fallback with a same-tab Archive or Sound Board
+	 * origin stored in sessionStorage. The public clip URL itself remains canonical.
+	 *
+	 * @param int $archiveItemId Resolved Archive menu item identifier.
+	 *
+	 * @return void
+	 */
+	private function prepareBackLink(int $archiveItemId): void
+	{
+		$archiveItem = Factory::getApplication()->getMenu()->getItem($archiveItemId);
+		$archiveTitle = trim((string) ($archiveItem?->title ?? ''));
+
+		if ($archiveTitle === '')
+		{
+			$archiveTitle = Text::_('COM_AUDIOARCHIVE_ARCHIVE_TITLE');
+		}
+
+		$this->backUrl = $this->archiveUrl;
+		$this->backLabel = Text::sprintf('COM_AUDIOARCHIVE_BACK_TO_MENU_ITEM', $archiveTitle);
 	}
 
 
@@ -293,6 +329,8 @@ class HtmlView extends BaseHtmlView
 		$needsRedirect = $router->isTainted()
 			|| isset($rawQuery['view'])
 			|| isset($rawQuery['id'])
+			|| isset($rawQuery['return'])
+			|| isset($rawQuery['return_itemid'])
 			|| str_contains($currentPath, '/component/audioarchive/')
 			|| ($routeItemId > 0 && $currentItemId !== $routeItemId);
 

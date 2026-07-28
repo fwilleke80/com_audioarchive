@@ -1,0 +1,1 @@
+-- Version 0.10.8 has no component table changes.
