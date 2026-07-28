@@ -55,6 +55,10 @@
             <option value="1">JYES</option>
         </field>
         <field name="soundboard_pad_count" type="number" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_PAD_COUNT_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_PAD_COUNT_DESC" default="12" min="4" max="36" step="1" showon="enable_soundboard:1" />
+        <field name="soundboard_style_note" type="note" class="alert alert-info" label="" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_NOTE_DESC" showon="enable_soundboard:1" />
+        <field name="soundboard_button_background_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_BUTTON_BACKGROUND_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" showon="enable_soundboard:1" />
+        <field name="soundboard_button_text_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_BUTTON_TEXT_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" showon="enable_soundboard:1" />
+        <field name="soundboard_button_border_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_BUTTON_BORDER_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" showon="enable_soundboard:1" />
     </fieldset>
 
     <fieldset name="storage" label="COM_AUDIOARCHIVE_CONFIG_STORAGE_LABEL">
@@ -133,6 +137,22 @@
             <field name="archive_show_recorded_filter" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_RECORDED_FILTER_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
             <field name="archive_show_uploaded_filter" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_UPLOADED_FILTER_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
             <field name="archive_show_active_filters" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_ACTIVE_FILTERS_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        </fieldset>
+
+        <fieldset name="archive_filter_style" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_SECTION_FILTER_STYLE_LABEL">
+            <field name="archive_filter_style_note" type="note" class="alert alert-info" label="" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_NOTE_DESC" />
+            <field name="archive_filter_background_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_FILTER_BACKGROUND_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+            <field name="archive_filter_header_background_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_FILTER_HEADER_BACKGROUND_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+            <field name="archive_filter_header_text_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_FILTER_HEADER_TEXT_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+            <field name="archive_filter_text_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_FILTER_TEXT_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+            <field name="archive_filter_field_text_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_FILTER_FIELD_TEXT_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+            <field name="archive_filter_text_field_background_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_FILTER_TEXT_FIELD_BACKGROUND_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+            <field name="archive_filter_date_field_background_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_FILTER_DATE_FIELD_BACKGROUND_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+            <field name="archive_filter_select_field_background_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_FILTER_SELECT_FIELD_BACKGROUND_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+            <field name="archive_filter_tag_list_background_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_FILTER_TAG_LIST_BACKGROUND_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+            <field name="archive_filter_border_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_FILTER_BORDER_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+            <field name="archive_filter_field_border_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_FILTER_FIELD_BORDER_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+            <field name="archive_filter_accent_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_FILTER_ACCENT_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_FILTER_ACCENT_COLOR_DESC" />
         </fieldset>
 
         <fieldset name="archive_list" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_SECTION_LIST_LABEL">

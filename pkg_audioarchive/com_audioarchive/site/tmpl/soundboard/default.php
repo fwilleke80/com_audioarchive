@@ -1,14 +1,17 @@
 <?php
 
 use Joomla\CMS\Language\Text;
+use Punga\Component\Audioarchive\Site\Helper\StyleHelper;
 
 \defined('_JEXEC') or die;
 
 $keys = array_merge(range(1, 9), [0], range('A', 'Z'));
 $headerText = trim((string) $this->params->get('soundboard_header_text', ''));
+$soundboardStyle = StyleHelper::buildSoundboardVariables($this->params);
 ?>
 <div
 	class="com-audioarchive com-audioarchive-soundboard"
+	<?php if ($soundboardStyle !== '') : ?>style="<?php echo $this->escape($soundboardStyle); ?>"<?php endif; ?>
 	data-audioarchive-soundboard
 	data-audioarchive-return-origin
 	data-audioarchive-return-title="<?php echo $this->escape($this->returnTitle); ?>"

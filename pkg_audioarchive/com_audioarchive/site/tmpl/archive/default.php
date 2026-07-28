@@ -1,11 +1,16 @@
 <?php
 
 use Joomla\CMS\Language\Text;
+use Punga\Component\Audioarchive\Site\Helper\StyleHelper;
 
 \defined('_JEXEC') or die;
+
+$archiveFilterClasses = StyleHelper::buildArchiveFilterClasses($this->params);
+$archiveFilterStyle = StyleHelper::buildArchiveFilterVariables($this->params);
 ?>
 <div
-	class="com-audioarchive com-audioarchive-archive"
+	class="com-audioarchive com-audioarchive-archive<?php echo $archiveFilterClasses !== '' ? ' ' . $this->escape($archiveFilterClasses) : ''; ?>"
+	<?php if ($archiveFilterStyle !== '') : ?>style="<?php echo $this->escape($archiveFilterStyle); ?>"<?php endif; ?>
 	data-audioarchive-return-origin
 	data-audioarchive-return-title="<?php echo $this->escape($this->returnTitle); ?>"
 	data-audioarchive-status-playing="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_PLAYING')); ?>"

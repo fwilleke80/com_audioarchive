@@ -40,11 +40,13 @@
 
 .com-audioarchive-filter-panel
 {
+	--audioarchive-filter-effective-accent: var(--audioarchive-filter-accent, var(--audioarchive-accent));
 	margin-block: 1.5rem;
-	border: 1px solid var(--audioarchive-border);
+	border: 1px solid var(--audioarchive-filter-border, var(--audioarchive-border));
 	border-radius: var(--audioarchive-radius);
-	background: var(--audioarchive-surface);
+	background: var(--audioarchive-filter-background, var(--audioarchive-surface));
 	box-shadow: var(--audioarchive-shadow);
+	color: var(--audioarchive-filter-text, inherit);
 	overflow: hidden;
 }
 
@@ -55,8 +57,9 @@
 	justify-content: space-between;
 	gap: 1rem;
 	padding: 1rem 1.15rem;
-	border-bottom: 1px solid var(--audioarchive-border);
-	background: var(--audioarchive-surface-raised);
+	border-bottom: 1px solid var(--audioarchive-filter-border, var(--audioarchive-border));
+	background: var(--audioarchive-filter-header-background, var(--audioarchive-surface-raised));
+	color: var(--audioarchive-filter-header-text, inherit);
 }
 
 .com-audioarchive-filter-header h2
@@ -69,7 +72,7 @@
 {
 	margin: .2rem 0 0;
 	font-size: .9rem;
-	color: var(--audioarchive-muted);
+	color: var(--audioarchive-filter-header-text, var(--audioarchive-muted));
 }
 
 .com-audioarchive-filter-header-actions
@@ -95,7 +98,7 @@
 	gap: .38rem;
 	min-height: 2.2rem;
 	padding: .35rem .65rem;
-	border: 1px solid var(--audioarchive-border-strong);
+	border: 1px solid var(--audioarchive-filter-border, var(--audioarchive-border-strong));
 	border-radius: var(--audioarchive-radius-small);
 	background: transparent;
 	color: inherit;
@@ -107,12 +110,12 @@
 
 .com-audioarchive-filter-toggle:hover
 {
-	background: var(--audioarchive-surface-raised);
+	background: var(--audioarchive-filter-header-background, var(--audioarchive-surface-raised));
 }
 
 .com-audioarchive-filter-toggle:focus-visible
 {
-	outline: .2rem solid color-mix(in srgb, var(--audioarchive-accent) 34%, transparent);
+	outline: .2rem solid color-mix(in srgb, var(--audioarchive-filter-effective-accent) 34%, transparent);
 	outline-offset: .12rem;
 }
 
@@ -191,6 +194,33 @@
 	border-radius: var(--audioarchive-radius-small);
 }
 
+.com-audioarchive-archive.has-audioarchive-filter-field-text .com-audioarchive-filter .form-control,
+.com-audioarchive-archive.has-audioarchive-filter-field-text .com-audioarchive-filter .form-select
+{
+	color: var(--audioarchive-filter-field-text);
+}
+
+.com-audioarchive-archive.has-audioarchive-filter-field-border .com-audioarchive-filter .form-control,
+.com-audioarchive-archive.has-audioarchive-filter-field-border .com-audioarchive-filter .form-select
+{
+	border-color: var(--audioarchive-filter-field-border);
+}
+
+.com-audioarchive-archive.has-audioarchive-filter-text-field-background .com-audioarchive-filter .form-control:not([type="date"])
+{
+	background-color: var(--audioarchive-filter-text-field-background);
+}
+
+.com-audioarchive-archive.has-audioarchive-filter-date-field-background .com-audioarchive-filter .form-control[type="date"]
+{
+	background-color: var(--audioarchive-filter-date-field-background);
+}
+
+.com-audioarchive-archive.has-audioarchive-filter-select-field-background .com-audioarchive-filter .form-select
+{
+	background-color: var(--audioarchive-filter-select-field-background);
+}
+
 .com-audioarchive-tag-search
 {
 	margin-bottom: .55rem;
@@ -244,9 +274,9 @@
 	gap: .12rem;
 	max-height: 10.5rem;
 	padding: .35rem;
-	border: 1px solid var(--audioarchive-border);
+	border: 1px solid var(--audioarchive-filter-field-border, var(--audioarchive-border));
 	border-radius: var(--audioarchive-radius-small);
-	background: color-mix(in srgb, currentColor 1.5%, transparent);
+	background: var(--audioarchive-filter-tag-list-background, color-mix(in srgb, currentColor 1.5%, transparent));
 	overflow-y: auto;
 	scrollbar-gutter: stable;
 }
@@ -267,7 +297,7 @@
 
 .com-audioarchive-tag-option:hover
 {
-	background: var(--audioarchive-surface-raised);
+	background: var(--audioarchive-filter-header-background, var(--audioarchive-surface-raised));
 }
 
 .com-audioarchive-tag-option input
@@ -276,12 +306,12 @@
 	width: 1rem;
 	height: 1rem;
 	margin: .03rem 0 0;
-	accent-color: var(--audioarchive-accent);
+	accent-color: var(--audioarchive-filter-effective-accent);
 }
 
 .com-audioarchive-tag-option:has(input:focus-visible)
 {
-	outline: .2rem solid color-mix(in srgb, var(--audioarchive-accent) 30%, transparent);
+	outline: .2rem solid color-mix(in srgb, var(--audioarchive-filter-effective-accent) 30%, transparent);
 	outline-offset: -.05rem;
 }
 
@@ -305,7 +335,7 @@
 	z-index: 1;
 	transform: translateY(-50%);
 	font-size: 1.1rem;
-	color: var(--audioarchive-muted);
+	color: var(--audioarchive-filter-field-text, var(--audioarchive-muted));
 	pointer-events: none;
 }
 
@@ -351,7 +381,7 @@
 	background: linear-gradient(
 		to right,
 		var(--audioarchive-border-strong) 0 var(--audioarchive-duration-start),
-		var(--audioarchive-accent) var(--audioarchive-duration-start) var(--audioarchive-duration-end),
+		var(--audioarchive-filter-effective-accent) var(--audioarchive-duration-start) var(--audioarchive-duration-end),
 		var(--audioarchive-border-strong) var(--audioarchive-duration-end) 100%
 	);
 	content: "";
@@ -383,9 +413,9 @@
 	width: 1.15rem;
 	height: 1.15rem;
 	margin-top: -.385rem;
-	border: .16rem solid var(--audioarchive-accent);
+	border: .16rem solid var(--audioarchive-filter-effective-accent);
 	border-radius: 50%;
-	background: var(--audioarchive-surface);
+	background: var(--audioarchive-filter-text-field-background, var(--audioarchive-surface));
 	box-shadow: 0 .1rem .3rem rgb(0 0 0 / 20%);
 	appearance: none;
 	cursor: grab;
@@ -402,9 +432,9 @@
 {
 	width: .88rem;
 	height: .88rem;
-	border: .16rem solid var(--audioarchive-accent);
+	border: .16rem solid var(--audioarchive-filter-effective-accent);
 	border-radius: 50%;
-	background: var(--audioarchive-surface);
+	background: var(--audioarchive-filter-text-field-background, var(--audioarchive-surface));
 	box-shadow: 0 .1rem .3rem rgb(0 0 0 / 20%);
 	cursor: grab;
 	pointer-events: auto;
@@ -417,13 +447,13 @@
 
 .com-audioarchive-duration-track input[type="range"]:focus-visible::-webkit-slider-thumb
 {
-	outline: .2rem solid color-mix(in srgb, var(--audioarchive-accent) 35%, transparent);
+	outline: .2rem solid color-mix(in srgb, var(--audioarchive-filter-effective-accent) 35%, transparent);
 	outline-offset: .12rem;
 }
 
 .com-audioarchive-duration-track input[type="range"]:focus-visible::-moz-range-thumb
 {
-	outline: .2rem solid color-mix(in srgb, var(--audioarchive-accent) 35%, transparent);
+	outline: .2rem solid color-mix(in srgb, var(--audioarchive-filter-effective-accent) 35%, transparent);
 	outline-offset: .12rem;
 }
 
@@ -444,7 +474,7 @@
 	gap: .65rem;
 	margin-top: 1.15rem;
 	padding-top: 1rem;
-	border-top: 1px solid var(--audioarchive-border);
+	border-top: 1px solid var(--audioarchive-filter-border, var(--audioarchive-border));
 }
 
 .com-audioarchive-active-filters
@@ -1848,10 +1878,10 @@
 	width: 100%;
 	min-height: 6rem;
 	padding: 0.9rem;
-	border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+	border: 1px solid var(--audioarchive-soundboard-button-border, color-mix(in srgb, currentColor 25%, transparent));
 	border-radius: 0.8rem;
-	background: color-mix(in srgb, currentColor 4%, transparent);
-	color: inherit;
+	background: var(--audioarchive-soundboard-button-background, color-mix(in srgb, currentColor 4%, transparent));
+	color: var(--audioarchive-soundboard-button-text, inherit);
 	text-align: left;
 	cursor: pointer;
 	transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
@@ -1861,15 +1891,23 @@
 .com-audioarchive-soundboard-trigger:focus-visible
 {
 	transform: translateY(-1px);
-	border-color: color-mix(in srgb, currentColor 50%, transparent);
-	background: color-mix(in srgb, currentColor 8%, transparent);
+	border-color: var(--audioarchive-soundboard-button-border, color-mix(in srgb, currentColor 50%, transparent));
+	background: color-mix(
+		in srgb,
+		var(--audioarchive-soundboard-button-background, color-mix(in srgb, currentColor 4%, transparent)) 90%,
+		currentColor 10%
+	);
 }
 
 .com-audioarchive-soundboard-pad.is-playing .com-audioarchive-soundboard-trigger
 {
 	transform: translateY(1px) scale(0.99);
-	border-color: currentColor;
-	background: color-mix(in srgb, currentColor 14%, transparent);
+	border-color: var(--audioarchive-soundboard-button-border, currentColor);
+	background: color-mix(
+		in srgb,
+		var(--audioarchive-soundboard-button-background, color-mix(in srgb, currentColor 4%, transparent)) 84%,
+		currentColor 16%
+	);
 }
 
 .com-audioarchive-soundboard-pad.is-empty .com-audioarchive-soundboard-trigger

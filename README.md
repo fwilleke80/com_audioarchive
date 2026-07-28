@@ -59,6 +59,7 @@ It is intended for archives ranging from a small collection to several thousand 
   - [Archive clip counts](#archive-clip-counts)
   - [Archive playtime](#archive-playtime)
   - [Content-plugin behaviour](#content-plugin-behaviour)
+- [Release history: 0.10.11](#release-history-01011)
 - [Release history: 0.10.10](#release-history-01010)
 - [Release history: 0.10.9](#release-history-0109)
 - [Release history: 0.10.8](#release-history-0108)
@@ -1262,6 +1263,15 @@ The plugin can be configured under:
 ```text
 System → Manage → Plugins → Content - Audio Archive
 ```
+
+## Release history: 0.10.11
+
+### 0.10.11
+
+- Added optional global colour controls for the Archive filter panel, title area, labels, field text, text/date/select fields, tag list, borders, and interactive accents.
+- Added optional Sound Board pad background, text, and border colours.
+- Empty colour fields emit no frontend override, preserving the active Joomla template style and the component's adaptive defaults.
+- Centralised colour validation and CSS-variable generation so invalid values are ignored safely.
 
 ## Release history: 0.10.10
 
