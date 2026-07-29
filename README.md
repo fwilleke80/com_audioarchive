@@ -1,6 +1,6 @@
-# Joomla! Audio Archive
+# Punga Audio Archive
 
-Audio Archive is a native Joomla! 6 extension package for managing and publishing collections of audio clips.
+Punga Audio Archive is a native Joomla! 6 extension package for managing and publishing collections of audio clips.
 
 It is intended for archives ranging from a small collection to several thousand files. Administrators can upload or import clips, organise them with Joomla categories and tags, edit metadata, replace source files in bulk, inspect archive integrity, create portable archive exports, restore or migrate collections, generate waveform and spectral analyses with optional FFmpeg support, control publication and access, and review playback and download statistics. Visitors can search and filter the archive, browse a tag directory, use consistent responsive players throughout the site, move between neighbouring clips, and — where permitted — download the protected original files.
 
@@ -8,7 +8,7 @@ It is intended for archives ranging from a small collection to several thousand 
 
 ## Table of contents
 
-- [What Audio Archive offers](#what-audio-archive-offers)
+- [What Punga Audio Archive offers](#what-punga-audio-archive-offers)
   - [Administrator features](#administrator-features)
   - [Public website features](#public-website-features)
 - [Package contents](#package-contents)
@@ -47,7 +47,7 @@ It is intended for archives ranging from a small collection to several thousand 
   - [Module layouts](#module-layouts)
   - [Player presentation](#player-presentation)
   - [Display options](#display-options)
-- [Using the Audio Archive Tags module](#using-the-audio-archive-tags-module)
+- [Using the Audio Archive Tags module](#using-the-punga-audio-archive-tags-module)
   - [Tag selection and archive linking](#tag-selection-and-archive-linking)
   - [Tag-module presentation](#tag-module-presentation)
 - [Using the Smart Search plugin](#using-the-smart-search-plugin)
@@ -59,19 +59,8 @@ It is intended for archives ranging from a small collection to several thousand 
   - [Archive clip counts](#archive-clip-counts)
   - [Archive playtime](#archive-playtime)
   - [Content-plugin behaviour](#content-plugin-behaviour)
-- [Release history: 0.10.14](#release-history-01014)
-- [Release history: 0.10.13](#release-history-01013)
-- [Release history: 0.10.12](#release-history-01012)
-- [Release history: 0.10.11](#release-history-01011)
-- [Release history: 0.10.10](#release-history-01010)
-- [Release history: 0.10.9](#release-history-0109)
-- [Release history: 0.10.8](#release-history-0108)
-- [Release history: 0.10.7](#release-history-0107)
-- [Release history: 0.10.6](#release-history-0106)
-- [Release history: 0.10.5](#release-history-0105)
-- [Release history: 0.9.0–0.9.5](#release-history-090095)
 
-## What Audio Archive offers
+## What Punga Audio Archive offers
 
 ### Administrator features
 
@@ -197,7 +186,7 @@ pkg_audioarchive_v0-9-5.zip
 
 ## Requirements and external tools
 
-Audio Archive 0.9.5 requires:
+Punga Audio Archive requires:
 
 - Joomla! 6.x
 - PHP 8.3 or later
@@ -207,7 +196,7 @@ Audio Archive 0.9.5 requires:
 
 Core archive features—including metadata editing, filters, protected playback, downloads, modules, plugins, imports, and non-generation maintenance checks—work without FFmpeg or FFprobe. Waveform and spectral-analysis generation requires FFmpeg.
 
-`proc_open()` must be available when Audio Archive is expected to execute FFmpeg or FFprobe. Some hosting providers disable external process execution; the dashboard System Check reports this explicitly.
+`proc_open()` must be available when Punga Audio Archive is expected to execute FFmpeg or FFprobe. Some hosting providers disable external process execution; the dashboard System Check reports this explicitly.
 
 Archive export and restore require the PHP ZIP extension and its `ZipArchive` class. The rest of Audio Archive remains available when that optional PHP extension is missing.
 
@@ -224,15 +213,15 @@ Recommended sources:
 
 FFbinaries is an open-source, unofficial repackaging service. Its documentation identifies the upstream build providers and stores the packaged binaries on GitHub. However, its latest listed release is FFmpeg 6.1 from December 2023, and the reviewed download pages do not present a prominent signature or checksum-verification workflow. Treat it as a convenient compatibility source rather than the primary source for a current production binary. Prefer a recent build linked from the official FFmpeg download page when the hosting platform allows it.
 
-Store uploaded executables outside the public web root where possible. When that is impossible, place them in a server-protected directory. Configure the complete executable path under **Components → Audio Archive → Options → Processing** and confirm it through the dashboard System Check.
+Store uploaded executables outside the public web root where possible. When that is impossible, place them in a server-protected directory. Configure the complete executable path under **Components → Punga Audio Archive → Options → Processing** and confirm it through the dashboard System Check.
 
 ## Installing and updating the package
 
-To install Audio Archive:
+To install Punga Audio Archive:
 
 1. Open **System → Install → Extensions** in the Joomla administrator.
-2. Upload `pkg_audioarchive_v0-9-5.zip`.
-3. Open **Components → Audio Archive**.
+2. Upload `pkg_audioarchive_vx-x-x.zip`.
+3. Open **Components → Punga Audio Archive**.
 4. Review the dashboard and component options before importing files.
 
 Install newer package versions directly over the existing installation. Do not uninstall the existing package as an update procedure, because uninstallation removes component database records.
@@ -246,7 +235,7 @@ After an update, Joomla may retain cached administrator forms. If a newly added 
 Open:
 
 ```text
-Components → Audio Archive → Options
+Components → Punga Audio Archive → Options
 ```
 
 Review the following settings before importing the archive:
@@ -256,7 +245,7 @@ Review the following settings before importing the archive:
 - Default access level for new clips
 - Default publication state
 - Original-file storage directory
-- Reserved compatibility-preview storage directory (Audio Archive does not currently generate playback previews)
+- Reserved compatibility-preview storage directory (Punga Audio Archive does not currently generate playback previews)
 - Analysis-data storage directory for waveform and spectral-analysis files
 - Import inbox directory
 - Permitted extensions and MIME types
@@ -309,7 +298,7 @@ A relative executable path must remain inside the Joomla root.
 Open:
 
 ```text
-Components → Audio Archive
+Components → Punga Audio Archive
 ```
 
 The dashboard provides archive statistics and checks the database schema, configured directories, PHP capabilities, FFmpeg, and optional FFprobe. The shared waveform and spectral-analysis location is reported as **Analysis data storage**. Where supported, missing managed-storage directories can be created from the System Check.
@@ -322,13 +311,13 @@ For FFmpeg and FFprobe, the system check reports:
 - Its reported version
 - Whether execute permission was added automatically
 
-Audio Archive checks an explicitly configured path first. It then tries the executable name through the server's `PATH`, followed by `/usr/bin` and `/usr/local/bin`. If an explicitly configured Unix executable lacks execute bits, Audio Archive attempts to add them when the hosting account has sufficient permission. Otherwise, the dashboard reports the permission problem explicitly.
+Punga Audio Archive checks an explicitly configured path first. It then tries the executable name through the server's `PATH`, followed by `/usr/bin` and `/usr/local/bin`. If an explicitly configured Unix executable lacks execute bits, Punga Audio Archive attempts to add them when the hosting account has sufficient permission. Otherwise, the dashboard reports the permission problem explicitly.
 
-FFmpeg is required for waveform and spectral-analysis generation. FFprobe is optional and is currently only located and version-tested by the System Check. Audio Archive 0.9.5 performs media metadata extraction with its bundled PHP inspector, whether or not FFprobe is installed.
+FFmpeg is required for waveform and spectral-analysis generation. FFprobe is optional and is currently only located and version-tested by the System Check. Punga Audio Archive performs media metadata extraction with its bundled PHP inspector, whether or not FFprobe is installed.
 
-The dashboard also displays the installed Audio Archive version, provides actions for resetting all recorded play counts or all recorded download counts, and shows the combined managed-storage size with separate totals for current original clip files, waveform data, and spectral analyses. These totals use the recorded sizes of currently referenced files and therefore do not require a filesystem scan; stale or unreferenced files remain part of the manual maintenance checks.
+The dashboard also displays the installed Punga Audio Archive version, provides actions for resetting all recorded play counts or all recorded download counts, and shows the combined managed-storage size with separate totals for current original clip files, waveform data, and spectral analyses. These totals use the recorded sizes of currently referenced files and therefore do not require a filesystem scan; stale or unreferenced files remain part of the manual maintenance checks.
 
-Audio Archive 0.9.5 does not generate compatibility playback files and does not transcode originals. Public playback streams the current original file. The preview directory, preview status column, and stale-preview maintenance support remain as compatibility scaffolding for legacy or manually created preview records.
+Punga Audio Archive does not generate compatibility playback files and does not transcode originals. Public playback streams the current original file. The preview directory, preview status column, and stale-preview maintenance support remain as compatibility scaffolding for legacy or manually created preview records.
 
 ### Adding clips
 
@@ -414,7 +403,7 @@ A successful bulk replacement preserves:
 
 The old original can either be deleted immediately or retained. Retention is enabled by default because it is safer for large migration runs. Retained originals become unreferenced cleanup candidates on the **Integrity & Maintenance** page. Existing waveform and spectral analyses are marked stale, and automatic analysis queueing can schedule regeneration for the replacement.
 
-Audio Archive does not transcode files itself in this workflow. Conversion is performed externally; the resulting files are then placed in the import inbox and assigned through replacement mode.
+Punga Audio Archive does not transcode files itself in this workflow. Conversion is performed externally; the resulting files are then placed in the import inbox and assigned through replacement mode.
 
 ### Managing clips
 
@@ -436,7 +425,7 @@ On a frontend clip detail page, an authorised user sees an **Edit clip** button 
 Open:
 
 ```text
-Components → Audio Archive → Integrity & Maintenance
+Components → Punga Audio Archive → Integrity & Maintenance
 ```
 
 The page opens without scanning the archive or managed storage. This keeps it responsive as the collection grows. Database-only analysis status counts and recorded disk-usage totals remain immediately available.
@@ -492,7 +481,7 @@ The stale-file results contain only cleanup candidates, including:
 - Unreferenced managed files
 - Abandoned temporary files
 
-Current referenced originals are never eligible for stale-file cleanup. Before deletion, Audio Archive regenerates the current candidate list and revalidates every selected item so that files whose status changed after the check are not removed.
+Current referenced originals are never eligible for stale-file cleanup. Before deletion, Punga Audio Archive regenerates the current candidate list and revalidates every selected item so that files whose status changed after the check are not removed.
 
 Large cleanup selections are processed automatically in sequential AJAX batches of at most 200 files. This avoids PHP input limits and oversized single requests while preserving the server-side safety limit and per-batch validation.
 
@@ -510,9 +499,9 @@ Three export scopes are available:
 
 Every export is a ZIP with a manifest and recorded SHA-256 checksum for each included entry. Transient processing jobs are intentionally not exported.
 
-Audio Archive finishes and reopens the complete ZIP before sending it to the browser. It validates the required documents and ZIP structure, refuses to silently omit a requested original or analysis file, clears response buffering and compression that could corrupt binary output, sends the exact completed file length, and removes the protected temporary file afterwards. If a requested managed file cannot be included, the export stops with an error so the integrity issue can be corrected first.
+Punga Audio Archive finishes and reopens the complete ZIP before sending it to the browser. It validates the required documents and ZIP structure, refuses to silently omit a requested original or analysis file, clears response buffering and compression that could corrupt binary output, sends the exact completed file length, and removes the protected temporary file afterwards. If a requested managed file cannot be included, the export stops with an error so the integrity issue can be corrected first.
 
-An export can be selected either through a browser upload or from the configured import inbox. Inbox selection is useful when a complete archive exceeds browser or PHP upload limits. Before any archive data changes, Audio Archive copies the ZIP into protected staging storage and verifies:
+An export can be selected either through a browser upload or from the configured import inbox. Inbox selection is useful when a complete archive exceeds browser or PHP upload limits. Before any archive data changes, Punga Audio Archive copies the ZIP into protected staging storage and verifies:
 
 - The export format and supported format version
 - Required manifest and data documents
@@ -543,13 +532,13 @@ Restore uses a database transaction and protected file staging. New managed file
 
 ### Audio analyses
 
-Audio Archive uses a generic derived-analysis subsystem for waveform and spectral data. Both analysis types share protected managed storage, database status records, processing jobs, retry handling, and access-controlled delivery endpoints.
+Punga Audio Archive uses a generic derived-analysis subsystem for waveform and spectral data. Both analysis types share protected managed storage, database status records, processing jobs, retry handling, and access-controlled delivery endpoints.
 
 FFmpeg is required for generating either analysis type. Missing or failed analyses never prevent publication, playback, or downloads.
 
 #### Waveform generation
 
-For each clip, Audio Archive decodes the first audio stream to mono PCM and stores compact minimum/maximum peak data rather than a pre-rendered image.
+For each clip, Punga Audio Archive decodes the first audio stream to mono PCM and stores compact minimum/maximum peak data rather than a pre-rendered image.
 
 Available waveform detail levels are:
 
@@ -660,7 +649,7 @@ Create a Joomla menu item:
 
 1. Open the Joomla menu manager.
 2. Create a new menu item.
-3. Choose **Audio Archive → Audio Archive** as the menu-item type.
+3. Choose **Punga Audio Archive → Audio Archive** as the menu-item type.
 4. Configure its optional introductory text, category or tag restrictions, filters, columns, ordering, pagination, clip-detail settings, and download policy.
 5. Set the menu item's Joomla access level as required.
 6. Publish the menu item.
@@ -669,18 +658,18 @@ Each Archive menu item can override the component defaults. When several Archive
 
 ### Publishing a tag directory
 
-Audio Archive provides a separate **Tag Directory** menu-item type.
+Punga Audio Archive provides a separate **Tag Directory** menu-item type.
 
 Create one through the Joomla menu manager and choose:
 
 ```text
-Audio Archive → Tag Directory
+Punga Audio Archive → Tag Directory
 ```
 
 The Tag Directory can:
 
 - Display optional introductory text above the directory
-- Display all accessible Audio Archive tags or only selected tags
+- Display all accessible Punga Audio Archive tags or only selected tags
 - Link each tag to a chosen Archive menu item
 - Choose a suitable Archive menu item automatically
 - Hide tags without accessible clips
@@ -699,13 +688,13 @@ A Joomla menu item's access level only protects that menu item. Joomla component
 /component/audioarchive
 ```
 
-Audio Archive therefore has a component-wide **Frontend archive access** option under:
+Punga Audio Archive therefore has a component-wide **Frontend archive access** option under:
 
 ```text
-Components → Audio Archive → Options → General
+Components → Punga Audio Archive → Options → General
 ```
 
-The selected Joomla access level is checked before any frontend Audio Archive controller or view is dispatched. It protects:
+The selected Joomla access level is checked before any frontend Punga Audio Archive controller or view is dispatched. It protects:
 
 - Archive views
 - Tag Directory views
@@ -722,7 +711,7 @@ Menu-item access levels, category access, and individual clip access remain addi
 
 ### Frontend clip editing
 
-Frontend editing is available only when Joomla's global **Frontend Editing** option is enabled. Audio Archive then displays **Edit clip** on a detail page only when the current user has effective `core.edit` permission for that clip, or `core.edit.own` for a clip they created.
+Frontend editing is available only when Joomla's global **Frontend Editing** option is enabled. Punga Audio Archive then displays **Edit clip** on a detail page only when the current user has effective `core.edit` permission for that clip, or `core.edit.own` for a clip they created.
 
 The frontend form supports:
 
@@ -768,7 +757,7 @@ Duration values can be entered as seconds or as formatted times:
 
 With JavaScript enabled, the duration fields are accompanied by a two-handle slider. The text fields remain the submitted values and continue to work without JavaScript.
 
-Audio Archive stores the visitor's last-used filter values, tag mode, sorting, sort direction, and page size in the Joomla session. Returning to the same Archive menu item restores that state when no explicit filter state is present in the URL. Guest visitors are supported through Joomla's anonymous session cookie; the state is temporary and tied to that browser session.
+Punga Audio Archive stores the visitor's last-used filter values, tag mode, sorting, sort direction, and page size in the Joomla session. Returning to the same Archive menu item restores that state when no explicit filter state is present in the URL. Guest visitors are supported through Joomla's anonymous session cookie; the state is temporary and tied to that browser session.
 
 When JavaScript is available, opening a clip from an Archive or Sound Board stores the exact originating URL and active menu-item title in the tab's `sessionStorage`. The clip keeps its clean canonical URL, while its return link restores the exact Archive page, filters, sorting, pagination, or temporary shared Sound Board fragment. Previous/next navigation and frontend editing retain this tab-local origin. The state accepts only same-origin URLs, expires after 24 hours, and falls back to the resolved Archive menu item when JavaScript or browser storage is unavailable.
 
@@ -804,7 +793,7 @@ The global **Clip detail → Previous and next clip navigation** setting default
 
 Tags displayed in the Archive, Tag Directory, modules, embedded clips, and clip detail pages link back to the appropriate Archive menu item with the corresponding tag filter applied.
 
-When a Joomla tag has a description, Audio Archive adds that description as the tag link's standard HTML `title` attribute. Browsers therefore display the description as a native tooltip when the pointer hovers over the tag.
+When a Joomla tag has a description, Punga Audio Archive adds that description as the tag link's standard HTML `title` attribute. Browsers therefore display the description as a native tooltip when the pointer hovers over the tag.
 
 ### Playback and downloads
 
@@ -823,9 +812,9 @@ The detail-page download button can be configured globally and overridden by an 
 
 #### Punga Analytics integration
 
-Audio Archive can report confirmed plays and downloads to the optional Punga Analytics extension through Joomla's generic event dispatcher. No Punga Analytics class is imported and there is no hard package dependency.
+Punga Audio Archive can report confirmed plays and downloads to the optional Punga Analytics extension through Joomla's generic event dispatcher. No Punga Analytics class is imported and there is no hard package dependency.
 
-Audio Archive dispatches `onPungaAnalyticsRecord` with these event types:
+Punga Audio Archive dispatches `onPungaAnalyticsRecord` with these event types:
 
 | Event type | Dispatch point |
 | --- | --- |
@@ -844,13 +833,13 @@ item_title: current clip title
 
 This lets Punga Analytics present overall Audio plays and Audio downloads as well as item rankings such as Most played clips and Most downloaded clips. The corresponding `audio.play` and `audio.download` event definitions must be enabled in Punga Analytics when its recording policy accepts configured events only.
 
-The corresponding Audio Archive aggregate counter must also be enabled: disabling play counts suppresses `audio.play`, and disabling download counts suppresses `audio.download`. Sound Board plays additionally respect **Record Sound Board plays**, which is available as a global Engagement setting and as an inheritable Sound Board menu-item override. When that option is disabled, Sound Board playback neither increments the clip play counter nor dispatches `audio.play`. Repeated triggers of a clip during the same page view do not create duplicate play events. HEAD requests and playback streams do not generate download events.
+The corresponding Punga Audio Archive aggregate counter must also be enabled: disabling play counts suppresses `audio.play`, and disabling download counts suppresses `audio.download`. Sound Board plays additionally respect **Record Sound Board plays**, which is available as a global Engagement setting and as an inheritable Sound Board menu-item override. When that option is disabled, Sound Board playback neither increments the clip play counter nor dispatches `audio.play`. Repeated triggers of a clip during the same page view do not create duplicate play events. HEAD requests and playback streams do not generate download events.
 
-Listener failures are isolated: Punga Analytics can never block playback or an authorised download, and Audio Archive continues normally when the analytics extension is absent or disabled.
+Listener failures are isolated: Punga Analytics can never block playback or an authorised download, and Punga Audio Archive continues normally when the analytics extension is absent or disabled.
 
 #### Shared player presentations
 
-Audio Archive has one shared player renderer with four presentations:
+Punga Audio Archive has one shared player renderer with four presentations:
 
 | Presentation | Controls |
 | --- | --- |
@@ -891,7 +880,7 @@ The shared player markup can be replaced with a Joomla template override:
 templates/<template>/html/layouts/com_audioarchive/player/unified.php
 ```
 
-The override is used by archive rows and cards, clip detail pages, Audio Archive modules, and content-plugin embeds. When no override exists, Audio Archive uses its bundled component layout.
+The override is used by archive rows and cards, clip detail pages, Audio Archive modules, and content-plugin embeds. When no override exists, Punga Audio Archive uses its bundled component layout.
 
 The administrator clip preview uses the same bundled player renderer, but the site-template override above does not currently replace the backend preview layout.
 
@@ -993,7 +982,7 @@ The module uses the component's protected playback, analysis, and download endpo
 
 Random mode should normally be used without module caching when a new random selection is expected on each request. Clip-of-the-day mode produces a stable daily selection.
 
-## Using the Audio Archive Tags module
+## Using the Punga Audio Archive Tags module
 
 The package also contains:
 
@@ -1007,13 +996,13 @@ Create an instance through:
 Content → Site Modules → New → Audio Archive Tags
 ```
 
-The module displays Audio Archive tags and links each one to a filtered Archive view.
+The module displays Punga Audio Archive tags and links each one to a filtered Archive view.
 
 ### Tag selection and archive linking
 
 The module can:
 
-- Display every accessible tag used by Audio Archive clips
+- Display every accessible tag used by Punga Audio Archive clips
 - Display only a selected subset of tags
 - Choose the target Archive menu item automatically
 - Link to a specifically selected Archive menu item
@@ -1083,7 +1072,7 @@ plg_quickicon_audioarchive
 
 On the first package installation, the plugin is enabled automatically. Its enabled or disabled state is preserved during package updates.
 
-The plugin adds an **Audio Archive** music-icon shortcut to the **Site** group on Joomla's administrator Home Dashboard. The shortcut opens the Audio Archive dashboard.
+The plugin adds an **Audio Archive** music-icon shortcut to the **Site** group on Joomla's administrator Home Dashboard. The shortcut opens the Punga Audio Archive dashboard.
 
 The icon is only shown to users authorised to manage `com_audioarchive`.
 
@@ -1260,140 +1249,10 @@ Tag links retain the appropriate Archive menu context, and tag descriptions are 
 
 Count and playtime placeholders use the same public eligibility rules so that unpublished, inaccessible, or otherwise unavailable clips are not exposed through aggregate values.
 
-Malformed Audio Archive placeholders are left visible so syntax mistakes can be found. When a referenced clip is unavailable, the plugin can either display a translated unavailable message or remove the placeholder silently, according to its plugin settings.
+Malformed placeholders are left visible so syntax mistakes can be found. When a referenced clip is unavailable, the plugin can either display a translated unavailable message or remove the placeholder silently, according to its plugin settings.
 
 The plugin can be configured under:
 
 ```text
 System → Manage → Plugins → Content - Audio Archive
 ```
-
-## Release history: 0.10.14
-
-### 0.10.14
-
-- Sound Board playback can now be polyphonic: triggering another pad no longer has to stop clips that are already playing, and repeated triggers of the same pad can overlap as separate voices.
-- Added **Sound Board polyphony** to the global Engagement settings and an inheritable override to Sound Board menu items. It is enabled by default; when disabled, each new trigger stops all currently playing Sound Board voices.
-- Sound Board playback can now use the regular play-count endpoint, which also dispatches the `audio.play` event consumed by Punga Analytics.
-- Added **Record Sound Board plays** to the global Engagement settings and an inheritable override to Sound Board menu items. When disabled, Sound Board playback remains local and does not increment clip play counts or emit analytics events.
-
-## Release history: 0.10.13
-
-### 0.10.13
-
-- Added optional global colour controls for the Archive list table and responsive cards.
-- Configurable colours now cover the list background, header background and text, body text, links, borders, alternating rows, row hover state, and tag pills.
-- Empty or invalid colour values emit no frontend overrides, preserving the active Joomla template and existing adaptive defaults.
-
-## Release history: 0.10.12
-
-### 0.10.12
-
-- Corrected the duration range slider endpoint display so its empty minimum and maximum fields show the actual slider limits instead of unrelated example placeholders.
-- Removed the "Open Sound Board" button above the Archive filters.
-- Removed the "Open Sound Board" button from clip detail actions while retaining "Add to Sound Board".
-
-## Release history: 0.10.11
-
-### 0.10.11
-
-- Added optional global colour controls for the Archive filter panel, title area, labels, field text, text/date/select fields, tag list, borders, and interactive accents.
-- Added optional Sound Board pad background, text, and border colours.
-- Empty colour fields emit no frontend override, preserving the active Joomla template style and the component's adaptive defaults.
-- Centralised colour validation and CSS-variable generation so invalid values are ignored safely.
-
-## Release history: 0.10.10
-
-### 0.10.10
-
-- Generalised detail-page return navigation across all built-in clip links instead of limiting it to Archive and Sound Board views.
-- Audio Archive modules and content-plugin embeds now register their exact originating page before opening a clip detail page.
-- Return labels use the explicit Archive or Sound Board menu title where available, otherwise the originating page heading or document title.
-- Existing return context is retained when navigating from one clip detail page to another, while directly opened clips can return to the immediately preceding clip page.
-- Custom layouts can opt into the same mechanism by adding `data-audioarchive-detail-link` to clip-detail anchors.
-
-## Release history: 0.10.9
-
-### 0.10.9
-
-- Clip detail URLs remain canonical and no longer include `return` or `return_itemid` query parameters.
-- Archive and Sound Board pages store their exact same-tab return URL and active menu-item title in `sessionStorage` only when a clip detail link is opened.
-- The detail-page return link restores the exact Archive page, filters, sorting, pagination, or temporary shared Sound Board fragment from that transient navigation state.
-- Previous/next clip navigation and frontend edit round-trips retain the same return origin without propagating it through URLs.
-- Return state is restricted to same-origin URLs, expires after 24 hours, and falls back to the resolved Archive menu item when JavaScript or browser storage is unavailable.
-- Legacy 0.10.8 clip URLs carrying return parameters redirect to their clean canonical URL.
-
-## Release history: 0.10.8
-
-### 0.10.8
-
-- Clip detail links opened from an Archive now retain the exact originating Archive URL, including pagination, filters, sorting, and page size.
-- Clip detail links opened from a Sound Board now return to that Sound Board; shared-board URL fragments are preserved so the temporary board remains available.
-- The detail-page return label now uses the title of the originating Archive or Sound Board menu item instead of fixed wording.
-- Previous/next clip navigation and frontend edit round-trips preserve the original return target.
-
-## Release history: 0.10.7
-
-### 0.10.7
-
-- Sound Board detail icons now resolve all occupied clip IDs through one read-only component request and receive current Joomla-routed detail URLs using the most appropriate public Archive menu item.
-- Shared and personal boards continue to store only clip IDs and titles, so aliases and menu routes remain current without board migration.
-- Added an optional formatted **Header text** field to the Sound Board menu item, replacing the fixed introductory sentence.
-- Added a 0.10.7 schema marker so Joomla's Database maintenance check reports matching schema and manifest versions.
-
-## Release history: 0.10.6
-
-### 0.10.6
-
-- Fixed the detail-page eye icons on Sound Board pads so they open the corresponding clip instead of the parent Archive page.
-- Clip-detail link templates now bypass Joomla SEF processing until the real clip identifier has been substituted, preventing placeholder routes from collapsing to the Archive route.
-
-## Release history: 0.10.5
-
-### 0.10.5
-
-- Shared Sound Board links now open as temporary boards and never overwrite the visitor's browser-local personal board merely by being opened.
-- Added explicit actions to merge a shared board into the personal board without duplicate clips, or replace the personal board after confirmation.
-- Added a compact detail-page icon to every occupied Sound Board pad.
-
-## Release history: 0.9.0–0.9.5
-
-### 0.9.0
-
-- Added portable, versioned archive exports with **Metadata only**, **Metadata and analyses**, and **Complete archive** scopes.
-- Added protected ZIP staging and preflight inspection with manifest, entry-path, and SHA-256 validation.
-- Added restore into an empty archive, merge by persistent clip UUID, and complete archive replacement.
-- Added merge conflict policies for skipping existing clips, updating public metadata only, or updating metadata and included files.
-- Added portable restoration of categories, tags, Custom Fields, ACL, counters, and component configuration with semantic destination-site mapping.
-- Added transactional restore, file rollback, delayed cleanup of superseded files, and a Smart Search reindex reminder.
-
-### 0.9.1
-
-- Added compact Archive pagination with ellipses instead of rendering every page number in a long archive.
-- Added Previous and Next navigation with neighbouring clip titles on clip detail pages.
-
-### 0.9.2
-
-- Refined compact pagination to retain only the configured number of page links at each edge plus the current page and its immediate neighbours.
-- Added **Public Archive → Pagination → Page links at each edge**, defaulting to `5` with a permitted range of `1`–`20`.
-- Added global and per-Archive-menu-item control of **Previous and next clip navigation**, enabled by default.
-- Made detail navigation follow the active Archive menu item's filters, restrictions, and sorting.
-
-### 0.9.3
-
-- Repaired complete archive downloads that could previously be truncated or corrupted by active Joomla or PHP response buffering and compression.
-- Finalised and validated the complete ZIP before beginning the download response.
-- Made missing requested originals or analysis files fail the export explicitly instead of producing an incomplete backup.
-- Preserved the exact content length and protected temporary-file cleanup for successful and failed export streams.
-
-### 0.9.4
-
-- Added an optional Joomla custom-event bridge for semantic `audio.play` and `audio.download` statistics.
-- Added stable component, view, item type, clip ID, and clip title fields for item-level analytics.
-- Isolated statistics listeners so analytics failures cannot interrupt playback or downloads.
-
-### 0.9.5
-
-- Updated the statistics bridge to the current Punga Analytics contract and `onPungaAnalyticsRecord` event name.
-- Renamed the internal integration helper and documentation from SimpleStats to Punga Analytics.
-- Updated package, component, media asset, and export fallback version references to `0.9.5`.
