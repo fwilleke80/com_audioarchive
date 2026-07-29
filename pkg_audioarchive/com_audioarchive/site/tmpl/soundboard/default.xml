@@ -16,6 +16,16 @@
 			<field name="show_page_heading" type="list" label="JGLOBAL_SHOW_PAGE_HEADING_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
 			<field name="page_heading" type="text" label="JGLOBAL_PAGE_HEADING_LABEL" />
 			<field name="soundboard_pad_count" type="number" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_PAD_COUNT_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_PAD_COUNT_DESC" default="" min="4" max="36" />
+			<field name="soundboard_record_plays" type="list" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_RECORD_PLAYS_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_RECORD_PLAYS_DESC" default="" validate="options">
+				<option value="">JGLOBAL_USE_GLOBAL</option>
+				<option value="1">JYES</option>
+				<option value="0">JNO</option>
+			</field>
+			<field name="soundboard_polyphony" type="list" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_POLYPHONY_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_POLYPHONY_DESC" default="" validate="options">
+				<option value="">JGLOBAL_USE_GLOBAL</option>
+				<option value="1">JYES</option>
+				<option value="0">JNO</option>
+			</field>
 		</fieldset>
 	</fields>
 </metadata>

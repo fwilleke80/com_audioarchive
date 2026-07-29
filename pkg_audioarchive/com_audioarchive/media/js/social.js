@@ -778,11 +778,13 @@ function initialiseSoundboard()
 	}
 
 	const padCount = Math.max(4, Number.parseInt(root.dataset.audioarchivePadCount || '12', 10));
+	const polyphonic = root.dataset.audioarchivePolyphonic !== '0';
 	const streamTemplate = root.dataset.audioarchiveStreamTemplate || '';
 	const routesUrl = root.dataset.audioarchiveRoutesUrl || '';
 	const canonicalUrl = root.dataset.audioarchiveCanonicalUrl || window.location.href.split('#')[0];
 	const status = root.querySelector('[data-audioarchive-soundboard-status]');
-	const audio = root.querySelector('[data-audioarchive-soundboard-audio]');
+	const playCountUrl = root.dataset.audioarchivePlayCountUrl || '';
+	const tokenName = root.dataset.audioarchiveTokenName || '';
 	const pads = Array.from(root.querySelectorAll('[data-audioarchive-soundboard-pad]'));
 	const sharedPanel = root.querySelector('[data-audioarchive-soundboard-shared]');
 	let board = readBoard().slice(0, padCount);
@@ -790,6 +792,9 @@ function initialiseSoundboard()
 	const detailRoutes = new Map();
 	const unavailableDetailIds = new Set();
 	const pendingDetailIds = new Set();
+	const countedClipIds = new Set();
+	const activeVoices = new Set();
+	const voicesByPad = new Map();
 
 	const fragment = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('board');
 
@@ -931,31 +936,128 @@ function initialiseSoundboard()
 		void resolveDetailRoutes();
 	};
 
-	const play = (index) =>
+	const recordPlay = (clipId) =>
 	{
-		const entry = board[index] || null;
+		const id = Number.parseInt(String(clipId || ''), 10);
 
-		if (!entry || !audio)
+		if (!Number.isInteger(id) || id <= 0 || playCountUrl === '' || tokenName === '' || countedClipIds.has(id))
 		{
 			return;
 		}
 
-		pads.forEach((pad) => pad.classList.remove('is-playing'));
-		const source = streamTemplate.replace('987654321', String(entry.id));
+		countedClipIds.add(id);
+		const body = new URLSearchParams();
+		body.set('id', String(id));
+		body.set(tokenName, '1');
 
-		if (audio.src !== source)
+		fetch(playCountUrl,
+			{
+				method: 'POST',
+				headers:
+				{
+					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+					'X-Requested-With': 'XMLHttpRequest',
+				},
+				body: body.toString(),
+				credentials: 'same-origin',
+				keepalive: true,
+			}
+		).catch(() =>
 		{
-			audio.src = source;
+			// Counting is informational and must never interrupt playback.
+		});
+	};
+
+	const cleanupVoice = (voice, index) =>
+	{
+		activeVoices.delete(voice);
+		const padVoices = voicesByPad.get(index);
+
+		if (padVoices)
+		{
+			padVoices.delete(voice);
+
+			if (padVoices.size === 0)
+			{
+				voicesByPad.delete(index);
+				pads[index]?.classList.remove('is-playing');
+			}
 		}
 
-		audio.currentTime = 0;
-		audio.play().then(() =>
+		voice.removeAttribute('src');
+		voice.load();
+	};
+
+	const stopPadVoices = (index) =>
+	{
+		const padVoices = voicesByPad.get(index);
+
+		if (!padVoices)
+		{
+			return;
+		}
+
+		Array.from(padVoices).forEach((voice) =>
+		{
+			voice.pause();
+			cleanupVoice(voice, index);
+		});
+	};
+
+	const stopAllVoices = () =>
+	{
+		Array.from(activeVoices).forEach((voice) =>
+		{
+			voice.pause();
+		});
+
+		activeVoices.clear();
+		voicesByPad.clear();
+		pads.forEach((pad) => pad.classList.remove('is-playing'));
+	};
+
+	const play = (index) =>
+	{
+		const entry = board[index] || null;
+
+		if (!entry || streamTemplate === '')
+		{
+			return;
+		}
+
+		if (!polyphonic)
+		{
+			stopAllVoices();
+		}
+
+		const source = streamTemplate.replace('987654321', String(entry.id));
+		const voice = new Audio(source);
+		voice.preload = 'auto';
+		voice.playsInline = true;
+		activeVoices.add(voice);
+
+		if (!voicesByPad.has(index))
+		{
+			voicesByPad.set(index, new Set());
+		}
+
+		voicesByPad.get(index).add(voice);
+		voice.addEventListener('play', () =>
 		{
 			pads[index]?.classList.add('is-playing');
-			status.textContent = `${root.dataset.audioarchiveLabelPlaying}: ${entry.title}`;
-		}).catch(() =>
+			recordPlay(entry.id);
+
+			if (status)
+			{
+				status.textContent = `${root.dataset.audioarchiveLabelPlaying}: ${entry.title}`;
+			}
+		}, {once: true});
+		voice.addEventListener('ended', () => cleanupVoice(voice, index), {once: true});
+		voice.addEventListener('error', () => cleanupVoice(voice, index), {once: true});
+
+		voice.play().catch(() =>
 		{
-			pads[index]?.classList.remove('is-playing');
+			cleanupVoice(voice, index);
 		});
 	};
 
@@ -964,6 +1066,7 @@ function initialiseSoundboard()
 		pad.querySelector('[data-audioarchive-soundboard-trigger]')?.addEventListener('click', () => play(index));
 		pad.querySelector('[data-audioarchive-soundboard-remove]')?.addEventListener('click', () =>
 		{
+			stopPadVoices(index);
 			board[index] = null;
 			saveCurrentBoard();
 			render();
@@ -972,12 +1075,9 @@ function initialiseSoundboard()
 
 	root.querySelector('[data-audioarchive-soundboard-clear]')?.addEventListener('click', () =>
 	{
+		stopAllVoices();
 		board = [];
 		saveCurrentBoard();
-		if (audio)
-		{
-			audio.pause();
-		}
 		render();
 	});
 
@@ -990,6 +1090,7 @@ function initialiseSoundboard()
 			return;
 		}
 
+		stopAllVoices();
 		board = result.board;
 		setTemporarySharedBoard(false);
 		leaveSharedUrl();
@@ -1013,6 +1114,7 @@ function initialiseSoundboard()
 			return;
 		}
 
+		stopAllVoices();
 		board = normaliseBoard(board, padCount);
 
 		if (!writeStorage(BOARD_STORAGE_KEY, board))
@@ -1068,6 +1170,7 @@ function initialiseSoundboard()
 				throw new Error('Unable to store soundboard');
 			}
 
+			stopAllVoices();
 			board = importedBoard;
 			setTemporarySharedBoard(false);
 			leaveSharedUrl();
@@ -1152,7 +1255,7 @@ function initialiseSoundboard()
 		}
 	});
 
-	audio?.addEventListener('ended', () => pads.forEach((pad) => pad.classList.remove('is-playing')));
+	window.addEventListener('pagehide', stopAllVoices);
 	setTemporarySharedBoard(temporarySharedBoard);
 	render();
 }

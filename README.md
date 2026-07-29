@@ -59,6 +59,7 @@ It is intended for archives ranging from a small collection to several thousand 
   - [Archive clip counts](#archive-clip-counts)
   - [Archive playtime](#archive-playtime)
   - [Content-plugin behaviour](#content-plugin-behaviour)
+- [Release history: 0.10.14](#release-history-01014)
 - [Release history: 0.10.13](#release-history-01013)
 - [Release history: 0.10.12](#release-history-01012)
 - [Release history: 0.10.11](#release-history-01011)
@@ -150,11 +151,12 @@ It is intended for archives ranging from a small collection to several thousand 
 - Configurable player colours, corner radius, button sizes, waveform height, and preferred analysis view
 - Joomla template override support for the shared frontend player markup
 - One-player-at-a-time behaviour
-- Browser-local Sound Board with configurable pads and keyboard shortcuts
+- Browser-local polyphonic Sound Board with configurable pads and keyboard shortcuts
 - Portable Sound Board export/import and shareable links
 - Shared links open as temporary boards without changing the visitor's personal board
 - Explicit duplicate-safe merge and confirmed replacement actions for shared boards
 - Direct clip-detail links on occupied Sound Board pads
+- Optional Sound Board play counting and `audio.play` analytics dispatch, configurable globally and per Sound Board menu item
 - Clean, menu-aware SEF clip detail URLs
 - Breadcrumb integration
 - Page titles, metadata, canonical routes, and redirects from stale aliases or legacy URLs
@@ -842,7 +844,7 @@ item_title: current clip title
 
 This lets Punga Analytics present overall Audio plays and Audio downloads as well as item rankings such as Most played clips and Most downloaded clips. The corresponding `audio.play` and `audio.download` event definitions must be enabled in Punga Analytics when its recording policy accepts configured events only.
 
-The corresponding Audio Archive aggregate counter must also be enabled: disabling play counts suppresses `audio.play`, and disabling download counts suppresses `audio.download`. Repeated pause and resume actions do not generate repeated play events during the same page view. HEAD requests and playback streams do not generate download events.
+The corresponding Audio Archive aggregate counter must also be enabled: disabling play counts suppresses `audio.play`, and disabling download counts suppresses `audio.download`. Sound Board plays additionally respect **Record Sound Board plays**, which is available as a global Engagement setting and as an inheritable Sound Board menu-item override. When that option is disabled, Sound Board playback neither increments the clip play counter nor dispatches `audio.play`. Repeated triggers of a clip during the same page view do not create duplicate play events. HEAD requests and playback streams do not generate download events.
 
 Listener failures are isolated: Punga Analytics can never block playback or an authorised download, and Audio Archive continues normally when the analytics extension is absent or disabled.
 
@@ -1265,6 +1267,15 @@ The plugin can be configured under:
 ```text
 System → Manage → Plugins → Content - Audio Archive
 ```
+
+## Release history: 0.10.14
+
+### 0.10.14
+
+- Sound Board playback can now be polyphonic: triggering another pad no longer has to stop clips that are already playing, and repeated triggers of the same pad can overlap as separate voices.
+- Added **Sound Board polyphony** to the global Engagement settings and an inheritable override to Sound Board menu items. It is enabled by default; when disabled, each new trigger stops all currently playing Sound Board voices.
+- Sound Board playback can now use the regular play-count endpoint, which also dispatches the `audio.play` event consumed by Punga Analytics.
+- Added **Record Sound Board plays** to the global Engagement settings and an inheritable override to Sound Board menu items. When disabled, Sound Board playback remains local and does not increment clip play counts or emit analytics events.
 
 ## Release history: 0.10.13
 

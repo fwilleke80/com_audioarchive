@@ -7,6 +7,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\Session\Session;
 use Joomla\Registry\Registry;
 use Punga\Component\Audioarchive\Site\Helper\RouteHelper;
 
@@ -37,6 +38,15 @@ class HtmlView extends BaseHtmlView
 
 	/** @var string */
 	public string $returnTitle = '';
+
+	/** @var string */
+	public string $playCountUrl = '';
+
+	/** @var string */
+	public string $playCountToken = '';
+
+	/** @var bool */
+	public bool $polyphonic = true;
 
 
 	/**
@@ -69,6 +79,7 @@ class HtmlView extends BaseHtmlView
 		}
 
 		$this->padCount = max(4, min(36, (int) $this->params->get('soundboard_pad_count', 12)));
+		$this->polyphonic = (int) $this->params->get('soundboard_polyphony', 1) === 1;
 		$itemId = (int) ($item?->id ?? $application->getInput()->getInt('Itemid', 0));
 		$this->pageHeading = (string) $this->params->get(
 			'page_heading',
@@ -81,6 +92,16 @@ class HtmlView extends BaseHtmlView
 			$this->returnTitle = $this->pageHeading;
 		}
 		$this->streamTemplate = Route::_(RouteHelper::getPlaybackRoute(987654321, $itemId));
+
+		if (
+			(int) $this->params->get('enable_play_counts', 1) === 1
+			&& (int) $this->params->get('soundboard_record_plays', 1) === 1
+		)
+		{
+			$this->playCountUrl = Route::_(RouteHelper::getPlayCountRoute($itemId));
+			$this->playCountToken = Session::getFormToken();
+		}
+
 		$this->routesUrl = Route::_(RouteHelper::getSoundboardRoutesRoute($itemId));
 		$this->canonicalUrl = Route::_(
 			RouteHelper::getSoundboardRoute($itemId),

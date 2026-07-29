@@ -55,6 +55,14 @@
             <option value="1">JYES</option>
         </field>
         <field name="soundboard_pad_count" type="number" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_PAD_COUNT_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_PAD_COUNT_DESC" default="12" min="4" max="36" step="1" showon="enable_soundboard:1" />
+        <field name="soundboard_record_plays" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_RECORD_PLAYS_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_RECORD_PLAYS_DESC" default="1" showon="enable_soundboard:1">
+            <option value="0">JNO</option>
+            <option value="1">JYES</option>
+        </field>
+        <field name="soundboard_polyphony" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_POLYPHONY_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_POLYPHONY_DESC" default="1" showon="enable_soundboard:1">
+            <option value="0">JNO</option>
+            <option value="1">JYES</option>
+        </field>
         <field name="soundboard_style_note" type="note" class="alert alert-info" label="" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_NOTE_DESC" showon="enable_soundboard:1" />
         <field name="soundboard_button_background_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_BUTTON_BACKGROUND_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" showon="enable_soundboard:1" />
         <field name="soundboard_button_text_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_BUTTON_TEXT_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" showon="enable_soundboard:1" />
