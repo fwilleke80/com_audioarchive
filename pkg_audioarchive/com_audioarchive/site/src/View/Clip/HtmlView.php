@@ -82,9 +82,6 @@ class HtmlView extends BaseHtmlView
 	/** @var string */
 	public string $shareUrl = '';
 
-	/** @var string */
-	public string $soundboardUrl = '';
-
 	/** @var bool */
 	public bool $canRate = false;
 
@@ -226,11 +223,7 @@ class HtmlView extends BaseHtmlView
 
 		$canonicalInternal = RouteHelper::getClipRoute((int) $item->id, $routeItemId);
 		$canonical = Route::_($canonicalInternal, false, Route::TLS_IGNORE, true);
-		$this->shareUrl = $canonical;
-		$this->soundboardUrl = (int) $this->params->get('enable_soundboard', 1) === 1
-			? Route::_(RouteHelper::getSoundboardRoute())
-			: '';
-		$this->canEdit = FrontendEditingService::isEnabled($application)
+		$this->shareUrl = $canonical;		$this->canEdit = FrontendEditingService::isEnabled($application)
 			&& FrontendEditingService::canEdit($identity, $item);
 
 		if ($this->canEdit)

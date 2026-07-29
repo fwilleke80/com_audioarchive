@@ -58,6 +58,32 @@ final class StyleHelper
 	}
 
 	/**
+	 * @brief Build Archive list CSS custom properties.
+	 *
+	 * Empty or invalid settings are omitted so desktop tables and responsive
+	 * cards continue to inherit the active Joomla template when unconfigured.
+	 *
+	 * @param Registry $params Resolved component and menu parameters.
+	 *
+	 * @return string Inline CSS custom-property declarations.
+	 */
+	public static function buildArchiveListVariables(Registry $params): string
+	{
+		return self::buildColorVariables($params, [
+			'archive_list_background_color' => '--audioarchive-list-background',
+			'archive_list_header_background_color' => '--audioarchive-list-header-background',
+			'archive_list_header_text_color' => '--audioarchive-list-header-text',
+			'archive_list_text_color' => '--audioarchive-list-text',
+			'archive_list_link_color' => '--audioarchive-list-link',
+			'archive_list_border_color' => '--audioarchive-list-border',
+			'archive_list_alternate_row_background_color' => '--audioarchive-list-alternate-row-background',
+			'archive_list_hover_background_color' => '--audioarchive-list-hover-background',
+			'archive_list_tag_background_color' => '--audioarchive-list-tag-background',
+			'archive_list_tag_text_color' => '--audioarchive-list-tag-text',
+		]);
+	}
+
+	/**
 	 * @brief Build Sound Board pad CSS custom properties.
 	 *
 	 * @param Registry $params Resolved component and menu parameters.

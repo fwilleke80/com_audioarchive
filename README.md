@@ -59,6 +59,8 @@ It is intended for archives ranging from a small collection to several thousand 
   - [Archive clip counts](#archive-clip-counts)
   - [Archive playtime](#archive-playtime)
   - [Content-plugin behaviour](#content-plugin-behaviour)
+- [Release history: 0.10.13](#release-history-01013)
+- [Release history: 0.10.12](#release-history-01012)
 - [Release history: 0.10.11](#release-history-01011)
 - [Release history: 0.10.10](#release-history-01010)
 - [Release history: 0.10.9](#release-history-0109)
@@ -1263,6 +1265,22 @@ The plugin can be configured under:
 ```text
 System → Manage → Plugins → Content - Audio Archive
 ```
+
+## Release history: 0.10.13
+
+### 0.10.13
+
+- Added optional global colour controls for the Archive list table and responsive cards.
+- Configurable colours now cover the list background, header background and text, body text, links, borders, alternating rows, row hover state, and tag pills.
+- Empty or invalid colour values emit no frontend overrides, preserving the active Joomla template and existing adaptive defaults.
+
+## Release history: 0.10.12
+
+### 0.10.12
+
+- Corrected the duration range slider endpoint display so its empty minimum and maximum fields show the actual slider limits instead of unrelated example placeholders.
+- Removed the "Open Sound Board" button above the Archive filters.
+- Removed the "Open Sound Board" button from clip detail actions while retaining "Add to Sound Board".
 
 ## Release history: 0.10.11
 

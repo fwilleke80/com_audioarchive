@@ -191,6 +191,9 @@ const initialiseAudioArchiveFilters = () =>
 
 		const clamp = (value) => Math.max(0, Math.min(maximum, value));
 
+		minimumField.placeholder = formatDuration(0);
+		maximumField.placeholder = formatDuration(maximum);
+
 		const updatePresentation = () =>
 		{
 			const minimum = clamp(Number.parseInt(minimumRange.value, 10));

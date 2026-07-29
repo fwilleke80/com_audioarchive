@@ -189,6 +189,20 @@
             <field name="archive_show_result_count" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SHOW_RESULT_COUNT_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
         </fieldset>
 
+        <fieldset name="archive_list_style" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_SECTION_LIST_STYLE_LABEL">
+            <field name="archive_list_style_note" type="note" class="alert alert-info" label="" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_NOTE_DESC" />
+            <field name="archive_list_background_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_LIST_BACKGROUND_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_LIST_BACKGROUND_COLOR_DESC" />
+            <field name="archive_list_header_background_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_LIST_HEADER_BACKGROUND_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+            <field name="archive_list_header_text_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_LIST_HEADER_TEXT_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+            <field name="archive_list_text_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_LIST_TEXT_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+            <field name="archive_list_link_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_LIST_LINK_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+            <field name="archive_list_border_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_LIST_BORDER_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+            <field name="archive_list_alternate_row_background_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_LIST_ALTERNATE_ROW_BACKGROUND_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_LIST_ALTERNATE_ROW_BACKGROUND_COLOR_DESC" />
+            <field name="archive_list_hover_background_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_LIST_HOVER_BACKGROUND_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+            <field name="archive_list_tag_background_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_LIST_TAG_BACKGROUND_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+            <field name="archive_list_tag_text_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_LIST_TAG_TEXT_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+        </fieldset>
+
         <fieldset name="archive_columns" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_SECTION_COLUMNS_LABEL">
             <field name="archive_column_play" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_PLAY" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
             <field name="archive_column_title" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLUMN_TITLE" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>

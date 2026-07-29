@@ -598,9 +598,9 @@
 .com-audioarchive-table-wrapper
 {
 	min-width: 0;
-	border: 1px solid var(--audioarchive-border);
+	border: 1px solid var(--audioarchive-list-border, var(--audioarchive-border));
 	border-radius: var(--audioarchive-radius);
-	background: var(--audioarchive-surface);
+	background: var(--audioarchive-list-background, var(--audioarchive-surface));
 	box-shadow: var(--audioarchive-shadow);
 	overflow-x: auto;
 }
@@ -612,6 +612,8 @@
 	margin: 0;
 	border-collapse: separate;
 	border-spacing: 0;
+	background: var(--audioarchive-list-background, transparent);
+	color: var(--audioarchive-list-text, inherit);
 }
 
 .com-audioarchive-table th,
@@ -619,7 +621,7 @@
 {
 	padding: .85rem .8rem;
 	border: 0;
-	border-bottom: 1px solid var(--audioarchive-border);
+	border-bottom: 1px solid var(--audioarchive-list-border, var(--audioarchive-border));
 	text-align: start;
 	vertical-align: middle;
 }
@@ -627,7 +629,8 @@
 .com-audioarchive-table thead th
 {
 	padding-block: .72rem;
-	background: var(--audioarchive-surface-raised);
+	background: var(--audioarchive-list-header-background, var(--audioarchive-surface-raised));
+	color: var(--audioarchive-list-header-text, inherit);
 	font-size: .76rem;
 	font-weight: 800;
 	letter-spacing: .035em;
@@ -645,9 +648,14 @@
 	transition: background-color 120ms ease;
 }
 
+.com-audioarchive-table tbody tr:nth-child(even)
+{
+	background: var(--audioarchive-list-alternate-row-background, transparent);
+}
+
 .com-audioarchive-table tbody tr:hover
 {
-	background: color-mix(in srgb, var(--audioarchive-accent) 5%, transparent);
+	background: var(--audioarchive-list-hover-background, color-mix(in srgb, var(--audioarchive-accent) 5%, transparent));
 }
 
 .com-audioarchive-sort-link
@@ -655,7 +663,7 @@
 	display: inline-flex;
 	align-items: center;
 	gap: .45rem;
-	color: inherit;
+	color: var(--audioarchive-list-header-text, inherit);
 	text-decoration: none;
 }
 
@@ -683,6 +691,7 @@
 .com-audioarchive-title-link
 {
 	display: inline-block;
+	color: var(--audioarchive-list-link, inherit);
 	font-weight: 750;
 	line-height: 1.25;
 	text-decoration-thickness: .08em;
@@ -811,6 +820,13 @@
 .com-audioarchive-tag-list--linked a:focus-visible
 {
 	text-decoration: underline;
+}
+
+.com-audioarchive-table .com-audioarchive-tag-list li,
+.com-audioarchive-mobile-card .com-audioarchive-tag-list li
+{
+	background: var(--audioarchive-list-tag-background, var(--audioarchive-surface-raised));
+	color: var(--audioarchive-list-tag-text, inherit);
 }
 
 .com-audioarchive-empty-state
@@ -1227,9 +1243,10 @@
 	{
 		min-width: 0;
 		padding: .9rem;
-		border: 1px solid var(--audioarchive-border);
+		border: 1px solid var(--audioarchive-list-border, var(--audioarchive-border));
 		border-radius: var(--audioarchive-radius);
-		background: var(--audioarchive-surface);
+		background: var(--audioarchive-list-background, var(--audioarchive-surface));
+		color: var(--audioarchive-list-text, inherit);
 		box-shadow: 0 .18rem .75rem color-mix(in srgb, #000 7%, transparent);
 	}
 
@@ -1263,6 +1280,7 @@
 	{
 		display: block;
 		max-width: 100%;
+		color: var(--audioarchive-list-link, inherit);
 		font-size: 1.02rem;
 		font-weight: 750;
 		line-height: 1.25;
@@ -1279,7 +1297,7 @@
 		gap: .65rem 1rem;
 		margin: .85rem 0 0;
 		padding: .8rem 0 0;
-		border-top: 1px solid var(--audioarchive-border);
+		border-top: 1px solid var(--audioarchive-list-border, var(--audioarchive-border));
 	}
 
 	.com-audioarchive-mobile-card-metadata-item

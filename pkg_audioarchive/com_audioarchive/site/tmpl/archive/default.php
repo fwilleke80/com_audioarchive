@@ -6,11 +6,14 @@ use Punga\Component\Audioarchive\Site\Helper\StyleHelper;
 \defined('_JEXEC') or die;
 
 $archiveFilterClasses = StyleHelper::buildArchiveFilterClasses($this->params);
-$archiveFilterStyle = StyleHelper::buildArchiveFilterVariables($this->params);
+$archiveStyle = implode(';', array_filter([
+	StyleHelper::buildArchiveFilterVariables($this->params),
+	StyleHelper::buildArchiveListVariables($this->params),
+]));
 ?>
 <div
 	class="com-audioarchive com-audioarchive-archive<?php echo $archiveFilterClasses !== '' ? ' ' . $this->escape($archiveFilterClasses) : ''; ?>"
-	<?php if ($archiveFilterStyle !== '') : ?>style="<?php echo $this->escape($archiveFilterStyle); ?>"<?php endif; ?>
+	<?php if ($archiveStyle !== '') : ?>style="<?php echo $this->escape($archiveStyle); ?>"<?php endif; ?>
 	data-audioarchive-return-origin
 	data-audioarchive-return-title="<?php echo $this->escape($this->returnTitle); ?>"
 	data-audioarchive-status-playing="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_PLAYING')); ?>"
@@ -33,12 +36,6 @@ $archiveFilterStyle = StyleHelper::buildArchiveFilterVariables($this->params);
 	<header class="com-audioarchive-page-header">
 		<?php if ((int) $this->params->get('show_page_heading', 1) === 1) : ?>
 			<h1><?php echo $this->escape($this->pageHeading); ?></h1>
-		<?php endif; ?>
-		<?php if ($this->soundboardUrl !== '') : ?>
-			<a class="btn btn-outline-secondary com-audioarchive-soundboard-open" href="<?php echo $this->escape($this->soundboardUrl); ?>">
-				<span class="icon-grid-2" aria-hidden="true"></span>
-				<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_OPEN'); ?>
-			</a>
 		<?php endif; ?>
 	</header>
 

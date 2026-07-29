@@ -22,12 +22,6 @@ if (!$showShare && !$showSoundboard)
 
 		<?php if ($showSoundboard) : ?>
 			<?php echo LayoutHelper::render('interaction.soundboard_add', ['clipId' => (int) $this->item->id, 'title' => (string) $this->item->title], null, ['component' => 'com_audioarchive', 'client' => 0]); ?>
-			<?php if ($this->soundboardUrl !== '') : ?>
-				<a class="btn btn-sm btn-outline-secondary com-audioarchive-soundboard-open" href="<?php echo $this->escape($this->soundboardUrl); ?>">
-					<span class="icon-grid-2" aria-hidden="true"></span>
-					<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_OPEN'); ?>
-				</a>
-			<?php endif; ?>
 		<?php endif; ?>
 	</div>
 </section>

@@ -66,9 +66,6 @@ class HtmlView extends BaseHtmlView
 	public bool $canRate = false;
 
 	/** @var string */
-	public string $soundboardUrl = '';
-
-	/** @var string */
 	public string $returnTitle = '';
 	/** @var object|null */
 	public ?object $item = null;
@@ -134,10 +131,6 @@ class HtmlView extends BaseHtmlView
 			$this->ratingToken = Session::getFormToken();
 			$this->canRate = $ratingService->canVote();
 		}
-
-		$this->soundboardUrl = (int) $this->params->get('enable_soundboard', 1) === 1
-			? Route::_(RouteHelper::getSoundboardRoute())
-			: '';
 
 		$item = $app->getMenu()->getActive();
 		$this->pageHeading = (string) $this->params->get('page_heading', $item?->title ?? Text::_('COM_AUDIOARCHIVE_ARCHIVE_TITLE'));
