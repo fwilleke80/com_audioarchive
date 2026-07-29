@@ -146,7 +146,8 @@ class HtmlView extends BaseHtmlView
 			->useStyle('com_audioarchive.player-style')
 			->useScript('com_audioarchive.player')
 			->useScript('com_audioarchive.archive')
-			->useScript('com_audioarchive.social');
+			->useScript('com_audioarchive.social')
+			->useScript('com_audioarchive.playlist');
 
 		parent::display($tpl);
 	}

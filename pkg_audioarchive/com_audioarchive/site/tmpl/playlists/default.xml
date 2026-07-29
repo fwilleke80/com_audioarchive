@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+	<layout title="COM_AUDIOARCHIVE_PLAYLISTS_MENU_TITLE" option="COM_AUDIOARCHIVE_PLAYLISTS_MENU_TITLE">
+		<message><![CDATA[COM_AUDIOARCHIVE_PLAYLISTS_MENU_DESC]]></message>
+	</layout>
+	<fields name="params">
+		<fieldset name="basic" label="JGLOBAL_FIELDSET_BASIC">
+			<field
+				name="playlist_header_text"
+				type="editor"
+				label="COM_AUDIOARCHIVE_PLAYLIST_HEADER_TEXT_LABEL"
+				description="COM_AUDIOARCHIVE_PLAYLIST_HEADER_TEXT_DESC"
+				buttons="true"
+				filter="\Joomla\CMS\Component\ComponentHelper::filterText"
+			/>
+			<field name="show_page_heading" type="list" label="JGLOBAL_SHOW_PAGE_HEADING_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+			<field name="page_heading" type="text" label="JGLOBAL_PAGE_HEADING_LABEL" />
+		</fieldset>
+
+		<fieldset name="list_style" label="COM_AUDIOARCHIVE_CONFIG_PLAYLIST_TABLE_STYLE_LABEL">
+			<field name="playlist_list_style_note" type="note" class="alert alert-info" label="" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_NOTE_DESC" />
+			<field name="playlist_list_background_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_PLAYLIST_LIST_BACKGROUND_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_PLAYLIST_LIST_BACKGROUND_COLOR_DESC" />
+			<field name="playlist_list_header_background_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_PLAYLIST_LIST_HEADER_BACKGROUND_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+			<field name="playlist_list_header_text_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_PLAYLIST_LIST_HEADER_TEXT_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+			<field name="playlist_list_text_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_PLAYLIST_LIST_TEXT_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+			<field name="playlist_list_link_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_PLAYLIST_LIST_LINK_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+			<field name="playlist_list_border_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_PLAYLIST_LIST_BORDER_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+			<field name="playlist_list_alternate_row_background_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_PLAYLIST_LIST_ALTERNATE_ROW_BACKGROUND_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_PLAYLIST_LIST_ALTERNATE_ROW_BACKGROUND_COLOR_DESC" />
+			<field name="playlist_list_hover_background_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_PLAYLIST_LIST_HOVER_BACKGROUND_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+			<field name="playlist_list_current_row_background_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_PLAYLIST_LIST_CURRENT_ROW_BACKGROUND_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_PLAYLIST_LIST_CURRENT_ROW_BACKGROUND_COLOR_DESC" />
+			<field name="playlist_list_tag_background_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_PLAYLIST_LIST_TAG_BACKGROUND_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+			<field name="playlist_list_tag_text_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_PLAYLIST_LIST_TAG_TEXT_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+		</fieldset>
+	</fields>
+</metadata>

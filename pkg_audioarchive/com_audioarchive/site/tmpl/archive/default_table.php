@@ -28,7 +28,7 @@ $columns = [
 	'uploaded' => (int) $this->params->get('archive_column_uploaded', 1) === 1,
 	'tags' => (int) $this->params->get('archive_column_tags', 1) === 1,
 	'rating' => (int) $this->params->get('archive_column_rating', 1) === 1 && (int) $this->params->get('enable_ratings', 1) === 1,
-	'actions' => (int) $this->params->get('archive_column_actions', 1) === 1 && ((int) $this->params->get('archive_show_share', 1) === 1 || (int) $this->params->get('enable_soundboard', 1) === 1),
+	'actions' => (int) $this->params->get('archive_column_actions', 1) === 1 && ((int) $this->params->get('archive_show_share', 1) === 1 || (int) $this->params->get('enable_soundboard', 1) === 1 || (int) $this->params->get('enable_playlists', 1) === 1),
 ];
 $currentSort = (string) $this->state->get('list.ordering', 'uploaded');
 $currentDirection = strtoupper((string) $this->state->get('list.direction', 'DESC'));

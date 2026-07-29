@@ -7,8 +7,9 @@ use Joomla\CMS\Layout\LayoutHelper;
 
 $showShare = (int) $this->params->get('detail_show_share', 1) === 1;
 $showSoundboard = (int) $this->params->get('enable_soundboard', 1) === 1;
+$showPlaylists = (int) $this->params->get('enable_playlists', 1) === 1;
 
-if (!$showShare && !$showSoundboard)
+if (!$showShare && !$showSoundboard && !$showPlaylists)
 {
 	return;
 }
@@ -22,6 +23,10 @@ if (!$showShare && !$showSoundboard)
 
 		<?php if ($showSoundboard) : ?>
 			<?php echo LayoutHelper::render('interaction.soundboard_add', ['clipId' => (int) $this->item->id, 'title' => (string) $this->item->title], null, ['component' => 'com_audioarchive', 'client' => 0]); ?>
+		<?php endif; ?>
+
+		<?php if ($showPlaylists) : ?>
+			<?php echo LayoutHelper::render('interaction.playlist_add', ['clipId' => (int) $this->item->id, 'clipUuid' => (string) ($this->item->uuid ?? ''), 'title' => (string) $this->item->title], null, ['component' => 'com_audioarchive', 'client' => 0]); ?>
 		<?php endif; ?>
 	</div>
 </section>

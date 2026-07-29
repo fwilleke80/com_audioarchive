@@ -25,11 +25,12 @@ $normaliseInteger = static function (mixed $value, int $fallback, int $minimum, 
 	return max($minimum, min($maximum, (int) $integer));
 };
 $presentation = strtolower(trim((string) ($data['presentation'] ?? 'default')));
-$presentation = in_array($presentation, ['minimal', 'compact', 'default', 'featured'], true)
+$presentation = in_array($presentation, ['minimal', 'compact', 'default', 'featured', 'playlist'], true)
 	? $presentation
 	: 'default';
 $showSeek = $presentation !== 'minimal';
-$showMute = in_array($presentation, ['default', 'featured'], true);
+$isPlaylist = $presentation === 'playlist';
+$showMute = in_array($presentation, ['default', 'featured', 'playlist'], true);
 $showAnalysis = $presentation === 'featured';
 $audioId = trim((string) ($data['audioId'] ?? 'audioarchive-player'));
 $seekId = $audioId . '-seek';
@@ -63,6 +64,8 @@ $seekLabel = (string) ($labels['seek'] ?? 'Seek');
 $muteLabel = (string) ($labels['mute'] ?? 'Mute');
 $unmuteLabel = (string) ($labels['unmute'] ?? 'Unmute');
 $fallbackLabel = (string) ($labels['fallback'] ?? 'Your browser cannot play this audio.');
+$previousLabel = (string) ($labels['previous'] ?? 'Previous');
+$nextLabel = (string) ($labels['next'] ?? 'Next');
 $waveformLoadingLabel = (string) ($labels['waveformLoading'] ?? 'Loading waveform…');
 $spectrogramLoadingLabel = (string) ($labels['spectrogramLoading'] ?? 'Loading spectrum…');
 $waveformLabel = (string) ($labels['waveform'] ?? 'Waveform');
@@ -72,6 +75,7 @@ $buttonSizeParameter = match ($presentation)
 	'minimal' => 'player_minimal_button_size',
 	'compact' => 'player_compact_button_size',
 	'featured' => 'player_featured_button_size',
+	'playlist' => 'player_default_button_size',
 	default => 'player_default_button_size',
 };
 $buttonSizeFallback = match ($presentation)
@@ -114,12 +118,33 @@ $style = implode(';', [
 		data-clip-id="<?php echo $clipId; ?>"
 		data-clip-title="<?php echo $escape($title); ?>"
 	>
-		<source src="<?php echo $escape($streamUrl); ?>" type="<?php echo $escape($mime); ?>">
+		<?php if ($streamUrl !== '') : ?>
+			<source src="<?php echo $escape($streamUrl); ?>" type="<?php echo $escape($mime); ?>">
+		<?php endif; ?>
 		<?php echo $escape($fallbackLabel); ?>
 	</audio>
 
 	<div class="audioarchive-custom-player-ui" data-audioarchive-custom-ui hidden>
+		<?php if ($isPlaylist) : ?>
+			<div class="audioarchive-custom-player-playlist-meta">
+				<strong data-audioarchive-playlist-player-title><?php echo $escape($title); ?></strong>
+				<span data-audioarchive-playlist-player-position>0 / 0</span>
+			</div>
+		<?php endif; ?>
+
 		<div class="audioarchive-custom-player-controls">
+			<?php if ($isPlaylist) : ?>
+				<button
+					type="button"
+					class="audioarchive-custom-player-skip"
+					aria-label="<?php echo $escape($previousLabel); ?>"
+					title="<?php echo $escape($previousLabel); ?>"
+					data-audioarchive-playlist-previous
+					disabled
+				>
+					<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M6 5h2v14H6zm3.5 7 8.5 7V5z"/></svg>
+				</button>
+			<?php endif; ?>
 			<button
 				type="button"
 				class="audioarchive-custom-player-toggle"
@@ -138,6 +163,19 @@ $style = implode(';', [
 					<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M6.5 5h4v14h-4zm7 0h4v14h-4z"/></svg>
 				</span>
 			</button>
+
+			<?php if ($isPlaylist) : ?>
+				<button
+					type="button"
+					class="audioarchive-custom-player-skip"
+					aria-label="<?php echo $escape($nextLabel); ?>"
+					title="<?php echo $escape($nextLabel); ?>"
+					data-audioarchive-playlist-next
+					disabled
+				>
+					<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M16 5h2v14h-2zM6 5v14l8.5-7z"/></svg>
+				</button>
+			<?php endif; ?>
 
 			<?php if ($showSeek) : ?>
 				<div class="audioarchive-custom-player-main">

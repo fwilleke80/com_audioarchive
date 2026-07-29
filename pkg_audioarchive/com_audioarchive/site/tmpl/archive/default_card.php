@@ -122,8 +122,8 @@ $hasMetadata = $columns['category'] || $columns['duration'] || $columns['recorde
 					<?php if ((int) $this->params->get('archive_show_share', 1) === 1) : ?>
 						<?php echo LayoutHelper::render('interaction.share', ['url' => (string) $item->share_url, 'title' => (string) $item->title], null, ['component' => 'com_audioarchive', 'client' => 0]); ?>
 					<?php endif; ?>
-					<?php if ((int) $this->params->get('enable_soundboard', 1) === 1) : ?>
-						<?php echo LayoutHelper::render('interaction.soundboard_add', ['clipId' => (int) $item->id, 'title' => (string) $item->title], null, ['component' => 'com_audioarchive', 'client' => 0]); ?>
+					<?php if ((int) $this->params->get('enable_soundboard', 1) === 1 || (int) $this->params->get('enable_playlists', 1) === 1) : ?>
+						<?php echo LayoutHelper::render('interaction.add_to', ['clipId' => (int) $item->id, 'clipUuid' => (string) ($item->uuid ?? ''), 'title' => (string) $item->title, 'soundboardEnabled' => (int) $this->params->get('enable_soundboard', 1) === 1, 'playlistsEnabled' => (int) $this->params->get('enable_playlists', 1) === 1], null, ['component' => 'com_audioarchive', 'client' => 0]); ?>
 					<?php endif; ?>
 				</div>
 			<?php endif; ?>

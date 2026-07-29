@@ -16,7 +16,7 @@ use Joomla\Database\ParameterType;
 \defined('_JEXEC') or die;
 
 /**
- * @brief Site router for Punga Audio Archive archive, tag-directory, soundboard, and clip views.
+ * @brief Site router for Punga Audio Archive archive, tag-directory, playlists, soundboard, and clip views.
  */
 class Router extends RouterView
 {
@@ -45,6 +45,9 @@ class Router extends RouterView
 
 		$tagDirectory = new RouterViewConfiguration('tagdirectory');
 		$this->registerView($tagDirectory);
+
+		$playlists = new RouterViewConfiguration('playlists');
+		$this->registerView($playlists);
 
 		$soundboard = new RouterViewConfiguration('soundboard');
 		$this->registerView($soundboard);

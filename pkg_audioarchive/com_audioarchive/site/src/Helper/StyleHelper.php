@@ -84,6 +84,33 @@ final class StyleHelper
 	}
 
 	/**
+	 * @brief Build Playlist table CSS custom properties.
+	 *
+	 * Empty or invalid settings are omitted so the active Joomla template and
+	 * the component's adaptive defaults remain in control.
+	 *
+	 * @param Registry $params Resolved component and menu parameters.
+	 *
+	 * @return string Inline CSS custom-property declarations.
+	 */
+	public static function buildPlaylistListVariables(Registry $params): string
+	{
+		return self::buildColorVariables($params, [
+			'playlist_list_background_color' => '--audioarchive-list-background',
+			'playlist_list_header_background_color' => '--audioarchive-list-header-background',
+			'playlist_list_header_text_color' => '--audioarchive-list-header-text',
+			'playlist_list_text_color' => '--audioarchive-list-text',
+			'playlist_list_link_color' => '--audioarchive-list-link',
+			'playlist_list_border_color' => '--audioarchive-list-border',
+			'playlist_list_alternate_row_background_color' => '--audioarchive-list-alternate-row-background',
+			'playlist_list_hover_background_color' => '--audioarchive-list-hover-background',
+			'playlist_list_current_row_background_color' => '--audioarchive-playlist-current-row-background',
+			'playlist_list_tag_background_color' => '--audioarchive-list-tag-background',
+			'playlist_list_tag_text_color' => '--audioarchive-list-tag-text',
+		]);
+	}
+
+	/**
 	 * @brief Build Sound Board pad CSS custom properties.
 	 *
 	 * @param Registry $params Resolved component and menu parameters.

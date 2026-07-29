@@ -57,6 +57,64 @@ abstract class RouteHelper
 	}
 
 
+
+	/**
+	 * @brief Return the public playlists route.
+	 *
+	 * @param int $itemId Optional Playlists menu item identifier.
+	 *
+	 * @return string Internal Joomla route.
+	 */
+	public static function getPlaylistsRoute(int $itemId = 0): string
+	{
+		$link = 'index.php?option=com_audioarchive&view=playlists';
+
+		if ($itemId > 0)
+		{
+			$link .= '&Itemid=' . $itemId;
+		}
+
+		return $link;
+	}
+
+	/**
+	 * @brief Return the playlist clip-resolution endpoint.
+	 *
+	 * @param int $itemId Optional Playlists menu item identifier.
+	 *
+	 * @return string Internal Joomla route.
+	 */
+	public static function getPlaylistItemsRoute(int $itemId = 0): string
+	{
+		$link = 'index.php?option=com_audioarchive&task=playlist.items&format=json';
+
+		if ($itemId > 0)
+		{
+			$link .= '&Itemid=' . $itemId;
+		}
+
+		return $link;
+	}
+
+	/**
+	 * @brief Return the endpoint used for optional frontend interaction events.
+	 *
+	 * @param int $itemId Optional active menu item identifier.
+	 *
+	 * @return string Internal Joomla route.
+	 */
+	public static function getInteractionRecordRoute(int $itemId = 0): string
+	{
+		$link = 'index.php?option=com_audioarchive&task=interaction.record&format=json';
+
+		if ($itemId > 0)
+		{
+			$link .= '&Itemid=' . $itemId;
+		}
+
+		return $link;
+	}
+
 	/**
 	 * @brief Return the public soundboard route.
 	 *

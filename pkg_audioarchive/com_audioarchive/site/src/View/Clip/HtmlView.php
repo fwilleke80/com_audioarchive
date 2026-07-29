@@ -223,7 +223,8 @@ class HtmlView extends BaseHtmlView
 
 		$canonicalInternal = RouteHelper::getClipRoute((int) $item->id, $routeItemId);
 		$canonical = Route::_($canonicalInternal, false, Route::TLS_IGNORE, true);
-		$this->shareUrl = $canonical;		$this->canEdit = FrontendEditingService::isEnabled($application)
+		$this->shareUrl = $canonical;
+		$this->canEdit = FrontendEditingService::isEnabled($application)
 			&& FrontendEditingService::canEdit($identity, $item);
 
 		if ($this->canEdit)
@@ -249,7 +250,8 @@ class HtmlView extends BaseHtmlView
 			->useStyle('com_audioarchive.site')
 			->useStyle('com_audioarchive.player-style')
 			->useScript('com_audioarchive.player')
-			->useScript('com_audioarchive.social');
+			->useScript('com_audioarchive.social')
+			->useScript('com_audioarchive.playlist');
 
 		parent::display($tpl);
 	}

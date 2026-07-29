@@ -779,12 +779,15 @@ function initialiseSoundboard()
 
 	const padCount = Math.max(4, Number.parseInt(root.dataset.audioarchivePadCount || '12', 10));
 	const polyphonic = root.dataset.audioarchivePolyphonic !== '0';
+	const recordSoundboardPlays = root.dataset.audioarchiveRecordSoundboardPlays !== '0';
 	const streamTemplate = root.dataset.audioarchiveStreamTemplate || '';
 	const routesUrl = root.dataset.audioarchiveRoutesUrl || '';
 	const canonicalUrl = root.dataset.audioarchiveCanonicalUrl || window.location.href.split('#')[0];
 	const status = root.querySelector('[data-audioarchive-soundboard-status]');
 	const playCountUrl = root.dataset.audioarchivePlayCountUrl || '';
 	const tokenName = root.dataset.audioarchiveTokenName || '';
+	const interactionUrl = root.dataset.audioarchiveInteractionUrl || '';
+	const interactionToken = root.dataset.audioarchiveInteractionToken || '';
 	const pads = Array.from(root.querySelectorAll('[data-audioarchive-soundboard-pad]'));
 	const sharedPanel = root.querySelector('[data-audioarchive-soundboard-shared]');
 	let board = readBoard().slice(0, padCount);
@@ -921,6 +924,40 @@ function initialiseSoundboard()
 		}
 	};
 
+	const recordInteraction = (eventType, clipId = 0) =>
+	{
+		if (interactionUrl === '' || interactionToken === '')
+		{
+			return;
+		}
+
+		const body = new URLSearchParams();
+		body.set('event_type', eventType);
+		body.set(interactionToken, '1');
+
+		if (clipId > 0)
+		{
+			body.set('clip_id', String(clipId));
+		}
+
+		fetch(interactionUrl,
+			{
+				method: 'POST',
+				headers:
+				{
+					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+					'X-Requested-With': 'XMLHttpRequest',
+				},
+				body: body.toString(),
+				credentials: 'same-origin',
+				keepalive: true,
+			}
+		).catch(() =>
+		{
+			// Optional analytics must never interrupt the Sound Board.
+		});
+	};
+
 	const render = () =>
 	{
 		pads.forEach((pad, index) =>
@@ -1046,6 +1083,10 @@ function initialiseSoundboard()
 		{
 			pads[index]?.classList.add('is-playing');
 			recordPlay(entry.id);
+			if (recordSoundboardPlays)
+			{
+				recordInteraction('audioarchive.soundboard.play', entry.id);
+			}
 
 			if (status)
 			{
@@ -1216,6 +1257,7 @@ function initialiseSoundboard()
 		if (await copyText(url))
 		{
 			status.textContent = root.dataset.audioarchiveLabelCopied;
+			recordInteraction('audioarchive.soundboard.shared');
 		}
 
 		setShareMenuOpen(shareMenu, false);
@@ -1224,7 +1266,11 @@ function initialiseSoundboard()
 	shareNative?.addEventListener('click', async () =>
 	{
 		const url = `${canonicalUrl}#board=${encodeBoard(board)}`;
-		await openNativeShare(document.title, url);
+		if (await openNativeShare(document.title, url))
+		{
+			recordInteraction('audioarchive.soundboard.shared');
+		}
+
 		setShareMenuOpen(shareMenu, false);
 	});
 

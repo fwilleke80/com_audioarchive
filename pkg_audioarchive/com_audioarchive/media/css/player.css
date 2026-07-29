@@ -459,3 +459,108 @@
 	}
 
 }
+
+/* Playlist: one unified player instance with queue navigation. */
+.audioarchive-custom-player--playlist .audioarchive-custom-player-playlist-meta
+{
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-bottom: .75rem;
+}
+
+.audioarchive-custom-player--playlist .audioarchive-custom-player-playlist-meta strong
+{
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.audioarchive-custom-player--playlist .audioarchive-custom-player-playlist-meta span
+{
+	flex: 0 0 auto;
+	font-size: .82rem;
+	font-variant-numeric: tabular-nums;
+	font-weight: 700;
+	color: var(--audioarchive-player-muted);
+}
+
+.audioarchive-custom-player--playlist .audioarchive-custom-player-controls
+{
+	grid-template-columns: auto var(--audioarchive-player-button-size) auto minmax(0, 1fr) auto;
+	gap: .75rem;
+}
+
+.audioarchive-custom-player-skip
+{
+	display: inline-grid;
+	place-items: center;
+	width: 2.6rem;
+	height: 2.6rem;
+	padding: 0;
+	border: 1px solid var(--audioarchive-player-border);
+	border-radius: 50%;
+	background: color-mix(in srgb, var(--audioarchive-player-text) 3%, transparent);
+	color: inherit;
+	cursor: pointer;
+}
+
+.audioarchive-custom-player-skip:hover:not(:disabled)
+{
+	border-color: color-mix(in srgb, var(--audioarchive-player-accent) 55%, var(--audioarchive-player-border));
+	background: color-mix(in srgb, var(--audioarchive-player-accent) 9%, transparent);
+}
+
+.audioarchive-custom-player-skip:disabled
+{
+	cursor: default;
+	opacity: .38;
+}
+
+.audioarchive-custom-player-skip:focus-visible
+{
+	outline: .2rem solid color-mix(in srgb, var(--audioarchive-player-accent) 38%, transparent);
+	outline-offset: .18rem;
+}
+
+.audioarchive-custom-player-skip svg
+{
+	width: 1.1rem;
+	height: 1.1rem;
+	fill: currentColor;
+}
+
+@media (max-width: 42rem)
+{
+	.audioarchive-custom-player--playlist .audioarchive-custom-player-controls
+	{
+		grid-template-columns: auto var(--audioarchive-player-button-size) auto minmax(0, 1fr);
+	}
+
+	.audioarchive-custom-player--playlist .audioarchive-custom-player-mute-controls
+	{
+		grid-column: 4;
+		justify-self: end;
+	}
+}
+
+@media (max-width: 32rem)
+{
+	.audioarchive-custom-player--playlist .audioarchive-custom-player-controls
+	{
+		grid-template-columns: auto var(--audioarchive-player-button-size) auto;
+	}
+
+	.audioarchive-custom-player--playlist .audioarchive-custom-player-main
+	{
+		grid-column: 1 / -1;
+	}
+
+	.audioarchive-custom-player--playlist .audioarchive-custom-player-mute-controls
+	{
+		grid-column: 1 / -1;
+		justify-self: end;
+	}
+}

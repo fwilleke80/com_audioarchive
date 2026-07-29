@@ -1,6 +1,6 @@
 <?php
 
-namespace Punga\Component\Audioarchive\Site\View\Soundboard;
+namespace Punga\Component\Audioarchive\Site\View\Playlists;
 
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
@@ -14,7 +14,7 @@ use Punga\Component\Audioarchive\Site\Helper\RouteHelper;
 \defined('_JEXEC') or die;
 
 /**
- * @brief Public browser-local sound board.
+ * @brief Public browser-local playlist manager and player.
  */
 class HtmlView extends BaseHtmlView
 {
@@ -25,28 +25,10 @@ class HtmlView extends BaseHtmlView
 	public string $pageHeading = '';
 
 	/** @var string */
-	public string $streamTemplate = '';
-
-	/** @var string */
-	public string $routesUrl = '';
-
-	/** @var string */
-	public string $canonicalUrl = '';
-
-	/** @var int */
-	public int $padCount = 12;
-
-	/** @var string */
 	public string $returnTitle = '';
 
 	/** @var string */
-	public string $playCountUrl = '';
-
-	/** @var string */
-	public string $playCountToken = '';
-
-	/** @var bool */
-	public bool $polyphonic = true;
+	public string $itemsUrl = '';
 
 	/** @var string */
 	public string $interactionUrl = '';
@@ -54,9 +36,23 @@ class HtmlView extends BaseHtmlView
 	/** @var string */
 	public string $interactionToken = '';
 
+	/** @var string */
+	public string $canonicalUrl = '';
+
+	/** @var string */
+	public string $playCountUrl = '';
+
+	/** @var string */
+	public string $playCountToken = '';
+
+	/** @var int */
+	public int $soundboardPadCount = 12;
+
+	/** @var bool */
+	public bool $soundboardEnabled = true;
 
 	/**
-	 * @brief Display the sound board page.
+	 * @brief Display the playlist page.
 	 *
 	 * @param string|null $tpl Template name.
 	 *
@@ -68,9 +64,9 @@ class HtmlView extends BaseHtmlView
 		$this->params = clone ComponentHelper::getParams('com_audioarchive');
 		$item = $application->getMenu()->getActive();
 
-		if ((int) $this->params->get('enable_soundboard', 1) !== 1)
+		if ((int) $this->params->get('enable_playlists', 1) !== 1)
 		{
-			throw new \Exception(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_DISABLED'), 404);
+			throw new \Exception(Text::_('COM_AUDIOARCHIVE_PLAYLISTS_DISABLED'), 404);
 		}
 
 		if ($item !== null)
@@ -84,12 +80,10 @@ class HtmlView extends BaseHtmlView
 			}
 		}
 
-		$this->padCount = max(4, min(36, (int) $this->params->get('soundboard_pad_count', 12)));
-		$this->polyphonic = (int) $this->params->get('soundboard_polyphony', 1) === 1;
 		$itemId = (int) ($item?->id ?? $application->getInput()->getInt('Itemid', 0));
 		$this->pageHeading = (string) $this->params->get(
 			'page_heading',
-			$item?->title ?? Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_TITLE')
+			$item?->title ?? Text::_('COM_AUDIOARCHIVE_PLAYLISTS_TITLE')
 		);
 		$this->returnTitle = trim((string) ($item?->title ?? ''));
 
@@ -97,26 +91,24 @@ class HtmlView extends BaseHtmlView
 		{
 			$this->returnTitle = $this->pageHeading;
 		}
-		$this->streamTemplate = Route::_(RouteHelper::getPlaybackRoute(987654321, $itemId));
 
-		if (
-			(int) $this->params->get('enable_play_counts', 1) === 1
-			&& (int) $this->params->get('soundboard_record_plays', 1) === 1
-		)
-		{
-			$this->playCountUrl = Route::_(RouteHelper::getPlayCountRoute($itemId));
-			$this->playCountToken = Session::getFormToken();
-		}
-
+		$this->itemsUrl = Route::_(RouteHelper::getPlaylistItemsRoute($itemId));
 		$this->interactionUrl = Route::_(RouteHelper::getInteractionRecordRoute($itemId));
 		$this->interactionToken = Session::getFormToken();
-		$this->routesUrl = Route::_(RouteHelper::getSoundboardRoutesRoute($itemId));
 		$this->canonicalUrl = Route::_(
-			RouteHelper::getSoundboardRoute($itemId),
+			RouteHelper::getPlaylistsRoute($itemId),
 			false,
 			Route::TLS_IGNORE,
 			true
 		);
+		$this->soundboardEnabled = (int) $this->params->get('enable_soundboard', 1) === 1;
+		$this->soundboardPadCount = max(4, min(36, (int) $this->params->get('soundboard_pad_count', 12)));
+
+		if ((int) $this->params->get('enable_play_counts', 1) === 1)
+		{
+			$this->playCountUrl = Route::_(RouteHelper::getPlayCountRoute($itemId));
+			$this->playCountToken = Session::getFormToken();
+		}
 
 		$document = $this->getDocument();
 		$pageTitle = trim((string) $this->params->get('page_title', ''));
@@ -127,7 +119,10 @@ class HtmlView extends BaseHtmlView
 		$document->setMetaData('og:url', $this->canonicalUrl, 'property');
 		$document->getWebAssetManager()
 			->useStyle('com_audioarchive.site')
-			->useScript('com_audioarchive.social');
+			->useStyle('com_audioarchive.player-style')
+			->useScript('com_audioarchive.player')
+			->useScript('com_audioarchive.social')
+			->useScript('com_audioarchive.playlist');
 
 		parent::display($tpl);
 	}

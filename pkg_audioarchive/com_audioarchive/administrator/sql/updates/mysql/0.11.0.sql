@@ -1,0 +1,1 @@
+-- Punga Audio Archive 0.11.0: browser-local playlists require no database changes.

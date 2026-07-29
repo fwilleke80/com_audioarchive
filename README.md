@@ -32,6 +32,7 @@ It is intended for archives ranging from a small collection to several thousand 
     - [Analysis queues and regeneration](#analysis-queues-and-regeneration)
   - [Publishing the public archive](#publishing-the-public-archive)
   - [Publishing a tag directory](#publishing-a-tag-directory)
+  - [Publishing browser-local playlists](#publishing-browser-local-playlists)
   - [Frontend access control](#frontend-access-control)
   - [Frontend clip editing](#frontend-clip-editing)
   - [Public filtering](#public-filtering)
@@ -130,7 +131,7 @@ It is intended for archives ranging from a small collection to several thousand 
 - Mobile cards that preserve readable tag and duration layouts on narrow screens
 - Protected inline playback with HTTP byte-range seeking
 - One shared player implementation used by archive rows, clip pages, modules, content embeds, and backend previews
-- Four player presentations: Minimal, Compact, Default, and Featured
+- Five player presentations: Minimal, Compact, Default, Featured, and Playlist
 - Featured player with switchable waveform and spectrum views
 - Waveform seeking with played/unplayed colouring and a moving playhead
 - Spectrum view with playback-position marker and click-to-seek interaction
@@ -146,6 +147,9 @@ It is intended for archives ranging from a small collection to several thousand 
 - Explicit duplicate-safe merge and confirmed replacement actions for shared boards
 - Direct clip-detail links on occupied Sound Board pads
 - Optional Sound Board play counting and `audio.play` analytics dispatch, configurable globally and per Sound Board menu item
+- Multiple browser-local playlists with create, rename, delete, add/remove, manual ordering, import/export, and sharing
+- Sequential playlist playback through the shared Playlist player presentation
+- Archive **Add to…** menus and dedicated clip-detail playlist actions
 - Clean, menu-aware SEF clip detail URLs
 - Breadcrumb integration
 - Page titles, metadata, canonical routes, and redirects from stale aliases or legacy URLs
@@ -680,6 +684,22 @@ The Tag Directory can:
 
 Clip counts respect the current visitor's access and the category or tag restrictions of the target Archive menu item.
 
+### Publishing browser-local playlists
+
+Create a Joomla menu item and choose:
+
+```text
+Audio Archive → Playlists
+```
+
+The page manages multiple playlists stored entirely in the current browser. Visitors can create, rename, and delete playlists; add or remove clips; move clips up or down to define the manual order; play the list sequentially; export or import JSON files; and share a playlist through a URL fragment. Opening a shared link creates a temporary playlist which can be played without replacing local data, then explicitly saved into the visitor’s playlists.
+
+Archive rows use an **Add to…** menu containing the Sound Board and the visitor’s existing playlists, plus **Create new playlist…**. Clip detail pages retain the separate **Add to Sound Board** action and add **Add to playlist** beside it.
+
+Playlist entries store stable clip UUIDs rather than playback URLs. The Playlists view resolves those UUIDs against the current archive, access levels, publication state, and routing. Removed, unpublished, or inaccessible clips remain identifiable as unavailable entries and can be removed from the local playlist.
+
+The Playlist player is a queue-oriented presentation of the unified player. It adds previous and next controls, displays the current clip and position, and automatically advances to the next accessible clip. The Sound Board remains a separate direct-audio system so its optional polyphonic behaviour is unaffected.
+
 ### Frontend access control
 
 A Joomla menu item's access level only protects that menu item. Joomla components may also be reached directly through routes such as:
@@ -820,6 +840,15 @@ Punga Audio Archive dispatches `onPungaAnalyticsRecord` with these event types:
 | --- | --- |
 | `audio.play` | After the protected play-counter request accepts and counts the first play for that clip during the current page view |
 | `audio.download` | After a GET download request has passed clip, access, and file validation and the download is about to be delivered |
+| `audioarchive.playlist.created` | A browser-local playlist is created |
+| `audioarchive.playlist.deleted` | A browser-local playlist is deleted |
+| `audioarchive.playlist.clip_added` | A clip is added to a playlist |
+| `audioarchive.playlist.clip_removed` | A clip is removed from a playlist |
+| `audioarchive.playlist.play` | A clip starts through the Playlist player, including automatic advancement |
+| `audioarchive.playlist.shared` | Playlist sharing completes through Copy Link or the native share sheet |
+| `audioarchive.playlist.saved_shared` | A received shared playlist is saved locally |
+| `audioarchive.soundboard.play` | A Sound Board voice starts; every successful pad trigger counts, including repeated and overlapping triggers |
+| `audioarchive.soundboard.shared` | Sound Board sharing completes through Copy Link or the native share sheet |
 
 The payload identifies:
 
@@ -847,6 +876,7 @@ Punga Audio Archive has one shared player renderer with four presentations:
 | **Compact** | Play/pause, seek bar, current time, and duration |
 | **Default** | Compact controls plus mute and volume controls |
 | **Featured** | Default controls plus switchable waveform and spectrum views with moving playback position and click-to-seek interaction |
+| **Playlist** | Unified queue player with previous/next controls, current-item metadata, seeking, mute, and automatic continuation |
 
 The archive table and mobile archive cards use the Minimal player. Clip detail pages, backend previews, modules, and content-plugin embeds can use any presentation permitted by their settings.
 

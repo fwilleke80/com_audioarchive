@@ -81,6 +81,7 @@ class ArchiveModel extends ListModel
 		$query = $db->getQuery(true)
 			->select([
 				$db->quoteName('a.id'),
+				$db->quoteName('a.uuid'),
 				$db->quoteName('a.title'),
 				$db->quoteName('a.alias'),
 				$db->quoteName('a.description'),

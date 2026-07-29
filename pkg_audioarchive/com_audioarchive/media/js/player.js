@@ -780,8 +780,9 @@ const initialiseAudioArchivePlayers = () =>
 		audio.hidden = true;
 		ui.hidden = false;
 		player.classList.add('is-enhanced');
-		const title = audio.dataset.clipTitle || '';
-		const clipId = audio.dataset.clipId || '';
+		toggle.disabled = !audio.getAttribute('src') && audio.querySelector('source[src]') === null;
+		const getTitle = () => audio.dataset.clipTitle || '';
+		const getClipId = () => audio.dataset.clipId || '';
 		updateCustomPlayerProgress(player, audio);
 		updateCustomPlayerMuteState(player, audio);
 		initialisePlayerWaveform(player, audio);
@@ -809,7 +810,7 @@ const initialiseAudioArchivePlayers = () =>
 			{
 				setCustomPlayerState(player, false);
 				player.classList.add('has-error');
-				announce(player, 'Error', title);
+				announce(player, 'Error', getTitle());
 				activeAudio = null;
 				activeCustomPlayer = null;
 			}
@@ -847,6 +848,15 @@ const initialiseAudioArchivePlayers = () =>
 			});
 		}
 
+		player.addEventListener('audioarchive:sourcechanged', () =>
+		{
+			stopProgressAnimation(player);
+			setCustomPlayerState(player, false);
+			player.classList.remove('has-error');
+			updateCustomPlayerProgress(player, audio);
+			toggle.disabled = !audio.getAttribute('src') && audio.querySelector('source[src]') === null;
+		});
+
 		audio.addEventListener('loadedmetadata', () => updateCustomPlayerProgress(player, audio));
 		audio.addEventListener('durationchange', () =>
 		{
@@ -876,8 +886,8 @@ const initialiseAudioArchivePlayers = () =>
 			activeCustomPlayer = player;
 			player.classList.remove('has-error');
 			setCustomPlayerState(player, true);
-			recordPlay(player, clipId);
-			announce(player, 'Playing', title);
+			recordPlay(player, getClipId());
+			announce(player, 'Playing', getTitle());
 		});
 
 		audio.addEventListener('playing', () => startProgressAnimation(player, audio));
@@ -911,7 +921,7 @@ const initialiseAudioArchivePlayers = () =>
 
 			if (!audio.ended && audio.currentTime > 0)
 			{
-				announce(player, 'Paused', title);
+				announce(player, 'Paused', getTitle());
 			}
 		});
 
@@ -930,7 +940,7 @@ const initialiseAudioArchivePlayers = () =>
 			stopProgressAnimation(player);
 			setCustomPlayerState(player, false);
 			player.classList.add('has-error');
-			announce(player, 'Error', title);
+			announce(player, 'Error', getTitle());
 			activeAudio = null;
 			activeCustomPlayer = null;
 		});

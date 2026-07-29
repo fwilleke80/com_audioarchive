@@ -17,12 +17,15 @@ $soundboardStyle = StyleHelper::buildSoundboardVariables($this->params);
 	data-audioarchive-return-title="<?php echo $this->escape($this->returnTitle); ?>"
 	data-audioarchive-pad-count="<?php echo $this->padCount; ?>"
 	data-audioarchive-polyphonic="<?php echo $this->polyphonic ? '1' : '0'; ?>"
+	data-audioarchive-record-soundboard-plays="<?php echo (int) $this->params->get('soundboard_record_plays', 1) === 1 ? '1' : '0'; ?>"
 	data-audioarchive-stream-template="<?php echo $this->escape($this->streamTemplate); ?>"
 	<?php if ($this->playCountUrl !== '') : ?>
 		data-audioarchive-play-count-url="<?php echo $this->escape($this->playCountUrl); ?>"
 		data-audioarchive-token-name="<?php echo $this->escape($this->playCountToken); ?>"
 	<?php endif; ?>
 	data-audioarchive-routes-url="<?php echo $this->escape($this->routesUrl); ?>"
+	data-audioarchive-interaction-url="<?php echo $this->escape($this->interactionUrl); ?>"
+	data-audioarchive-interaction-token="<?php echo $this->escape($this->interactionToken); ?>"
 	data-audioarchive-canonical-url="<?php echo $this->escape($this->canonicalUrl); ?>"
 	data-audioarchive-label-empty="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_EMPTY_PAD')); ?>"
 	data-audioarchive-label-playing="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_PLAYING')); ?>"
