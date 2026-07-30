@@ -6,7 +6,7 @@ use Punga\Component\Audioarchive\Site\Helper\StyleHelper;
 \defined('_JEXEC') or die;
 
 $keys = array_merge(range(1, 9), [0], range('A', 'Z'));
-$headerText = trim((string) $this->params->get('soundboard_header_text', ''));
+$introText = trim((string) $this->params->get('soundboard_header_text', ''));
 $soundboardStyle = StyleHelper::buildSoundboardVariables($this->params);
 ?>
 <div
@@ -41,12 +41,13 @@ $soundboardStyle = StyleHelper::buildSoundboardVariables($this->params);
 		<?php if ((int) $this->params->get('show_page_heading', 1) === 1) : ?>
 			<h1><?php echo $this->escape($this->pageHeading); ?></h1>
 		<?php endif; ?>
-		<?php if ($headerText !== '') : ?>
-			<div class="com-audioarchive-soundboard-intro">
-				<?php echo $headerText; ?>
-			</div>
-		<?php endif; ?>
 	</header>
+
+	<?php if ($introText !== '') : ?>
+		<div class="com-audioarchive-intro">
+			<?php echo $introText; ?>
+		</div>
+	<?php endif; ?>
 
 	<p class="visually-hidden" aria-live="polite" data-audioarchive-soundboard-status></p>
 

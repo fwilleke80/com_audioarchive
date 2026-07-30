@@ -94,6 +94,9 @@ class HtmlView extends BaseHtmlView
 	/** @var int */
 	public int $archiveItemId = 0;
 
+	/** @var array<int, object> */
+	public array $relatedClips = [];
+
 	/**
 	 * @brief Display one public clip.
 	 *
@@ -135,6 +138,20 @@ class HtmlView extends BaseHtmlView
 			(array) $application->getIdentity()->getAuthorisedViewLevels()
 		);
 		$this->archiveItemId = $routeItemId;
+
+		$this->relatedClips = $model->getRelatedClips($item);
+
+		foreach ($this->relatedClips as $relatedClip)
+		{
+			$relatedClip->stream_url = Route::_(RouteHelper::getPlaybackRoute((int) $relatedClip->id, $routeItemId));
+			$relatedClip->detail_url = Route::_(RouteHelper::getClipRoute((int) $relatedClip->id, $routeItemId));
+			$relatedClip->share_url = Route::_(
+				RouteHelper::getClipRoute((int) $relatedClip->id, $routeItemId),
+				false,
+				Route::TLS_IGNORE,
+				true
+			);
+		}
 
 		$this->streamUrl = Route::_(RouteHelper::getPlaybackRoute((int) $item->id, $routeItemId));
 		$this->downloadUrl = $this->canDownload

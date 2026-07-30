@@ -49,6 +49,33 @@ class ClipModel extends BaseDatabaseModel
 		return $service->getPublicAnalysis($id, $analysisType);
 	}
 
+
+	/**
+	 * @brief Load clips related to the current public clip.
+	 *
+	 * @param object $clip Current public clip.
+	 *
+	 * @return array<int, object> Related clips.
+	 */
+	public function getRelatedClips(object $clip): array
+	{
+		$params = $this->getResolvedParams();
+
+		if ((int) $params->get('related_show', 1) !== 1)
+		{
+			return [];
+		}
+
+		$service = new PublicMediaService($this->getDatabase(), $params, $this->getCurrentUser());
+
+		return $service->getRelatedClips(
+			$clip,
+			(int) $params->get('related_count', 4),
+			(int) $params->get('related_min_shared_tags', 1),
+			(string) $params->get('related_ranking', 'rare_tags')
+		);
+	}
+
 	/**
 	 * @brief Return global settings with active menu-item overrides.
 	 *

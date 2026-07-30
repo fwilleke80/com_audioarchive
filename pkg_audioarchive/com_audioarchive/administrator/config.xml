@@ -40,7 +40,7 @@
     </fieldset>
 
 
-    <fieldset name="engagement" label="COM_AUDIOARCHIVE_CONFIG_ENGAGEMENT_LABEL">
+    <fieldset name="ratings" label="COM_AUDIOARCHIVE_CONFIG_RATINGS_LABEL">
         <field name="enable_ratings" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_ENABLE_RATINGS_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ENABLE_RATINGS_DESC" default="1">
             <option value="0">JNO</option>
             <option value="1">JYES</option>
@@ -50,31 +50,13 @@
             <option value="registered">COM_AUDIOARCHIVE_RATING_PERMISSION_REGISTERED</option>
             <option value="disabled">COM_AUDIOARCHIVE_RATING_PERMISSION_DISABLED</option>
         </field>
+    </fieldset>
+
+    <fieldset name="playlists" label="COM_AUDIOARCHIVE_CONFIG_PLAYLISTS_LABEL">
         <field name="enable_playlists" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_ENABLE_PLAYLISTS_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ENABLE_PLAYLISTS_DESC" default="1">
             <option value="0">JNO</option>
             <option value="1">JYES</option>
         </field>
-        <field name="enable_soundboard" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_ENABLE_SOUNDBOARD_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ENABLE_SOUNDBOARD_DESC" default="1">
-            <option value="0">JNO</option>
-            <option value="1">JYES</option>
-        </field>
-        <field name="soundboard_pad_count" type="number" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_PAD_COUNT_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_PAD_COUNT_DESC" default="12" min="4" max="36" step="1" showon="enable_soundboard:1" />
-        <field name="soundboard_record_plays" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_RECORD_PLAYS_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_RECORD_PLAYS_DESC" default="1" showon="enable_soundboard:1">
-            <option value="0">JNO</option>
-            <option value="1">JYES</option>
-        </field>
-        <field name="soundboard_polyphony" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_POLYPHONY_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_POLYPHONY_DESC" default="1" showon="enable_soundboard:1">
-            <option value="0">JNO</option>
-            <option value="1">JYES</option>
-        </field>
-        <field name="soundboard_style_note" type="note" class="alert alert-info" label="" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_NOTE_DESC" showon="enable_soundboard:1" />
-        <field name="soundboard_button_background_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_BUTTON_BACKGROUND_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" showon="enable_soundboard:1" />
-        <field name="soundboard_button_text_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_BUTTON_TEXT_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" showon="enable_soundboard:1" />
-        <field name="soundboard_button_border_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_BUTTON_BORDER_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" showon="enable_soundboard:1" />
-    </fieldset>
-
-
-    <fieldset name="playlists" label="COM_AUDIOARCHIVE_CONFIG_PLAYLISTS_LABEL">
         <fieldset name="playlist_list_style" label="COM_AUDIOARCHIVE_CONFIG_PLAYLIST_TABLE_STYLE_LABEL">
             <field name="playlist_list_style_note" type="note" class="alert alert-info" label="" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_NOTE_DESC" />
             <field name="playlist_list_background_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_PLAYLIST_LIST_BACKGROUND_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_PLAYLIST_LIST_BACKGROUND_COLOR_DESC" />
@@ -88,6 +70,28 @@
             <field name="playlist_list_current_row_background_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_PLAYLIST_LIST_CURRENT_ROW_BACKGROUND_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_PLAYLIST_LIST_CURRENT_ROW_BACKGROUND_COLOR_DESC" />
             <field name="playlist_list_tag_background_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_PLAYLIST_LIST_TAG_BACKGROUND_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
             <field name="playlist_list_tag_text_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_PLAYLIST_LIST_TAG_TEXT_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" />
+        </fieldset>
+    </fieldset>
+
+    <fieldset name="soundboards" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARDS_LABEL">
+        <field name="enable_soundboard" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_ENABLE_SOUNDBOARD_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ENABLE_SOUNDBOARD_DESC" default="1">
+            <option value="0">JNO</option>
+            <option value="1">JYES</option>
+        </field>
+        <field name="soundboard_pad_count" type="number" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_PAD_COUNT_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_PAD_COUNT_DESC" default="12" min="4" max="36" step="1" showon="enable_soundboard:1" />
+        <field name="soundboard_record_plays" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_RECORD_PLAYS_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_RECORD_PLAYS_DESC" default="1" showon="enable_soundboard:1">
+            <option value="0">JNO</option>
+            <option value="1">JYES</option>
+        </field>
+        <field name="soundboard_polyphony" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_POLYPHONY_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_POLYPHONY_DESC" default="1" showon="enable_soundboard:1">
+            <option value="0">JNO</option>
+            <option value="1">JYES</option>
+        </field>
+        <fieldset name="soundboard_style" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_STYLE_LABEL">
+            <field name="soundboard_style_note" type="note" class="alert alert-info" label="" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_NOTE_DESC" showon="enable_soundboard:1" />
+            <field name="soundboard_button_background_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_BUTTON_BACKGROUND_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" showon="enable_soundboard:1" />
+            <field name="soundboard_button_text_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_BUTTON_TEXT_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" showon="enable_soundboard:1" />
+            <field name="soundboard_button_border_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_BUTTON_BORDER_COLOR_LABEL" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_DESC" showon="enable_soundboard:1" />
         </fieldset>
     </fieldset>
 
@@ -335,6 +339,25 @@
             <option value="default">COM_AUDIOARCHIVE_PRESENTATION_DEFAULT</option>
             <option value="featured">COM_AUDIOARCHIVE_PRESENTATION_FEATURED</option>
         </field>
+        <fieldset name="related_clips" label="COM_AUDIOARCHIVE_CONFIG_RELATED_SECTION_LABEL">
+            <field name="related_show" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_RELATED_SHOW_LABEL" description="COM_AUDIOARCHIVE_CONFIG_RELATED_SHOW_DESC" default="1">
+                <option value="0">JHIDE</option>
+                <option value="1">JSHOW</option>
+            </field>
+            <field name="related_count" type="number" label="COM_AUDIOARCHIVE_CONFIG_RELATED_COUNT_LABEL" description="COM_AUDIOARCHIVE_CONFIG_RELATED_COUNT_DESC" default="4" min="1" max="24" step="1" showon="related_show:1" />
+            <field name="related_min_shared_tags" type="number" label="COM_AUDIOARCHIVE_CONFIG_RELATED_MIN_TAGS_LABEL" description="COM_AUDIOARCHIVE_CONFIG_RELATED_MIN_TAGS_DESC" default="1" min="1" max="20" step="1" showon="related_show:1" />
+            <field name="related_ranking" type="list" label="COM_AUDIOARCHIVE_CONFIG_RELATED_RANKING_LABEL" description="COM_AUDIOARCHIVE_CONFIG_RELATED_RANKING_DESC" default="rare_tags" validate="options" showon="related_show:1">
+                <option value="rare_tags">COM_AUDIOARCHIVE_RELATED_RANKING_RARE_TAGS</option>
+                <option value="shared_tags">COM_AUDIOARCHIVE_RELATED_RANKING_SHARED_TAGS</option>
+                <option value="same_category">COM_AUDIOARCHIVE_RELATED_RANKING_SAME_CATEGORY</option>
+            </field>
+            <field name="related_style_note" type="note" class="alert alert-info" label="" description="COM_AUDIOARCHIVE_CONFIG_RELATED_STYLE_NOTE_DESC" showon="related_show:1" />
+            <field name="related_show_category" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_RELATED_CATEGORY_LABEL" default="0" showon="related_show:1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+            <field name="related_show_duration" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_RELATED_DURATION_LABEL" default="1" showon="related_show:1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+            <field name="related_show_tags" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_RELATED_TAGS_LABEL" default="1" showon="related_show:1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+            <field name="related_show_share" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_RELATED_SHARE_LABEL" default="1" showon="related_show:1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+            <field name="related_show_add" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_RELATED_ADD_LABEL" default="1" showon="related_show:1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+        </fieldset>
     </fieldset>
 
     <fieldset name="processing" label="COM_AUDIOARCHIVE_CONFIG_PROCESSING_LABEL">
@@ -349,10 +372,6 @@
                 <option value="1024">1024</option>
                 <option value="2048">2048</option>
                 <option value="4096">4096</option>
-            </field>
-            <field name="queue_waveform_after_upload" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_QUEUE_WAVEFORM_UPLOAD_LABEL" description="COM_AUDIOARCHIVE_CONFIG_QUEUE_WAVEFORM_UPLOAD_DESC" default="1" showon="enable_waveform_generation:1">
-                <option value="0">JNO</option>
-                <option value="1">JYES</option>
             </field>
 
         </fieldset>
@@ -383,10 +402,6 @@
             <field name="spectrogram_start_frequency" type="number" label="COM_AUDIOARCHIVE_CONFIG_SPECTROGRAM_START_FREQUENCY_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SPECTROGRAM_START_FREQUENCY_DESC" default="30" min="0" max="200000" step="1" filter="integer" showon="enable_spectrogram_generation:1" />
             <field name="spectrogram_stop_frequency" type="number" label="COM_AUDIOARCHIVE_CONFIG_SPECTROGRAM_STOP_FREQUENCY_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SPECTROGRAM_STOP_FREQUENCY_DESC" default="8000" min="0" max="200000" step="1" filter="integer" showon="enable_spectrogram_generation:1" />
             <field name="spectrogram_dynamic_range" type="number" label="COM_AUDIOARCHIVE_CONFIG_SPECTROGRAM_DYNAMIC_RANGE_LABEL" description="COM_AUDIOARCHIVE_CONFIG_SPECTROGRAM_DYNAMIC_RANGE_DESC" default="80" min="10" max="200" step="1" filter="integer" showon="enable_spectrogram_generation:1" />
-            <field name="queue_spectrogram_after_upload" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_QUEUE_SPECTROGRAM_UPLOAD_LABEL" description="COM_AUDIOARCHIVE_CONFIG_QUEUE_SPECTROGRAM_UPLOAD_DESC" default="1" showon="enable_spectrogram_generation:1">
-                <option value="0">JNO</option>
-                <option value="1">JYES</option>
-            </field>
         </fieldset>
 
         <fieldset name="external_processing" label="COM_AUDIOARCHIVE_CONFIG_PROCESSING_SECTION_LABEL">

@@ -59,7 +59,7 @@ use Joomla\CMS\Language\Text;
             </div>
         </div>
         <div class="d-flex justify-content-end gap-2 mt-4">
-            <button type="button" class="btn btn-secondary" data-joomla-dialog-close><?php echo Text::_('JCANCEL'); ?></button>
+            <button type="button" class="btn btn-secondary" data-joomla-dialog-close data-audioarchive-batch-cancel><?php echo Text::_('JCANCEL'); ?></button>
             <button type="button" class="btn btn-primary" onclick="Joomla.submitbutton('clips.batch')"><?php echo Text::_('JGLOBAL_BATCH_PROCESS'); ?></button>
         </div>
     </div>

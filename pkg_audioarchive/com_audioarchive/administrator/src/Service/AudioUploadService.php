@@ -311,7 +311,7 @@ class AudioUploadService
             throw $exception;
         }
 
-        $this->queueAnalysesAfterUpload($clipId);
+        $this->queueEnabledAnalyses($clipId);
 
         return $file;
     }
@@ -443,7 +443,7 @@ class AudioUploadService
             throw $exception;
         }
 
-        $this->queueAnalysesAfterUpload($clipId);
+        $this->queueEnabledAnalyses($clipId);
         $warnings = [];
         $previousOriginalRetained = (bool) ($prepared['retain_previous_original'] ?? false);
 
@@ -600,7 +600,7 @@ class AudioUploadService
 
         if ($contentChanged)
         {
-            $this->queueAnalysesAfterUpload($clipId);
+            $this->queueEnabledAnalyses($clipId);
         }
 
         return array_values(array_unique(array_filter((array) ($metadata['warnings'] ?? []))));
@@ -889,7 +889,7 @@ class AudioUploadService
     }
 
     /**
-     * @brief Queue enabled analyses after a successful upload or replacement.
+     * @brief Queue every globally enabled analysis after storing an original file.
      *
      * Queue failures are non-fatal because the original file and clip record are
      * already valid and administrators can queue analyses from maintenance.
@@ -898,16 +898,13 @@ class AudioUploadService
      *
      * @return void
      */
-    private function queueAnalysesAfterUpload(int $clipId): void
+    private function queueEnabledAnalyses(int $clipId): void
     {
         $jobs = new AnalysisJobService($this->database, $this->params, $this->user);
 
         try
         {
-            if (
-                (int) $this->params->get('enable_waveform_generation', 1) === 1
-                && (int) $this->params->get('queue_waveform_after_upload', 1) === 1
-            )
+            if ((int) $this->params->get('enable_waveform_generation', 1) === 1)
             {
                 $jobs->queueWaveform($clipId);
             }
@@ -918,10 +915,7 @@ class AudioUploadService
 
         try
         {
-            if (
-                (int) $this->params->get('enable_spectrogram_generation', 1) === 1
-                && (int) $this->params->get('queue_spectrogram_after_upload', 1) === 1
-            )
+            if ((int) $this->params->get('enable_spectrogram_generation', 1) === 1)
             {
                 $jobs->queueSpectrogram($clipId);
             }

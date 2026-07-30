@@ -2,9 +2,10 @@
 
 Punga Audio Archive is a native Joomla! 6 extension package for managing and publishing collections of audio clips.
 
-It is intended for archives ranging from a small collection to several thousand files. Administrators can upload or import clips, organise them with Joomla categories and tags, edit metadata, replace source files in bulk, inspect archive integrity, create portable archive exports, restore or migrate collections, generate waveform and spectral analyses with optional FFmpeg support, control publication and access, and review playback and download statistics. Visitors can search and filter the archive, browse a tag directory, use consistent responsive players throughout the site, move between neighbouring clips, and — where permitted — download the protected original files.
+It is intended for archives ranging from a small collection to several thousand files. Administrators can upload or import clips, organise them with Joomla categories and tags, edit metadata, replace source files in bulk, inspect archive integrity, create portable archive exports, restore or migrate collections, generate waveform and spectral analyses with optional FFmpeg support, control publication and access, and review playback and download statistics. Visitors can search and filter the archive, browse a tag directory, rate clips, use a browser-local Sound Board and playlists, discover related clips through shared tags, use consistent responsive players throughout the site, move between neighbouring clips, and — where permitted — download the protected original files.
 
-> **Package:** `pkg_audioarchive`
+> **Package:** `pkg_audioarchive`  
+> **Documented version:** `0.11.3`
 
 ## Table of contents
 
@@ -32,12 +33,15 @@ It is intended for archives ranging from a small collection to several thousand 
     - [Analysis queues and regeneration](#analysis-queues-and-regeneration)
   - [Publishing the public archive](#publishing-the-public-archive)
   - [Publishing a tag directory](#publishing-a-tag-directory)
+  - [Publishing a Sound Board](#publishing-a-sound-board)
   - [Publishing browser-local playlists](#publishing-browser-local-playlists)
   - [Frontend access control](#frontend-access-control)
   - [Frontend clip editing](#frontend-clip-editing)
   - [Public filtering](#public-filtering)
   - [Archive pagination](#archive-pagination)
   - [Previous and next clip navigation](#previous-and-next-clip-navigation)
+  - [Related clips](#related-clips)
+  - [Ratings](#ratings)
   - [Tags and tag descriptions](#tags-and-tag-descriptions)
   - [Playback and downloads](#playback-and-downloads)
     - [Punga Analytics integration](#punga-analytics-integration)
@@ -87,6 +91,7 @@ It is intended for archives ranging from a small collection to several thousand 
 - Protected audio preview in the clip editor using the shared player system
 - Configurable backend player presentation
 - Manual waveform and spectral-analysis generation or regeneration from the clip editor
+- Automatic queueing of every globally enabled analysis whenever a new original is stored through single creation, bulk upload, directory import, or file replacement
 - Database-backed analysis queues with missing, pending, failed, stale, available, and queued status counts
 - Incremental FFmpeg waveform and spectrum processing with visible progress and retry handling
 - Queue-based full regeneration of every eligible waveform or spectral analysis after generation settings change
@@ -96,6 +101,7 @@ It is intended for archives ranging from a small collection to several thousand 
 - Batch category assignment
 - Batch tag addition, replacement, and clearing
 - Searchable tag selection in batch operations
+- Joomla-compatible Batch Edit dialog with explicit Apply and Cancel behaviour
 - On-demand integrity, codec-inventory, and stale-file checks so the maintenance page opens without scanning the archive
 - Original-file codec, container, extension, clip-count, and storage-size inventory
 - Filtering of maintenance results by audio codec
@@ -113,7 +119,7 @@ It is intended for archives ranging from a small collection to several thousand 
 
 - Searchable and filterable Archive menu-item type
 - Configurable Tag Directory menu-item type
-- Optional menu-item introductory text above Archive filters and Tag Directory contents
+- Optional menu-item introductory text above Archive, Tag Directory, Sound Board, and Playlists contents, using consistent terminology and spacing
 - Text search across clip metadata
 - Category filtering
 - Multiple-tag filtering using selectable logical **AND** or **OR**
@@ -164,6 +170,9 @@ It is intended for archives ranging from a small collection to several thousand 
 - Clickable tag links, with category names available as archive metadata and breadcrumb context
 - Tag descriptions exposed through standard browser hover tooltips
 - Native frontend clip editing for authorised users when Joomla frontend editing is enabled
+- Like/dislike ratings with configurable guest or registered-user permissions
+- Related clips on Clip Detail pages, ranked through shared tags and displayed with the Archive-style responsive table and Minimal unified player
+- Configurable related-clip count, minimum shared tags, ranking strategy, metadata columns, and actions globally and per Archive menu item
 - Joomla publication-date, category, and access-level enforcement
 - English and German site interfaces
 
@@ -185,7 +194,7 @@ The package installs the following Joomla extensions:
 Install the package ZIP rather than installing its individual extension ZIP files separately.
 
 ```text
-pkg_audioarchive_v0-9-5.zip
+pkg_audioarchive_v0-11-3.zip
 ```
 
 ## Requirements and external tools
@@ -208,7 +217,7 @@ Archive export and restore require the PHP ZIP extension and its `ZipArchive` cl
 
 Audio Archive does not bundle FFmpeg or FFprobe executables.
 
-FFmpeg is optional but required for generating waveform peak data and spectral-analysis images. FFprobe is also detected by the System Check, but **Audio Archive 0.9.5 does not use FFprobe for metadata extraction or any other production operation**. Duration, container, codec, embedded title, recording date, and related technical metadata are read by the bundled PHP media inspector.
+FFmpeg is optional but required for generating waveform peak data and spectral-analysis images. FFprobe is also detected by the System Check, but **Punga Audio Archive 0.11.3 does not use FFprobe for metadata extraction or any other production operation**. Duration, container, codec, embedded title, recording date, and related technical metadata are read by the bundled PHP media inspector.
 
 Recommended sources:
 
@@ -261,18 +270,26 @@ Review the following settings before importing the archive:
 - Shared player defaults and styling
 - Clip-detail player presentation
 - Previous and next clip navigation
+- Related clips, ranking, displayed columns, and actions
 - Backend preview player presentation
 - Playback and download settings
+- Ratings and rating permissions
+- Playlist availability and table colours
+- Sound Board availability, pad count, play recording, polyphony, and button colours
 - Clip detail-page fields
 - FFmpeg path and optional FFprobe diagnostic path
-- Waveform and spectrum generation, detail levels, automatic queueing, process timeout, and retry limit
+- Waveform and spectrum generation, detail levels, process timeout, and retry limit
 - Uninstallation media-retention policy
+
+The component options contain dedicated tabs for **Ratings**, **Playlists**, and **Sound Boards**. Playlist table colours are grouped under Playlists; Sound Board behaviour and button colours are grouped under Sound Boards. Related-clip settings form their own subgroup inside **Clip Detail**.
 
 The **Processing** tab is divided into three groups:
 
-- **Clip analysis** — waveform generation, waveform detail, and automatic waveform queueing after upload, import, or replacement
-- **Spectrum generation** — spectral-analysis generation, output detail, intensity scale, frequency scale, minimum and maximum frequency, dynamic range, and automatic queueing
+- **Clip analysis** — waveform generation and waveform detail
+- **Spectrum generation** — spectral-analysis generation, output detail, intensity scale, frequency scale, minimum and maximum frequency, and dynamic range
 - **Processing** — explicit FFmpeg and FFprobe paths, external-process timeout, and maximum processing attempts
+
+There are no separate “queue after upload” switches. Whenever waveform or spectral-analysis generation is enabled globally, the corresponding job is queued automatically after a new original file is stored or an existing original is replaced.
 
 The default spectrum-generation values are:
 
@@ -347,9 +364,9 @@ A clip can contain:
 
 Existing clips include a protected administrator preview using the shared player presentation selected in the component options. Playback from the editor does not increase public play statistics.
 
-When analysis generation is enabled, the edit form provides **Generate waveform** or **Regenerate waveform**, plus **Generate spectral analysis** or **Regenerate spectral analysis**. New uploads can queue either or both analyses automatically.
+When analysis generation is enabled, the edit form provides **Generate waveform** or **Regenerate waveform**, plus **Generate spectral analysis** or **Regenerate spectral analysis**. When waveform or spectral-analysis generation is enabled globally, the corresponding analysis jobs are queued automatically after the original file is stored.
 
-An existing clip can receive a replacement original file from its edit form. The replacement preserves the clip ID, title, alias, category, tags, counters, access level, and public route. Technical metadata is recalculated. Existing waveform and spectral-analysis derivatives are marked stale; a legacy preview record is also marked stale if one exists. When automatic analysis queueing is enabled, a replacement can queue new waveform and spectral-analysis jobs.
+An existing clip can receive a replacement original file from its edit form. The replacement preserves the clip ID, title, alias, category, tags, counters, access level, and public route. Technical metadata is recalculated. Existing waveform and spectral-analysis derivatives are marked stale; a legacy preview record is also marked stale if one exists. A replacement automatically queues every globally enabled analysis after the new original has been stored.
 
 #### Browser bulk upload
 
@@ -363,7 +380,7 @@ The upload view processes files individually and supports shared settings for:
 - Publication state
 - Recording-date override
 
-Each file receives its own progress, result, duplicate warning, and edit link. One failed upload does not stop the remaining queue. When automatic analysis queueing is enabled, each successfully added clip receives the configured waveform and spectral-analysis jobs.
+Each file receives its own progress, result, duplicate warning, and edit link. One failed upload does not stop the remaining queue. Each successfully added clip automatically receives jobs for every globally enabled analysis.
 
 #### Server inbox import
 
@@ -381,7 +398,7 @@ In **Import new clips** mode, the importer can:
 - Override the component duplicate policy for the current import
 - Remove an inbox file after a successful transfer into managed storage
 
-The importer only works inside the configured inbox and does not provide arbitrary filesystem browsing. When automatic analysis queueing is enabled, successfully imported clips receive the configured waveform and spectral-analysis jobs.
+The importer only works inside the configured inbox and does not provide arbitrary filesystem browsing. Successfully imported clips automatically receive jobs for every globally enabled analysis.
 
 #### Bulk replacement of existing files
 
@@ -405,7 +422,7 @@ A successful bulk replacement preserves:
 - Play and download counters
 - Public URL
 
-The old original can either be deleted immediately or retained. Retention is enabled by default because it is safer for large migration runs. Retained originals become unreferenced cleanup candidates on the **Integrity & Maintenance** page. Existing waveform and spectral analyses are marked stale, and automatic analysis queueing can schedule regeneration for the replacement.
+The old original can either be deleted immediately or retained. Retention is enabled by default because it is safer for large migration runs. Retained originals become unreferenced cleanup candidates on the **Integrity & Maintenance** page. Existing waveform and spectral analyses are marked stale, and every globally enabled analysis is queued automatically for the replacement.
 
 Punga Audio Archive does not transcode files itself in this workflow. Conversion is performed externally; the resulting files are then placed in the import inbox and assigned through replacement mode.
 
@@ -588,7 +605,8 @@ The **Spectrum generation** options control:
 - Minimum frequency
 - Maximum frequency
 - Dynamic range
-- Queue spectral analysis after upload
+
+When spectral-analysis generation is enabled, new and replaced originals are queued automatically; there is no separate queue-after-upload option.
 
 The default FFmpeg spectrum parameters are equivalent to:
 
@@ -684,6 +702,20 @@ The Tag Directory can:
 
 Clip counts respect the current visitor's access and the category or tag restrictions of the target Archive menu item.
 
+### Publishing a Sound Board
+
+Create a Joomla menu item and choose:
+
+```text
+Punga Audio Archive → Sound Board
+```
+
+The Sound Board stores its pad assignments in the current browser. It supports configurable pad counts, keyboard shortcuts, removal and clip-detail actions, portable JSON export and import, shareable links, and temporary shared boards that can be merged into or replace the visitor's personal board only after an explicit action.
+
+The menu item can provide optional introductory text and can override the global pad count, play-recording behaviour, and polyphony setting. Global Sound Board options are grouped on the dedicated **Sound Boards** tab, including optional button background, text, and border colours.
+
+When polyphony is enabled, several pad-triggered clips may play concurrently. When **Record Sound Board plays** is enabled and aggregate play counting is active, every successful pad trigger records the clip play and dispatches the configured analytics events.
+
 ### Publishing browser-local playlists
 
 Create a Joomla menu item and choose:
@@ -692,7 +724,9 @@ Create a Joomla menu item and choose:
 Audio Archive → Playlists
 ```
 
-The page manages multiple playlists stored entirely in the current browser. Visitors can create, rename, and delete playlists; add or remove clips; move clips up or down to define the manual order; play the list sequentially; export or import JSON files; and share a playlist through a URL fragment. Opening a shared link creates a temporary playlist which can be played without replacing local data, then explicitly saved into the visitor’s playlists.
+The page can provide optional introductory text and manages multiple playlists stored entirely in the current browser. Visitors can create, rename, and delete playlists; add or remove clips; move clips up or down to define the manual order; play the list sequentially; export or import JSON files; and share a playlist through a URL fragment. Opening a shared link creates a temporary playlist which can be played without replacing local data, then explicitly saved into the visitor’s playlists.
+
+Playlist availability and table colours are configured on the dedicated **Playlists** component-options tab. A Playlists menu item can override the table background, header, text, link, border, alternate-row, hover, currently-playing-row, and tag colours.
 
 Archive rows use an **Add to…** menu containing the Sound Board and the visitor’s existing playlists, plus **Create new playlist…**. Clip detail pages retain the separate **Add to Sound Board** action and add **Add to playlist** beside it.
 
@@ -809,6 +843,35 @@ Clip detail pages can show **Previous** and **Next** links at the bottom of the 
 
 The global **Clip detail → Previous and next clip navigation** setting defaults to **Show**. Each Archive menu item can select **Use Global**, **Show**, or **Hide**.
 
+### Related clips
+
+Clip Detail pages can display a **Related clips** section after the main clip information and before Previous/Next navigation. The section is omitted when no eligible related clips are found.
+
+Related clips must share Joomla tags with the current clip. The current clip is excluded, and candidates must pass the same original-file availability, publication-date, category, ancestor-category, and Joomla access-level checks as other public clip queries.
+
+Available ranking strategies are:
+
+- **Prefer distinctive shared tags** — gives greater weight to tags used by fewer Audio Archive clips, then prefers a larger number of shared tags
+- **Most shared tags first** — ranks primarily by the number of shared tags
+- **Same category first** — prefers clips in the current clip's category, then uses shared-tag count and tag distinctiveness
+
+The global **Clip Detail → Related clips** subgroup controls:
+
+- Whether the section is displayed
+- Maximum number of results
+- Minimum number of shared tags
+- Ranking strategy
+- Category, duration, and tag columns
+- Share and Add actions
+
+Archive menu items can override each setting. Related clips use the same responsive table and mobile-card styling as the Archive list, inherit the Archive list colour options, and render the shared unified player in its Minimal presentation. The Add action follows the globally enabled Sound Board and playlist features.
+
+### Ratings
+
+Punga Audio Archive provides Like and Dislike ratings. The dedicated **Ratings** component-options tab controls whether ratings are enabled and whether voting is available to everyone, registered users only, or nobody.
+
+The Archive table and Clip Detail page can show or hide rating controls independently. Archive menu items can override both display settings. Rating requests use Joomla session and CSRF protection and do not require a separate user account when guest voting is permitted.
+
 ### Tags and tag descriptions
 
 Tags displayed in the Archive, Tag Directory, modules, embedded clips, and clip detail pages link back to the appropriate Archive menu item with the corresponding tag filter applied.
@@ -862,13 +925,13 @@ item_title: current clip title
 
 This lets Punga Analytics present overall Audio plays and Audio downloads as well as item rankings such as Most played clips and Most downloaded clips. The corresponding `audio.play` and `audio.download` event definitions must be enabled in Punga Analytics when its recording policy accepts configured events only.
 
-The corresponding Punga Audio Archive aggregate counter must also be enabled: disabling play counts suppresses `audio.play`, and disabling download counts suppresses `audio.download`. Sound Board plays additionally respect **Record Sound Board plays**, which is available as a global Engagement setting and as an inheritable Sound Board menu-item override. When that option is disabled, Sound Board playback neither increments the clip play counter nor dispatches `audio.play`. Repeated triggers of a clip during the same page view do not create duplicate play events. HEAD requests and playback streams do not generate download events.
+The corresponding Punga Audio Archive aggregate counter must also be enabled: disabling play counts suppresses `audio.play`, and disabling download counts suppresses `audio.download`. Sound Board plays additionally respect **Record Sound Board plays**, which is available on the global **Sound Boards** tab and as an inheritable Sound Board menu-item override. When that option is disabled, Sound Board playback neither increments the clip play counter nor dispatches `audio.play`. Normal unified-player playback is counted once per clip during the current page view, while Sound Board pad triggers are counted individually, including repeated and overlapping triggers. HEAD requests and playback streams do not generate download events.
 
 Listener failures are isolated: Punga Analytics can never block playback or an authorised download, and Punga Audio Archive continues normally when the analytics extension is absent or disabled.
 
 #### Shared player presentations
 
-Punga Audio Archive has one shared player renderer with four presentations:
+Punga Audio Archive has one shared player renderer with five presentations:
 
 | Presentation | Controls |
 | --- | --- |
@@ -878,7 +941,7 @@ Punga Audio Archive has one shared player renderer with four presentations:
 | **Featured** | Default controls plus switchable waveform and spectrum views with moving playback position and click-to-seek interaction |
 | **Playlist** | Unified queue player with previous/next controls, current-item metadata, seeking, mute, and automatic continuation |
 
-The archive table and mobile archive cards use the Minimal player. Clip detail pages, backend previews, modules, and content-plugin embeds can use any presentation permitted by their settings.
+The archive table, mobile archive cards, and Related Clips results use the Minimal player. Clip detail pages, backend previews, modules, and content-plugin embeds can use any presentation permitted by their settings. Playlists use the dedicated Playlist presentation.
 
 The Featured player can display waveform data, spectral data, or both. When both analyses are available, compact **Waveform** and **Spectrum** controls let the visitor switch views. When only one is available, that view is shown directly. When neither is available, the analysis area is omitted and the controls remain usable.
 
@@ -910,7 +973,7 @@ The shared player markup can be replaced with a Joomla template override:
 templates/<template>/html/layouts/com_audioarchive/player/unified.php
 ```
 
-The override is used by archive rows and cards, clip detail pages, Audio Archive modules, and content-plugin embeds. When no override exists, Punga Audio Archive uses its bundled component layout.
+The override is used by archive rows and cards, Related Clips results, clip detail pages, Audio Archive modules, and content-plugin embeds. When no override exists, Punga Audio Archive uses its bundled component layout.
 
 The administrator clip preview uses the same bundled player renderer, but the site-template override above does not currently replace the backend preview layout.
 
@@ -1186,7 +1249,7 @@ Longest and shortest selections use the same public eligibility checks as other 
 
 ### Embedded player presentations
 
-The `layout` attribute selects one of the four shared player presentations:
+The `layout` attribute selects one of the four player presentations supported by content embeds (the queue-oriented Playlist presentation is reserved for the Playlists view):
 
 ```text
 {audioarchive clip=some-clip-alias layout=minimal}

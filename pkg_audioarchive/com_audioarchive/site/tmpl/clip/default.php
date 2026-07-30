@@ -3,13 +3,16 @@
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Layout\LayoutHelper;
+use Punga\Component\Audioarchive\Site\Helper\StyleHelper;
 
 \defined('_JEXEC') or die;
 
 $hasDescription = trim((string) $this->item->description) !== '';
+$clipStyle = StyleHelper::buildArchiveListVariables($this->params);
 ?>
 <article
 	class="com-audioarchive com-audioarchive-clip"
+	<?php if ($clipStyle !== '') : ?>style="<?php echo $this->escape($clipStyle); ?>"<?php endif; ?>
 	data-audioarchive-clip-return
 	data-audioarchive-return-label-template="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_BACK_TO_MENU_ITEM')); ?>"
 	data-audioarchive-status-playing="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_PLAYING')); ?>"
@@ -80,6 +83,8 @@ $hasDescription = trim((string) $this->item->description) !== '';
 			<?php echo $this->loadTemplate('download'); ?>
 		</aside>
 	</div>
+
+	<?php echo $this->loadTemplate('related'); ?>
 
 	<?php echo $this->loadTemplate('navigation'); ?>
 </article>

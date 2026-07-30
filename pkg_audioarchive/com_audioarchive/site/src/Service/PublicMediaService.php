@@ -163,6 +163,142 @@ class PublicMediaService
 		return $item;
 	}
 
+
+	/**
+	 * @brief Load published clips related through shared Joomla tags.
+	 *
+	 * @param object $clip Current public clip including its identifier and category.
+	 * @param int $limit Maximum number of related clips.
+	 * @param int $minimumSharedTags Minimum number of shared tags.
+	 * @param string $ranking Ranking strategy: rare_tags, shared_tags, or same_category.
+	 *
+	 * @return array<int, object> Related public clips.
+	 */
+	public function getRelatedClips(object $clip, int $limit, int $minimumSharedTags, string $ranking): array
+	{
+		$clipId = (int) ($clip->id ?? 0);
+		$categoryId = (int) ($clip->catid ?? 0);
+		$limit = max(1, min(24, $limit));
+		$minimumSharedTags = max(1, min(20, $minimumSharedTags));
+		$ranking = in_array($ranking, ['rare_tags', 'shared_tags', 'same_category'], true)
+			? $ranking
+			: 'rare_tags';
+
+		if ($clipId <= 0)
+		{
+			return [];
+		}
+
+		$database = $this->database;
+		$published = 1;
+		$available = 1;
+		$extension = 'com_audioarchive';
+		$typeAlias = 'com_audioarchive.clip';
+		$fileRole = 'original';
+		$now = Factory::getDate()->toSql();
+		$levels = $this->getAuthorisedViewLevels();
+		$frequencyExpression = '(SELECT COUNT(*) FROM '
+			. $database->quoteName('#__contentitem_tag_map', 'tf')
+			. ' WHERE ' . $database->quoteName('tf.type_alias') . ' = :frequencyTypeAlias'
+			. ' AND ' . $database->quoteName('tf.tag_id') . ' = ' . $database->quoteName('candidateMap.tag_id') . ')';
+		$query = $database->getQuery(true)
+			->select([
+				$database->quoteName('a.id'),
+				$database->quoteName('a.uuid'),
+				$database->quoteName('a.title'),
+				$database->quoteName('a.alias'),
+				$database->quoteName('a.duration_ms'),
+				$database->quoteName('a.catid'),
+				$database->quoteName('a.language'),
+				$database->quoteName('c.title', 'category_title'),
+				$database->quoteName('f.mime_type'),
+				'COUNT(DISTINCT ' . $database->quoteName('candidateMap.tag_id') . ') AS ' . $database->quoteName('shared_tag_count'),
+				'SUM(1.0 / GREATEST(1, ' . $frequencyExpression . ')) AS ' . $database->quoteName('rare_tag_score'),
+			])
+			->from($database->quoteName('#__contentitem_tag_map', 'currentMap'))
+			->innerJoin(
+				$database->quoteName('#__contentitem_tag_map', 'candidateMap')
+				. ' ON ' . $database->quoteName('candidateMap.tag_id') . ' = ' . $database->quoteName('currentMap.tag_id')
+				. ' AND ' . $database->quoteName('candidateMap.type_alias') . ' = :candidateTypeAlias'
+			)
+			->innerJoin(
+				$database->quoteName('#__audioarchive_clips', 'a')
+				. ' ON ' . $database->quoteName('a.id') . ' = ' . $database->quoteName('candidateMap.content_item_id')
+			)
+			->innerJoin(
+				$database->quoteName('#__categories', 'c')
+				. ' ON ' . $database->quoteName('c.id') . ' = ' . $database->quoteName('a.catid')
+			)
+			->innerJoin(
+				$database->quoteName('#__audioarchive_files', 'f')
+				. ' ON ' . $database->quoteName('f.clip_id') . ' = ' . $database->quoteName('a.id')
+				. ' AND ' . $database->quoteName('f.file_role') . ' = :relatedFileRole'
+				. ' AND ' . $database->quoteName('f.is_available') . ' = :relatedAvailable'
+			)
+			->where($database->quoteName('currentMap.content_item_id') . ' = :relatedClipId')
+			->where($database->quoteName('currentMap.type_alias') . ' = :currentTypeAlias')
+			->where($database->quoteName('a.id') . ' <> :excludedClipId')
+			->where($database->quoteName('a.state') . ' = :relatedPublished')
+			->where($database->quoteName('c.published') . ' = :relatedCategoryPublished')
+			->where($database->quoteName('c.extension') . ' = :relatedExtension')
+			->whereIn($database->quoteName('a.access'), $levels, ParameterType::INTEGER)
+			->whereIn($database->quoteName('c.access'), $levels, ParameterType::INTEGER)
+			->extendWhere('AND', [$database->quoteName('a.publish_up') . ' IS NULL', $database->quoteName('a.publish_up') . ' <= :relatedPublishNow'], 'OR')
+			->extendWhere('AND', [$database->quoteName('a.publish_down') . ' IS NULL', $database->quoteName('a.publish_down') . ' >= :relatedUnpublishNow'], 'OR')
+			->group([
+				$database->quoteName('a.id'), $database->quoteName('a.uuid'), $database->quoteName('a.title'),
+				$database->quoteName('a.alias'), $database->quoteName('a.duration_ms'), $database->quoteName('a.catid'),
+				$database->quoteName('a.language'), $database->quoteName('c.title'), $database->quoteName('f.mime_type'),
+			])
+			->having('COUNT(DISTINCT ' . $database->quoteName('candidateMap.tag_id') . ') >= :minimumSharedTags')
+			->bind(':frequencyTypeAlias', $typeAlias, ParameterType::STRING)
+			->bind(':candidateTypeAlias', $typeAlias, ParameterType::STRING)
+			->bind(':currentTypeAlias', $typeAlias, ParameterType::STRING)
+			->bind(':relatedClipId', $clipId, ParameterType::INTEGER)
+			->bind(':excludedClipId', $clipId, ParameterType::INTEGER)
+			->bind(':relatedFileRole', $fileRole, ParameterType::STRING)
+			->bind(':relatedAvailable', $available, ParameterType::INTEGER)
+			->bind(':relatedPublished', $published, ParameterType::INTEGER)
+			->bind(':relatedCategoryPublished', $published, ParameterType::INTEGER)
+			->bind(':relatedExtension', $extension, ParameterType::STRING)
+			->bind(':relatedPublishNow', $now, ParameterType::STRING)
+			->bind(':relatedUnpublishNow', $now, ParameterType::STRING)
+			->bind(':minimumSharedTags', $minimumSharedTags, ParameterType::INTEGER);
+
+		$this->addAncestorCategoryRestrictions($query, 'c', $levels);
+
+		if ($ranking === 'same_category')
+		{
+			$query->order('CASE WHEN ' . $database->quoteName('a.catid') . ' = ' . $categoryId . ' THEN 0 ELSE 1 END ASC');
+			$query->order($database->quoteName('shared_tag_count') . ' DESC');
+			$query->order($database->quoteName('rare_tag_score') . ' DESC');
+		}
+		elseif ($ranking === 'shared_tags')
+		{
+			$query->order($database->quoteName('shared_tag_count') . ' DESC');
+			$query->order($database->quoteName('rare_tag_score') . ' DESC');
+		}
+		else
+		{
+			$query->order($database->quoteName('rare_tag_score') . ' DESC');
+			$query->order($database->quoteName('shared_tag_count') . ' DESC');
+		}
+
+		$query->order($database->quoteName('a.title') . ' ASC');
+		$items = $database->setQuery($query, 0, $limit)->loadObjectList() ?: [];
+		$tagsHelper = new TagsHelper();
+
+		foreach ($items as $item)
+		{
+			$item->tags = TagDescriptionHelper::enrich(
+				$database,
+				$tagsHelper->getItemTags('com_audioarchive.clip', (int) $item->id, true)
+			);
+		}
+
+		return $items;
+	}
+
 	/**
 	 * @brief Load one available derived analysis for an authorised public clip.
 	 *

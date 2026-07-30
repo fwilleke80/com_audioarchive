@@ -6,7 +6,7 @@ use Punga\Component\Audioarchive\Site\Helper\StyleHelper;
 
 \defined('_JEXEC') or die;
 
-$headerText = trim((string) $this->params->get('playlist_header_text', ''));
+$introText = trim((string) $this->params->get('playlist_header_text', ''));
 $audioId = 'audioarchive-playlist-player';
 $playlistStyle = StyleHelper::buildPlaylistListVariables($this->params);
 ?>
@@ -56,12 +56,13 @@ $playlistStyle = StyleHelper::buildPlaylistListVariables($this->params);
 		<?php if ((int) $this->params->get('show_page_heading', 1) === 1) : ?>
 			<h1><?php echo $this->escape($this->pageHeading); ?></h1>
 		<?php endif; ?>
-		<?php if ($headerText !== '') : ?>
-			<div class="com-audioarchive-playlists-intro">
-				<?php echo $headerText; ?>
-			</div>
-		<?php endif; ?>
 	</header>
+
+	<?php if ($introText !== '') : ?>
+		<div class="com-audioarchive-intro">
+			<?php echo $introText; ?>
+		</div>
+	<?php endif; ?>
 
 	<p class="visually-hidden" aria-live="polite" data-audioarchive-playlist-status data-audioarchive-status></p>
 

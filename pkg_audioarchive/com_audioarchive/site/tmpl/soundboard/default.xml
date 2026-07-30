@@ -8,8 +8,8 @@
 			<field
 				name="soundboard_header_text"
 				type="editor"
-				label="COM_AUDIOARCHIVE_SOUNDBOARD_HEADER_TEXT_LABEL"
-				description="COM_AUDIOARCHIVE_SOUNDBOARD_HEADER_TEXT_DESC"
+				label="COM_AUDIOARCHIVE_MENU_INTRO_TEXT_LABEL"
+				description="COM_AUDIOARCHIVE_MENU_INTRO_TEXT_DESC"
 				buttons="true"
 				filter="\Joomla\CMS\Component\ComponentHelper::filterText"
 			/>

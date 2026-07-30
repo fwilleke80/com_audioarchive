@@ -1825,15 +1825,6 @@
 	border-top: 1px solid var(--audioarchive-border);
 }
 
-.com-audioarchive-soundboard-intro
-{
-	margin-top: .75rem;
-}
-
-.com-audioarchive-soundboard-intro > :last-child
-{
-	margin-bottom: 0;
-}
 
 
 .com-audioarchive-soundboard-shared
@@ -2142,10 +2133,6 @@
 }
 
 /* Browser-local playlist manager. */
-.com-audioarchive-playlists-intro
-{
-	margin-bottom: 1rem;
-}
 
 .com-audioarchive-playlist-manager,
 .com-audioarchive-playlist-shared,
@@ -2360,4 +2347,25 @@
 .com-audioarchive-playlist-shared[hidden]
 {
 	display: none !important;
+}
+
+.com-audioarchive-related
+{
+	margin-block: 2rem;
+}
+
+.com-audioarchive-related > h2
+{
+	margin-bottom: 1rem;
+}
+
+.com-audioarchive-related-table .com-audioarchive-actions-cell
+{
+	width: 1%;
+	white-space: nowrap;
+}
+
+.com-audioarchive-related-mobile-list .com-audioarchive-mobile-card-actions
+{
+	justify-content: flex-end;
 }
