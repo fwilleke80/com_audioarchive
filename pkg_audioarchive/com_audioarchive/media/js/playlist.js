@@ -889,6 +889,7 @@ function initialisePlaylistPage()
 	const playerPosition = player?.querySelector('[data-audioarchive-playlist-player-position]');
 	const previousButton = player?.querySelector('[data-audioarchive-playlist-previous]');
 	const nextButton = player?.querySelector('[data-audioarchive-playlist-next]');
+	const rowPlayerTemplate = root.querySelector('[data-audioarchive-playlist-row-player-template]');
 
 	const fragment = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('playlist');
 
@@ -1148,6 +1149,83 @@ function initialisePlaylistPage()
 		updateManager();
 	};
 
+	/**
+	 * Create the playlist-row control from the same unified Minimal player markup
+	 * used by Archive and Related Clips. Playback remains routed through the
+	 * queue player above the list so sequential playback and analytics retain
+	 * their existing behaviour.
+	 *
+	 * @param {object|null} item Resolved clip metadata.
+	 * @param {object} entry Stored playlist entry.
+	 * @param {number} index Playlist position.
+	 * @returns {HTMLElement|HTMLButtonElement} Row playback control.
+	 */
+	function createRowPlayerControl(item, entry, index)
+	{
+		const title = item?.title || entry.title || root.dataset.audioarchiveLabelUnavailable || 'Unavailable clip';
+		const playLabel = root.dataset.audioarchiveLabelPlay || 'Play';
+		const pauseLabel = root.dataset.audioarchiveLabelPause || 'Pause';
+		const isPlaying = entry.uuid === currentUuid && audio instanceof HTMLAudioElement && !audio.paused;
+
+		if (rowPlayerTemplate instanceof HTMLTemplateElement)
+		{
+			const fragment = rowPlayerTemplate.content.cloneNode(true);
+			const rowPlayer = fragment.querySelector('[data-audioarchive-custom-player]');
+			const nativeAudio = rowPlayer?.querySelector('[data-audioarchive-custom-audio]');
+			const ui = rowPlayer?.querySelector('[data-audioarchive-custom-ui]');
+			const toggle = rowPlayer?.querySelector('[data-audioarchive-custom-toggle]');
+			const playIcon = rowPlayer?.querySelector('[data-audioarchive-icon-play]');
+			const pauseIcon = rowPlayer?.querySelector('[data-audioarchive-icon-pause]');
+
+			if (rowPlayer instanceof HTMLElement && ui instanceof HTMLElement && toggle instanceof HTMLButtonElement)
+			{
+				nativeAudio?.remove();
+				rowPlayer.removeAttribute('data-audioarchive-custom-player');
+				rowPlayer.dataset.audioarchivePlaylistRowPlayer = '';
+				rowPlayer.classList.add('is-enhanced');
+				rowPlayer.classList.toggle('is-playing', isPlaying);
+				ui.hidden = false;
+				toggle.removeAttribute('data-audioarchive-custom-toggle');
+				toggle.dataset.action = 'play';
+				toggle.dataset.index = String(index);
+				toggle.disabled = item === null;
+				toggle.setAttribute('aria-controls', audio instanceof HTMLAudioElement ? audio.id : '');
+				toggle.setAttribute('aria-label', `${isPlaying ? pauseLabel : playLabel}: ${title}`);
+				toggle.setAttribute('aria-pressed', isPlaying ? 'true' : 'false');
+				toggle.title = `${isPlaying ? pauseLabel : playLabel}: ${title}`;
+				toggle.dataset.playLabel = `${playLabel}: ${title}`;
+				toggle.dataset.pauseLabel = `${pauseLabel}: ${title}`;
+
+				if (playIcon instanceof HTMLElement)
+				{
+					playIcon.hidden = isPlaying;
+				}
+
+				if (pauseIcon instanceof HTMLElement)
+				{
+					pauseIcon.hidden = !isPlaying;
+				}
+
+				return rowPlayer;
+			}
+		}
+
+		const fallback = document.createElement('button');
+		fallback.type = 'button';
+		fallback.className = 'audioarchive-custom-player-toggle';
+		fallback.dataset.action = 'play';
+		fallback.dataset.index = String(index);
+		fallback.disabled = item === null;
+		fallback.setAttribute('aria-controls', audio instanceof HTMLAudioElement ? audio.id : '');
+		fallback.setAttribute('aria-label', `${isPlaying ? pauseLabel : playLabel}: ${title}`);
+		fallback.setAttribute('aria-pressed', isPlaying ? 'true' : 'false');
+		fallback.title = `${isPlaying ? pauseLabel : playLabel}: ${title}`;
+		fallback.innerHTML = isPlaying
+			? '<span aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M6.5 5h4v14h-4zm7 0h4v14h-4z"/></svg></span>'
+			: '<span aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M8 5.5v13l10-6.5z"/></svg></span>';
+		return fallback;
+	}
+
 	function renderRows()
 	{
 		const playlist = getCurrentPlaylist();
@@ -1205,17 +1283,9 @@ function initialisePlaylistPage()
 			orderCell.appendChild(orderControls);
 
 			const playCell = document.createElement('td');
-			playCell.className = 'com-audioarchive-play-column';
-			const playButton = document.createElement('button');
-			playButton.type = 'button';
-			playButton.className = 'btn btn-sm btn-outline-primary com-audioarchive-playlist-row-play';
-			playButton.dataset.action = 'play';
-			playButton.dataset.index = String(index);
-			playButton.disabled = item === null;
-			playButton.title = root.dataset.audioarchiveLabelPlay || 'Play';
-			playButton.setAttribute('aria-label', `${playButton.title}: ${item?.title || entry.title}`);
-			playButton.textContent = entry.uuid === currentUuid && audio instanceof HTMLAudioElement && !audio.paused ? '❚❚' : '▶';
-			playCell.appendChild(playButton);
+			playCell.className = 'com-audioarchive-play-cell';
+			playCell.dataset.label = root.dataset.audioarchiveLabelPlay || 'Play';
+			playCell.appendChild(createRowPlayerControl(item, entry, index));
 
 			const titleCell = document.createElement('th');
 			titleCell.scope = 'row';

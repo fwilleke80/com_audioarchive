@@ -40,6 +40,7 @@ $playlistStyle = StyleHelper::buildPlaylistListVariables($this->params);
 	data-audioarchive-label-position="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_POSITION')); ?>"
 	data-audioarchive-label-title="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_COLUMN_TITLE')); ?>"
 	data-audioarchive-label-play="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_PLAY_CLIP')); ?>"
+	data-audioarchive-label-pause="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_PAUSE')); ?>"
 	data-audioarchive-label-remove="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_REMOVE_CLIP')); ?>"
 	data-audioarchive-label-move-up="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_MOVE_UP')); ?>"
 	data-audioarchive-label-move-down="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_MOVE_DOWN')); ?>"
@@ -129,6 +130,33 @@ $playlistStyle = StyleHelper::buildPlaylistListVariables($this->params);
 		);
 		?>
 	</section>
+
+	<template data-audioarchive-playlist-row-player-template>
+		<?php
+		echo LayoutHelper::render(
+			'player.unified',
+			[
+				'audioId' => 'audioarchive-playlist-row-player-template',
+				'clipId' => 0,
+				'title' => '',
+				'streamUrl' => '',
+				'mime' => 'application/octet-stream',
+				'params' => $this->params,
+				'presentation' => 'minimal',
+				'labels' => [
+					'play' => Text::_('COM_AUDIOARCHIVE_PLAYLIST_PLAY_CLIP'),
+					'pause' => Text::_('COM_AUDIOARCHIVE_PLAYER_PAUSE'),
+					'fallback' => Text::_('COM_AUDIOARCHIVE_PLAYER_FALLBACK'),
+				],
+			],
+			null,
+			[
+				'component' => 'com_audioarchive',
+				'client' => 0,
+			]
+		);
+		?>
+	</template>
 
 	<div class="com-audioarchive-playlist-empty" data-audioarchive-playlist-empty hidden>
 		<span aria-hidden="true">♪</span>

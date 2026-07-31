@@ -2,8 +2,8 @@
 <extension type="package" method="upgrade">
     <name>Punga Audio Archive Package</name>
     <packagename>audioarchive</packagename>
-    <version>0.11.3</version>
-    <creationDate>2026-07-30</creationDate>
+    <version>0.11.4</version>
+    <creationDate>2026-07-31</creationDate>
     <author>Frank Willeke</author>
     <authorEmail></authorEmail>
     <authorUrl></authorUrl>
