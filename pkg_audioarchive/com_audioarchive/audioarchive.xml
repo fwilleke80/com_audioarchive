@@ -1,8 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <extension type="component" method="upgrade">
     <name>COM_AUDIOARCHIVE</name>
-    <version>0.11.4</version>
-    <creationDate>2026-07-31</creationDate>
+    <version>0.11.8</version>
+    <creationDate>2026-08-02</creationDate>
     <author>Frank Willeke</author>
     <copyright>Copyright (C) 2026 Frank Willeke.</copyright>
     <license>GNU General Public License version 2 or later</license>
@@ -10,37 +10,31 @@
     <element>com_audioarchive</element>
     <namespace path="src">Punga\Component\Audioarchive</namespace>
     <scriptfile>install.php</scriptfile>
-
     <install>
         <sql>
             <file driver="mysql" charset="utf8mb4">sql/install.mysql.utf8mb4.sql</file>
         </sql>
     </install>
-
     <uninstall>
         <sql>
             <file driver="mysql" charset="utf8mb4">sql/uninstall.mysql.utf8mb4.sql</file>
         </sql>
     </uninstall>
-
     <update>
         <schemas>
             <schemapath type="mysql">sql/updates/mysql</schemapath>
         </schemas>
     </update>
-
     <files folder="site">
         <folder>src</folder>
         <folder>tmpl</folder>
         <folder>layouts</folder>
         <folder>forms</folder>
     </files>
-
     <languages folder="site/language">
         <language tag="en-GB">en-GB/com_audioarchive.ini</language>
         <language tag="de-DE">de-DE/com_audioarchive.ini</language>
     </languages>
-
     <administration>
         <menu view="dashboard">COM_AUDIOARCHIVE</menu>
         <submenu>
@@ -67,7 +61,6 @@
             <language tag="de-DE">de-DE/com_audioarchive.sys.ini</language>
         </languages>
     </administration>
-
     <media destination="com_audioarchive" folder="media">
         <filename>joomla.asset.json</filename>
         <folder>css</folder>

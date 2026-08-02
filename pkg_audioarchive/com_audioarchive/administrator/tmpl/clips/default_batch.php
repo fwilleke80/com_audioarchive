@@ -58,6 +58,52 @@ use Joomla\CMS\Language\Text;
                 <small><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_TAGS_HINT'); ?></small>
             </div>
         </div>
+
+        <div class="border-top mt-4 pt-4">
+            <h3 class="h5 mb-2"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_SEARCH_REPLACE_TITLE'); ?></h3>
+            <p class="text-body-secondary mb-3"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_SEARCH_REPLACE_DESC'); ?></p>
+            <div class="row g-3 align-items-end">
+                <div class="col-12 col-md-5">
+                    <label class="form-label" for="audioarchive-batch-title-search"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_TITLE_SEARCH_LABEL'); ?></label>
+                    <input
+                        class="form-control"
+                        id="audioarchive-batch-title-search"
+                        type="text"
+                        name="batch[title_search]"
+                        autocomplete="off"
+                        placeholder="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_BATCH_TITLE_SEARCH_PLACEHOLDER')); ?>"
+                        data-audioarchive-batch-title-search
+                    >
+                </div>
+                <div class="col-12 col-md-5">
+                    <label class="form-label" for="audioarchive-batch-title-replace"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_TITLE_REPLACE_LABEL'); ?></label>
+                    <input
+                        class="form-control"
+                        id="audioarchive-batch-title-replace"
+                        type="text"
+                        name="batch[title_replace]"
+                        autocomplete="off"
+                        placeholder="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_BATCH_TITLE_REPLACE_PLACEHOLDER')); ?>"
+                    >
+                </div>
+                <div class="col-12 col-md-2">
+                    <div class="form-check mb-2">
+                        <input
+                            class="form-check-input"
+                            id="audioarchive-batch-update-alias"
+                            type="checkbox"
+                            name="batch[update_alias]"
+                            value="1"
+                            data-audioarchive-batch-update-alias
+                            disabled
+                        >
+                        <label class="form-check-label" for="audioarchive-batch-update-alias"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_UPDATE_ALIAS_LABEL'); ?></label>
+                    </div>
+                </div>
+            </div>
+            <small class="text-body-secondary"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_SEARCH_REPLACE_HINT'); ?></small>
+        </div>
+
         <div class="d-flex justify-content-end gap-2 mt-4">
             <button type="button" class="btn btn-secondary" data-joomla-dialog-close data-audioarchive-batch-cancel><?php echo Text::_('JCANCEL'); ?></button>
             <button type="button" class="btn btn-primary" onclick="Joomla.submitbutton('clips.batch')"><?php echo Text::_('JGLOBAL_BATCH_PROCESS'); ?></button>

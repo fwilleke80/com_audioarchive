@@ -23,6 +23,7 @@ $codecClips = (array) ($this->report['codec_clips'] ?? []);
 $staleItems = (array) ($this->report['stale_items'] ?? []);
 $waveforms = (array) ($this->report['waveforms'] ?? []);
 $spectrograms = (array) ($this->report['spectrograms'] ?? []);
+$analysisQueue = (array) ($this->report['analysis_queue'] ?? []);
 $archiveZipSupported = (bool) ($this->report['archive_zip_supported'] ?? false);
 $archiveInboxFiles = (array) ($this->report['archive_inbox_files'] ?? []);
 $archiveInspectionState = (array) ($this->report['archive_inspection'] ?? []);
@@ -219,6 +220,11 @@ $checkUrl = static fn(string $check): string => Route::_('index.php?option=com_a
 		data-token-name="<?php echo htmlspecialchars($analysisToken, ENT_QUOTES, 'UTF-8'); ?>"
 		data-progress-template="<?php echo htmlspecialchars(Text::_('COM_AUDIOARCHIVE_ANALYSIS_PROCESS_PROGRESS'), ENT_QUOTES, 'UTF-8'); ?>"
 		data-failure-text="<?php echo htmlspecialchars(Text::_('COM_AUDIOARCHIVE_ANALYSIS_PROCESS_AJAX_FAILED'), ENT_QUOTES, 'UTF-8'); ?>"
+		data-complete-text="<?php echo htmlspecialchars(Text::_('COM_AUDIOARCHIVE_ANALYSIS_PROCESS_COMPLETE'), ENT_QUOTES, 'UTF-8'); ?>"
+		data-state-pending="<?php echo htmlspecialchars(Text::_('COM_AUDIOARCHIVE_ANALYSIS_QUEUE_STATE_PENDING'), ENT_QUOTES, 'UTF-8'); ?>"
+		data-state-processing="<?php echo htmlspecialchars(Text::_('COM_AUDIOARCHIVE_ANALYSIS_QUEUE_STATE_PROCESSING'), ENT_QUOTES, 'UTF-8'); ?>"
+		data-state-finished="<?php echo htmlspecialchars(Text::_('COM_AUDIOARCHIVE_ANALYSIS_QUEUE_STATE_FINISHED'), ENT_QUOTES, 'UTF-8'); ?>"
+		data-state-failed="<?php echo htmlspecialchars(Text::_('COM_AUDIOARCHIVE_ANALYSIS_QUEUE_STATE_FAILED'), ENT_QUOTES, 'UTF-8'); ?>"
 	>
 		<div class="card-header">
 			<h2 class="h4 mb-1"><?php echo Text::_('COM_AUDIOARCHIVE_ANALYSIS_MAINTENANCE_TITLE'); ?></h2>
@@ -343,12 +349,93 @@ $checkUrl = static fn(string $check): string => Route::_('index.php?option=com_a
 					<?php echo Text::_('COM_AUDIOARCHIVE_ANALYSIS_PROCESS_QUEUE'); ?>
 				</button>
 				<div class="flex-grow-1" style="min-width: 16rem;">
-					<div class="progress" role="progressbar" aria-label="<?php echo Text::_('COM_AUDIOARCHIVE_ANALYSIS_PROCESS_PROGRESS_LABEL'); ?>" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-audioarchive-analysis-progress hidden>
+					<div
+						class="progress"
+						role="progressbar"
+						aria-label="<?php echo Text::_('COM_AUDIOARCHIVE_ANALYSIS_PROCESS_PROGRESS_LABEL'); ?>"
+						aria-valuemin="0"
+						aria-valuemax="100"
+						aria-valuenow="0"
+						data-audioarchive-analysis-progress
+						hidden
+					>
 						<div class="progress-bar" style="width: 0%" data-audioarchive-analysis-progress-bar></div>
 					</div>
 					<div class="small text-body-secondary mt-1" data-audioarchive-analysis-status aria-live="polite"></div>
 				</div>
 			</div>
+
+			<section class="border-top pt-4 mt-4">
+				<h3 class="h5 mb-1"><?php echo Text::_('COM_AUDIOARCHIVE_ANALYSIS_QUEUE_LIST_TITLE'); ?></h3>
+				<p class="text-body-secondary"><?php echo Text::_('COM_AUDIOARCHIVE_ANALYSIS_QUEUE_LIST_TEXT'); ?></p>
+
+				<?php if ($analysisQueue === []) : ?>
+					<p class="mb-0 text-body-secondary"><?php echo Text::_('COM_AUDIOARCHIVE_ANALYSIS_QUEUE_EMPTY'); ?></p>
+				<?php else : ?>
+					<div class="table-responsive">
+						<table class="table table-striped table-hover align-middle mb-0">
+							<thead>
+								<tr>
+									<th scope="col" class="text-end"><?php echo Text::_('COM_AUDIOARCHIVE_ANALYSIS_QUEUE_COLUMN_POSITION'); ?></th>
+									<th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_ANALYSIS_QUEUE_COLUMN_CLIP'); ?></th>
+									<th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_ANALYSIS_QUEUE_COLUMN_FILENAME'); ?></th>
+									<th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_ANALYSIS_QUEUE_COLUMN_ANALYSIS'); ?></th>
+									<th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_ANALYSIS_QUEUE_COLUMN_STATE'); ?></th>
+									<th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_ANALYSIS_QUEUE_COLUMN_QUEUED'); ?></th>
+									<th scope="col" class="text-end"><?php echo Text::_('COM_AUDIOARCHIVE_ANALYSIS_QUEUE_COLUMN_ATTEMPTS'); ?></th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php foreach ($analysisQueue as $position => $job) : ?>
+									<?php
+									$clipId = (int) ($job['clip_id'] ?? 0);
+									$clipTitle = trim((string) ($job['clip_title'] ?? ''));
+									$originalFilename = trim((string) ($job['original_filename'] ?? ''));
+									$analysisType = strtolower((string) ($job['analysis_type'] ?? ''));
+									$state = strtolower((string) ($job['state'] ?? 'pending'));
+									$analysisLabel = match ($analysisType)
+									{
+										'waveform' => Text::_('COM_AUDIOARCHIVE_ANALYSIS_QUEUE_TYPE_WAVEFORM'),
+										'spectrogram' => Text::_('COM_AUDIOARCHIVE_ANALYSIS_QUEUE_TYPE_SPECTROGRAM'),
+										default => $analysisType !== '' ? $analysisType : Text::_('COM_AUDIOARCHIVE_ANALYSIS_QUEUE_TYPE_UNKNOWN'),
+									};
+									$stateLabel = $state === 'running'
+										? Text::_('COM_AUDIOARCHIVE_ANALYSIS_QUEUE_STATE_PROCESSING')
+										: Text::_('COM_AUDIOARCHIVE_ANALYSIS_QUEUE_STATE_PENDING');
+									$stateClass = $state === 'running' ? 'bg-warning text-dark' : 'bg-secondary';
+									$clipLabel = $clipTitle !== '' ? $clipTitle : Text::sprintf('COM_AUDIOARCHIVE_ANALYSIS_QUEUE_CLIP_FALLBACK', $clipId);
+									?>
+									<tr
+										class="<?php echo $state === 'running' ? 'table-primary' : ''; ?>"
+										data-audioarchive-analysis-job-id="<?php echo (int) ($job['id'] ?? 0); ?>"
+										data-audioarchive-analysis-job-state="<?php echo htmlspecialchars($state, ENT_QUOTES, 'UTF-8'); ?>"
+									>
+										<td class="text-end"><?php echo (int) $position + 1; ?></td>
+										<td>
+											<?php if ($clipId > 0) : ?>
+												<a href="<?php echo Route::_('index.php?option=com_audioarchive&task=clip.edit&id=' . $clipId); ?>">
+													<?php echo htmlspecialchars($clipLabel, ENT_QUOTES, 'UTF-8'); ?>
+												</a>
+											<?php else : ?>
+												<?php echo htmlspecialchars($clipLabel, ENT_QUOTES, 'UTF-8'); ?>
+											<?php endif; ?>
+										</td>
+										<td class="text-break"><?php echo $originalFilename !== '' ? htmlspecialchars($originalFilename, ENT_QUOTES, 'UTF-8') : '&mdash;'; ?></td>
+										<td><?php echo htmlspecialchars($analysisLabel, ENT_QUOTES, 'UTF-8'); ?></td>
+										<td><span class="badge <?php echo $stateClass; ?>" data-audioarchive-analysis-job-status><?php echo htmlspecialchars($stateLabel, ENT_QUOTES, 'UTF-8'); ?></span></td>
+										<td><?php echo HTMLHelper::_('date', (string) ($job['created'] ?? ''), Text::_('DATE_FORMAT_LC4')); ?></td>
+										<td
+											class="text-end"
+											data-audioarchive-analysis-job-attempts="<?php echo (int) ($job['attempts'] ?? 0); ?>"
+											data-audioarchive-analysis-job-maximum-attempts="<?php echo (int) ($job['maximum_attempts'] ?? 0); ?>"
+										><?php echo (int) ($job['attempts'] ?? 0); ?> / <?php echo (int) ($job['maximum_attempts'] ?? 0); ?></td>
+									</tr>
+								<?php endforeach; ?>
+							</tbody>
+						</table>
+					</div>
+				<?php endif; ?>
+			</section>
 		</div>
 	</div>
 

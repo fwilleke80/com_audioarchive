@@ -75,7 +75,7 @@
       "name": "com_audioarchive.batch",
       "type": "script",
       "uri": "com_audioarchive/batch.js",
-      "version": "0.11.4",
+      "version": "0.11.8",
       "attributes": {
         "type": "module"
       },
@@ -99,7 +99,7 @@
       "name": "com_audioarchive.analysis-maintenance",
       "type": "script",
       "uri": "com_audioarchive/analysis-maintenance.js",
-      "version": "0.11.4",
+      "version": "0.11.7",
       "attributes": {
         "type": "module"
       },

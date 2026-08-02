@@ -212,6 +212,56 @@ final class AnalysisJobService
 	}
 
 	/**
+	 * @brief Return active audio-analysis jobs for the maintenance queue list.
+	 *
+	 * @return array<int, array<string, mixed>> Pending and running analysis jobs.
+	 */
+	public function getQueuedJobs(): array
+	{
+		$query = $this->database->getQuery(true)
+			->select([
+				$this->database->quoteName('j.id'),
+				$this->database->quoteName('j.clip_id'),
+				$this->database->quoteName('j.job_type'),
+				$this->database->quoteName('j.state'),
+				$this->database->quoteName('j.priority'),
+				$this->database->quoteName('j.attempts'),
+				$this->database->quoteName('j.maximum_attempts'),
+				$this->database->quoteName('j.created'),
+				$this->database->quoteName('j.started'),
+				$this->database->quoteName('a.title', 'clip_title'),
+				$this->database->quoteName('a.original_filename'),
+			])
+			->from($this->database->quoteName('#__audioarchive_jobs', 'j'))
+			->leftJoin(
+				$this->database->quoteName('#__audioarchive_clips', 'a')
+				. ' ON ' . $this->database->quoteName('a.id') . ' = ' . $this->database->quoteName('j.clip_id')
+			)
+			->where($this->database->quoteName('j.job_type') . ' LIKE ' . $this->database->quote('generate_analysis_%'))
+			->whereIn($this->database->quoteName('j.state'), ['pending', 'running'], ParameterType::STRING)
+			->order([
+				'CASE WHEN ' . $this->database->quoteName('j.state') . ' = ' . $this->database->quote('running') . ' THEN 0 ELSE 1 END ASC',
+				$this->database->quoteName('j.priority') . ' DESC',
+				$this->database->quoteName('j.created') . ' ASC',
+				$this->database->quoteName('j.id') . ' ASC',
+			]);
+		$jobs = $this->database->setQuery($query)->loadAssocList() ?: [];
+		$prefix = 'generate_analysis_';
+
+		foreach ($jobs as &$job)
+		{
+			$jobType = (string) ($job['job_type'] ?? '');
+			$job['analysis_type'] = str_starts_with($jobType, $prefix)
+				? substr($jobType, strlen($prefix))
+				: '';
+		}
+
+		unset($job);
+
+		return $jobs;
+	}
+
+	/**
 	 * @brief Return status and queue counts for one denormalised analysis type.
 	 *
 	 * @param string $analysisType Stable analysis type.

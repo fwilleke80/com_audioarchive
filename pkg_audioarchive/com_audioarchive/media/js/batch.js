@@ -56,6 +56,40 @@ document.addEventListener('search', (event) =>
 	}
 });
 
+/**
+ * @brief Enable alias regeneration only while a title search is configured.
+ *
+ * @param {HTMLInputElement} search Title search field.
+ *
+ * @return {void}
+ */
+const updateAudioArchiveBatchAliasOption = (search) =>
+{
+	const dialog = search.closest('.com-audioarchive-batch-dialog');
+	const updateAlias = dialog?.querySelector('[data-audioarchive-batch-update-alias]');
+
+	if (!(updateAlias instanceof HTMLInputElement))
+	{
+		return;
+	}
+
+	const enabled = search.value.trim() !== '';
+	updateAlias.disabled = !enabled;
+
+	if (!enabled)
+	{
+		updateAlias.checked = false;
+	}
+};
+
+document.addEventListener('input', (event) =>
+{
+	if (event.target instanceof HTMLInputElement && event.target.matches('[data-audioarchive-batch-title-search]'))
+	{
+		updateAudioArchiveBatchAliasOption(event.target);
+	}
+});
+
 
 /**
  * @brief Close the Joomla inline batch dialog reliably.

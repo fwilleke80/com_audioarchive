@@ -535,7 +535,7 @@ class ClipModel extends AdminModel
 
 
 	/**
-	 * @brief Apply category and tag changes to selected clips.
+	 * @brief Apply category, tag, and title changes to selected clips.
 	 *
 	 * @param int[] $ids Clip identifiers.
 	 * @param array<string, mixed> $batch Batch settings.
@@ -549,8 +549,12 @@ class ClipModel extends AdminModel
 		$applyTags = (int) ($batch['apply_tags'] ?? 0) === 1;
 		$tagMode = ($batch['tag_mode'] ?? 'add') === 'replace' ? 'replace' : 'add';
 		$selectedTags = array_values(array_unique(ArrayHelper::toInteger((array) ($batch['tags'] ?? []))));
+		$titleSearch = trim((string) ($batch['title_search'] ?? ''));
+		$titleReplace = (string) ($batch['title_replace'] ?? '');
+		$replaceTitles = $titleSearch !== '';
+		$updateAliases = $replaceTitles && (int) ($batch['update_alias'] ?? 0) === 1;
 
-		if (!$ids || ($categoryId <= 0 && !$applyTags))
+		if (!$ids || ($categoryId <= 0 && !$applyTags && !$replaceTitles))
 		{
 			$this->setError(Text::_('COM_AUDIOARCHIVE_BATCH_NOTHING_TO_APPLY'));
 			return false;
@@ -575,27 +579,67 @@ class ClipModel extends AdminModel
 		}
 
 		$db = $this->getDatabase();
+		$changedIds = [];
 		$db->transactionStart();
+
 		try
 		{
 			foreach ($ids as $id)
 			{
 				$asset = 'com_audioarchive.clip.' . $id;
+
 				if (!$this->getCurrentUser()->authorise('core.edit', $asset))
 				{
 					throw new \RuntimeException(Text::sprintf('COM_AUDIOARCHIVE_BATCH_EDIT_DENIED', $id));
 				}
 
 				$table = $this->getTable();
+
 				if (!$table->load($id))
 				{
 					throw new \RuntimeException(Text::sprintf('COM_AUDIOARCHIVE_BATCH_CLIP_NOT_FOUND', $id));
 				}
 
-				$tagHelper = new TagsHelper();
-				$tagHelper->typeAlias = $this->typeAlias;
-				$currentTagString = (string) $tagHelper->getTagIds($id, $this->typeAlias);
-				$currentTags = $currentTagString === '' ? [] : ArrayHelper::toInteger(explode(',', $currentTagString));
+				$titleChanged = false;
+
+				if ($replaceTitles)
+				{
+					$replacementCount = 0;
+					$newTitle = str_replace($titleSearch, $titleReplace, (string) $table->title, $replacementCount);
+
+					if ($replacementCount > 0)
+					{
+						$table->title = $newTitle;
+						$titleChanged = true;
+
+						if ($updateAliases)
+						{
+							$table->alias = $this->createUniqueBatchAlias(
+								$newTitle,
+								(string) $table->language,
+								$id
+							);
+						}
+					}
+				}
+
+				if ($categoryId <= 0 && !$applyTags && !$titleChanged)
+				{
+					continue;
+				}
+
+				$tagHelper = null;
+				$currentTags = [];
+
+				if ($applyTags)
+				{
+					$tagHelper = new TagsHelper();
+					$tagHelper->typeAlias = $this->typeAlias;
+					$currentTagString = (string) $tagHelper->getTagIds($id, $this->typeAlias);
+					$currentTags = $currentTagString === ''
+						? []
+						: ArrayHelper::toInteger(explode(',', $currentTagString));
+				}
 
 				if ($categoryId > 0)
 				{
@@ -606,6 +650,7 @@ class ClipModel extends AdminModel
 				$table->modified_by = (int) $this->getCurrentUser()->id;
 				$table->version = max(1, (int) $table->version + 1);
 				$table->clearTagsHelper();
+
 				if (!$table->check() || !$table->store(true))
 				{
 					throw new \RuntimeException($table->getError());
@@ -616,18 +661,33 @@ class ClipModel extends AdminModel
 					$this->updateUcmCategory($id, $categoryId);
 				}
 
-				if ($applyTags)
+				if ($titleChanged)
+				{
+					$this->updateUcmTitle(
+						$id,
+						(string) $table->title,
+						(string) $table->alias,
+						(string) $table->modified,
+						(int) $table->modified_by
+					);
+				}
+
+				if ($applyTags && $tagHelper instanceof TagsHelper)
 				{
 					$finalTags = $tagMode === 'replace'
 						? $selectedTags
 						: array_values(array_unique(array_merge($currentTags, $selectedTags)));
 					$tagHelper->preStoreProcess($table, $finalTags);
+
 					if (!$tagHelper->postStore($table, $finalTags, true))
 					{
 						throw new \RuntimeException(Text::sprintf('COM_AUDIOARCHIVE_BATCH_TAG_STORE_FAILED', $id));
 					}
 				}
+
+				$changedIds[] = $id;
 			}
+
 			$db->transactionCommit();
 		}
 		catch (\Throwable $exception)
@@ -639,7 +699,7 @@ class ClipModel extends AdminModel
 
 		$this->cleanCache();
 
-		foreach ($ids as $id)
+		foreach ($changedIds as $id)
 		{
 			$this->notifyFinderAfterSave($id);
 		}
@@ -729,6 +789,82 @@ class ClipModel extends AdminModel
 				'warning'
 			);
 		}
+	}
+
+
+	/**
+	 * @brief Create a globally unique alias for a title changed by batch editing.
+	 *
+	 * @param string $title Updated clip title.
+	 * @param string $language Clip language code.
+	 * @param int $clipId Clip identifier excluded from duplicate checks.
+	 *
+	 * @return string Unique URL-safe alias.
+	 */
+	private function createUniqueBatchAlias(string $title, string $language, int $clipId): string
+	{
+		$baseAlias = ApplicationHelper::stringURLSafe($title, $language);
+		$baseAlias = $baseAlias !== '' ? $baseAlias : 'clip-' . $clipId;
+		$candidateAlias = mb_substr($baseAlias, 0, 400);
+		$suffix = 2;
+		$db = $this->getDatabase();
+
+		while (true)
+		{
+			$query = $db->getQuery(true)
+				->select('COUNT(*)')
+				->from($db->quoteName('#__audioarchive_clips'))
+				->where($db->quoteName('alias') . ' = :alias')
+				->where($db->quoteName('id') . ' <> :clipId')
+				->bind(':alias', $candidateAlias, ParameterType::STRING)
+				->bind(':clipId', $clipId, ParameterType::INTEGER);
+
+			if ((int) $db->setQuery($query)->loadResult() === 0)
+			{
+				return $candidateAlias;
+			}
+
+			$suffixText = '-' . $suffix++;
+			$candidateAlias = mb_substr($baseAlias, 0, 400 - mb_strlen($suffixText)) . $suffixText;
+		}
+	}
+
+	/**
+	 * @brief Keep Joomla UCM title data aligned after batch search and replace.
+	 *
+	 * @param int $clipId Clip identifier.
+	 * @param string $title Updated title.
+	 * @param string $alias Updated or existing alias.
+	 * @param string $modified Modification timestamp.
+	 * @param int $modifiedBy Modifying user identifier.
+	 *
+	 * @return void
+	 */
+	private function updateUcmTitle(
+		int $clipId,
+		string $title,
+		string $alias,
+		string $modified,
+		int $modifiedBy
+	): void
+	{
+		$db = $this->getDatabase();
+		$typeAlias = $this->typeAlias;
+		$query = $db->getQuery(true)
+			->update($db->quoteName('#__ucm_content'))
+			->set($db->quoteName('core_title') . ' = :title')
+			->set($db->quoteName('core_alias') . ' = :alias')
+			->set($db->quoteName('core_modified_time') . ' = :modified')
+			->set($db->quoteName('core_modified_user_id') . ' = :modifiedBy')
+			->where($db->quoteName('core_content_item_id') . ' = :clipId')
+			->where($db->quoteName('core_type_alias') . ' = :typeAlias')
+			->bind(':title', $title, ParameterType::STRING)
+			->bind(':alias', $alias, ParameterType::STRING)
+			->bind(':modified', $modified, ParameterType::STRING)
+			->bind(':modifiedBy', $modifiedBy, ParameterType::INTEGER)
+			->bind(':clipId', $clipId, ParameterType::INTEGER)
+			->bind(':typeAlias', $typeAlias, ParameterType::STRING);
+		$db->setQuery($query)->execute();
 	}
 
 	/**

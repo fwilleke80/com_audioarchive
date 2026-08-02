@@ -1,12 +1,12 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <extension type="package" method="upgrade">
     <name>Punga Audio Archive Package</name>
     <packagename>audioarchive</packagename>
-    <version>0.11.4</version>
-    <creationDate>2026-07-31</creationDate>
+    <version>0.11.8</version>
+    <creationDate>2026-08-02</creationDate>
     <author>Frank Willeke</author>
-    <authorEmail></authorEmail>
-    <authorUrl></authorUrl>
+    <authorEmail>joomla-plugins@frankwilleke.de</authorEmail>
+    <authorUrl>www.frankwilleke.de</authorUrl>
     <copyright>Copyright (C) 2026 Frank Willeke.</copyright>
     <license>GNU General Public License version 2 or later</license>
     <description>PKG_AUDIOARCHIVE_XML_DESCRIPTION</description>

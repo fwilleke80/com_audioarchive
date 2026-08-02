@@ -68,6 +68,7 @@ class MaintenanceModel extends BaseDatabaseModel
 			'stale_items' => [],
 			'waveforms' => $analysisJobs->getWaveformSummary(),
 			'spectrograms' => $analysisJobs->getSpectrogramSummary(),
+			'analysis_queue' => $analysisJobs->getQueuedJobs(),
 			'archive_zip_supported' => ArchiveImportService::isSupported(),
 			'archive_inbox_files' => ArchiveImportService::isSupported() ? $archiveImport->listInboxArchives() : [],
 			'archive_inspection' => is_array($stagedInspection) ? $stagedInspection : [],
