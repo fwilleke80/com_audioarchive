@@ -76,6 +76,39 @@ $archiveStyle = implode(';', array_filter([
 				<?php endif; ?>
 			</p>
 		<?php endif; ?>
+
+		<?php if ($this->playlistArchiveItemsUrl !== '') : ?>
+			<div class="com-audioarchive-add-all-action">
+				<div
+					class="com-audioarchive-add-to-menu com-audioarchive-add-all-menu"
+					data-audioarchive-add-all-menu
+					data-items-url="<?php echo $this->escape($this->playlistArchiveItemsUrl); ?>"
+					data-interaction-url="<?php echo $this->escape($this->interactionUrl); ?>"
+					data-interaction-token="<?php echo $this->escape($this->interactionToken); ?>"
+					data-label-default-name="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_DEFAULT_NAME')); ?>"
+					data-label-create="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_CREATE_NEW')); ?>"
+					data-label-name-prompt="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_NAME_PROMPT')); ?>"
+					data-label-empty="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_NONE')); ?>"
+					data-label-loading="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_ALL_LOADING')); ?>"
+					data-label-added="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_ALL_ADDED')); ?>"
+					data-label-error="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_ALL_ERROR')); ?>"
+					data-label-storage-error="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_STORAGE_ERROR')); ?>"
+				>
+					<button
+						type="button"
+						class="btn btn-sm btn-outline-secondary com-audioarchive-add-to-toggle"
+						data-audioarchive-add-all-toggle
+						aria-haspopup="menu"
+						aria-expanded="false"
+					>
+						<span class="icon-plus" aria-hidden="true"></span>
+						<?php echo Text::_('COM_AUDIOARCHIVE_PLAYLIST_ADD_ALL'); ?>
+					</button>
+					<div class="com-audioarchive-add-to-popover" data-audioarchive-add-all-popover role="menu" hidden></div>
+				</div>
+				<span class="com-audioarchive-add-all-status" data-audioarchive-add-all-status role="status"></span>
+			</div>
+		<?php endif; ?>
 	</div>
 
 	<?php echo $this->loadTemplate('table'); ?>

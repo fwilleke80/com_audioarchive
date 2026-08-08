@@ -448,6 +448,30 @@ class ArchiveModel extends ListModel
 	}
 
 	/**
+	 * @brief Return every clip in the current filtered result set for playlist insertion.
+	 *
+	 * Pagination is intentionally not applied. The query retains the current
+	 * filters, menu restrictions, access checks, and archive ordering.
+	 *
+	 * @return object[] Ordered lightweight clip identities.
+	 */
+	public function getPlaylistItems(): array
+	{
+		$this->getState();
+		$database = $this->getDatabase();
+		$query = $this->getListQuery();
+		$query
+			->clear('select')
+			->select([
+				$database->quoteName('a.id'),
+				$database->quoteName('a.uuid'),
+				$database->quoteName('a.title'),
+			]);
+
+		return (array) $database->setQuery($query)->loadObjectList();
+	}
+
+	/**
 	 * @brief Return categories available to the public filter.
 	 *
 	 * @return object[]

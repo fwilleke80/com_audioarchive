@@ -9,6 +9,7 @@ use Joomla\CMS\Router\Route;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
 use Punga\Component\Audioarchive\Site\Helper\RouteHelper;
+use Punga\Component\Audioarchive\Site\Model\ArchiveModel;
 use Punga\Component\Audioarchive\Site\Service\ArchiveMenuItemResolver;
 use Punga\Component\Audioarchive\Site\Service\PublicMediaService;
 
@@ -19,6 +20,52 @@ use Punga\Component\Audioarchive\Site\Service\PublicMediaService;
  */
 class PlaylistController extends BaseController
 {
+	/**
+	 * @brief Return every accessible clip in the current Archive result set.
+	 *
+	 * The Archive model applies the same filters, ordering, menu restrictions,
+	 * publication rules, and access checks as the visible result table.
+	 *
+	 * @return void
+	 */
+	public function archiveItems(): void
+	{
+		if (strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET')) !== 'GET')
+		{
+			$this->sendJson(405, ['success' => false, 'items' => []]);
+		}
+
+		try
+		{
+			/** @var ArchiveModel $model */
+			$model = $this->getModel('Archive');
+			$model->setUseExceptions(true);
+
+			if ((int) $model->getResolvedParams()->get('enable_playlists', 1) !== 1)
+			{
+				$this->sendJson(404, ['success' => false, 'items' => []]);
+			}
+
+			$items = array_values(array_map(
+				static fn(object $item): array => [
+					'uuid' => strtolower(trim((string) ($item->uuid ?? ''))),
+					'id' => max(0, (int) ($item->id ?? 0)),
+					'title' => trim((string) ($item->title ?? '')),
+				],
+				$model->getPlaylistItems()
+			));
+
+			$this->sendJson(200, [
+				'success' => true,
+				'items' => $items,
+			]);
+		}
+		catch (\Throwable)
+		{
+			$this->sendJson(500, ['success' => false, 'items' => []]);
+		}
+	}
+
 	/**
 	 * @brief Return metadata and routes for accessible playlist clips.
 	 *

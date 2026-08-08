@@ -97,6 +97,33 @@ abstract class RouteHelper
 	}
 
 	/**
+	 * @brief Return the filtered Archive playlist-items endpoint.
+	 *
+	 * @param int $itemId Optional Archive menu item identifier.
+	 * @param array<string, mixed> $query Public Archive filter and ordering values.
+	 *
+	 * @return string Internal Joomla route.
+	 */
+	public static function getPlaylistArchiveItemsRoute(int $itemId = 0, array $query = []): string
+	{
+		$link = 'index.php?option=com_audioarchive&task=playlist.archiveItems&format=json';
+
+		if ($itemId > 0)
+		{
+			$link .= '&Itemid=' . $itemId;
+		}
+
+		unset($query['limit'], $query['limitstart']);
+		$query['audioarchive_state'] = 1;
+
+		$encodedQuery = http_build_query($query, '', '&', PHP_QUERY_RFC3986);
+		$encodedQuery = str_replace(['%2C', '%3A'], [',', ':'], $encodedQuery);
+		$link .= '&' . $encodedQuery;
+
+		return $link;
+	}
+
+	/**
 	 * @brief Return the endpoint used for optional frontend interaction events.
 	 *
 	 * @param int $itemId Optional active menu item identifier.

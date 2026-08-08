@@ -1,5 +1,6 @@
 const PLAYLIST_STORAGE_KEY = 'com_audioarchive.playlists.v1';
 const PLAYLIST_STORAGE_VERSION = 1;
+const PLAYLIST_RESOLUTION_BATCH_SIZE = 500;
 const SOUNDBOARD_STORAGE_KEY = 'com_audioarchive.soundboard.v1';
 
 /**
@@ -130,11 +131,6 @@ function normalisePlaylist(value, fallbackName = 'Playlist')
 
 		seen.add(item.uuid);
 		items.push(item);
-
-		if (items.length >= 500)
-		{
-			break;
-		}
 	}
 
 	return {id, name, created, modified, items};
@@ -296,6 +292,45 @@ function addClipToPlaylist(playlist, clip)
 	playlist.items.push(clip);
 	playlist.modified = Date.now();
 	return true;
+}
+
+/**
+ * Append multiple clips to one playlist in source order without duplicates.
+ *
+ * @param {object} playlist Target playlist.
+ * @param {Array<{uuid:string,id:number,title:string}>} clips Ordered clip identities.
+ * @returns {number} Number of inserted clips.
+ */
+function addClipsToPlaylist(playlist, clips)
+{
+	if (!playlist)
+	{
+		return 0;
+	}
+
+	const existing = new Set(playlist.items.map((item) => item.uuid));
+	let added = 0;
+
+	for (const candidate of clips)
+	{
+		const clip = normalisePlaylistItem(candidate);
+
+		if (!clip || existing.has(clip.uuid))
+		{
+			continue;
+		}
+
+		existing.add(clip.uuid);
+		playlist.items.push(clip);
+		added++;
+	}
+
+	if (added > 0)
+	{
+		playlist.modified = Date.now();
+	}
+
+	return added;
 }
 
 /**
@@ -485,7 +520,7 @@ function positionPlaylistPopover(toggle, popover)
  */
 function closePlaylistPopovers(retained = null)
 {
-	document.querySelectorAll('[data-audioarchive-add-to-menu], [data-audioarchive-playlist-row-share-menu], [data-audioarchive-playlist-share-menu]').forEach((menu) =>
+	document.querySelectorAll('[data-audioarchive-add-to-menu], [data-audioarchive-add-all-menu], [data-audioarchive-playlist-row-share-menu], [data-audioarchive-playlist-share-menu]').forEach((menu) =>
 	{
 		if (menu === retained)
 		{
@@ -572,7 +607,12 @@ function renderAddToPlaylistChoices(container, menu)
 		button.className = 'com-audioarchive-add-to-option';
 		button.setAttribute('role', 'menuitem');
 		button.disabled = alreadyAdded;
-		button.textContent = `${alreadyAdded ? '✓ ' : ''}${playlist.name}`;
+		const stateIcon = document.createElement('span');
+		stateIcon.setAttribute('aria-hidden', 'true');
+		stateIcon.textContent = alreadyAdded ? '✓' : '';
+		const name = document.createElement('span');
+		name.textContent = playlist.name;
+		button.append(stateIcon, name);
 		button.addEventListener('click', () =>
 		{
 			if (addClipToPlaylist(playlist, clip) && writePlaylistStore(store))
@@ -640,6 +680,336 @@ function renderAddToPlaylistChoices(container, menu)
 		closePlaylistPopovers();
 	});
 	container.appendChild(createButton);
+}
+
+/**
+ * Publish feedback for the Archive playlist bulk action.
+ *
+ * @param {HTMLElement} menu Bulk-action menu.
+ * @param {string} message Feedback text.
+ * @returns {void}
+ */
+function setArchivePlaylistStatus(menu, message)
+{
+	const status = menu.closest('.com-audioarchive-add-all-action')
+		?.querySelector('[data-audioarchive-add-all-status]')
+		|| menu.closest('.com-audioarchive')?.querySelector('[data-audioarchive-status]');
+
+	if (status instanceof HTMLElement)
+	{
+		status.replaceChildren(document.createTextNode(message));
+	}
+}
+
+/**
+ * Format the translated Archive playlist bulk-action result.
+ *
+ * @param {string} template Translated template.
+ * @param {number} count Number of inserted clips.
+ * @param {string} playlistName Target playlist name.
+ * @returns {string} Formatted message.
+ */
+function formatArchivePlaylistResult(template, count, playlistName)
+{
+	return String(template || '%1$d clips added to %2$s.')
+		.replace('%1$d', String(count))
+		.replace('%2$s', playlistName);
+}
+
+/**
+ * Load and normalise all clips in the current filtered Archive result set.
+ *
+ * @param {HTMLElement} menu Bulk-action menu.
+ * @returns {Promise<Array<{uuid:string,id:number,title:string}>>} Ordered clips.
+ */
+async function loadArchivePlaylistItems(menu)
+{
+	if (Array.isArray(menu.audioarchivePlaylistItems))
+	{
+		return menu.audioarchivePlaylistItems;
+	}
+
+	if (menu.audioarchivePlaylistItemsPromise instanceof Promise)
+	{
+		return menu.audioarchivePlaylistItemsPromise;
+	}
+
+	menu.audioarchivePlaylistItemsPromise = (async () =>
+	{
+		const response = await fetch(menu.dataset.itemsUrl || '', {
+			method: 'GET',
+			headers: {
+				'Accept': 'application/json',
+				'X-Requested-With': 'XMLHttpRequest',
+			},
+			credentials: 'same-origin',
+		});
+		const payload = response.ok ? await response.json() : null;
+
+		if (payload?.success !== true || !Array.isArray(payload.items))
+		{
+			throw new Error('Unable to load Archive playlist items.');
+		}
+
+		const items = [];
+		const seen = new Set();
+
+		for (const candidate of payload.items)
+		{
+			const item = normalisePlaylistItem(candidate);
+
+			if (!item || seen.has(item.uuid))
+			{
+				continue;
+			}
+
+			seen.add(item.uuid);
+			items.push(item);
+		}
+
+		menu.audioarchivePlaylistItems = items;
+		return items;
+	})();
+
+	try
+	{
+		return await menu.audioarchivePlaylistItemsPromise;
+	}
+	catch (error)
+	{
+		delete menu.audioarchivePlaylistItemsPromise;
+		throw error;
+	}
+}
+
+/**
+ * Render playlist choices for every clip in the filtered Archive result.
+ *
+ * Existing playlist items remain in place. New clips are appended in the
+ * Archive's current sort order, and clips already present are skipped.
+ *
+ * @param {HTMLElement} container Choice container.
+ * @param {HTMLElement} menu Bulk-action menu.
+ * @param {Array<{uuid:string,id:number,title:string}>} clips Ordered clips.
+ * @returns {void}
+ */
+function renderArchiveAddAllPlaylistChoices(container, menu, clips)
+{
+	const fallbackName = menu.dataset.labelDefaultName || 'My playlist';
+	const store = readPlaylistStore(fallbackName, false);
+	container.replaceChildren();
+
+	for (const playlist of store.playlists)
+	{
+		const existing = new Set(playlist.items.map((item) => item.uuid));
+		const missingCount = clips.reduce(
+			(count, clip) => count + (existing.has(clip.uuid) ? 0 : 1),
+			0
+		);
+		const button = document.createElement('button');
+		button.type = 'button';
+		button.className = 'com-audioarchive-add-to-option';
+		button.setAttribute('role', 'menuitem');
+		button.disabled = missingCount === 0;
+		const stateIcon = document.createElement('span');
+		stateIcon.setAttribute('aria-hidden', 'true');
+		stateIcon.textContent = missingCount === 0 ? '✓' : '';
+		const name = document.createElement('span');
+		name.textContent = playlist.name;
+		const count = document.createElement('span');
+		count.className = 'com-audioarchive-add-to-count';
+		count.textContent = missingCount > 0 ? '+' + missingCount : '';
+		button.append(stateIcon, name, count);
+		button.addEventListener('click', () =>
+		{
+			const added = addClipsToPlaylist(playlist, clips);
+
+			if (added <= 0)
+			{
+				closePlaylistPopovers();
+				return;
+			}
+
+			if (!writePlaylistStore(store))
+			{
+				setArchivePlaylistStatus(
+					menu,
+					menu.dataset.labelStorageError || 'The playlist could not be saved in this browser.'
+				);
+				renderArchiveAddAllPlaylistChoices(container, menu, clips);
+				return;
+			}
+
+			recordPlaylistInteraction(
+				menu.dataset.interactionUrl || '',
+				menu.dataset.interactionToken || '',
+				'audioarchive.playlist.clips_added'
+			);
+			setArchivePlaylistStatus(
+				menu,
+				formatArchivePlaylistResult(
+					menu.dataset.labelAdded,
+					added,
+					playlist.name
+				)
+			);
+			closePlaylistPopovers();
+		});
+		container.appendChild(button);
+	}
+
+	if (store.playlists.length === 0)
+	{
+		const empty = document.createElement('span');
+		empty.className = 'com-audioarchive-add-to-empty';
+		empty.textContent = menu.dataset.labelEmpty || 'No playlists yet.';
+		container.appendChild(empty);
+	}
+
+	const separator = document.createElement('div');
+	separator.className = 'com-audioarchive-add-to-separator';
+	separator.setAttribute('role', 'separator');
+	container.appendChild(separator);
+	const createButton = document.createElement('button');
+	createButton.type = 'button';
+	createButton.className = 'com-audioarchive-add-to-option';
+	createButton.setAttribute('role', 'menuitem');
+	createButton.innerHTML = '<span aria-hidden="true">＋</span><span>'
+		+ (menu.dataset.labelCreate || 'Create new playlist…')
+		+ '</span>';
+	createButton.addEventListener('click', () =>
+	{
+		const requestedName = window.prompt(menu.dataset.labelNamePrompt || 'Playlist name:', fallbackName);
+
+		if (requestedName === null || requestedName.trim() === '')
+		{
+			return;
+		}
+
+		const currentStore = readPlaylistStore(fallbackName, false);
+		const playlist = createPlaylist(currentStore, requestedName);
+		const added = addClipsToPlaylist(playlist, clips);
+
+		if (added <= 0)
+		{
+			return;
+		}
+
+		if (!writePlaylistStore(currentStore))
+		{
+			setArchivePlaylistStatus(
+				menu,
+				menu.dataset.labelStorageError || 'The playlist could not be saved in this browser.'
+			);
+			return;
+		}
+
+		recordPlaylistInteraction(
+			menu.dataset.interactionUrl || '',
+			menu.dataset.interactionToken || '',
+			'audioarchive.playlist.created'
+		);
+		recordPlaylistInteraction(
+			menu.dataset.interactionUrl || '',
+			menu.dataset.interactionToken || '',
+			'audioarchive.playlist.clips_added'
+		);
+		setArchivePlaylistStatus(
+			menu,
+			formatArchivePlaylistResult(
+				menu.dataset.labelAdded,
+				added,
+				playlist.name
+			)
+		);
+		closePlaylistPopovers();
+	});
+	container.appendChild(createButton);
+}
+
+/**
+ * Initialise the filtered Archive playlist bulk action.
+ *
+ * @returns {void}
+ */
+function initialiseArchiveAddAllMenus()
+{
+	document.querySelectorAll('[data-audioarchive-add-all-menu]').forEach((menu) =>
+	{
+		if (menu.dataset.audioarchiveInitialised === '1')
+		{
+			return;
+		}
+
+		menu.dataset.audioarchiveInitialised = '1';
+		const toggle = menu.querySelector('[data-audioarchive-add-all-toggle]');
+		const popover = menu.querySelector('[data-audioarchive-add-all-popover]');
+
+		if (!(toggle instanceof HTMLButtonElement) || !(popover instanceof HTMLElement))
+		{
+			return;
+		}
+
+		toggle.addEventListener('click', async () =>
+		{
+			const open = toggle.getAttribute('aria-expanded') !== 'true';
+			closePlaylistPopovers(open ? menu : null);
+			toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+			popover.hidden = !open;
+
+			if (!open)
+			{
+				return;
+			}
+
+			const loading = document.createElement('span');
+			loading.className = 'com-audioarchive-add-to-empty';
+			loading.setAttribute('role', 'status');
+			loading.textContent = menu.dataset.labelLoading || 'Loading all matching clips…';
+			popover.replaceChildren(loading);
+			positionPlaylistPopover(toggle, popover);
+
+			try
+			{
+				const clips = await loadArchivePlaylistItems(menu);
+
+				if (toggle.getAttribute('aria-expanded') !== 'true')
+				{
+					return;
+				}
+
+				renderArchiveAddAllPlaylistChoices(popover, menu, clips);
+				positionPlaylistPopover(toggle, popover);
+				popover.querySelector('[role="menuitem"]:not(:disabled)')?.focus();
+			}
+			catch (error)
+			{
+				if (toggle.getAttribute('aria-expanded') !== 'true')
+				{
+					return;
+				}
+
+				const message = menu.dataset.labelError || 'The matching clips could not be loaded.';
+				const failure = document.createElement('span');
+				failure.className = 'com-audioarchive-add-to-empty';
+				failure.setAttribute('role', 'alert');
+				failure.textContent = message;
+				popover.replaceChildren(failure);
+				setArchivePlaylistStatus(menu, message);
+				positionPlaylistPopover(toggle, popover);
+			}
+		});
+
+		menu.addEventListener('keydown', (event) =>
+		{
+			if (event.key === 'Escape')
+			{
+				event.preventDefault();
+				closePlaylistPopovers();
+				toggle.focus();
+			}
+		});
+	});
 }
 
 /**
@@ -1402,38 +1772,59 @@ function initialisePlaylistPage()
 
 		try
 		{
-			const body = new URLSearchParams();
-			body.set('uuids', playlist.items.map((item) => item.uuid).join(','));
-			const response = await fetch(root.dataset.audioarchiveItemsUrl || '', {
-				method: 'POST',
-				headers: {
-					'Accept': 'application/json',
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-				},
-				body: body.toString(),
-				credentials: 'same-origin',
-			});
-			const payload = response.ok ? await response.json() : null;
+			const requests = [];
+
+			for (let offset = 0; offset < playlist.items.length; offset += PLAYLIST_RESOLUTION_BATCH_SIZE)
+			{
+				const body = new URLSearchParams();
+				body.set(
+					'uuids',
+					playlist.items
+						.slice(offset, offset + PLAYLIST_RESOLUTION_BATCH_SIZE)
+						.map((item) => item.uuid)
+						.join(',')
+				);
+				requests.push(
+					fetch(root.dataset.audioarchiveItemsUrl || '', {
+						method: 'POST',
+						headers: {
+							'Accept': 'application/json',
+							'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+						},
+						body: body.toString(),
+						credentials: 'same-origin',
+					})
+						.then((response) => response.ok ? response.json() : null)
+						.catch(() => null)
+				);
+			}
+
+			const payloads = await Promise.all(requests);
 
 			if (requestId !== metadataRequest)
 			{
 				return;
 			}
 
-			const items = payload?.success === true && payload.items && typeof payload.items === 'object'
-				? payload.items
-				: {};
+			const storedItems = new Map(playlist.items.map((item) => [item.uuid, item]));
 
-			for (const [uuid, item] of Object.entries(items))
+			for (const payload of payloads)
 			{
-				if (item && typeof item === 'object')
+				const items = payload?.success === true && payload.items && typeof payload.items === 'object'
+					? payload.items
+					: {};
+
+				for (const [uuid, item] of Object.entries(items))
 				{
-					resolvedItems.set(uuid, item);
-					const stored = playlist.items.find((entry) => entry.uuid === uuid);
-					if (stored)
+					if (item && typeof item === 'object')
 					{
-						stored.id = Number.parseInt(item.id, 10) || stored.id;
-						stored.title = String(item.title || stored.title).slice(0, 255);
+						resolvedItems.set(uuid, item);
+						const stored = storedItems.get(uuid);
+						if (stored)
+						{
+							stored.id = Number.parseInt(item.id, 10) || stored.id;
+							stored.title = String(item.title || stored.title).slice(0, 255);
+						}
 					}
 				}
 			}
@@ -1875,6 +2266,7 @@ function initialisePlaylistPage()
 function initialiseAudioArchivePlaylists()
 {
 	initialiseAddToMenus();
+	initialiseArchiveAddAllMenus();
 	initialisePlaylistPage();
 
 	document.addEventListener('click', (event) =>
@@ -1884,7 +2276,7 @@ function initialiseAudioArchivePlaylists()
 			return;
 		}
 
-		if (!event.target.closest('[data-audioarchive-add-to-menu], [data-audioarchive-playlist-row-share-menu], [data-audioarchive-playlist-share-menu]'))
+		if (!event.target.closest('[data-audioarchive-add-to-menu], [data-audioarchive-add-all-menu], [data-audioarchive-playlist-row-share-menu], [data-audioarchive-playlist-share-menu]'))
 		{
 			closePlaylistPopovers();
 		}

@@ -62,6 +62,15 @@ class HtmlView extends BaseHtmlView
 	/** @var string */
 	public string $ratingToken = '';
 
+	/** @var string */
+	public string $playlistArchiveItemsUrl = '';
+
+	/** @var string */
+	public string $interactionUrl = '';
+
+	/** @var string */
+	public string $interactionToken = '';
+
 	/** @var bool */
 	public bool $canRate = false;
 
@@ -130,6 +139,15 @@ class HtmlView extends BaseHtmlView
 			$this->ratingUrl = Route::_(RouteHelper::getRatingRoute($itemId));
 			$this->ratingToken = Session::getFormToken();
 			$this->canRate = $ratingService->canVote();
+		}
+
+		if ((int) $this->params->get('enable_playlists', 1) === 1 && $this->items !== [])
+		{
+			$this->playlistArchiveItemsUrl = Route::_(
+				RouteHelper::getPlaylistArchiveItemsRoute($itemId, $this->getQueryValues())
+			);
+			$this->interactionUrl = Route::_(RouteHelper::getInteractionRecordRoute($itemId));
+			$this->interactionToken = Session::getFormToken();
 		}
 
 		$item = $app->getMenu()->getActive();

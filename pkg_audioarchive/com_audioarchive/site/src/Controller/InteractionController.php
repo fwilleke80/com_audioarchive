@@ -22,6 +22,7 @@ class InteractionController extends BaseController
 		'audioarchive.playlist.created',
 		'audioarchive.playlist.deleted',
 		'audioarchive.playlist.clip_added',
+		'audioarchive.playlist.clips_added',
 		'audioarchive.playlist.clip_removed',
 		'audioarchive.playlist.play',
 		'audioarchive.playlist.shared',
