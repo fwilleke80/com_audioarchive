@@ -34,7 +34,9 @@ $currentSort = (string) $this->state->get('list.ordering', 'uploaded');
 $currentDirection = strtoupper((string) $this->state->get('list.direction', 'DESC'));
 $sortLink = function(string $field) use ($currentSort, $currentDirection): string
 {
-	$direction = $currentSort === $field && $currentDirection === 'ASC' ? 'desc' : 'asc';
+	$direction = $currentSort === $field
+		? ($currentDirection === 'ASC' ? 'desc' : 'asc')
+		: ($field === 'rating' ? 'desc' : 'asc');
 	return $this->buildUrl(['sort' => $field, 'direction' => $direction, 'limitstart' => null], ['limitstart']);
 };
 $ariaSort = static function(string $field) use ($currentSort, $currentDirection): string
@@ -60,6 +62,7 @@ $mobileSortFields = [
 	'duration' => $columns['duration'] ? Text::_('COM_AUDIOARCHIVE_COLUMN_DURATION') : null,
 	'recorded' => $columns['recorded'] ? Text::_('COM_AUDIOARCHIVE_COLUMN_RECORDED') : null,
 	'uploaded' => $columns['uploaded'] ? Text::_('COM_AUDIOARCHIVE_COLUMN_UPLOADED') : null,
+	'rating' => $columns['rating'] ? Text::_('COM_AUDIOARCHIVE_COLUMN_RATING') : null,
 ];
 $mobileSortFields = array_filter($mobileSortFields);
 ?>
@@ -126,7 +129,14 @@ $mobileSortFields = array_filter($mobileSortFields);
 					</th>
 				<?php endif; ?>
 				<?php if ($columns['tags']) : ?><th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_TAGS'); ?></th><?php endif; ?>
-				<?php if ($columns['rating']) : ?><th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_RATING'); ?></th><?php endif; ?>
+				<?php if ($columns['rating']) : ?>
+					<th scope="col" aria-sort="<?php echo $ariaSort('rating'); ?>">
+						<a class="com-audioarchive-sort-link" href="<?php echo $sortLink('rating'); ?>">
+							<span><?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_RATING'); ?></span>
+							<span aria-hidden="true"><?php echo $sortIndicator('rating'); ?></span>
+						</a>
+					</th>
+				<?php endif; ?>
 				<?php if ($columns['actions']) : ?><th scope="col"><span class="visually-hidden"><?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_ACTIONS'); ?></span></th><?php endif; ?>
 			</tr>
 		</thead>

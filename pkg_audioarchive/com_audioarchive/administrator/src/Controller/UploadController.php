@@ -2,14 +2,17 @@
 
 namespace Punga\Component\Audioarchive\Administrator\Controller;
 
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Response\JsonResponse;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
+use Joomla\Database\DatabaseInterface;
 use Punga\Component\Audioarchive\Administrator\Model\ClipModel;
 use Punga\Component\Audioarchive\Administrator\Model\UploadModel;
+use Punga\Component\Audioarchive\Administrator\Service\Analysis\AnalysisJobService;
 
 \defined('_JEXEC') or die;
 
@@ -154,6 +157,56 @@ class UploadController extends BaseController
                 true,
                 $statusCode
             );
+        }
+    }
+
+    /**
+     * @brief Process one queued analysis job for a newly uploaded clip.
+     *
+     * @return void
+     */
+    public function processAnalysisJob(): void
+    {
+        $app = Factory::getApplication();
+
+        try
+        {
+            if (!Session::checkToken('post'))
+            {
+                throw new \RuntimeException(Text::_('JINVALID_TOKEN'), 403);
+            }
+
+            $user = $app->getIdentity();
+
+            if (!$user->authorise('audioarchive.process', 'com_audioarchive'))
+            {
+                throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+            }
+
+            $clipId = $app->getInput()->post->getInt('clip_id');
+
+            if ($clipId <= 0)
+            {
+                throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_ERROR_SAVED_CLIP_NOT_FOUND'), 400);
+            }
+
+            $jobs = new AnalysisJobService(
+                Factory::getContainer()->get(DatabaseInterface::class),
+                ComponentHelper::getParams('com_audioarchive'),
+                $user
+            );
+            $this->sendJson($jobs->processNextForClip($clipId), '', false, 200);
+        }
+        catch (\Throwable $exception)
+        {
+            $statusCode = (int) $exception->getCode();
+
+            if ($statusCode < 400 || $statusCode > 599)
+            {
+                $statusCode = 500;
+            }
+
+            $this->sendJson(null, $exception->getMessage(), true, $statusCode);
         }
     }
 

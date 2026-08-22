@@ -20,7 +20,7 @@ Storage paths that create or replace an original call the shared queueing logic.
 
 ## Processing
 
-The maintenance controller processes jobs incrementally through AJAX requests. Each invocation is bounded to avoid request timeouts. Interrupted running jobs become recoverable after their lock expires.
+The maintenance controller processes the global queue incrementally through AJAX requests. Bulk Upload uses a clip-scoped processing endpoint after its file queue completes, so only analysis jobs belonging to newly uploaded clips are run automatically. Each invocation processes one job to avoid request timeouts. Interrupted running jobs become recoverable after their lock expires.
 
 ## Waveforms
 

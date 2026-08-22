@@ -23,6 +23,7 @@
 				<option value="recorded">COM_AUDIOARCHIVE_FIELD_RECORDING_DATE</option>
 				<option value="title">JGLOBAL_TITLE</option>
 				<option value="duration">COM_AUDIOARCHIVE_FIELD_DURATION</option>
+				<option value="rating">COM_AUDIOARCHIVE_COLUMN_RATING</option>
 			</field>
 			<field name="archive_default_direction" type="list" label="COM_AUDIOARCHIVE_CONFIG_DEFAULT_DIRECTION_LABEL" default="">
 				<option value="">JGLOBAL_USE_GLOBAL</option>

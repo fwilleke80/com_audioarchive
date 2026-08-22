@@ -22,6 +22,8 @@
     const emptyMessage = document.getElementById('audioarchive-bulk-upload-empty');
     const tableWrapper = document.getElementById('audioarchive-bulk-upload-table-wrapper');
     const endpoint = form.dataset.uploadEndpoint || '';
+    const analysisEndpoint = form.dataset.analysisEndpoint || '';
+    const analysisStatus = document.getElementById('audioarchive-bulk-upload-analysis-status');
     const tokenName = form.dataset.tokenName || '';
     const jobs = [];
     let running = false;
@@ -499,6 +501,125 @@
     });
 
     /**
+     * @brief Process the analysis jobs queued for newly uploaded clips.
+     *
+     * @param {object[]} uploadedJobs Successfully uploaded jobs from this run.
+     * @returns {Promise<void>} Completion promise.
+     */
+    const processUploadedAnalyses = async (uploadedJobs) =>
+    {
+        if (analysisEndpoint === '' || tokenName === '' || uploadedJobs.length === 0)
+        {
+            return;
+        }
+
+        let processed = 0;
+        let failed = 0;
+
+        if (analysisStatus instanceof HTMLElement)
+        {
+            analysisStatus.hidden = false;
+        }
+
+        try
+        {
+            for (const job of uploadedJobs)
+            {
+                const clipId = Number.parseInt(String(job.result?.clip_id || 0), 10) || 0;
+
+                if (clipId <= 0)
+                {
+                    continue;
+                }
+
+                if (analysisStatus instanceof HTMLElement)
+                {
+                    analysisStatus.textContent = translate(
+                        'COM_AUDIOARCHIVE_BULK_UPLOAD_ANALYSIS_PROCESSING',
+                        'Processing waveform and spectral analyses for %s…'
+                    ).replace('%s', String(job.result?.title || job.file.name));
+                }
+
+                while (true)
+                {
+                    const body = new URLSearchParams();
+                    body.set(tokenName, '1');
+                    body.set('clip_id', String(clipId));
+                    const response = await fetch(analysisEndpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        credentials: 'same-origin',
+                        body: body.toString(),
+                    });
+                    const payload = await response.json();
+
+                    if (!response.ok || payload.success === false)
+                    {
+                        throw new Error(
+                            payload.message
+                            || response.statusText
+                            || String(response.status)
+                        );
+                    }
+
+                    const result = payload.data || {};
+
+                    if (result.processed !== true)
+                    {
+                        break;
+                    }
+
+                    processed += 1;
+
+                    if (result.success !== true)
+                    {
+                        failed += 1;
+                    }
+
+                    if ((Number.parseInt(String(result.remaining || 0), 10) || 0) <= 0)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            if (analysisStatus instanceof HTMLElement)
+            {
+                if (processed > 0)
+                {
+                    analysisStatus.textContent = translate(
+                        'COM_AUDIOARCHIVE_BULK_UPLOAD_ANALYSIS_COMPLETE',
+                        'Automatic analysis finished: %1$d processed, %2$d failed.'
+                    )
+                        .replace('%1$d', String(processed))
+                        .replace('%2$d', String(failed));
+                }
+                else
+                {
+                    analysisStatus.hidden = true;
+                    analysisStatus.textContent = '';
+                }
+            }
+        }
+        catch (error)
+        {
+            if (analysisStatus instanceof HTMLElement)
+            {
+                const message = error instanceof Error ? error.message : String(error);
+                const failureTemplate = translate(
+                    'COM_AUDIOARCHIVE_BULK_UPLOAD_ANALYSIS_FAILED',
+                    'Automatic analysis processing stopped: %s. Remaining jobs stay queued.'
+                );
+                analysisStatus.textContent = failureTemplate.replace('%s', message);
+                analysisStatus.classList.add('text-danger');
+            }
+        }
+    };
+
+    /**
      * @brief Process all pending jobs sequentially.
      *
      * @returns {Promise<void>} Queue completion promise.
@@ -518,6 +639,14 @@
         batchMetadata = readBatchMetadata();
         running = true;
         updateControls();
+        const uploadedJobs = [];
+
+        if (analysisStatus instanceof HTMLElement)
+        {
+            analysisStatus.hidden = true;
+            analysisStatus.textContent = '';
+            analysisStatus.classList.remove('text-danger');
+        }
 
         while (true)
         {
@@ -529,7 +658,14 @@
             }
 
             await uploadJob(job);
+
+            if (job.state === 'complete' && Number.parseInt(String(job.result?.clip_id || 0), 10) > 0)
+            {
+                uploadedJobs.push(job);
+            }
         }
+
+        await processUploadedAnalyses(uploadedJobs);
 
         running = false;
         batchMetadata = null;

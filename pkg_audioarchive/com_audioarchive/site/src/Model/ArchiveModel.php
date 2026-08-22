@@ -64,6 +64,7 @@ class ArchiveModel extends ListModel
 				'duration', 'a.duration_ms',
 				'recorded', 'a.recorded_at',
 				'uploaded', 'a.uploaded_at',
+				'rating', 'rating_up',
 			];
 		}
 
@@ -324,6 +325,9 @@ class ArchiveModel extends ListModel
 			'duration' => $db->quoteName('a.duration_ms'),
 			'recorded' => $db->quoteName('a.recorded_at'),
 			'uploaded' => $db->quoteName('a.uploaded_at'),
+			'rating' => '(SELECT COUNT(*) FROM ' . $db->quoteName('#__audioarchive_ratings', 'rs')
+				. ' WHERE ' . $db->quoteName('rs.clip_id') . ' = ' . $db->quoteName('a.id')
+				. ' AND ' . $db->quoteName('rs.vote') . ' = 1)',
 		];
 		$sort = (string) $this->getState('list.ordering', 'uploaded');
 		$direction = strtoupper((string) $this->getState('list.direction', 'DESC')) === 'ASC' ? 'ASC' : 'DESC';
@@ -849,7 +853,7 @@ class ArchiveModel extends ListModel
 		{
 			'uploaded_at' => 'uploaded',
 			'recorded_at' => 'recorded',
-			default => in_array($ordering, ['title', 'duration', 'recorded', 'uploaded'], true) ? $ordering : 'uploaded',
+			default => in_array($ordering, ['title', 'duration', 'recorded', 'uploaded', 'rating'], true) ? $ordering : 'uploaded',
 		};
 	}
 
@@ -1048,7 +1052,7 @@ class ArchiveModel extends ListModel
 		$this->setState('filter.uploaded_from_sql', $this->parseDate($uploadedFromInput, false, 'COM_AUDIOARCHIVE_FILTER_UPLOADED_FROM_INVALID'));
 		$this->setState('filter.uploaded_to_sql', $this->parseDate($uploadedToInput, true, 'COM_AUDIOARCHIVE_FILTER_UPLOADED_TO_INVALID'));
 
-		$allowedOrdering = ['title', 'duration', 'recorded', 'uploaded'];
+		$allowedOrdering = ['title', 'duration', 'recorded', 'uploaded', 'rating'];
 		$defaultOrdering = $this->getDefaultOrdering($params);
 		$requestedOrdering = trim((string) ($source['sort'] ?? $defaultOrdering));
 		$resolvedOrdering = in_array($requestedOrdering, $allowedOrdering, true) ? $requestedOrdering : $defaultOrdering;

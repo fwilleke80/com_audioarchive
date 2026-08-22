@@ -7,7 +7,8 @@ Open **Components → Punga Audio Archive → Upload** to add several files thro
 1. Select or drag audio files into the upload view.
 2. Choose shared category, tags, access level, publication state, and optional recording-date override.
 3. Start the upload queue.
-4. Review the per-file result and edit link.
+4. Wait while enabled waveform and spectral analyses are generated automatically.
+5. Review the per-file result and edit link.
 
 Files are processed individually. A failed file does not invalidate the rest of the batch.
 
@@ -17,7 +18,7 @@ Each file is checked against configured extension, MIME-type, size, duration, an
 
 ## Automatic analyses
 
-Every successfully stored clip receives jobs for all globally enabled analysis types. The upload request does not run FFmpeg synchronously; jobs are processed from the maintenance queue.
+Every successfully stored clip receives jobs for all globally enabled analysis types. After the file queue has finished, the Bulk Upload page automatically processes those jobs one at a time and reports the result. If processing is interrupted or fails, unprocessed jobs remain available in the maintenance queue.
 
 ## Server limits
 

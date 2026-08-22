@@ -200,6 +200,7 @@
                 <option value="uploaded_at">COM_AUDIOARCHIVE_FIELD_UPLOAD_DATE</option>
                 <option value="recorded_at">COM_AUDIOARCHIVE_FIELD_RECORDING_DATE</option>
                 <option value="title">JGLOBAL_TITLE</option>
+                <option value="rating">COM_AUDIOARCHIVE_COLUMN_RATING</option>
             </field>
             <field
                 name="default_direction"

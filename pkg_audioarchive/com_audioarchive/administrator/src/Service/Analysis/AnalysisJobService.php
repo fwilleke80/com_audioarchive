@@ -355,15 +355,48 @@ final class AnalysisJobService
 	 */
 	public function processNext(): array
 	{
+		return $this->processNextJob(null);
+	}
+
+	/**
+	 * @brief Process the next pending analysis job for one clip.
+	 *
+	 * @param int $clipId Clip identifier.
+	 *
+	 * @return array<string, mixed> Processing result.
+	 */
+	public function processNextForClip(int $clipId): array
+	{
+		if ($clipId <= 0)
+		{
+			return [
+				'processed' => false,
+				'success' => true,
+				'remaining' => 0,
+			];
+		}
+
+		return $this->processNextJob($clipId);
+	}
+
+	/**
+	 * @brief Claim and process the next pending analysis job in a requested scope.
+	 *
+	 * @param int|null $clipId Optional clip restriction.
+	 *
+	 * @return array<string, mixed> Processing result.
+	 */
+	private function processNextJob(?int $clipId): array
+	{
 		$this->releaseExpiredJobs();
-		$job = $this->claimNextJob();
+		$job = $this->claimNextJob($clipId);
 
 		if ($job === null)
 		{
 			return [
 				'processed' => false,
 				'success' => true,
-				'remaining' => 0,
+				'remaining' => $this->countPending($clipId),
 			];
 		}
 
@@ -420,7 +453,7 @@ final class AnalysisJobService
 			'clip_id' => (int) $job->clip_id,
 			'clip_title' => (string) ($job->clip_title ?? ''),
 			'message' => $message,
-			'remaining' => $this->countPending(),
+			'remaining' => $this->countPending($clipId),
 		];
 	}
 
@@ -588,9 +621,11 @@ final class AnalysisJobService
 	/**
 	 * @brief Atomically claim the next pending analysis job.
 	 *
+	 * @param int|null $clipId Optional clip restriction.
+	 *
 	 * @return object|null Claimed job.
 	 */
-	private function claimNextJob(): ?object
+	private function claimNextJob(?int $clipId = null): ?object
 	{
 		$this->database->transactionStart();
 
@@ -614,6 +649,14 @@ final class AnalysisJobService
 					$this->database->quoteName('j.created') . ' ASC',
 					$this->database->quoteName('j.id') . ' ASC',
 				]);
+
+			if ($clipId !== null)
+			{
+				$query
+					->where($this->database->quoteName('j.clip_id') . ' = :clipId')
+					->bind(':clipId', $clipId, ParameterType::INTEGER);
+			}
+
 			$job = $this->database->setQuery($query, 0, 1)->loadObject();
 
 			if (!is_object($job))
@@ -693,15 +736,24 @@ final class AnalysisJobService
 	/**
 	 * @brief Count pending analysis jobs.
 	 *
+	 * @param int|null $clipId Optional clip restriction.
+	 *
 	 * @return int Pending jobs.
 	 */
-	private function countPending(): int
+	private function countPending(?int $clipId = null): int
 	{
 		$query = $this->database->getQuery(true)
 			->select('COUNT(*)')
 			->from($this->database->quoteName('#__audioarchive_jobs'))
 			->where($this->database->quoteName('state') . ' = ' . $this->database->quote('pending'))
 			->where($this->database->quoteName('job_type') . ' LIKE ' . $this->database->quote('generate_analysis_%'));
+
+		if ($clipId !== null)
+		{
+			$query
+				->where($this->database->quoteName('clip_id') . ' = :clipId')
+				->bind(':clipId', $clipId, ParameterType::INTEGER);
+		}
 
 		return (int) $this->database->setQuery($query)->loadResult();
 	}

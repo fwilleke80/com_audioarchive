@@ -2,6 +2,17 @@
 
 Notable changes to Punga Audio Archive are recorded here.
 
+## 0.11.12 — 2026-08-22
+
+- Fixed Clip Detail Previous/Next navigation when the Archive is ordered by rating. The navigation query now orders by the underlying positive-rating expression instead of a SELECT alias that is removed by the compact navigation query.
+
+## 0.11.11 — 2026-08-22
+
+- Fixed the untranslated Actions heading in the Bulk Upload queue.
+- Added Archive sorting by positive rating count, including Rating as a configurable default order.
+- Replaced the informal Batch Edit Search & Replace placeholders with neutral examples.
+- Automatically processes waveform and spectral-analysis jobs queued for newly bulk-uploaded clips.
+
 ## 0.11.4 — 2026-07-31
 
 - Changed playlist-row play controls to use the same unified Minimal player control as Archive and Related Clips rows.
