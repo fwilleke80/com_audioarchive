@@ -23,7 +23,13 @@ Check the job error, FFmpeg availability, analysis directory permissions, timeou
 
 ## Audio does not play on one browser
 
-Browser support depends on the original container and codec. Punga Audio Archive 0.11.4 streams originals and does not generate compatibility playback previews. The authorised original may still be downloadable.
+Browser support depends on the original container and codec. Punga Audio Archive 0.11.20 streams originals and does not generate compatibility playback previews. The authorised original may still be downloadable.
+
+## An external MIDI keyboard is unavailable
+
+Web MIDI requires a browser that implements the API and a secure HTTPS page. Current desktop Chrome, Edge, and Firefox can provide MIDI access after the visitor grants permission. Safari does not expose Web MIDI, but the onscreen and computer keyboards remain available.
+
+On iPhone and iPad, use the onscreen keyboard. Silent mode can still affect browser audio output depending on the browser and iOS audio policy.
 
 ## Seeking does not work
 

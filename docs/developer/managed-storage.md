@@ -18,7 +18,7 @@ Originals are mandatory and preserved. Replacing an original updates its file re
 
 ## Derived data
 
-Waveforms and spectra are optional. Missing, failed, or stale analyses do not block publication or playback. Derivatives are delivered through protected analysis controllers.
+Waveforms, spectrograms, and frequency profiles are optional. Missing, failed, or stale analyses do not block publication or playback. Derivatives are delivered through protected analysis controllers.
 
 ## Cleanup
 

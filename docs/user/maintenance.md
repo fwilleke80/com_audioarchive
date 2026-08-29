@@ -22,7 +22,7 @@ Current referenced originals are never stale-file cleanup candidates. Before del
 
 ## Analysis queues
 
-Separate waveform and spectral-analysis summaries report available, missing, pending, failed, stale, queued, and recorded storage totals.
+Separate waveform, spectrogram, and frequency-profile summaries report available, missing, pending, failed, stale, queued, and recorded storage totals.
 
 Actions include queue missing, queue stale, retry failed, regenerate all, and delete all analysis data.
 

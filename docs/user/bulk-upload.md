@@ -7,7 +7,7 @@ Open **Components → Punga Audio Archive → Upload** to add several files thro
 1. Select or drag audio files into the upload view.
 2. Choose shared category, tags, access level, publication state, and optional recording-date override.
 3. Start the upload queue.
-4. Wait while enabled waveform and spectral analyses are generated automatically.
+4. Wait while enabled waveform, spectrogram, and frequency-profile analyses are generated automatically.
 5. Review the per-file result and edit link.
 
 Files are processed individually. A failed file does not invalidate the rest of the batch.

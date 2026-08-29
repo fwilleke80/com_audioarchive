@@ -26,7 +26,7 @@ Common placeholders:
 {audioarchive playtime}
 ```
 
-Use `layout=minimal|compact|default|featured` to select a supported embedded player presentation. Featured players can use `dataview=waveform|spectrum`.
+Use `layout=minimal|compact|default|featured` to select a supported embedded player presentation. Featured players can use `dataview=waveform|spectrum|profile`.
 
 Count and playtime placeholders can be restricted with a comma-separated `category` value.
 

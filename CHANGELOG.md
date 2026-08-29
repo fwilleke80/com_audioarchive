@@ -2,6 +2,50 @@
 
 Notable changes to Punga Audio Archive are recorded here.
 
+## 0.11.20 — 2026-08-28
+
+- Added **Save as playlist** to the Sound Board, preserving occupied pad order and resolving numeric clip IDs to stable playlist UUIDs.
+- Added **Load into Sound Board** to playlists, preserving playlist order, omitting inaccessible clips, respecting the configured pad count, and confirming before replacing an occupied board.
+- Made both conversion controls respect the global Playlists and Sound Board feature switches.
+- Added analytics events for conversions between playlists and Sound Boards.
+
+## 0.11.19 — 2026-08-28
+
+- Fixed chromatic sampler playback in iPhone Safari by caching decoded buffers and starting ready Web Audio voices synchronously from the user gesture.
+
+## 0.11.18 — 2026-08-28
+
+- Added explicit Web Audio unlocking during chromatic-mode and onscreen-key interactions for stricter mobile browsers.
+
+## 0.11.17 — 2026-08-28
+
+- Added Audio Session handling for chromatic sampler playback on supported mobile browsers.
+
+## 0.11.16 — 2026-08-28
+
+- Replaced per-pad sampler buttons with one Sound Board mode switch for **Pad trigger** and **Chromatic keyboard** modes.
+- In chromatic mode, selecting an occupied pad chooses its clip as the sampler sound.
+
+## 0.11.15 — 2026-08-28
+
+- Restored the standard nested fieldsets in the Sound Boards component-options tab, separating general behaviour from styling.
+- Made the onscreen keyboard appear automatically in chromatic mode and reduced its height while retaining the full available width.
+- Changed number keys 1–9 and 0 to select sampler pads while chromatic mode is active.
+- Improved Web MIDI availability, HTTPS, and browser-support messages.
+
+## 0.11.14 — 2026-08-28
+
+- Added a velocity-sensitive polyphonic chromatic sampler to the Sound Board with MIDI note C4 as the original pitch.
+- Added Web MIDI input and an onscreen piano with computer-key mappings and octave switching.
+- Added a global option to enable or disable sampler functionality independently of the Sound Board.
+- Made the global Sound Board switch consistently hide Sound Board pages and Add to Sound Board actions.
+
+## 0.11.13 — 2026-08-22
+
+- Added protected averaged Frequency Profiles generated with the existing FFmpeg/FFT analysis pipeline.
+- Integrated Frequency Profiles into automatic queueing, maintenance, Clip editing, archive export/restore, and the unified Featured player.
+- Added Frequency Profile generation and colour options, with player controls shown only when profile data exists.
+
 ## 0.11.12 — 2026-08-22
 
 - Fixed Clip Detail Previous/Next navigation when the Archive is ordered by rating. The navigation query now orders by the underlying positive-rating expression instead of a SELECT alias that is removed by the compact navigation query.

@@ -28,7 +28,7 @@ Optional arguments:
 
 ```bash
 python3 build_package.py --source /path/to/pkg_audioarchive
-python3 build_package.py --output /path/to/pkg_audioarchive_v0-11-4.zip
+python3 build_package.py --output /path/to/pkg_audioarchive_v0-11-20.zip
 ```
 
 The script:

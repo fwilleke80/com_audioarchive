@@ -10,7 +10,7 @@ Punga Audio Archive is a Joomla package containing one component, two site modul
 - Database tables and schema migrations
 - Managed media and analysis storage
 - Public Archive, Tag Directory, Clip Detail, Sound Board, Playlists, and frontend edit views
-- Protected playback, download, waveform, and spectrum endpoints
+- Protected playback, download, waveform, spectrogram, and frequency-profile endpoints
 - Ratings, interactions, routing, menu resolution, and access enforcement
 
 The component follows Joomla MVC conventions with separate administrator and site trees.
@@ -36,3 +36,4 @@ The component follows Joomla MVC conventions with separate administrator and sit
 - Progressive enhancement for player and frontend interactions
 - No runtime CDN dependencies
 - External analysis performed through bounded, retryable jobs
+- Browser-local personal collections, with server resolution used only to enforce current clip visibility and stable identity

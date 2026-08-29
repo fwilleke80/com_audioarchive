@@ -1,6 +1,6 @@
 # Database schema
 
-Punga Audio Archive 0.11.4 uses these component tables:
+Punga Audio Archive 0.11.20 uses these component tables:
 
 - `#__audioarchive_clips`
 - `#__audioarchive_files`
@@ -13,7 +13,7 @@ Joomla core tables provide categories, tags and tag mappings, assets and ACL, ac
 
 ## Clips
 
-The clips table stores public metadata, publication and access fields, duration and dates, stable UUID, aggregate counters, analysis status, technical metadata, and Joomla bookkeeping fields.
+The clips table stores public metadata, publication and access fields, duration and dates, stable UUID, aggregate counters, waveform/spectrogram/frequency-profile status, technical metadata, and Joomla bookkeeping fields.
 
 ## Files
 
@@ -21,7 +21,7 @@ The files table records managed original and optional legacy preview variants, i
 
 ## Analyses
 
-Waveform data has a compatibility-specific waveform table, while the generic analyses table stores typed derived analysis records such as spectral data. The implementation shares repository and job services across analysis types.
+Waveform data has a compatibility-specific waveform table, while the generic analyses table stores typed derived records such as spectrograms and frequency profiles. The implementation shares repository and job services across analysis types.
 
 ## Jobs
 

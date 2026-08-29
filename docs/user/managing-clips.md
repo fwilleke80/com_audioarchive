@@ -13,13 +13,13 @@ A clip can contain:
 - Access level and publication state/dates
 - Original audio file and extracted technical metadata
 - Play, download, and rating data
-- Waveform and spectral-analysis status
+- Waveform, spectrogram, and frequency-profile status
 
 ## Creating one clip
 
 Select **New**, upload the original, and complete the metadata form. Audio information such as duration, codec, container, file size, embedded title, and recording date is extracted where available.
 
-If waveform or spectral-analysis generation is enabled globally, the corresponding jobs are queued automatically after the original is stored.
+If waveform, spectrogram, or frequency-profile generation is enabled globally, the corresponding jobs are queued automatically after the original is stored.
 
 ## Editing and replacing
 

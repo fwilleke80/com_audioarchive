@@ -23,4 +23,6 @@ Properties:
 
 Sound Board assignments and playlists are stored in browser storage. Shared boards and playlists are encoded in URL fragments, so the fragment is not sent to the server as part of the HTTP request.
 
-Playlist entries use stable clip UUIDs and are resolved server-side before rendering playable data.
+Sound Board entries contain the numeric clip IDs required by direct playback. Playlist entries use stable clip UUIDs and are resolved server-side before rendering playable data.
+
+Conversion from a Sound Board to a playlist resolves occupied pad IDs to public clip UUIDs. Conversion from a playlist to a Sound Board uses the playlist page's resolved public metadata. Both directions preserve source order, skip inaccessible clips, and write only browser-local storage.

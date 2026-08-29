@@ -14,7 +14,7 @@ This guide is for Joomla administrators, site owners, and authorised editors.
 - [Managing clips](managing-clips.md)
 - [Browser bulk upload](bulk-upload.md)
 - [Directory import and bulk replacement](directory-import.md)
-- [Waveforms and spectral analyses](analyses.md)
+- [Waveforms, spectrograms, and frequency profiles](analyses.md)
 - [Integrity and maintenance](maintenance.md)
 - [Archive export and restore](backup-and-restore.md)
 

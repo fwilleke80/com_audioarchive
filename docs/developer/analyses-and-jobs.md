@@ -6,7 +6,7 @@ Administrator analysis services live under:
 com_audioarchive/administrator/src/Service/Analysis/
 ```
 
-The subsystem includes generator interfaces/results, repository access, job management, waveform generation, and spectrogram generation.
+The subsystem includes generator interfaces/results, repository access, job management, waveform generation, spectrogram generation, and averaged frequency-profile generation.
 
 ## Job lifecycle
 
@@ -29,6 +29,10 @@ The maintenance controller processes the global queue incrementally through AJAX
 ## Spectra
 
 `SpectrogramGeneratorService` invokes FFmpeg with configured output dimensions, intensity/frequency scales, frequency range, and dynamic range.
+
+## Frequency profiles
+
+`FrequencyProfileGeneratorService` uses FFmpeg spectrum data and the shared analysis infrastructure to calculate averaged, normalised frequency bins plus peak-frequency and spectral-centroid metadata. The profile is stored as protected JSON through the generic analysis repository.
 
 ## Failure behaviour
 

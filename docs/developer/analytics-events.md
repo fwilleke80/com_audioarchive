@@ -9,6 +9,7 @@ Punga Audio Archive optionally dispatches Joomla events named `onPungaAnalyticsR
 | `audio.play` | A protected play-count request accepted the first ordinary play for a clip in the current page view, or an enabled Sound Board trigger was recorded |
 | `audio.download` | An authorised GET download is about to be delivered |
 | `audioarchive.playlist.created` | A browser-local playlist was created |
+| `audioarchive.playlist.created_from_soundboard` | A Sound Board was saved as a playlist |
 | `audioarchive.playlist.deleted` | A playlist was deleted |
 | `audioarchive.playlist.clip_added` | A clip was added |
 | `audioarchive.playlist.clip_removed` | A clip was removed |
@@ -16,6 +17,7 @@ Punga Audio Archive optionally dispatches Joomla events named `onPungaAnalyticsR
 | `audioarchive.playlist.shared` | Sharing completed |
 | `audioarchive.playlist.saved_shared` | A received playlist was saved locally |
 | `audioarchive.soundboard.play` | A Sound Board voice started |
+| `audioarchive.soundboard.loaded_from_playlist` | A playlist was loaded into the Sound Board |
 | `audioarchive.soundboard.shared` | Sound Board sharing completed |
 
 ## Clip payload
@@ -32,6 +34,6 @@ item_title: current clip title
 
 ## Counting rules
 
-Ordinary unified-player play recording is de-duplicated per clip during the current page view. Sound Board triggers are counted individually when Sound Board recording is enabled, including repeated and overlapping voices.
+Ordinary unified-player play recording is de-duplicated per clip during the current page view. Sound Board triggers are counted individually when Sound Board recording is enabled, including repeated and overlapping voices. Chromatic sampler events use `play_source` values such as `midi`, `computer_keyboard`, and `onscreen_keyboard`, with validated MIDI note and velocity fields when available.
 
 HEAD requests and playback streams do not create download events. Disabling the corresponding aggregate counter suppresses its standard play/download event.

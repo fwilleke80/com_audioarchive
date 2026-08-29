@@ -16,8 +16,15 @@ Playlists are stored entirely in the current browser. A visitor can maintain mul
 - JSON import and export
 - Share through URL fragments
 - Save a received temporary playlist locally
+- Load the current playlist into the Sound Board
 
 Playlist entries store stable clip UUIDs rather than playback URLs. The page resolves those UUIDs against the current archive, publication state, access levels, and routing. Removed or inaccessible clips remain identifiable and can be removed.
+
+## Sound Board conversion
+
+When the Sound Board is enabled, **Load into Sound Board** copies available playlist clips into pads in playlist order. It skips removed or inaccessible clips and stops at the configured Sound Board pad count. If the current board contains clips, replacement requires confirmation.
+
+Loading a playlist stores the current resolved numeric clip IDs required by Sound Board playback. The reverse action, **Save as playlist**, is available on the Sound Board when Playlists are enabled.
 
 ## Players
 

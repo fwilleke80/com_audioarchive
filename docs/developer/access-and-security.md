@@ -32,7 +32,7 @@ Only administrator-controlled executable paths are used. Arguments are supplied 
 
 ## Public interaction endpoints
 
-Play counts, ratings, playlist resolution, Sound Board resolution, and other interactions validate clip eligibility and request tokens where applicable. Clients cannot submit arbitrary counter deltas.
+Play counts, ratings, playlist resolution, Sound Board resolution, collection conversion, and other interactions validate clip eligibility and request tokens where applicable. Sound Board-to-playlist conversion exposes only stable identity and titles for currently accessible public clips. Clients cannot submit arbitrary counter deltas.
 
 ## Error handling
 

@@ -7,7 +7,7 @@ Archive export and restore are available on **Integrity & Maintenance** and requ
 | Scope | Contents |
 | --- | --- |
 | Metadata only | Clips, categories, tags, relations, ACL data, Custom Fields, counters, file/analysis records, and portable configuration |
-| Metadata and analyses | Metadata plus generated waveform and spectral-analysis files |
+| Metadata and analyses | Metadata plus generated waveform, spectrogram, and frequency-profile files |
 | Complete archive | Metadata, analyses, originals, and any legacy compatibility-preview files |
 
 Exports use a versioned manifest and SHA-256 checksums. Requested files are not silently omitted: an export fails when required managed files cannot be included.

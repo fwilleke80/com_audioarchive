@@ -12,7 +12,7 @@ Punga Audio Archive requires:
 
 Optional requirements:
 
-- FFmpeg for waveform and spectral-analysis generation
+- FFmpeg for waveform, spectrogram, and frequency-profile generation
 - `proc_open()` for launching FFmpeg and diagnostic FFprobe checks
 - PHP `ZipArchive` for archive export and restore
 
@@ -21,7 +21,7 @@ Core clip management, public filtering, protected playback, downloads, modules, 
 ## Installing
 
 1. Open **System → Install → Extensions** in Joomla Administrator.
-2. Upload the versioned package, such as `pkg_audioarchive_v0-11-4.zip`.
+2. Upload the versioned package, such as `pkg_audioarchive_v0-11-20.zip`.
 3. Open **Components → Punga Audio Archive**.
 4. Review the dashboard System Check.
 5. Open **Options** and configure storage, defaults, frontend access, and processing.

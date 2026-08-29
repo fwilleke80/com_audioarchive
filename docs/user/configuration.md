@@ -14,7 +14,9 @@ These features have separate tabs:
 
 - **Ratings** controls whether Like/Dislike voting is enabled and who may vote.
 - **Playlists** enables browser-local playlists and controls playlist-table colours.
-- **Sound Boards** enables the Sound Board, pad count, play recording, polyphony, and optional pad colours.
+- **Sound Boards** separates general options from styling. General options enable the Sound Board, set pad count, play recording and polyphony, and independently enable the chromatic sampler. Styling controls optional pad colours.
+
+Disabling the Sound Board hides its page and all **Add to Sound Board** actions. Disabling Playlists also removes Sound Board-to-playlist conversion.
 
 ## Storage
 
@@ -39,7 +41,7 @@ Configure visible filters, list columns, default ordering, page size, compact pa
 
 ## Playback and downloads
 
-Choose default player presentations and colours, preferred Featured-player analysis view, backend preview presentation, and download access.
+Choose default player presentations and colours—including Frequency Profile background, fill, line, and grid colours—preferred Featured-player analysis view, backend preview presentation, and download access.
 
 ## Clip Detail and Related Clips
 
@@ -49,7 +51,7 @@ Related Clips options include visibility, result count, minimum shared tags, ran
 
 ## Processing
 
-Enable waveform or spectral-analysis generation and set their detail parameters. When an analysis type is enabled globally, its job is queued automatically whenever a new original is stored or an existing original is replaced.
+Enable waveform, spectrogram, or frequency-profile generation and set their detail parameters. Frequency Profile options include bin/detail level, linear or logarithmic frequency scale, minimum and maximum frequency, and dynamic range. When an analysis type is enabled globally, its job is queued automatically whenever a new original is stored or an existing original is replaced.
 
 Configure FFmpeg and optional FFprobe paths, process timeout, and maximum attempts. Paths can be absolute or relative to the Joomla root, but a relative path must remain within that root.
 
