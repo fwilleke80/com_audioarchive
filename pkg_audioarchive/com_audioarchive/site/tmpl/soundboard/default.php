@@ -180,6 +180,24 @@ $soundboardStyle = StyleHelper::buildSoundboardVariables($this->params);
 				<p data-audioarchive-soundboard-sampler-description><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_SAMPLER_PROMPT'); ?></p>
 			</div>
 			<div class="com-audioarchive-soundboard-sampler-actions">
+				<?php if ($this->polyphonic) : ?>
+				<div
+					class="form-check form-switch com-audioarchive-soundboard-sampler-polyphony"
+					title="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_SAMPLER_POLYPHONY_DESC')); ?>"
+				>
+					<input
+						class="form-check-input"
+						type="checkbox"
+						role="switch"
+						id="audioarchive-soundboard-sampler-polyphony"
+						data-audioarchive-soundboard-sampler-polyphony
+						checked
+					>
+					<label class="form-check-label" for="audioarchive-soundboard-sampler-polyphony">
+						<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_SAMPLER_POLYPHONY'); ?>
+					</label>
+				</div>
+				<?php endif; ?>
 				<button type="button" class="btn btn-outline-secondary" data-audioarchive-soundboard-midi-enable>
 					<span class="icon-plug" aria-hidden="true"></span>
 					<span data-audioarchive-soundboard-midi-enable-label><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_MIDI_ENABLE'); ?></span>

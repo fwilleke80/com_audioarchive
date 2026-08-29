@@ -26,3 +26,5 @@ Sound Board assignments and playlists are stored in browser storage. Shared boar
 Sound Board entries contain the numeric clip IDs required by direct playback. Playlist entries use stable clip UUIDs and are resolved server-side before rendering playable data.
 
 Conversion from a Sound Board to a playlist resolves occupied pad IDs to public clip UUIDs. Conversion from a playlist to a Sound Board uses the playlist page's resolved public metadata. Both directions preserve source order, skip inaccessible clips, and write only browser-local storage.
+
+When global Sound Board polyphony permits visitor choice, the chromatic sampler stores its mono/poly preference separately under `com_audioarchive.soundboard.sampler_polyphony.v1`. This preference can restrict sampler voices to monophonic playback but cannot override an administrator-disabled polyphony setting.

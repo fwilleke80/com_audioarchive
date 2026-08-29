@@ -2,7 +2,7 @@
 
 The outer manifest is `pkg_audioarchive/pkg_audioarchive.xml`.
 
-It declares package version 0.11.20, package-level language files, `install.php`, and these nested archives:
+It declares package version 0.11.24, package-level language files, `install.php`, and these nested archives:
 
 - `com_audioarchive.zip`
 - `mod_audioarchive.zip`

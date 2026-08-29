@@ -10,6 +10,7 @@ use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
 use Joomla\Registry\Registry;
 use Punga\Component\Audioarchive\Site\Helper\RouteHelper;
+use Punga\Component\Audioarchive\Site\Helper\SoundboardHelper;
 
 \defined('_JEXEC') or die;
 
@@ -102,7 +103,7 @@ class HtmlView extends BaseHtmlView
 			true
 		);
 		$this->soundboardEnabled = (int) $this->params->get('enable_soundboard', 1) === 1;
-		$this->soundboardPadCount = max(4, min(36, (int) $this->params->get('soundboard_pad_count', 12)));
+		$this->soundboardPadCount = SoundboardHelper::getPadCount($this->params);
 
 		if ((int) $this->params->get('enable_play_counts', 1) === 1)
 		{

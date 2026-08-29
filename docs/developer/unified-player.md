@@ -14,6 +14,7 @@ Registered component assets provide the player JavaScript and CSS.
 - **Compact** — play/pause, seek bar, current time, duration
 - **Default** — Compact plus mute/volume controls
 - **Featured** — Default plus available waveform, spectrogram, and/or frequency-profile views
+  - Optionally adds a continuous ±2-octave varispeed control. The slider maps octaves exponentially with `playbackRate = 2^octaves`, disables pitch preservation, updates live during playback, and snaps only around the 1.00× centre position.
 - **Playlist** — queue controls, current-item metadata, seeking, mute, and automatic continuation
 
 Archive rows, Archive mobile cards, Related Clips, and playlist list rows use the Minimal control. The Playlists page routes row selection through the Playlist player at the top rather than creating independent queue-less playback.

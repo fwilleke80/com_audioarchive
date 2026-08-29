@@ -2094,9 +2094,32 @@
 .com-audioarchive-soundboard-sampler-actions
 {
 	display: flex;
+	align-items: center;
 	flex: 0 0 auto;
 	flex-wrap: wrap;
 	gap: 0.5rem;
+}
+
+.com-audioarchive-soundboard-sampler-polyphony
+{
+	display: flex;
+	align-items: center;
+	min-height: 2.4rem;
+	margin: 0;
+	padding: 0.375rem 0.75rem 0.375rem 2.75rem;
+	border: 1px solid color-mix(in srgb, currentColor 32%, transparent);
+	border-radius: 0.375rem;
+}
+
+.com-audioarchive-soundboard-sampler-polyphony .form-check-input
+{
+	margin-top: 0;
+}
+
+.com-audioarchive-soundboard-sampler-polyphony .form-check-label
+{
+	white-space: nowrap;
+	cursor: pointer;
 }
 
 .com-audioarchive-soundboard-midi-status
@@ -2328,6 +2351,11 @@
 	.com-audioarchive-soundboard-sampler-actions .btn
 	{
 		flex: 1 1 10rem;
+	}
+
+	.com-audioarchive-soundboard-sampler-polyphony
+	{
+		flex: 1 1 100%;
 	}
 
 	.com-audioarchive-soundboard-piano

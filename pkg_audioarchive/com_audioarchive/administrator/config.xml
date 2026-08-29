@@ -317,6 +317,7 @@
             <field name="player_default_button_size" type="number" label="COM_AUDIOARCHIVE_CONFIG_PLAYER_DEFAULT_BUTTON_SIZE_LABEL" description="COM_AUDIOARCHIVE_CONFIG_PLAYER_BUTTON_SIZE_DESC" default="54" min="32" max="88" step="1" />
             <field name="player_featured_button_size" type="number" label="COM_AUDIOARCHIVE_CONFIG_PLAYER_FEATURED_BUTTON_SIZE_LABEL" description="COM_AUDIOARCHIVE_CONFIG_PLAYER_BUTTON_SIZE_DESC" default="54" min="32" max="88" step="1" />
             <field name="player_featured_waveform_height" type="number" label="COM_AUDIOARCHIVE_CONFIG_PLAYER_FEATURED_WAVEFORM_HEIGHT_LABEL" description="COM_AUDIOARCHIVE_CONFIG_PLAYER_FEATURED_WAVEFORM_HEIGHT_DESC" default="100" min="48" max="240" step="1" />
+            <field name="player_featured_varispeed" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_PLAYER_FEATURED_VARISPEED_LABEL" description="COM_AUDIOARCHIVE_CONFIG_PLAYER_FEATURED_VARISPEED_DESC" default="0"><option value="0">JNO</option><option value="1">JYES</option></field>
         </fieldset>
 
 		<fieldset name="frequency_profile_style" label="COM_AUDIOARCHIVE_CONFIG_FREQUENCY_PROFILE_STYLE_SECTION_LABEL">

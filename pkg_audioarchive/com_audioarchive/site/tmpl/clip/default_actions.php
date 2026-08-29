@@ -22,7 +22,7 @@ if (!$showShare && !$showSoundboard && !$showPlaylists)
 		<?php endif; ?>
 
 		<?php if ($showSoundboard) : ?>
-			<?php echo LayoutHelper::render('interaction.soundboard_add', ['clipId' => (int) $this->item->id, 'title' => (string) $this->item->title], null, ['component' => 'com_audioarchive', 'client' => 0]); ?>
+			<?php echo LayoutHelper::render('interaction.soundboard_add', ['clipId' => (int) $this->item->id, 'clipUuid' => (string) ($this->item->uuid ?? ''), 'title' => (string) $this->item->title], null, ['component' => 'com_audioarchive', 'client' => 0]); ?>
 		<?php endif; ?>
 
 		<?php if ($showPlaylists) : ?>

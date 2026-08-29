@@ -2,7 +2,7 @@
 
 Punga Audio Archive is a native Joomla! 6 extension package for managing and publishing collections of audio clips. It combines protected media storage, bulk importing, metadata management, waveform, spectrogram, and frequency-profile analysis, responsive frontend players, ratings, related clips, Sound Boards, playlists, and optional Punga Analytics integration.
 
-> **Current version:** 0.11.20  
+> **Current version:** 0.11.24  
 > **Package:** `pkg_audioarchive`  
 > **Licence:** GNU General Public License version 2 or later
 
@@ -16,7 +16,7 @@ Punga Audio Archive is a native Joomla! 6 extension package for managing and pub
 - Optional FFmpeg waveform, spectrogram, and averaged frequency-profile analysis with database-backed processing queues
 - Archive search and filtering by text, category, tags, duration, and dates
 - Tag Directory, clip ratings, related clips, Previous/Next navigation, and frontend editing
-- Browser-local polyphonic Sound Boards with MIDI/onscreen chromatic sampler mode
+- Browser-local Sound Boards with MIDI/onscreen chromatic sampler mode and visitor-selectable mono/poly playback
 - Manually ordered playlists with import, export, sharing, and two-way Sound Board conversion
 - Archive integrity checks, codec inventory, cleanup tools, and portable export/restore archives
 - Optional privacy-conscious event dispatch to Punga Analytics
@@ -34,7 +34,7 @@ FFmpeg is optional and required only for waveform, spectrogram, and frequency-pr
 
 ## Installation
 
-1. Download the versioned installer ZIP, for example `pkg_audioarchive_v0-11-20.zip`.
+1. Download the versioned installer ZIP, for example `pkg_audioarchive_v0-11-22.zip`.
 2. In Joomla Administrator, open **System → Install → Extensions**.
 3. Upload the package ZIP.
 4. Open **Components → Punga Audio Archive** and review the dashboard and component options.

@@ -107,6 +107,77 @@ const initialiseAudioArchivePlayers = () =>
 
 	const getCustomPlayerAudio = (player) => player.querySelector('[data-audioarchive-custom-audio]');
 
+	const configureVarispeedPitch = (audio) =>
+	{
+		if ('preservesPitch' in audio)
+		{
+			audio.preservesPitch = false;
+		}
+
+		if ('webkitPreservesPitch' in audio)
+		{
+			audio.webkitPreservesPitch = false;
+		}
+
+		if ('mozPreservesPitch' in audio)
+		{
+			audio.mozPreservesPitch = false;
+		}
+	};
+
+	const initialisePlayerVarispeed = (player, audio) =>
+	{
+		const range = player.querySelector('[data-audioarchive-varispeed-range]');
+		const reset = player.querySelector('[data-audioarchive-varispeed-reset]');
+		const output = player.querySelector('[data-audioarchive-varispeed-value]');
+
+		if (!(range instanceof HTMLInputElement) || !(reset instanceof HTMLButtonElement) || !(output instanceof HTMLElement))
+		{
+			return;
+		}
+
+		const centreSnap = 0.05;
+		const normalLabel = range.dataset.normalLabel || 'Normal';
+		const octaveLabel = range.dataset.octaveLabel || 'oct';
+
+		const apply = (requestedOctaves) =>
+		{
+			let octaves = Math.max(-2, Math.min(2, requestedOctaves));
+
+			if (Math.abs(octaves) <= centreSnap)
+			{
+				octaves = 0;
+			}
+
+			const rate = 2 ** octaves;
+			range.value = octaves.toFixed(3);
+			configureVarispeedPitch(audio);
+			audio.playbackRate = rate;
+
+			if (octaves === 0)
+			{
+				output.textContent = `${normalLabel} · 1.00×`;
+				return;
+			}
+
+			const signedOctaves = `${octaves > 0 ? '+' : '−'}${Math.abs(octaves).toFixed(2)}`;
+			output.textContent = `${signedOctaves} ${octaveLabel} · ${rate.toFixed(2)}×`;
+		};
+
+		range.addEventListener('input', () =>
+		{
+			const value = Number.parseFloat(range.value);
+
+			if (Number.isFinite(value))
+			{
+				apply(value);
+			}
+		});
+
+		reset.addEventListener('click', () => apply(0));
+		apply(0);
+	};
+
 	const setCustomPlayerState = (player, playing) =>
 	{
 		const button = player.querySelector('[data-audioarchive-custom-toggle]');
@@ -1060,6 +1131,7 @@ const initialiseAudioArchivePlayers = () =>
 		initialisePlayerSpectrogram(player, audio);
 		initialisePlayerFrequencyProfile(player);
 		initialiseAnalysisSwitcher(player);
+		initialisePlayerVarispeed(player, audio);
 
 		toggle.addEventListener('click', async () =>
 		{

@@ -448,6 +448,124 @@
 }
 
 /* Featured: complete controls plus waveform or spectral analysis when available. */
+.audioarchive-custom-player-varispeed
+{
+	margin-top: .9rem;
+	padding-top: .8rem;
+	border-top: 1px solid var(--audioarchive-player-border);
+}
+
+.audioarchive-custom-player-varispeed-heading
+{
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-bottom: .35rem;
+	font-size: .78rem;
+	font-weight: 700;
+	color: var(--audioarchive-player-muted);
+}
+
+.audioarchive-custom-player-varispeed-reset
+{
+	padding: .15rem .45rem;
+	border: 0;
+	border-radius: .4rem;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-variant-numeric: tabular-nums;
+	cursor: pointer;
+}
+
+.audioarchive-custom-player-varispeed-reset:hover
+{
+	background: color-mix(in srgb, var(--audioarchive-player-accent) 9%, transparent);
+	color: var(--audioarchive-player-text);
+}
+
+.audioarchive-custom-player-varispeed-reset:focus-visible
+{
+	outline: .2rem solid color-mix(in srgb, var(--audioarchive-player-accent) 38%, transparent);
+	outline-offset: .12rem;
+}
+
+.audioarchive-custom-player-varispeed-slider
+{
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	align-items: center;
+	gap: .65rem;
+}
+
+.audioarchive-custom-player-varispeed-slider > span
+{
+	font-size: .7rem;
+	font-weight: 650;
+	white-space: nowrap;
+	color: var(--audioarchive-player-muted);
+}
+
+.audioarchive-custom-player-varispeed-slider input[type="range"]
+{
+	-webkit-appearance: none;
+	appearance: none;
+	width: 100%;
+	height: 1.35rem;
+	margin: 0;
+	border: 0;
+	background: transparent;
+	cursor: ew-resize;
+}
+
+.audioarchive-custom-player-varispeed-slider input[type="range"]::-webkit-slider-runnable-track
+{
+	height: .42rem;
+	border-radius: 999px;
+	background: linear-gradient(
+		to right,
+		var(--audioarchive-player-border) 0 49.4%,
+		var(--audioarchive-player-accent) 49.4% 50.6%,
+		var(--audioarchive-player-border) 50.6% 100%
+	);
+}
+
+.audioarchive-custom-player-varispeed-slider input[type="range"]::-moz-range-track
+{
+	height: .42rem;
+	border-radius: 999px;
+	background: linear-gradient(
+		to right,
+		var(--audioarchive-player-border) 0 49.4%,
+		var(--audioarchive-player-accent) 49.4% 50.6%,
+		var(--audioarchive-player-border) 50.6% 100%
+	);
+}
+
+.audioarchive-custom-player-varispeed-slider input[type="range"]::-webkit-slider-thumb
+{
+	-webkit-appearance: none;
+	appearance: none;
+	width: 1.05rem;
+	height: 1.05rem;
+	margin-top: -.315rem;
+	border: .19rem solid #fff;
+	border-radius: 50%;
+	background: var(--audioarchive-player-accent);
+	box-shadow: 0 .12rem .4rem color-mix(in srgb, #000 24%, transparent);
+}
+
+.audioarchive-custom-player-varispeed-slider input[type="range"]::-moz-range-thumb
+{
+	width: .72rem;
+	height: .72rem;
+	border: .19rem solid #fff;
+	border-radius: 50%;
+	background: var(--audioarchive-player-accent);
+	box-shadow: 0 .12rem .4rem color-mix(in srgb, #000 24%, transparent);
+}
+
 .audioarchive-custom-player--featured.has-analysis
 {
 	padding-bottom: .85rem;

@@ -557,10 +557,33 @@ function addClipToSoundboard(clip, origin)
 	const fullLabel = configurationRoot?.dataset.audioarchiveSoundboardFullLabel || 'The Sound Board is full.';
 	const rawBoard = playlistReadStorage(SOUNDBOARD_STORAGE_KEY, []);
 	const board = Array.isArray(rawBoard) ? rawBoard.slice(0, padCount) : [];
-	const existing = board.findIndex((entry) => entry && Number.parseInt(entry.id, 10) === clip.id);
+	const clipUuid = String(clip.uuid || '').trim().toLowerCase();
+	const clipTitle = String(clip.title || '').trim();
+	const existing = board.findIndex((entry) =>
+	{
+		if (!entry || Number.parseInt(entry.id, 10) !== clip.id)
+		{
+			return false;
+		}
+
+		const entryUuid = String(entry.uuid || '').trim().toLowerCase();
+
+		if (clipUuid !== '' && entryUuid !== '')
+		{
+			return entryUuid === clipUuid;
+		}
+
+		return String(entry.title || '').trim() === clipTitle;
+	});
 
 	if (existing >= 0)
 	{
+		if (clipUuid !== '' && String(board[existing]?.uuid || '').trim() === '')
+		{
+			board[existing].uuid = clipUuid;
+			playlistWriteStorage(SOUNDBOARD_STORAGE_KEY, board);
+		}
+
 		return true;
 	}
 
@@ -577,7 +600,7 @@ function addClipToSoundboard(clip, origin)
 		return false;
 	}
 
-	board[slot] = {id: clip.id, title: clip.title};
+	board[slot] = {id: clip.id, uuid: clipUuid, title: clipTitle};
 	return playlistWriteStorage(SOUNDBOARD_STORAGE_KEY, board);
 }
 
@@ -1154,6 +1177,7 @@ function initialiseAddToMenus()
 					addClipToSoundboard(
 						{
 							id: Math.max(0, Number.parseInt(menu.dataset.clipId || '0', 10)),
+							uuid: String(menu.dataset.clipUuid || '').trim().toLowerCase(),
 							title: String(menu.dataset.clipTitle || '').trim(),
 						},
 						menu

@@ -41,7 +41,7 @@ Configure visible filters, list columns, default ordering, page size, compact pa
 
 ## Playback and downloads
 
-Choose default player presentations and colours—including Frequency Profile background, fill, line, and grid colours—preferred Featured-player analysis view, backend preview presentation, and download access.
+Choose default player presentations and colours—including Frequency Profile background, fill, line, and grid colours—preferred Featured-player analysis view, backend preview presentation, and download access. The optional **Show Featured speed/pitch control** switch adds a continuous ±2-octave varispeed slider to Featured players; pitch and playback speed move together live, with a centre snap at normal 1.00× speed.
 
 ## Clip Detail and Related Clips
 

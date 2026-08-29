@@ -23,7 +23,7 @@ Check the job error, FFmpeg availability, analysis directory permissions, timeou
 
 ## Audio does not play on one browser
 
-Browser support depends on the original container and codec. Punga Audio Archive 0.11.20 streams originals and does not generate compatibility playback previews. The authorised original may still be downloadable.
+Browser support depends on the original container and codec. Punga Audio Archive 0.11.24 streams originals and does not generate compatibility playback previews. The authorised original may still be downloadable.
 
 ## An external MIDI keyboard is unavailable
 

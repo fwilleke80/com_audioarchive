@@ -1,6 +1,6 @@
 # Developer documentation
 
-This section documents the implementation and maintenance contracts of Punga Audio Archive 0.11.20.
+This section documents the implementation and maintenance contracts of Punga Audio Archive 0.11.24.
 
 ## Architecture and source
 

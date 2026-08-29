@@ -1,4 +1,5 @@
 const BOARD_STORAGE_KEY = 'com_audioarchive.soundboard.v1';
+const SAMPLER_POLYPHONY_STORAGE_KEY = 'com_audioarchive.soundboard.sampler_polyphony.v1';
 const RATING_CLIENT_KEY = 'com_audioarchive.rating.client.v1';
 const RATING_VOTES_KEY = 'com_audioarchive.rating.votes.v1';
 const RETURN_STORAGE_KEY = 'com_audioarchive.return.v1';
@@ -611,8 +612,9 @@ function normaliseBoard(board, padCount = 36)
 		}
 
 		const id = Number.parseInt(entry.id, 10);
+		const uuid = String(entry.uuid || '').trim().toLowerCase();
 		const title = String(entry.title || '').trim().slice(0, 255);
-		return Number.isInteger(id) && id > 0 && title !== '' ? {id, title} : null;
+		return Number.isInteger(id) && id > 0 && title !== '' ? {id, uuid, title} : null;
 	});
 }
 
@@ -624,6 +626,24 @@ function normaliseBoard(board, padCount = 36)
 function readBoard()
 {
 	return normaliseBoard(readStorage(BOARD_STORAGE_KEY, []));
+}
+
+/**
+ * Show a visible Sound Board warning using Joomla's message area when available.
+ *
+ * @param {string} message Warning message.
+ * @returns {void}
+ */
+function showSoundboardWarning(message)
+{
+	const text = String(message || '').trim();
+
+	if (text === '')
+	{
+		return;
+	}
+
+	window.alert(text);
 }
 
 /**
@@ -649,14 +669,34 @@ function initialiseSoundboardAddButtons()
 		updateButtons(id, storedIds.has(id));
 		button.addEventListener('click', () =>
 		{
+			const uuid = String(button.dataset.clipUuid || '').trim().toLowerCase();
 			const title = String(button.dataset.clipTitle || '').trim();
 			const root = button.closest('[data-audioarchive-soundboard-pad-count]') || document.querySelector('[data-audioarchive-soundboard-pad-count]');
 			const padCount = Math.max(4, Number.parseInt(root?.dataset.audioarchiveSoundboardPadCount || '12', 10));
 			const board = readBoard().slice(0, padCount);
-			const existing = board.findIndex((entry) => entry && entry.id === id);
+			const existing = board.findIndex((entry) =>
+			{
+				if (!entry || entry.id !== id)
+				{
+					return false;
+				}
+
+				if (uuid !== '' && entry.uuid !== '')
+				{
+					return entry.uuid === uuid;
+				}
+
+				return entry.title === title;
+			});
 
 			if (existing >= 0)
 			{
+				if (uuid !== '' && board[existing] && board[existing].uuid === '')
+				{
+					board[existing].uuid = uuid;
+					writeStorage(BOARD_STORAGE_KEY, board);
+				}
+
 				updateButtons(id, true);
 				return;
 			}
@@ -671,11 +711,11 @@ function initialiseSoundboardAddButtons()
 			if (slot < 0)
 			{
 				const fullLabel = button.closest('[data-audioarchive-soundboard-full-label]')?.dataset.audioarchiveSoundboardFullLabel || 'The sound board is full.';
-				window.alert(fullLabel);
+				showSoundboardWarning(fullLabel);
 				return;
 			}
 
-			board[slot] = {id, title};
+			board[slot] = {id, uuid, title};
 
 			if (writeStorage(BOARD_STORAGE_KEY, board))
 			{
@@ -829,10 +869,17 @@ function initialiseSoundboard()
 	const midiStatus = root.querySelector('[data-audioarchive-soundboard-midi-status]');
 	const keyboardToggle = root.querySelector('[data-audioarchive-soundboard-keyboard-toggle]');
 	const keyboardToggleLabel = root.querySelector('[data-audioarchive-soundboard-keyboard-toggle-label]');
+	const samplerPolyphonyToggle = root.querySelector('[data-audioarchive-soundboard-sampler-polyphony]');
 	const keyboard = root.querySelector('[data-audioarchive-soundboard-keyboard]');
 	const octaveLabel = root.querySelector('[data-audioarchive-soundboard-octave-label]');
 	const pianoKeys = Array.from(root.querySelectorAll('[data-audioarchive-soundboard-piano-key]'));
-	let board = readBoard().slice(0, padCount);
+	const storedBoard = readBoard();
+	let board = storedBoard.slice(0, padCount);
+
+	if (storedBoard.length > padCount)
+	{
+		writeStorage(BOARD_STORAGE_KEY, board);
+	}
 	let temporarySharedBoard = false;
 	const detailRoutes = new Map();
 	const unavailableDetailIds = new Set();
@@ -850,11 +897,13 @@ function initialiseSoundboard()
 	let selectedSamplerClipId = 0;
 	let samplerBaseNote = SAMPLER_ROOT_MIDI_NOTE;
 	let keyboardVisible = false;
+	let samplerPolyphonic = polyphonic && readStorage(SAMPLER_POLYPHONY_STORAGE_KEY, true) !== false;
 	let samplerSelectionGeneration = 0;
 	let samplerMode = false;
 	let previousAudioSessionType = null;
 
-	const fragment = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('board');
+	const fragmentParameters = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+	const fragment = fragmentParameters.get('board');
 
 	if (fragment)
 	{
@@ -868,6 +917,21 @@ function initialiseSoundboard()
 		else if (status)
 		{
 			status.textContent = root.dataset.audioarchiveLabelInvalid;
+		}
+	}
+
+	const queryParameters = new URLSearchParams(window.location.search);
+	const requestedMode = Number.parseInt(queryParameters.get('mode') || fragmentParameters.get('mode') || '0', 10);
+	const requestedOctave = Number.parseInt(queryParameters.get('octave') || fragmentParameters.get('octave') || '', 10);
+	const requestedPad = Number.parseInt(queryParameters.get('pad') || fragmentParameters.get('pad') || '', 10);
+
+	if (Number.isInteger(requestedOctave))
+	{
+		const requestedBaseNote = (requestedOctave + 1) * 12;
+
+		if (requestedBaseNote >= SAMPLER_MIN_BASE_NOTE && requestedBaseNote <= SAMPLER_MAX_BASE_NOTE)
+		{
+			samplerBaseNote = requestedBaseNote;
 		}
 	}
 
@@ -1161,6 +1225,13 @@ function initialiseSoundboard()
 		}
 
 		cleanupSamplerVoice(voice);
+	};
+
+	const stopAllSamplerVoices = () =>
+	{
+		Array.from(activeSamplerVoices).forEach((voice) => stopSamplerVoice(voice));
+		activeSamplerVoices.clear();
+		samplerVoicesByPad.clear();
 	};
 
 	const stopPadVoices = (index) =>
@@ -1563,6 +1634,10 @@ function initialiseSoundboard()
 		{
 			stopAllVoices();
 		}
+		else if (!samplerPolyphonic)
+		{
+			stopAllSamplerVoices();
+		}
 
 		const sourceNode = context.createBufferSource();
 		const gainNode = context.createGain();
@@ -1835,6 +1910,21 @@ function initialiseSoundboard()
 		void enableMidi();
 	});
 
+	if (samplerPolyphonyToggle instanceof HTMLInputElement)
+	{
+		samplerPolyphonyToggle.checked = samplerPolyphonic;
+		samplerPolyphonyToggle.addEventListener('change', () =>
+		{
+			samplerPolyphonic = polyphonic && samplerPolyphonyToggle.checked;
+			writeStorage(SAMPLER_POLYPHONY_STORAGE_KEY, samplerPolyphonic);
+
+			if (!samplerPolyphonic)
+			{
+				stopAllSamplerVoices();
+			}
+		});
+	}
+
 	padModeButton?.addEventListener('click', () => setSamplerMode(false));
 	samplerModeButton?.addEventListener('click', () => setSamplerMode(true));
 	keyboardToggle?.addEventListener('click', () => setKeyboardVisible(!keyboardVisible));
@@ -2016,9 +2106,27 @@ function initialiseSoundboard()
 		setShareMenuOpen(shareMenu, open, open);
 	});
 
+	const getSharedSoundboardUrl = () =>
+	{
+		let url = `${canonicalUrl}#board=${encodeBoard(board)}`;
+
+		if (samplerMode)
+		{
+			const octave = Math.floor(samplerBaseNote / 12) - 1;
+			url += `&mode=2&octave=${octave}`;
+
+			if (selectedSamplerIndex >= 0 && selectedSamplerIndex < padCount && board[selectedSamplerIndex])
+			{
+				url += `&pad=${selectedSamplerIndex}`;
+			}
+		}
+
+		return url;
+	};
+
 	shareCopy?.addEventListener('click', async () =>
 	{
-		const url = `${canonicalUrl}#board=${encodeBoard(board)}`;
+		const url = getSharedSoundboardUrl();
 
 		if (await copyText(url))
 		{
@@ -2031,7 +2139,7 @@ function initialiseSoundboard()
 
 	shareNative?.addEventListener('click', async () =>
 	{
-		const url = `${canonicalUrl}#board=${encodeBoard(board)}`;
+		const url = getSharedSoundboardUrl();
 		if (await openNativeShare(document.title, url))
 		{
 			recordInteraction('audioarchive.soundboard.shared');
@@ -2159,6 +2267,20 @@ function initialiseSoundboard()
 	updateMidiStatus();
 	setTemporarySharedBoard(temporarySharedBoard);
 	render();
+
+	if (requestedMode === 2)
+	{
+		setSamplerMode(true);
+
+		if (Number.isInteger(requestedPad) && requestedPad >= 0 && requestedPad < padCount && board[requestedPad])
+		{
+			void selectSamplerPad(requestedPad, false);
+		}
+	}
+	else if (requestedMode === 1)
+	{
+		setSamplerMode(false);
+	}
 }
 
 /**

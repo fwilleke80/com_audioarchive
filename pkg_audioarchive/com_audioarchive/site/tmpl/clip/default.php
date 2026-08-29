@@ -3,6 +3,7 @@
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Layout\LayoutHelper;
+use Punga\Component\Audioarchive\Site\Helper\SoundboardHelper;
 use Punga\Component\Audioarchive\Site\Helper\StyleHelper;
 
 \defined('_JEXEC') or die;
@@ -18,7 +19,7 @@ $clipStyle = StyleHelper::buildArchiveListVariables($this->params);
 	data-audioarchive-status-playing="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_PLAYING')); ?>"
 	data-audioarchive-status-paused="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_PAUSED')); ?>"
 	data-audioarchive-status-error="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_ERROR')); ?>"
-	data-audioarchive-soundboard-pad-count="<?php echo max(4, min(36, (int) $this->params->get('soundboard_pad_count', 12))); ?>"
+	data-audioarchive-soundboard-pad-count="<?php echo SoundboardHelper::getPadCount($this->params); ?>"
 	data-audioarchive-soundboard-full-label="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_FULL')); ?>"
 	data-audioarchive-share-copied-label="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SHARE_COPIED')); ?>"
 	<?php if ($this->playCountUrl !== '') : ?>

@@ -29,7 +29,7 @@ Cover single creation, editing, Batch Apply/Cancel, bulk upload, directory impor
 
 Cover Archive filtering/sorting/pagination, Tag Directory, Clip Detail, Previous/Next, Related Clips, ratings, protected downloads, Sound Board, playlists, modules, content placeholders, Smart Search, frontend editing, and routing with multiple menu items.
 
-For Sound Boards, cover Pad trigger and Chromatic keyboard modes, pad selection with number keys, the onscreen and computer keyboards, polyphony, octave changes, MIDI permission/device changes where supported, and mobile audio unlocking. Test Sound Board-to-playlist and playlist-to-Sound Board conversion for ordering, empty/unavailable clips, pad-count limits, occupied-board confirmation, storage failures, and disabled feature switches.
+For Sound Boards, cover Pad trigger and Chromatic keyboard modes, pad selection with number keys, the onscreen and computer keyboards, configured polyphony, the visitor chromatic-polyphony switch, octave changes, MIDI permission/device changes where supported, and mobile audio unlocking. Confirm that the visitor switch is absent when configured polyphony is disabled, monophonic notes replace previous sampler voices, normal pad behaviour is unchanged, and MIDI Note Off retains documented one-shot playback. Test Sound Board-to-playlist and playlist-to-Sound Board conversion for ordering, empty/unavailable clips, pad-count limits, occupied-board confirmation, storage failures, and disabled feature switches.
 
 Test desktop and mobile Safari, Chrome, Firefox, and Edge where practical. iPhone Safari is important for player-control and Web Audio user-gesture regressions.
 

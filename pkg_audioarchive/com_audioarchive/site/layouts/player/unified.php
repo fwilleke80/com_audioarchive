@@ -32,8 +32,10 @@ $showSeek = $presentation !== 'minimal';
 $isPlaylist = $presentation === 'playlist';
 $showMute = in_array($presentation, ['default', 'featured', 'playlist'], true);
 $showAnalysis = $presentation === 'featured';
+$showVarispeed = $presentation === 'featured' && (int) $params->get('player_featured_varispeed', 0) === 1;
 $audioId = trim((string) ($data['audioId'] ?? 'audioarchive-player'));
 $seekId = $audioId . '-seek';
+$varispeedId = $audioId . '-varispeed';
 $title = trim((string) ($data['title'] ?? ''));
 $streamUrl = trim((string) ($data['streamUrl'] ?? ''));
 $waveformUrl = $showAnalysis ? trim((string) ($data['waveformUrl'] ?? '')) : '';
@@ -77,6 +79,10 @@ $waveformLabel = (string) ($labels['waveform'] ?? 'Waveform');
 $spectrumLabel = (string) ($labels['spectrum'] ?? 'Spectrum');
 $frequencyProfileLabel = (string) ($labels['frequencyProfile'] ?? 'Frequency Profile');
 $frequencyProfileSummary = (string) ($labels['frequencyProfileSummary'] ?? 'Peak: %1$s Hz · Centroid: %2$s Hz');
+$varispeedLabel = (string) ($labels['varispeed'] ?? 'Pitch / speed');
+$varispeedResetLabel = (string) ($labels['varispeedReset'] ?? 'Reset pitch and speed to normal');
+$varispeedNormalLabel = (string) ($labels['varispeedNormal'] ?? 'Normal');
+$varispeedOctaveLabel = (string) ($labels['varispeedOctave'] ?? 'oct');
 $buttonSizeParameter = match ($presentation)
 {
 	'minimal' => 'player_minimal_button_size',
@@ -232,6 +238,38 @@ $style = implode(';', [
 				</div>
 			<?php endif; ?>
 		</div>
+
+		<?php if ($showVarispeed) : ?>
+			<div class="audioarchive-custom-player-varispeed" data-audioarchive-varispeed>
+				<div class="audioarchive-custom-player-varispeed-heading">
+					<label for="<?php echo $escape($varispeedId); ?>"><?php echo $escape($varispeedLabel); ?></label>
+					<button
+						type="button"
+						class="audioarchive-custom-player-varispeed-reset"
+						title="<?php echo $escape($varispeedResetLabel); ?>"
+						aria-label="<?php echo $escape($varispeedResetLabel); ?>"
+						data-audioarchive-varispeed-reset
+					>
+						<span data-audioarchive-varispeed-value><?php echo $escape($varispeedNormalLabel); ?> · 1.00×</span>
+					</button>
+				</div>
+				<div class="audioarchive-custom-player-varispeed-slider">
+					<span aria-hidden="true">−2 <?php echo $escape($varispeedOctaveLabel); ?></span>
+					<input
+						id="<?php echo $escape($varispeedId); ?>"
+						type="range"
+						min="-2"
+						max="2"
+						step="0.001"
+						value="0"
+						data-audioarchive-varispeed-range
+						data-normal-label="<?php echo $escape($varispeedNormalLabel); ?>"
+						data-octave-label="<?php echo $escape($varispeedOctaveLabel); ?>"
+					>
+					<span aria-hidden="true">+2 <?php echo $escape($varispeedOctaveLabel); ?></span>
+				</div>
+			</div>
+		<?php endif; ?>
 
 		<?php if ($hasAnalysis) : ?>
 			<div class="audioarchive-custom-player-analysis" data-audioarchive-player-analysis>

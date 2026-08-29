@@ -1,6 +1,6 @@
 # Database schema
 
-Punga Audio Archive 0.11.20 uses these component tables:
+Punga Audio Archive 0.11.24 uses these component tables:
 
 - `#__audioarchive_clips`
 - `#__audioarchive_files`

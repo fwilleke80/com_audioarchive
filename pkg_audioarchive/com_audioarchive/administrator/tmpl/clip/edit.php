@@ -63,6 +63,10 @@ $renderAudioPreview = function (string $headingId): void
 					'spectrum' => Text::_('COM_AUDIOARCHIVE_ANALYSIS_SPECTRUM'),
 					'frequencyProfile' => Text::_('COM_AUDIOARCHIVE_ANALYSIS_FREQUENCY_PROFILE'),
 					'frequencyProfileSummary' => Text::_('COM_AUDIOARCHIVE_FREQUENCY_PROFILE_SUMMARY'),
+					'varispeed' => Text::_('COM_AUDIOARCHIVE_PLAYER_VARISPEED'),
+					'varispeedReset' => Text::_('COM_AUDIOARCHIVE_PLAYER_VARISPEED_RESET'),
+					'varispeedNormal' => Text::_('COM_AUDIOARCHIVE_PLAYER_VARISPEED_NORMAL'),
+					'varispeedOctave' => Text::_('COM_AUDIOARCHIVE_PLAYER_VARISPEED_OCTAVE_ABBR'),
 				],
 			],
 			JPATH_ROOT . '/components/com_audioarchive/layouts'

@@ -40,7 +40,9 @@ In chromatic mode:
 - MIDI note C4 (60) plays the clip at its original pitch; other notes change its Web Audio playback rate.
 - MIDI velocity controls voice volume.
 
-Sampler voices are one-shots: releasing a key does not stop an already started clip. Pitching also changes playback duration, just as changing tape speed would.
+When polyphony is permitted in the component or menu-item options, the chromatic controls include a **Polyphonic** switch. It defaults to on and the visitor's choice is stored in the current browser. Switching it off immediately stops active sampler voices; each subsequent chromatic note replaces the previous sampler voice. This switch affects only chromatic playback. Ordinary pad playback continues to follow the configured Sound Board polyphony setting. When polyphony is disabled by configuration, the switch is hidden and all Sound Board playback remains monophonic.
+
+Sampler voices are one-shots: releasing a MIDI, computer, or onscreen key does not stop an already started clip. MIDI Note Off updates the visible key state only. Pitching also changes playback duration, just as changing tape speed would.
 
 External MIDI requires browser Web MIDI support, an HTTPS page, visitor permission, and a connected MIDI input. When Web MIDI is unavailable, onscreen and computer-keyboard playback remain usable.
 
@@ -53,3 +55,16 @@ When Playlists are enabled, **Save as playlist** creates a new named playlist fr
 The Sound Board uses its own direct-audio voice system so several clips can overlap when polyphony is enabled.
 
 When **Record Sound Board plays** and aggregate play counting are enabled, every successful pad or chromatic-note trigger increments the clip and dispatches the configured analytics events, including repeated and overlapping triggers. Chromatic events identify MIDI/onscreen/computer input and include note and velocity values where applicable.
+
+## Opening a Sound Board in a specific mode
+
+The Sound Board accepts optional URL parameters that choose its initial presentation without changing the stored board:
+
+- `mode=1` opens **Pad trigger** mode.
+- `mode=2` opens **Chromatic keyboard** mode.
+- `octave=1` through `octave=7` chooses the initial keyboard octave when chromatic mode is used.
+- `pad=0` through `pad=n-1` selects the initial Sound Board pad in chromatic mode. Pad indexes are zero-based, so `pad=2` selects the third pad.
+
+For example, `/soundboard?mode=2&octave=3&pad=2` opens the board in chromatic mode at octave 3 with the third pad selected. Shared boards support the same parameters. Because the shared board itself is stored in the URL fragment, parameters may also be appended directly to the shared fragment, for example `#board=…&mode=2&octave=3&pad=2`. Invalid mode, octave, pad, or empty-pad selections are ignored.
+
+When a Sound Board is shared while chromatic keyboard mode is active, the generated share URL automatically includes the current `mode`, `octave`, and selected `pad`. Pad-trigger mode keeps the compact shared URL without these parameters.
