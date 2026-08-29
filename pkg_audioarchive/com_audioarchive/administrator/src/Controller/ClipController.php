@@ -218,6 +218,49 @@ class ClipController extends FormController
         $this->setRedirect($this->getEditRedirect($clipId));
     }
 
+	/**
+	 * @brief Generate or regenerate a frequency profile for the current clip.
+	 *
+	 * @return void
+	 */
+	public function generateFrequencyProfile(): void
+	{
+		Session::checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+		$app = Factory::getApplication();
+		$clipId = $this->getPostedClipId();
+
+		if (!$app->getIdentity()->authorise('audioarchive.process', 'com_audioarchive'))
+		{
+			throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+		}
+
+		try
+		{
+			$manager = new AnalysisManagerService(
+				Factory::getContainer()->get(DatabaseInterface::class),
+				ComponentHelper::getParams('com_audioarchive'),
+				$app->getIdentity()
+			);
+			$result = $manager->generate('frequency_profile', $clipId);
+			$app->enqueueMessage(
+				Text::sprintf(
+					'COM_AUDIOARCHIVE_FREQUENCY_PROFILE_GENERATED_SUCCESS',
+					(int) ($result->parameters['bin_count'] ?? 0)
+				),
+				'success'
+			);
+		}
+		catch (\Throwable $exception)
+		{
+			$app->enqueueMessage(
+				Text::sprintf('COM_AUDIOARCHIVE_FREQUENCY_PROFILE_GENERATED_FAILED', $exception->getMessage()),
+				'error'
+			);
+		}
+
+		$this->setRedirect($this->getEditRedirect($clipId));
+	}
+
     /**
      * @brief Read and validate the clip identifier from the posted edit form.
      *

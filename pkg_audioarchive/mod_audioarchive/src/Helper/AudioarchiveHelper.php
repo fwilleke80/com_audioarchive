@@ -233,6 +233,9 @@ abstract class AudioarchiveHelper
 		$spectrogramClipIds = $loadAnalyses
 			? self::getAvailableAnalysisClipIds($database, $ids, 'spectrogram')
 			: [];
+		$frequencyProfileClipIds = $loadAnalyses
+			? self::getAvailableAnalysisClipIds($database, $ids, 'frequency_profile')
+			: [];
 
 		foreach ($items as $item)
 		{
@@ -246,6 +249,9 @@ abstract class AudioarchiveHelper
 				: '';
 			$item->spectrogram_url = isset($spectrogramClipIds[(int) $item->id])
 				? Route::_(RouteHelper::getAnalysisRoute((int) $item->id, 'spectrogram', (int) $item->itemid))
+				: '';
+			$item->frequency_profile_url = isset($frequencyProfileClipIds[(int) $item->id])
+				? Route::_(RouteHelper::getAnalysisRoute((int) $item->id, 'frequency_profile', (int) $item->itemid))
 				: '';
 			$item->can_download = $canDownload;
 			$item->download_url = $item->can_download

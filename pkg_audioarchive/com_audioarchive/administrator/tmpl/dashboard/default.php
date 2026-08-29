@@ -74,7 +74,8 @@ $formatBytes = static function (int $bytes): string
                             'COM_AUDIOARCHIVE_DASHBOARD_STORAGE_BREAKDOWN',
                             htmlspecialchars($formatBytes((int) $this->counts['clip_storage']), ENT_QUOTES, 'UTF-8'),
                             htmlspecialchars($formatBytes((int) $this->counts['waveform_storage']), ENT_QUOTES, 'UTF-8'),
-                            htmlspecialchars($formatBytes((int) $this->counts['spectrogram_storage']), ENT_QUOTES, 'UTF-8')
+                            htmlspecialchars($formatBytes((int) $this->counts['spectrogram_storage']), ENT_QUOTES, 'UTF-8'),
+                            htmlspecialchars($formatBytes((int) $this->counts['frequency_profile_storage']), ENT_QUOTES, 'UTF-8')
                         ); ?>
                     </div>
                 </div>

@@ -846,6 +846,7 @@ final class ArchiveImportService
 					'preview_status',
 					'waveform_status',
 					'spectrogram_status',
+					'frequency_profile_status',
 					'technical_metadata',
 				] as $preservedField)
 				{
@@ -2044,6 +2045,7 @@ final class ArchiveImportService
 		{
 			'waveform' => 'waveform_status',
 			'spectrogram' => 'spectrogram_status',
+			'frequency_profile' => 'frequency_profile_status',
 			default => '',
 		};
 

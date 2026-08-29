@@ -3,6 +3,10 @@ const RATING_CLIENT_KEY = 'com_audioarchive.rating.client.v1';
 const RATING_VOTES_KEY = 'com_audioarchive.rating.votes.v1';
 const RETURN_STORAGE_KEY = 'com_audioarchive.return.v1';
 const RETURN_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const SAMPLER_ROOT_MIDI_NOTE = 60;
+const SAMPLER_MIN_BASE_NOTE = 24;
+const SAMPLER_MAX_BASE_NOTE = 96;
+const SAMPLER_NOTE_NAMES = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
 
 /**
  * Read a JSON value from local storage.
@@ -764,6 +768,31 @@ function mergeBoards(personalBoard, sharedBoard, padCount)
 }
 
 /**
+ * Insert a value into a translated single-placeholder label.
+ *
+ * @param {string} template Label containing %s or %d.
+ * @param {string|number} value Replacement value.
+ * @returns {string} Formatted label.
+ */
+function formatSoundboardLabel(template, value)
+{
+	return String(template || '').replace(/%[sd]/, String(value));
+}
+
+/**
+ * Return a display name for one MIDI note number.
+ *
+ * @param {number} midiNote MIDI note number.
+ * @returns {string} Note name such as C4.
+ */
+function getMidiNoteName(midiNote)
+{
+	const note = Math.max(0, Math.min(127, Math.round(midiNote)));
+	const octave = Math.floor(note / 12) - 1;
+	return `${SAMPLER_NOTE_NAMES[note % 12]}${octave}`;
+}
+
+/**
  * Initialise the soundboard page.
  *
  * @returns {void}
@@ -779,6 +808,7 @@ function initialiseSoundboard()
 
 	const padCount = Math.max(4, Number.parseInt(root.dataset.audioarchivePadCount || '12', 10));
 	const polyphonic = root.dataset.audioarchivePolyphonic !== '0';
+	const samplerEnabled = root.dataset.audioarchiveSamplerEnabled !== '0';
 	const recordSoundboardPlays = root.dataset.audioarchiveRecordSoundboardPlays !== '0';
 	const streamTemplate = root.dataset.audioarchiveStreamTemplate || '';
 	const routesUrl = root.dataset.audioarchiveRoutesUrl || '';
@@ -790,6 +820,18 @@ function initialiseSoundboard()
 	const interactionToken = root.dataset.audioarchiveInteractionToken || '';
 	const pads = Array.from(root.querySelectorAll('[data-audioarchive-soundboard-pad]'));
 	const sharedPanel = root.querySelector('[data-audioarchive-soundboard-shared]');
+	const padModeButton = root.querySelector('[data-audioarchive-soundboard-mode-pad]');
+	const samplerModeButton = root.querySelector('[data-audioarchive-soundboard-mode-sampler]');
+	const samplerPanel = root.querySelector('[data-audioarchive-soundboard-sampler]');
+	const samplerDescription = root.querySelector('[data-audioarchive-soundboard-sampler-description]');
+	const midiEnableButton = root.querySelector('[data-audioarchive-soundboard-midi-enable]');
+	const midiEnableLabel = root.querySelector('[data-audioarchive-soundboard-midi-enable-label]');
+	const midiStatus = root.querySelector('[data-audioarchive-soundboard-midi-status]');
+	const keyboardToggle = root.querySelector('[data-audioarchive-soundboard-keyboard-toggle]');
+	const keyboardToggleLabel = root.querySelector('[data-audioarchive-soundboard-keyboard-toggle-label]');
+	const keyboard = root.querySelector('[data-audioarchive-soundboard-keyboard]');
+	const octaveLabel = root.querySelector('[data-audioarchive-soundboard-octave-label]');
+	const pianoKeys = Array.from(root.querySelectorAll('[data-audioarchive-soundboard-piano-key]'));
 	let board = readBoard().slice(0, padCount);
 	let temporarySharedBoard = false;
 	const detailRoutes = new Map();
@@ -798,6 +840,19 @@ function initialiseSoundboard()
 	const countedClipIds = new Set();
 	const activeVoices = new Set();
 	const voicesByPad = new Map();
+	const activeSamplerVoices = new Set();
+	const samplerVoicesByPad = new Map();
+	const samplerBuffers = new Map();
+	const decodedSamplerBuffers = new Map();
+	let audioContext = null;
+	let midiAccess = null;
+	let selectedSamplerIndex = -1;
+	let selectedSamplerClipId = 0;
+	let samplerBaseNote = SAMPLER_ROOT_MIDI_NOTE;
+	let keyboardVisible = false;
+	let samplerSelectionGeneration = 0;
+	let samplerMode = false;
+	let previousAudioSessionType = null;
 
 	const fragment = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('board');
 
@@ -924,7 +979,7 @@ function initialiseSoundboard()
 		}
 	};
 
-	const recordInteraction = (eventType, clipId = 0) =>
+	const recordInteraction = (eventType, clipId = 0, playDetails = {}) =>
 	{
 		if (interactionUrl === '' || interactionToken === '')
 		{
@@ -938,6 +993,28 @@ function initialiseSoundboard()
 		if (clipId > 0)
 		{
 			body.set('clip_id', String(clipId));
+		}
+
+		if (eventType === 'audioarchive.soundboard.play')
+		{
+			const playSource = String(playDetails.source || '').trim();
+			const midiNote = Number.parseInt(String(playDetails.midiNote ?? ''), 10);
+			const midiVelocity = Number.parseInt(String(playDetails.midiVelocity ?? ''), 10);
+
+			if (playSource !== '')
+			{
+				body.set('play_source', playSource);
+			}
+
+			if (Number.isInteger(midiNote))
+			{
+				body.set('midi_note', String(midiNote));
+			}
+
+			if (Number.isInteger(midiVelocity))
+			{
+				body.set('midi_velocity', String(midiVelocity));
+			}
 		}
 
 		fetch(interactionUrl,
@@ -965,9 +1042,21 @@ function initialiseSoundboard()
 			const entry = board[index] || null;
 			const title = pad.querySelector('[data-audioarchive-soundboard-title]');
 			pad.classList.toggle('is-empty', !entry);
-			pad.classList.remove('is-playing');
 			title.textContent = entry ? entry.title : root.dataset.audioarchiveLabelEmpty;
+			updatePadPlayingState(index);
 		});
+
+		syncSamplerSelection();
+
+		if (samplerMode && selectedSamplerIndex < 0)
+		{
+			const firstOccupiedPad = board.findIndex((entry) => Boolean(entry));
+
+			if (firstOccupiedPad >= 0)
+			{
+				void selectSamplerPad(firstOccupiedPad, false);
+			}
+		}
 
 		applyDetailRoutes();
 		void resolveDetailRoutes();
@@ -1005,6 +1094,13 @@ function initialiseSoundboard()
 		});
 	};
 
+	const updatePadPlayingState = (index) =>
+	{
+		const hasAudioVoices = (voicesByPad.get(index)?.size || 0) > 0;
+		const hasSamplerVoices = (samplerVoicesByPad.get(index)?.size || 0) > 0;
+		pads[index]?.classList.toggle('is-playing', hasAudioVoices || hasSamplerVoices);
+	};
+
 	const cleanupVoice = (voice, index) =>
 	{
 		activeVoices.delete(voice);
@@ -1017,28 +1113,65 @@ function initialiseSoundboard()
 			if (padVoices.size === 0)
 			{
 				voicesByPad.delete(index);
-				pads[index]?.classList.remove('is-playing');
 			}
 		}
 
 		voice.removeAttribute('src');
 		voice.load();
+		updatePadPlayingState(index);
+	};
+
+	const cleanupSamplerVoice = (voice) =>
+	{
+		activeSamplerVoices.delete(voice);
+		const padVoices = samplerVoicesByPad.get(voice.index);
+
+		if (padVoices)
+		{
+			padVoices.delete(voice);
+
+			if (padVoices.size === 0)
+			{
+				samplerVoicesByPad.delete(voice.index);
+			}
+		}
+
+		try
+		{
+			voice.sourceNode.disconnect();
+			voice.gainNode.disconnect();
+		}
+		catch (error)
+		{
+			// A voice that already ended may already be disconnected.
+		}
+
+		updatePadPlayingState(voice.index);
+	};
+
+	const stopSamplerVoice = (voice) =>
+	{
+		try
+		{
+			voice.sourceNode.stop();
+		}
+		catch (error)
+		{
+			// Stopping an already-ended source is harmless.
+		}
+
+		cleanupSamplerVoice(voice);
 	};
 
 	const stopPadVoices = (index) =>
 	{
-		const padVoices = voicesByPad.get(index);
-
-		if (!padVoices)
-		{
-			return;
-		}
-
-		Array.from(padVoices).forEach((voice) =>
+		Array.from(voicesByPad.get(index) || []).forEach((voice) =>
 		{
 			voice.pause();
 			cleanupVoice(voice, index);
 		});
+
+		Array.from(samplerVoicesByPad.get(index) || []).forEach((voice) => stopSamplerVoice(voice));
 	};
 
 	const stopAllVoices = () =>
@@ -1046,11 +1179,584 @@ function initialiseSoundboard()
 		Array.from(activeVoices).forEach((voice) =>
 		{
 			voice.pause();
+			const index = Number.parseInt(voice.dataset.audioarchivePadIndex || '-1', 10);
+
+			if (index >= 0)
+			{
+				cleanupVoice(voice, index);
+			}
 		});
 
+		Array.from(activeSamplerVoices).forEach((voice) => stopSamplerVoice(voice));
 		activeVoices.clear();
 		voicesByPad.clear();
+		activeSamplerVoices.clear();
+		samplerVoicesByPad.clear();
 		pads.forEach((pad) => pad.classList.remove('is-playing'));
+	};
+
+	const setSamplerDescription = (template, title) =>
+	{
+		if (samplerDescription)
+		{
+			samplerDescription.textContent = formatSoundboardLabel(template, title);
+		}
+	};
+
+	const updatePianoNotes = () =>
+	{
+		pianoKeys.forEach((key) =>
+		{
+			const offset = Number.parseInt(key.dataset.noteOffset || '0', 10);
+			const midiNote = samplerBaseNote + offset;
+			const noteName = getMidiNoteName(midiNote);
+			const computerKey = key.dataset.computerKey || '';
+			const noteLabel = key.querySelector('[data-audioarchive-soundboard-piano-note]');
+			key.dataset.midiNote = String(midiNote);
+			key.setAttribute('aria-label', computerKey === '' ? noteName : `${noteName} (${computerKey})`);
+
+			if (noteLabel)
+			{
+				noteLabel.textContent = noteName;
+			}
+		});
+
+		if (octaveLabel)
+		{
+			const octave = Math.floor(samplerBaseNote / 12) - 1;
+			octaveLabel.textContent = formatSoundboardLabel(root.dataset.audioarchiveLabelKeyboardOctave, octave);
+		}
+	};
+
+	const setKeyboardVisible = (visible) =>
+	{
+		keyboardVisible = visible && samplerMode && selectedSamplerIndex >= 0;
+
+		if (keyboard)
+		{
+			keyboard.hidden = !keyboardVisible;
+		}
+
+		if (keyboardToggle)
+		{
+			keyboardToggle.setAttribute('aria-expanded', keyboardVisible ? 'true' : 'false');
+		}
+
+		if (keyboardToggleLabel)
+		{
+			keyboardToggleLabel.textContent = keyboardVisible
+				? root.dataset.audioarchiveLabelKeyboardHide
+				: root.dataset.audioarchiveLabelKeyboardShow;
+		}
+
+		if (!keyboardVisible)
+		{
+			pianoKeys.forEach((key) => key.classList.remove('is-pressed'));
+		}
+	};
+
+	const syncSamplerSelection = () =>
+	{
+		const entry = samplerMode && selectedSamplerIndex >= 0 ? board[selectedSamplerIndex] || null : null;
+
+		if (!entry || entry.id !== selectedSamplerClipId)
+		{
+			selectedSamplerIndex = -1;
+			selectedSamplerClipId = 0;
+			samplerSelectionGeneration++;
+			setKeyboardVisible(false);
+
+			if (samplerPanel)
+			{
+				samplerPanel.hidden = true;
+			}
+
+			setSamplerDescription(root.dataset.audioarchiveLabelSamplerPrompt, '');
+		}
+		else if (samplerPanel)
+		{
+			samplerPanel.hidden = false;
+		}
+
+		pads.forEach((pad, index) =>
+		{
+			const selected = samplerMode && index === selectedSamplerIndex;
+			const trigger = pad.querySelector('[data-audioarchive-soundboard-trigger]');
+			pad.classList.toggle('is-sampler-selected', selected);
+
+			if (trigger)
+			{
+				trigger.setAttribute(
+					'aria-label',
+					formatSoundboardLabel(
+						samplerMode
+							? root.dataset.audioarchiveLabelSamplerSelectPad
+							: root.dataset.audioarchiveLabelPlayPad,
+						index + 1
+					)
+				);
+
+				if (samplerMode)
+				{
+					trigger.setAttribute('aria-pressed', selected ? 'true' : 'false');
+				}
+				else
+				{
+					trigger.removeAttribute('aria-pressed');
+				}
+			}
+		});
+
+		root.classList.toggle('is-sampler-mode', samplerMode);
+		padModeButton?.classList.toggle('is-active', !samplerMode);
+		padModeButton?.setAttribute('aria-pressed', samplerMode ? 'false' : 'true');
+		samplerModeButton?.classList.toggle('is-active', samplerMode);
+		samplerModeButton?.setAttribute('aria-pressed', samplerMode ? 'true' : 'false');
+	};
+
+	const createAudioContext = () =>
+	{
+		const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+
+		if (!AudioContextClass)
+		{
+			throw new Error('Web Audio is unavailable');
+		}
+
+		if (!audioContext)
+		{
+			audioContext = new AudioContextClass();
+		}
+
+		return audioContext;
+	};
+
+	const unlockSamplerAudio = () =>
+	{
+		try
+		{
+			const context = createAudioContext();
+
+			if (context.state !== 'running')
+			{
+				void context.resume().catch(() => {});
+			}
+
+			const unlockBuffer = context.createBuffer(1, 1, context.sampleRate);
+			const unlockSource = context.createBufferSource();
+			unlockSource.buffer = unlockBuffer;
+			unlockSource.connect(context.destination);
+			unlockSource.addEventListener('ended', () => unlockSource.disconnect(), {once: true});
+			unlockSource.start(0);
+		}
+		catch (error)
+		{
+			// The normal sampler error message handles browsers without usable Web Audio.
+		}
+	};
+
+	const getAudioContext = async () =>
+	{
+		const context = createAudioContext();
+
+		if (context.state !== 'running')
+		{
+			await context.resume();
+		}
+
+		return context;
+	};
+
+	const loadSamplerBuffer = (entry) =>
+	{
+		if (samplerBuffers.has(entry.id))
+		{
+			return samplerBuffers.get(entry.id);
+		}
+
+		const promise = (async () =>
+		{
+			const context = await getAudioContext();
+			const source = streamTemplate.replace('987654321', String(entry.id));
+			const response = await fetch(source, {credentials: 'same-origin'});
+
+			if (!response.ok)
+			{
+				throw new Error(`Unable to load sampler audio (${response.status})`);
+			}
+
+			const encodedAudio = await response.arrayBuffer();
+			return new Promise((resolve, reject) =>
+			{
+				context.decodeAudioData(encodedAudio, resolve, reject);
+			});
+		})();
+
+		samplerBuffers.set(entry.id, promise);
+		promise
+			.then((buffer) => decodedSamplerBuffers.set(entry.id, buffer))
+			.catch(() =>
+			{
+				samplerBuffers.delete(entry.id);
+				decodedSamplerBuffers.delete(entry.id);
+			});
+		return promise;
+	};
+
+	const setSamplerAudioSessionActive = (active) =>
+	{
+		const audioSession = navigator.audioSession;
+
+		if (!audioSession || typeof audioSession.type !== 'string')
+		{
+			return;
+		}
+
+		if (active)
+		{
+			try
+			{
+				const currentType = audioSession.type;
+				audioSession.type = 'playback';
+
+				if (previousAudioSessionType === null)
+				{
+					previousAudioSessionType = currentType;
+				}
+			}
+			catch (error)
+			{
+				// Browsers without a writable AudioSession type keep their default behaviour.
+			}
+
+			return;
+		}
+
+		if (previousAudioSessionType !== null)
+		{
+			try
+			{
+				audioSession.type = previousAudioSessionType;
+			}
+			catch (error)
+			{
+				// The session may no longer be writable while the page is being hidden.
+			}
+			finally
+			{
+				previousAudioSessionType = null;
+			}
+		}
+	};
+
+	const selectSamplerPad = async (index, allowDeselect = true) =>
+	{
+		if (!samplerEnabled || !samplerMode)
+		{
+			return;
+		}
+
+		unlockSamplerAudio();
+
+		const entry = board[index] || null;
+
+		if (!entry)
+		{
+			return;
+		}
+
+		if (selectedSamplerIndex === index && selectedSamplerClipId === entry.id)
+		{
+			if (allowDeselect)
+			{
+				selectedSamplerIndex = -1;
+				selectedSamplerClipId = 0;
+				samplerSelectionGeneration++;
+				syncSamplerSelection();
+			}
+			else
+			{
+				setKeyboardVisible(true);
+			}
+
+			return;
+		}
+
+		selectedSamplerIndex = index;
+		selectedSamplerClipId = entry.id;
+		const generation = ++samplerSelectionGeneration;
+		syncSamplerSelection();
+		setKeyboardVisible(true);
+		setSamplerDescription(root.dataset.audioarchiveLabelSamplerLoading, entry.title);
+
+		try
+		{
+			await loadSamplerBuffer(entry);
+
+			if (generation === samplerSelectionGeneration && selectedSamplerClipId === entry.id)
+			{
+				setSamplerDescription(root.dataset.audioarchiveLabelSamplerReady, entry.title);
+			}
+		}
+		catch (error)
+		{
+			if (generation === samplerSelectionGeneration && selectedSamplerClipId === entry.id)
+			{
+				setSamplerDescription(root.dataset.audioarchiveLabelSamplerError, entry.title);
+			}
+		}
+	};
+
+	const setSamplerMode = (enabled) =>
+	{
+		const nextMode = samplerEnabled && Boolean(enabled);
+		setSamplerAudioSessionActive(nextMode);
+
+		if (nextMode)
+		{
+			unlockSamplerAudio();
+		}
+
+		if (samplerMode === nextMode)
+		{
+			syncSamplerSelection();
+		}
+		else
+		{
+			samplerMode = nextMode;
+			selectedSamplerIndex = -1;
+			selectedSamplerClipId = 0;
+			samplerSelectionGeneration++;
+			syncSamplerSelection();
+		}
+
+		if (samplerMode && selectedSamplerIndex < 0)
+		{
+			const firstOccupiedPad = board.findIndex((entry) => Boolean(entry));
+
+			if (firstOccupiedPad >= 0)
+			{
+				void selectSamplerPad(firstOccupiedPad, false);
+			}
+		}
+	};
+
+	const setPianoKeyPressed = (midiNote, pressed) =>
+	{
+		pianoKeys.forEach((key) =>
+		{
+			if (Number.parseInt(key.dataset.midiNote || '-1', 10) === midiNote)
+			{
+				key.classList.toggle('is-pressed', pressed);
+			}
+		});
+	};
+
+	const startSamplerVoice = (context, buffer, entry, index, midiNote, velocity, playSource) =>
+	{
+		if (selectedSamplerIndex !== index || selectedSamplerClipId !== entry.id)
+		{
+			return;
+		}
+
+		if (!polyphonic)
+		{
+			stopAllVoices();
+		}
+
+		const sourceNode = context.createBufferSource();
+		const gainNode = context.createGain();
+		const safeNote = Math.max(0, Math.min(127, Math.round(midiNote)));
+		const safeVelocity = Math.max(1, Math.min(127, Math.round(velocity)));
+		sourceNode.buffer = buffer;
+		sourceNode.playbackRate.value = 2 ** ((safeNote - SAMPLER_ROOT_MIDI_NOTE) / 12);
+		gainNode.gain.value = safeVelocity / 127;
+		sourceNode.connect(gainNode);
+		gainNode.connect(context.destination);
+
+		const voice = {sourceNode, gainNode, index};
+		activeSamplerVoices.add(voice);
+
+		if (!samplerVoicesByPad.has(index))
+		{
+			samplerVoicesByPad.set(index, new Set());
+		}
+
+		samplerVoicesByPad.get(index).add(voice);
+		sourceNode.addEventListener('ended', () => cleanupSamplerVoice(voice), {once: true});
+		sourceNode.start();
+		updatePadPlayingState(index);
+		recordPlay(entry.id);
+
+		if (recordSoundboardPlays)
+		{
+			recordInteraction(
+				'audioarchive.soundboard.play',
+				entry.id,
+				{source: playSource, midiNote: safeNote, midiVelocity: safeVelocity}
+			);
+		}
+
+		if (status)
+		{
+			status.textContent = `${root.dataset.audioarchiveLabelPlaying}: ${entry.title} (${getMidiNoteName(safeNote)})`;
+		}
+	};
+
+	const playSamplerNote = (midiNote, velocity, playSource) =>
+	{
+		if (!samplerEnabled || !samplerMode)
+		{
+			return;
+		}
+
+		setSamplerAudioSessionActive(true);
+		unlockSamplerAudio();
+
+		const index = selectedSamplerIndex;
+		const entry = index >= 0 ? board[index] || null : null;
+
+		if (!entry || entry.id !== selectedSamplerClipId || streamTemplate === '')
+		{
+			return;
+		}
+
+		const readyBuffer = decodedSamplerBuffers.get(entry.id) || null;
+
+		if (readyBuffer)
+		{
+			try
+			{
+				startSamplerVoice(createAudioContext(), readyBuffer, entry, index, midiNote, velocity, playSource);
+			}
+			catch (error)
+			{
+				setSamplerDescription(root.dataset.audioarchiveLabelSamplerError, entry.title);
+			}
+
+			return;
+		}
+
+		void (async () =>
+		{
+			const context = await getAudioContext();
+			const buffer = await loadSamplerBuffer(entry);
+			startSamplerVoice(context, buffer, entry, index, midiNote, velocity, playSource);
+		})().catch(() =>
+		{
+			setSamplerDescription(root.dataset.audioarchiveLabelSamplerError, entry.title);
+		});
+	};
+
+	const shiftSamplerOctave = (direction) =>
+	{
+		const nextBaseNote = Math.max(
+			SAMPLER_MIN_BASE_NOTE,
+			Math.min(SAMPLER_MAX_BASE_NOTE, samplerBaseNote + direction * 12)
+		);
+
+		if (nextBaseNote !== samplerBaseNote)
+		{
+			samplerBaseNote = nextBaseNote;
+			pianoKeys.forEach((key) => key.classList.remove('is-pressed'));
+			updatePianoNotes();
+		}
+	};
+
+	const updateMidiStatus = () =>
+	{
+		if (!midiStatus || !midiEnableButton)
+		{
+			return;
+		}
+
+		if (window.isSecureContext === false)
+		{
+			midiEnableButton.disabled = true;
+			midiStatus.textContent = root.dataset.audioarchiveLabelMidiInsecure;
+			return;
+		}
+
+		if (typeof navigator.requestMIDIAccess !== 'function')
+		{
+			midiEnableButton.disabled = true;
+			midiStatus.textContent = root.dataset.audioarchiveLabelMidiUnavailable;
+			return;
+		}
+
+		if (!midiAccess)
+		{
+			midiEnableButton.disabled = false;
+			midiStatus.textContent = '';
+			return;
+		}
+
+		const inputCount = Array.from(midiAccess.inputs.values()).filter((input) => input.state === 'connected').length;
+		midiEnableButton.disabled = true;
+
+		if (midiEnableLabel)
+		{
+			midiEnableLabel.textContent = root.dataset.audioarchiveLabelMidiEnabled;
+		}
+
+		midiStatus.textContent = inputCount === 0
+			? root.dataset.audioarchiveLabelMidiNoInputs
+			: formatSoundboardLabel(root.dataset.audioarchiveLabelMidiInputs, inputCount);
+	};
+
+	const handleMidiMessage = (event) =>
+	{
+		const data = event.data || [];
+		const command = Number(data[0] || 0) & 0xf0;
+		const midiNote = Number(data[1] || 0);
+		const velocity = Number(data[2] || 0);
+
+		if (command === 0x90 && velocity > 0)
+		{
+			setPianoKeyPressed(midiNote, true);
+			void playSamplerNote(midiNote, velocity, 'midi');
+		}
+		else if (command === 0x80 || (command === 0x90 && velocity === 0))
+		{
+			setPianoKeyPressed(midiNote, false);
+		}
+	};
+
+	const bindMidiInputs = () =>
+	{
+		if (!midiAccess)
+		{
+			return;
+		}
+
+		midiAccess.inputs.forEach((input) =>
+		{
+			input.onmidimessage = handleMidiMessage;
+		});
+		updateMidiStatus();
+	};
+
+	const enableMidi = async () =>
+	{
+		if (window.isSecureContext === false || typeof navigator.requestMIDIAccess !== 'function')
+		{
+			updateMidiStatus();
+			return;
+		}
+
+		try
+		{
+			midiAccess = await navigator.requestMIDIAccess({sysex: false});
+			midiAccess.addEventListener('statechange', bindMidiInputs);
+			bindMidiInputs();
+		}
+		catch (error)
+		{
+			if (midiStatus)
+			{
+				midiStatus.textContent = root.dataset.audioarchiveLabelMidiDenied;
+			}
+		}
 	};
 
 	const play = (index) =>
@@ -1071,6 +1777,7 @@ function initialiseSoundboard()
 		const voice = new Audio(source);
 		voice.preload = 'auto';
 		voice.playsInline = true;
+		voice.dataset.audioarchivePadIndex = String(index);
 		activeVoices.add(voice);
 
 		if (!voicesByPad.has(index))
@@ -1085,7 +1792,7 @@ function initialiseSoundboard()
 			recordPlay(entry.id);
 			if (recordSoundboardPlays)
 			{
-				recordInteraction('audioarchive.soundboard.play', entry.id);
+				recordInteraction('audioarchive.soundboard.play', entry.id, {source: 'pad'});
 			}
 
 			if (status)
@@ -1104,13 +1811,72 @@ function initialiseSoundboard()
 
 	pads.forEach((pad, index) =>
 	{
-		pad.querySelector('[data-audioarchive-soundboard-trigger]')?.addEventListener('click', () => play(index));
+		pad.querySelector('[data-audioarchive-soundboard-trigger]')?.addEventListener('click', () =>
+		{
+			if (samplerMode)
+			{
+				void selectSamplerPad(index, false);
+				return;
+			}
+
+			play(index);
+		});
 		pad.querySelector('[data-audioarchive-soundboard-remove]')?.addEventListener('click', () =>
 		{
 			stopPadVoices(index);
 			board[index] = null;
 			saveCurrentBoard();
 			render();
+		});
+	});
+
+	midiEnableButton?.addEventListener('click', () =>
+	{
+		void enableMidi();
+	});
+
+	padModeButton?.addEventListener('click', () => setSamplerMode(false));
+	samplerModeButton?.addEventListener('click', () => setSamplerMode(true));
+	keyboardToggle?.addEventListener('click', () => setKeyboardVisible(!keyboardVisible));
+	root.querySelector('[data-audioarchive-soundboard-octave-down]')?.addEventListener('click', () => shiftSamplerOctave(-1));
+	root.querySelector('[data-audioarchive-soundboard-octave-up]')?.addEventListener('click', () => shiftSamplerOctave(1));
+
+	pianoKeys.forEach((key) =>
+	{
+		const release = () => key.classList.remove('is-pressed');
+
+		key.addEventListener('pointerdown', (event) =>
+		{
+			if (event.button !== 0)
+			{
+				return;
+			}
+
+			event.preventDefault();
+			const midiNote = Number.parseInt(key.dataset.midiNote || '-1', 10);
+
+			if (midiNote >= 0)
+			{
+				key.classList.add('is-pressed');
+				void playSamplerNote(midiNote, 112, 'onscreen_keyboard');
+			}
+		});
+		key.addEventListener('pointerup', release);
+		key.addEventListener('pointercancel', release);
+		key.addEventListener('pointerleave', release);
+		key.addEventListener('click', (event) =>
+		{
+			if (event.detail !== 0)
+			{
+				return;
+			}
+
+			const midiNote = Number.parseInt(key.dataset.midiNote || '-1', 10);
+
+			if (midiNote >= 0)
+			{
+				void playSamplerNote(midiNote, 112, 'onscreen_keyboard');
+			}
 		});
 	});
 
@@ -1280,6 +2046,13 @@ function initialiseSoundboard()
 	}
 
 	const keyboardKeys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
+	const samplerPadKeys = keyboardKeys.slice(0, 10);
+	const samplerKeyboardOffsets = new Map(
+		[
+			['A', 0], ['W', 1], ['S', 2], ['E', 3], ['D', 4], ['F', 5], ['T', 6], ['G', 7],
+			['Z', 8], ['H', 9], ['U', 10], ['J', 11], ['K', 12], ['O', 13], ['L', 14], ['P', 15],
+		]
+	);
 	window.addEventListener('keydown', (event) =>
 	{
 		if (event.repeat || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
@@ -1287,12 +2060,58 @@ function initialiseSoundboard()
 			return;
 		}
 
-		if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement)
+		if (
+			event.target instanceof HTMLInputElement
+			|| event.target instanceof HTMLTextAreaElement
+			|| event.target instanceof HTMLSelectElement
+			|| (event.target instanceof HTMLElement && event.target.isContentEditable)
+		)
 		{
 			return;
 		}
 
-		const index = keyboardKeys.indexOf(event.key.toUpperCase());
+		const pressedKey = event.key.toUpperCase();
+
+		if (samplerEnabled && samplerMode)
+		{
+			const samplerPadIndex = samplerPadKeys.indexOf(pressedKey);
+
+			if (samplerPadIndex >= 0)
+			{
+				event.preventDefault();
+
+				if (samplerPadIndex < padCount && board[samplerPadIndex])
+				{
+					void selectSamplerPad(samplerPadIndex, false);
+				}
+
+				return;
+			}
+
+			if (pressedKey === 'Y' || pressedKey === 'X')
+			{
+				event.preventDefault();
+				shiftSamplerOctave(pressedKey === 'Y' ? -1 : 1);
+				return;
+			}
+
+			if (samplerKeyboardOffsets.has(pressedKey))
+			{
+				event.preventDefault();
+				const midiNote = samplerBaseNote + samplerKeyboardOffsets.get(pressedKey);
+				setPianoKeyPressed(midiNote, true);
+				void playSamplerNote(midiNote, 112, 'computer_keyboard');
+				return;
+			}
+
+			if (/^[A-Z]$/.test(pressedKey))
+			{
+				event.preventDefault();
+				return;
+			}
+		}
+
+		const index = keyboardKeys.indexOf(pressedKey);
 
 		if (index >= 0 && index < padCount)
 		{
@@ -1300,8 +2119,44 @@ function initialiseSoundboard()
 			play(index);
 		}
 	});
+	window.addEventListener('keyup', (event) =>
+	{
+		if (!samplerEnabled || !samplerMode)
+		{
+			return;
+		}
 
-	window.addEventListener('pagehide', stopAllVoices);
+		const pressedKey = event.key.toUpperCase();
+
+		if (samplerKeyboardOffsets.has(pressedKey))
+		{
+			setPianoKeyPressed(samplerBaseNote + samplerKeyboardOffsets.get(pressedKey), false);
+		}
+	});
+
+	const shutdownSoundboard = () =>
+	{
+		setSamplerAudioSessionActive(false);
+		stopAllVoices();
+
+		if (midiAccess)
+		{
+			midiAccess.removeEventListener('statechange', bindMidiInputs);
+			midiAccess.inputs.forEach((input) =>
+			{
+				input.onmidimessage = null;
+			});
+		}
+
+		if (audioContext && audioContext.state !== 'closed')
+		{
+			void audioContext.close();
+		}
+	};
+
+	window.addEventListener('pagehide', shutdownSoundboard);
+	updatePianoNotes();
+	updateMidiStatus();
 	setTemporarySharedBoard(temporarySharedBoard);
 	render();
 }

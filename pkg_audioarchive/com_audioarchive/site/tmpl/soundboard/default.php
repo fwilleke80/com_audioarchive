@@ -6,6 +6,26 @@ use Punga\Component\Audioarchive\Site\Helper\StyleHelper;
 \defined('_JEXEC') or die;
 
 $keys = array_merge(range(1, 9), [0], range('A', 'Z'));
+$samplerWhiteKeys = [
+	['offset' => 0, 'key' => 'A'],
+	['offset' => 2, 'key' => 'S'],
+	['offset' => 4, 'key' => 'D'],
+	['offset' => 5, 'key' => 'F'],
+	['offset' => 7, 'key' => 'G'],
+	['offset' => 9, 'key' => 'H'],
+	['offset' => 11, 'key' => 'J'],
+	['offset' => 12, 'key' => 'K'],
+	['offset' => 14, 'key' => 'L'],
+];
+$samplerBlackKeys = [
+	['offset' => 1, 'key' => 'W', 'position' => '11.111%'],
+	['offset' => 3, 'key' => 'E', 'position' => '22.222%'],
+	['offset' => 6, 'key' => 'T', 'position' => '44.444%'],
+	['offset' => 8, 'key' => 'Z', 'position' => '55.556%'],
+	['offset' => 10, 'key' => 'U', 'position' => '66.667%'],
+	['offset' => 13, 'key' => 'O', 'position' => '88.889%'],
+	['offset' => 15, 'key' => 'P', 'position' => '97%'],
+];
 $introText = trim((string) $this->params->get('soundboard_header_text', ''));
 $soundboardStyle = StyleHelper::buildSoundboardVariables($this->params);
 ?>
@@ -17,6 +37,7 @@ $soundboardStyle = StyleHelper::buildSoundboardVariables($this->params);
 	data-audioarchive-return-title="<?php echo $this->escape($this->returnTitle); ?>"
 	data-audioarchive-pad-count="<?php echo $this->padCount; ?>"
 	data-audioarchive-polyphonic="<?php echo $this->polyphonic ? '1' : '0'; ?>"
+	data-audioarchive-sampler-enabled="<?php echo $this->samplerEnabled ? '1' : '0'; ?>"
 	data-audioarchive-record-soundboard-plays="<?php echo (int) $this->params->get('soundboard_record_plays', 1) === 1 ? '1' : '0'; ?>"
 	data-audioarchive-stream-template="<?php echo $this->escape($this->streamTemplate); ?>"
 	<?php if ($this->playCountUrl !== '') : ?>
@@ -29,6 +50,8 @@ $soundboardStyle = StyleHelper::buildSoundboardVariables($this->params);
 	data-audioarchive-canonical-url="<?php echo $this->escape($this->canonicalUrl); ?>"
 	data-audioarchive-label-empty="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_EMPTY_PAD')); ?>"
 	data-audioarchive-label-playing="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_PLAYING')); ?>"
+	data-audioarchive-label-play-pad="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_PLAY_PAD')); ?>"
+	data-audioarchive-label-sampler-select-pad="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_SAMPLER_SELECT_PAD')); ?>"
 	data-audioarchive-label-copied="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SHARE_COPIED')); ?>"
 	data-audioarchive-label-imported="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_IMPORTED')); ?>"
 	data-audioarchive-label-invalid="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_INVALID_FILE')); ?>"
@@ -36,6 +59,24 @@ $soundboardStyle = StyleHelper::buildSoundboardVariables($this->params);
 	data-audioarchive-label-shared-full="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_SHARED_FULL')); ?>"
 	data-audioarchive-label-shared-replaced="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_SHARED_REPLACED')); ?>"
 	data-audioarchive-label-replace-confirm="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_SHARED_REPLACE_CONFIRM')); ?>"
+	data-audioarchive-label-sampler-prompt="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_SAMPLER_PROMPT')); ?>"
+	data-audioarchive-label-sampler-loading="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_SAMPLER_LOADING')); ?>"
+	data-audioarchive-label-sampler-ready="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_SAMPLER_READY')); ?>"
+	data-audioarchive-label-sampler-error="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_SAMPLER_ERROR')); ?>"
+	data-audioarchive-label-keyboard-show="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_KEYBOARD_SHOW')); ?>"
+	data-audioarchive-label-keyboard-hide="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_KEYBOARD_HIDE')); ?>"
+	data-audioarchive-label-keyboard-octave="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_KEYBOARD_OCTAVE')); ?>"
+	data-audioarchive-label-midi-unavailable="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_MIDI_UNAVAILABLE')); ?>"
+	data-audioarchive-label-midi-insecure="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_MIDI_INSECURE')); ?>"
+	data-audioarchive-label-midi-denied="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_MIDI_DENIED')); ?>"
+	data-audioarchive-label-midi-no-inputs="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_MIDI_NO_INPUTS')); ?>"
+	data-audioarchive-label-midi-inputs="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_MIDI_INPUTS')); ?>"
+	data-audioarchive-label-midi-enabled="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_MIDI_ENABLED')); ?>"
+	data-audioarchive-label-playlist-default-name="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_PLAYLIST_DEFAULT_NAME')); ?>"
+	data-audioarchive-label-playlist-name-prompt="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_NAME_PROMPT')); ?>"
+	data-audioarchive-label-playlist-empty="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_PLAYLIST_EMPTY')); ?>"
+	data-audioarchive-label-playlist-saved="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_PLAYLIST_SAVED')); ?>"
+	data-audioarchive-label-playlist-error="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_PLAYLIST_ERROR')); ?>"
 >
 	<header class="com-audioarchive-page-header">
 		<?php if ((int) $this->params->get('show_page_heading', 1) === 1) : ?>
@@ -67,6 +108,32 @@ $soundboardStyle = StyleHelper::buildSoundboardVariables($this->params);
 			</button>
 		</div>
 	</section>
+
+	<?php if ($this->samplerEnabled) : ?>
+		<div class="com-audioarchive-soundboard-mode" data-audioarchive-soundboard-mode>
+			<span class="com-audioarchive-soundboard-mode-label"><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_MODE_LABEL'); ?></span>
+			<div class="com-audioarchive-soundboard-mode-options" role="group" aria-label="<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_MODE_LABEL'); ?>">
+				<button
+					type="button"
+					class="com-audioarchive-soundboard-mode-button is-active"
+					data-audioarchive-soundboard-mode-pad
+					aria-pressed="true"
+				>
+					<span class="icon-grid-view" aria-hidden="true"></span>
+					<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_MODE_PAD'); ?>
+				</button>
+				<button
+					type="button"
+					class="com-audioarchive-soundboard-mode-button"
+					data-audioarchive-soundboard-mode-sampler
+					aria-pressed="false"
+				>
+					<span class="icon-music" aria-hidden="true"></span>
+					<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_MODE_SAMPLER'); ?>
+				</button>
+			</div>
+		</div>
+	<?php endif; ?>
 
 	<div class="com-audioarchive-soundboard-grid">
 		<?php for ($index = 0; $index < $this->padCount; $index++) : ?>
@@ -105,7 +172,98 @@ $soundboardStyle = StyleHelper::buildSoundboardVariables($this->params);
 		<?php endfor; ?>
 	</div>
 
+	<?php if ($this->samplerEnabled) : ?>
+	<section class="com-audioarchive-soundboard-sampler" data-audioarchive-soundboard-sampler hidden>
+		<div class="com-audioarchive-soundboard-sampler-header">
+			<div>
+				<h2><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_SAMPLER_TITLE'); ?></h2>
+				<p data-audioarchive-soundboard-sampler-description><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_SAMPLER_PROMPT'); ?></p>
+			</div>
+			<div class="com-audioarchive-soundboard-sampler-actions">
+				<button type="button" class="btn btn-outline-secondary" data-audioarchive-soundboard-midi-enable>
+					<span class="icon-plug" aria-hidden="true"></span>
+					<span data-audioarchive-soundboard-midi-enable-label><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_MIDI_ENABLE'); ?></span>
+				</button>
+				<button
+					type="button"
+					class="btn btn-outline-secondary"
+					data-audioarchive-soundboard-keyboard-toggle
+					aria-expanded="false"
+				>
+					<span class="icon-keyboard" aria-hidden="true"></span>
+					<span data-audioarchive-soundboard-keyboard-toggle-label><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_KEYBOARD_SHOW'); ?></span>
+				</button>
+			</div>
+		</div>
+
+		<p class="com-audioarchive-soundboard-midi-status" data-audioarchive-soundboard-midi-status aria-live="polite"></p>
+
+		<div class="com-audioarchive-soundboard-keyboard" data-audioarchive-soundboard-keyboard hidden>
+			<div class="com-audioarchive-soundboard-keyboard-toolbar">
+				<button
+					type="button"
+					class="btn btn-sm btn-outline-secondary"
+					data-audioarchive-soundboard-octave-down
+					aria-label="<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_KEYBOARD_OCTAVE_DOWN'); ?>"
+					title="<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_KEYBOARD_OCTAVE_DOWN'); ?>"
+				>
+					<span aria-hidden="true">Y</span>
+					<span class="icon-chevron-left" aria-hidden="true"></span>
+				</button>
+				<strong data-audioarchive-soundboard-octave-label><?php echo Text::sprintf('COM_AUDIOARCHIVE_SOUNDBOARD_KEYBOARD_OCTAVE', 4); ?></strong>
+				<button
+					type="button"
+					class="btn btn-sm btn-outline-secondary"
+					data-audioarchive-soundboard-octave-up
+					aria-label="<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_KEYBOARD_OCTAVE_UP'); ?>"
+					title="<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_KEYBOARD_OCTAVE_UP'); ?>"
+				>
+					<span class="icon-chevron-right" aria-hidden="true"></span>
+					<span aria-hidden="true">X</span>
+				</button>
+			</div>
+
+			<div class="com-audioarchive-soundboard-piano" role="group" aria-label="<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_KEYBOARD_ARIA_LABEL'); ?>">
+				<div class="com-audioarchive-soundboard-white-keys">
+					<?php foreach ($samplerWhiteKeys as $samplerKey) : ?>
+						<button
+							type="button"
+							class="com-audioarchive-soundboard-piano-key is-white"
+							data-audioarchive-soundboard-piano-key
+							data-note-offset="<?php echo (int) $samplerKey['offset']; ?>"
+							data-computer-key="<?php echo $this->escape($samplerKey['key']); ?>"
+						>
+							<span class="com-audioarchive-soundboard-piano-note" data-audioarchive-soundboard-piano-note></span>
+							<span class="com-audioarchive-soundboard-piano-shortcut"><?php echo $this->escape($samplerKey['key']); ?></span>
+						</button>
+					<?php endforeach; ?>
+				</div>
+				<?php foreach ($samplerBlackKeys as $samplerKey) : ?>
+					<button
+						type="button"
+						class="com-audioarchive-soundboard-piano-key is-black"
+						data-audioarchive-soundboard-piano-key
+						data-note-offset="<?php echo (int) $samplerKey['offset']; ?>"
+						data-computer-key="<?php echo $this->escape($samplerKey['key']); ?>"
+						style="--audioarchive-piano-key-position: <?php echo $this->escape($samplerKey['position']); ?>;"
+					>
+						<span class="com-audioarchive-soundboard-piano-note" data-audioarchive-soundboard-piano-note></span>
+						<span class="com-audioarchive-soundboard-piano-shortcut"><?php echo $this->escape($samplerKey['key']); ?></span>
+					</button>
+				<?php endforeach; ?>
+			</div>
+			<p class="com-audioarchive-soundboard-keyboard-hint"><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_KEYBOARD_HINT'); ?></p>
+		</div>
+	</section>
+	<?php endif; ?>
+
 	<div class="com-audioarchive-soundboard-toolbar" role="group" aria-label="<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_TOOLS'); ?>">
+		<?php if ($this->playlistsEnabled) : ?>
+		<button type="button" class="btn btn-outline-secondary" data-audioarchive-soundboard-save-playlist>
+			<span class="icon-list" aria-hidden="true"></span>
+			<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_SAVE_PLAYLIST'); ?>
+		</button>
+		<?php endif; ?>
 		<button type="button" class="btn btn-outline-secondary" data-audioarchive-soundboard-export>
 			<span class="icon-download" aria-hidden="true"></span>
 			<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_EXPORT'); ?>
@@ -148,6 +306,8 @@ $soundboardStyle = StyleHelper::buildSoundboardVariables($this->params);
 			<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_CLEAR'); ?>
 		</button>
 	</div>
+
+	<p class="com-audioarchive-conversion-status" data-audioarchive-soundboard-conversion-status aria-live="polite"></p>
 
 	<p class="com-audioarchive-soundboard-note"><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_STORAGE_NOTE'); ?></p>
 </div>

@@ -49,6 +49,10 @@ $playlistStyle = StyleHelper::buildPlaylistListVariables($this->params);
 	data-audioarchive-label-browser-share="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SHARE_BROWSER')); ?>"
 	data-audioarchive-label-browser-unavailable="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SHARE_BROWSER_UNAVAILABLE')); ?>"
 	data-audioarchive-label-add-soundboard="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_ADD')); ?>"
+	data-audioarchive-label-load-soundboard-confirm="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_LOAD_SOUNDBOARD_CONFIRM')); ?>"
+	data-audioarchive-label-load-soundboard-empty="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_LOAD_SOUNDBOARD_EMPTY')); ?>"
+	data-audioarchive-label-load-soundboard-success="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_LOAD_SOUNDBOARD_SUCCESS')); ?>"
+	data-audioarchive-label-load-soundboard-error="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_LOAD_SOUNDBOARD_ERROR')); ?>"
 	data-audioarchive-status-playing="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_PLAYING')); ?>"
 	data-audioarchive-status-paused="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_PAUSED')); ?>"
 	data-audioarchive-status-error="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_ERROR')); ?>"
@@ -180,6 +184,12 @@ $playlistStyle = StyleHelper::buildPlaylistListVariables($this->params);
 	</div>
 
 	<div class="com-audioarchive-playlist-toolbar" role="group" aria-label="<?php echo Text::_('COM_AUDIOARCHIVE_PLAYLIST_TOOLS'); ?>">
+		<?php if ($this->soundboardEnabled) : ?>
+		<button type="button" class="btn btn-outline-secondary" data-audioarchive-playlist-load-soundboard>
+			<span class="icon-grid-view" aria-hidden="true"></span>
+			<?php echo Text::_('COM_AUDIOARCHIVE_PLAYLIST_LOAD_SOUNDBOARD'); ?>
+		</button>
+		<?php endif; ?>
 		<button type="button" class="btn btn-outline-secondary" data-audioarchive-playlist-export>
 			<span class="icon-download" aria-hidden="true"></span>
 			<?php echo Text::_('COM_AUDIOARCHIVE_PLAYLIST_EXPORT'); ?>
@@ -217,6 +227,8 @@ $playlistStyle = StyleHelper::buildPlaylistListVariables($this->params);
 			</div>
 		</div>
 	</div>
+
+	<p class="com-audioarchive-conversion-status" data-audioarchive-playlist-conversion-status aria-live="polite"></p>
 
 	<p class="com-audioarchive-playlist-storage-note"><?php echo Text::_('COM_AUDIOARCHIVE_PLAYLIST_STORAGE_NOTE'); ?></p>
 </div>

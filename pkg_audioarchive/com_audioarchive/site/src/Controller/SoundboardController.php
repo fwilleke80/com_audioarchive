@@ -31,21 +31,21 @@ class SoundboardController extends BaseController
 
 		if (!in_array($requestMethod, ['GET', 'POST'], true))
 		{
-			$this->sendJson(405, ['success' => false, 'routes' => []]);
+			$this->sendJson(405, ['success' => false, 'routes' => [], 'items' => []]);
 		}
 
 		$ids = $this->normaliseIds($application->getInput()->getString('ids', ''));
 
 		if ($ids === [])
 		{
-			$this->sendJson(200, ['success' => true, 'routes' => []]);
+			$this->sendJson(200, ['success' => true, 'routes' => [], 'items' => []]);
 		}
 
 		$params = ComponentHelper::getParams('com_audioarchive');
 
 		if ((int) $params->get('enable_soundboard', 1) !== 1)
 		{
-			$this->sendJson(404, ['success' => false, 'routes' => []]);
+			$this->sendJson(404, ['success' => false, 'routes' => [], 'items' => []]);
 		}
 
 		try
@@ -57,6 +57,7 @@ class SoundboardController extends BaseController
 			$preferredItemId = $application->getInput()->getInt('Itemid', 0);
 			$authorisedViewLevels = (array) $identity->getAuthorisedViewLevels();
 			$routes = [];
+			$items = [];
 
 			foreach ($ids as $id)
 			{
@@ -84,13 +85,18 @@ class SoundboardController extends BaseController
 					Route::TLS_IGNORE,
 					true
 				);
+				$items[(string) $id] = [
+					'uuid' => strtolower((string) ($clip->uuid ?? '')),
+					'id' => $id,
+					'title' => (string) ($clip->title ?? ''),
+				];
 			}
 
-			$this->sendJson(200, ['success' => true, 'routes' => $routes]);
+			$this->sendJson(200, ['success' => true, 'routes' => $routes, 'items' => $items]);
 		}
 		catch (\Throwable)
 		{
-			$this->sendJson(500, ['success' => false, 'routes' => []]);
+			$this->sendJson(500, ['success' => false, 'routes' => [], 'items' => []]);
 		}
 	}
 

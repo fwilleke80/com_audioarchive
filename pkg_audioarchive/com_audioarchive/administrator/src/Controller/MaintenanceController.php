@@ -256,6 +256,43 @@ class MaintenanceController extends BaseController
         $this->setRedirect($this->maintenanceUrl());
     }
 
+    /**
+     * @brief Queue frequency-profile jobs for one maintenance status group.
+     *
+     * @return void
+     */
+    public function queueFrequencyProfiles(): void
+    {
+        Session::checkToken() or jexit(Text::_('JINVALID_TOKEN'));
+        $this->assertProcessPermission();
+        $application = Factory::getApplication();
+        $mode = $application->getInput()->post->getCmd('frequency_profile_mode', '');
+        $model = $this->getModel('Maintenance');
+
+        if (!$model instanceof MaintenanceModel)
+        {
+            throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_MAINTENANCE_ERROR_MODEL'), 500);
+        }
+
+        try
+        {
+            $queued = $model->queueFrequencyProfiles($mode);
+            $application->enqueueMessage(
+                Text::sprintf('COM_AUDIOARCHIVE_FREQUENCY_PROFILE_QUEUE_COMPLETE', $queued),
+                $queued > 0 ? 'success' : 'info'
+            );
+        }
+        catch (\Throwable $exception)
+        {
+            $application->enqueueMessage(
+                Text::sprintf('COM_AUDIOARCHIVE_FREQUENCY_PROFILE_QUEUE_FAILED', $exception->getMessage()),
+                'error'
+            );
+        }
+
+        $this->setRedirect($this->maintenanceUrl());
+    }
+
 
     /**
      * @brief Queue and begin regeneration of spectral analyses for all eligible clips.
@@ -307,6 +344,16 @@ class MaintenanceController extends BaseController
     public function deleteSpectrograms(): void
     {
         $this->deleteAnalysisData('spectrogram');
+    }
+
+    /**
+     * @brief Delete every generated frequency-profile file and reset its states.
+     *
+     * @return void
+     */
+    public function deleteFrequencyProfiles(): void
+    {
+        $this->deleteAnalysisData('frequency_profile');
     }
 
     /**
@@ -818,7 +865,7 @@ class MaintenanceController extends BaseController
     /**
      * @brief Delete all generated data for one analysis type.
      *
-     * @param string $analysisType Waveform or spectrogram.
+     * @param string $analysisType Waveform, spectrogram, or frequency profile.
      *
      * @return void
      */
@@ -843,9 +890,12 @@ class MaintenanceController extends BaseController
         try
         {
             $result = $model->deleteAllAnalysis($analysisType);
-            $key = $analysisType === 'waveform'
-                ? 'COM_AUDIOARCHIVE_WAVEFORM_DELETE_ALL_COMPLETE'
-                : 'COM_AUDIOARCHIVE_SPECTROGRAM_DELETE_ALL_COMPLETE';
+            $key = match ($analysisType)
+            {
+                'waveform' => 'COM_AUDIOARCHIVE_WAVEFORM_DELETE_ALL_COMPLETE',
+                'spectrogram' => 'COM_AUDIOARCHIVE_SPECTROGRAM_DELETE_ALL_COMPLETE',
+                'frequency_profile' => 'COM_AUDIOARCHIVE_FREQUENCY_PROFILE_DELETE_ALL_COMPLETE',
+            };
             $application->enqueueMessage(
                 Text::sprintf(
                     $key,
@@ -859,9 +909,12 @@ class MaintenanceController extends BaseController
         }
         catch (\Throwable $exception)
         {
-            $key = $analysisType === 'waveform'
-                ? 'COM_AUDIOARCHIVE_WAVEFORM_DELETE_ALL_FAILED'
-                : 'COM_AUDIOARCHIVE_SPECTROGRAM_DELETE_ALL_FAILED';
+            $key = match ($analysisType)
+            {
+                'waveform' => 'COM_AUDIOARCHIVE_WAVEFORM_DELETE_ALL_FAILED',
+                'spectrogram' => 'COM_AUDIOARCHIVE_SPECTROGRAM_DELETE_ALL_FAILED',
+                'frequency_profile' => 'COM_AUDIOARCHIVE_FREQUENCY_PROFILE_DELETE_ALL_FAILED',
+            };
             $application->enqueueMessage(Text::sprintf($key, $exception->getMessage()), 'error');
         }
 

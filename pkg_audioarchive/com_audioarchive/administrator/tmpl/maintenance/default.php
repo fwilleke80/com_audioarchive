@@ -23,6 +23,7 @@ $codecClips = (array) ($this->report['codec_clips'] ?? []);
 $staleItems = (array) ($this->report['stale_items'] ?? []);
 $waveforms = (array) ($this->report['waveforms'] ?? []);
 $spectrograms = (array) ($this->report['spectrograms'] ?? []);
+$frequencyProfiles = (array) ($this->report['frequency_profiles'] ?? []);
 $analysisQueue = (array) ($this->report['analysis_queue'] ?? []);
 $archiveZipSupported = (bool) ($this->report['archive_zip_supported'] ?? false);
 $archiveInboxFiles = (array) ($this->report['archive_inbox_files'] ?? []);
@@ -266,6 +267,23 @@ $checkUrl = static fn(string $check): string => Route::_('index.php?option=com_a
 					'delete_confirm' => 'COM_AUDIOARCHIVE_SPECTROGRAM_DELETE_ALL_CONFIRM',
 					'status_prefix' => 'COM_AUDIOARCHIVE_SPECTROGRAM_STATUS_',
 				],
+				[
+					'type' => 'frequency_profile',
+					'summary' => $frequencyProfiles,
+					'title' => 'COM_AUDIOARCHIVE_FREQUENCY_PROFILE_MAINTENANCE_TITLE',
+					'text' => 'COM_AUDIOARCHIVE_FREQUENCY_PROFILE_MAINTENANCE_TEXT',
+					'task' => 'maintenance.queueFrequencyProfiles',
+					'mode_name' => 'frequency_profile_mode',
+					'queue_missing' => 'COM_AUDIOARCHIVE_FREQUENCY_PROFILE_QUEUE_MISSING',
+					'queue_stale' => 'COM_AUDIOARCHIVE_FREQUENCY_PROFILE_QUEUE_STALE',
+					'retry_failed' => 'COM_AUDIOARCHIVE_FREQUENCY_PROFILE_RETRY_FAILED',
+					'regenerate' => 'COM_AUDIOARCHIVE_FREQUENCY_PROFILE_REGENERATE_ALL',
+					'regenerate_confirm' => 'COM_AUDIOARCHIVE_FREQUENCY_PROFILE_REGENERATE_ALL_CONFIRM',
+					'delete_task' => 'maintenance.deleteFrequencyProfiles',
+					'delete' => 'COM_AUDIOARCHIVE_FREQUENCY_PROFILE_DELETE_ALL',
+					'delete_confirm' => 'COM_AUDIOARCHIVE_FREQUENCY_PROFILE_DELETE_ALL_CONFIRM',
+					'status_prefix' => 'COM_AUDIOARCHIVE_FREQUENCY_PROFILE_STATUS_',
+				],
 			] as $analysisSection) : ?>
 				<?php
 				$analysisSummary = (array) $analysisSection['summary'];
@@ -274,7 +292,7 @@ $checkUrl = static fn(string $check): string => Route::_('index.php?option=com_a
 					array_intersect_key($analysisSummary, array_flip(['available', 'pending', 'failed', 'stale']))
 				));
 				?>
-				<section class="<?php echo $analysisSection['type'] === 'spectrogram' ? 'border-top pt-4 mt-4' : ''; ?>">
+				<section class="<?php echo $analysisSection['type'] !== 'waveform' ? 'border-top pt-4 mt-4' : ''; ?>">
 					<h3 class="h5 mb-1"><?php echo Text::_($analysisSection['title']); ?></h3>
 					<p class="text-body-secondary"><?php echo Text::_($analysisSection['text']); ?></p>
 
@@ -343,7 +361,7 @@ $checkUrl = static fn(string $check): string => Route::_('index.php?option=com_a
 					type="button"
 					class="btn btn-primary"
 					data-audioarchive-process-analyses
-					<?php echo ((int) ($waveforms['queued'] ?? 0) + (int) ($spectrograms['queued'] ?? 0)) <= 0 ? 'disabled' : ''; ?>
+					<?php echo ((int) ($waveforms['queued'] ?? 0) + (int) ($spectrograms['queued'] ?? 0) + (int) ($frequencyProfiles['queued'] ?? 0)) <= 0 ? 'disabled' : ''; ?>
 				>
 					<span class="icon-play" aria-hidden="true"></span>
 					<?php echo Text::_('COM_AUDIOARCHIVE_ANALYSIS_PROCESS_QUEUE'); ?>
@@ -397,6 +415,7 @@ $checkUrl = static fn(string $check): string => Route::_('index.php?option=com_a
 									{
 										'waveform' => Text::_('COM_AUDIOARCHIVE_ANALYSIS_QUEUE_TYPE_WAVEFORM'),
 										'spectrogram' => Text::_('COM_AUDIOARCHIVE_ANALYSIS_QUEUE_TYPE_SPECTROGRAM'),
+										'frequency_profile' => Text::_('COM_AUDIOARCHIVE_ANALYSIS_QUEUE_TYPE_FREQUENCY_PROFILE'),
 										default => $analysisType !== '' ? $analysisType : Text::_('COM_AUDIOARCHIVE_ANALYSIS_QUEUE_TYPE_UNKNOWN'),
 									};
 									$stateLabel = $state === 'running'

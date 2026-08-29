@@ -9,6 +9,10 @@
 	--audioarchive-player-progress: 0%;
 	--audioarchive-player-radius: 14px;
 	--audioarchive-player-text: #212529;
+	--audioarchive-frequency-profile-background: #111827;
+	--audioarchive-frequency-profile-fill: #0d6efd;
+	--audioarchive-frequency-profile-grid: #94a3b8;
+	--audioarchive-frequency-profile-line: #8bb9fe;
 	--audioarchive-waveform-height: 100px;
 	--audioarchive-waveform-played: #0d6efd;
 	--audioarchive-waveform-unplayed: #6c757d;
@@ -279,7 +283,8 @@
 }
 
 .audioarchive-custom-player-waveform canvas,
-.audioarchive-custom-player-spectrogram img
+.audioarchive-custom-player-spectrogram img,
+.audioarchive-custom-player-frequency-profile canvas
 {
 	display: block;
 	width: 100%;
@@ -297,6 +302,17 @@
 {
 	object-fit: fill;
 	background: #000;
+}
+
+.audioarchive-custom-player-frequency-profile
+{
+	background: var(--audioarchive-frequency-profile-background);
+	cursor: default;
+}
+
+.audioarchive-custom-player-frequency-profile canvas
+{
+	background: var(--audioarchive-frequency-profile-background);
 }
 
 .audioarchive-custom-player-waveform-playhead,
@@ -328,6 +344,23 @@
 	border-radius: .35rem;
 	background: rgb(0 0 0 / 58%);
 	color: #fff;
+}
+
+.audioarchive-custom-player-frequency-profile .audioarchive-custom-player-analysis-status
+{
+	padding: .25rem .5rem;
+	border-radius: .35rem;
+	background: rgb(0 0 0 / 58%);
+	color: #fff;
+}
+
+.audioarchive-custom-player-frequency-profile .audioarchive-custom-player-analysis-status.is-frequency-profile-summary
+{
+	inset: .4rem .45rem auto auto;
+	transform: none;
+	font-size: .68rem;
+	font-weight: 650;
+	pointer-events: none;
 }
 
 .audioarchive-custom-player.no-analysis

@@ -38,21 +38,25 @@ $title = trim((string) ($data['title'] ?? ''));
 $streamUrl = trim((string) ($data['streamUrl'] ?? ''));
 $waveformUrl = $showAnalysis ? trim((string) ($data['waveformUrl'] ?? '')) : '';
 $spectrogramUrl = $showAnalysis ? trim((string) ($data['spectrogramUrl'] ?? '')) : '';
+$frequencyProfileUrl = $showAnalysis ? trim((string) ($data['frequencyProfileUrl'] ?? '')) : '';
 $hasWaveform = $waveformUrl !== '';
 $hasSpectrogram = $spectrogramUrl !== '';
-$hasAnalysis = $hasWaveform || $hasSpectrogram;
+$hasFrequencyProfile = $frequencyProfileUrl !== '';
+$hasAnalysis = $hasWaveform || $hasSpectrogram || $hasFrequencyProfile;
 $preferredAnalysisView = strtolower(trim((string) (
 	$data['preferredAnalysisView']
 	?? $params->get('player_preferred_data_view', 'waveform')
 )));
-$preferredAnalysisView = in_array($preferredAnalysisView, ['waveform', 'spectrogram'], true)
+$preferredAnalysisView = in_array($preferredAnalysisView, ['waveform', 'spectrogram', 'frequency_profile'], true)
 	? $preferredAnalysisView
 	: 'waveform';
 $initialAnalysisView = match (true)
 {
 	$preferredAnalysisView === 'spectrogram' && $hasSpectrogram => 'spectrogram',
+	$preferredAnalysisView === 'frequency_profile' && $hasFrequencyProfile => 'frequency_profile',
 	$hasWaveform => 'waveform',
 	$hasSpectrogram => 'spectrogram',
+	$hasFrequencyProfile => 'frequency_profile',
 	default => '',
 };
 $mime = trim((string) ($data['mime'] ?? '')) ?: 'application/octet-stream';
@@ -68,8 +72,11 @@ $previousLabel = (string) ($labels['previous'] ?? 'Previous');
 $nextLabel = (string) ($labels['next'] ?? 'Next');
 $waveformLoadingLabel = (string) ($labels['waveformLoading'] ?? 'Loading waveform…');
 $spectrogramLoadingLabel = (string) ($labels['spectrogramLoading'] ?? 'Loading spectrum…');
+$frequencyProfileLoadingLabel = (string) ($labels['frequencyProfileLoading'] ?? 'Loading frequency profile…');
 $waveformLabel = (string) ($labels['waveform'] ?? 'Waveform');
 $spectrumLabel = (string) ($labels['spectrum'] ?? 'Spectrum');
+$frequencyProfileLabel = (string) ($labels['frequencyProfile'] ?? 'Frequency Profile');
+$frequencyProfileSummary = (string) ($labels['frequencyProfileSummary'] ?? 'Peak: %1$s Hz · Centroid: %2$s Hz');
 $buttonSizeParameter = match ($presentation)
 {
 	'minimal' => 'player_minimal_button_size',
@@ -91,12 +98,17 @@ $className = trim(
 $className .= $hasAnalysis ? ' has-analysis' : ' no-analysis';
 $className .= $hasWaveform ? ' has-waveform' : ' no-waveform';
 $className .= $hasSpectrogram ? ' has-spectrogram' : ' no-spectrogram';
+$className .= $hasFrequencyProfile ? ' has-frequency-profile' : ' no-frequency-profile';
 $style = implode(';', [
 	'--audioarchive-player-background:' . $normaliseColor($params->get('player_background_color'), '#f8f9fa'),
 	'--audioarchive-player-text:' . $normaliseColor($params->get('player_text_color'), '#212529'),
 	'--audioarchive-player-accent:' . $normaliseColor($params->get('player_control_color'), '#0d6efd'),
 	'--audioarchive-waveform-unplayed:' . $normaliseColor($params->get('player_waveform_unplayed_color'), '#6c757d'),
 	'--audioarchive-waveform-played:' . $normaliseColor($params->get('player_waveform_played_color'), '#0d6efd'),
+	'--audioarchive-frequency-profile-background:' . $normaliseColor($params->get('player_frequency_profile_background_color'), '#111827'),
+	'--audioarchive-frequency-profile-fill:' . $normaliseColor($params->get('player_frequency_profile_fill_color'), '#0d6efd'),
+	'--audioarchive-frequency-profile-line:' . $normaliseColor($params->get('player_frequency_profile_line_color'), '#8bb9fe'),
+	'--audioarchive-frequency-profile-grid:' . $normaliseColor($params->get('player_frequency_profile_grid_color'), '#94a3b8'),
 	'--audioarchive-player-radius:' . $normaliseInteger($params->get('player_border_radius'), 14, 0, 40) . 'px',
 	'--audioarchive-player-button-size:' . $normaliseInteger($params->get($buttonSizeParameter), $buttonSizeFallback, 32, 88) . 'px',
 	'--audioarchive-waveform-height:' . $normaliseInteger($params->get('player_featured_waveform_height'), 100, 48, 240) . 'px',
@@ -223,9 +235,10 @@ $style = implode(';', [
 
 		<?php if ($hasAnalysis) : ?>
 			<div class="audioarchive-custom-player-analysis" data-audioarchive-player-analysis>
-				<?php if ($hasWaveform && $hasSpectrogram) : ?>
+				<?php if (((int) $hasWaveform + (int) $hasSpectrogram + (int) $hasFrequencyProfile) > 1) : ?>
 					<div class="audioarchive-custom-player-analysis-switch" role="group" aria-label="<?php echo $escape((string) ($labels['analysisView'] ?? 'Analysis view')); ?>">
 						<button
+							<?php echo !$hasWaveform ? 'hidden' : ''; ?>
 							type="button"
 							<?php echo $initialAnalysisView === 'waveform' ? 'class="is-active" aria-pressed="true"' : 'aria-pressed="false"'; ?>
 							data-audioarchive-analysis-switch="waveform"
@@ -233,11 +246,20 @@ $style = implode(';', [
 							<?php echo $escape($waveformLabel); ?>
 						</button>
 						<button
+							<?php echo !$hasSpectrogram ? 'hidden' : ''; ?>
 							type="button"
 							<?php echo $initialAnalysisView === 'spectrogram' ? 'class="is-active" aria-pressed="true"' : 'aria-pressed="false"'; ?>
 							data-audioarchive-analysis-switch="spectrogram"
 						>
 							<?php echo $escape($spectrumLabel); ?>
+						</button>
+						<button
+							<?php echo !$hasFrequencyProfile ? 'hidden' : ''; ?>
+							type="button"
+							<?php echo $initialAnalysisView === 'frequency_profile' ? 'class="is-active" aria-pressed="true"' : 'aria-pressed="false"'; ?>
+							data-audioarchive-analysis-switch="frequency_profile"
+						>
+							<?php echo $escape($frequencyProfileLabel); ?>
 						</button>
 					</div>
 				<?php endif; ?>
@@ -269,6 +291,22 @@ $style = implode(';', [
 						<span class="audioarchive-custom-player-spectrogram-playhead" aria-hidden="true" data-audioarchive-spectrogram-playhead></span>
 						<p class="audioarchive-custom-player-analysis-status" data-audioarchive-spectrogram-status>
 							<?php echo $escape($spectrogramLoadingLabel); ?>
+						</p>
+					</div>
+				<?php endif; ?>
+
+				<?php if ($hasFrequencyProfile) : ?>
+					<div
+						class="audioarchive-custom-player-analysis-panel audioarchive-custom-player-frequency-profile"
+						data-audioarchive-analysis-panel="frequency_profile"
+						data-audioarchive-player-frequency-profile
+						data-frequency-profile-url="<?php echo $escape($frequencyProfileUrl); ?>"
+						data-summary-template="<?php echo $escape($frequencyProfileSummary); ?>"
+						<?php echo $initialAnalysisView !== 'frequency_profile' ? 'hidden' : ''; ?>
+					>
+						<canvas aria-hidden="true"></canvas>
+						<p class="audioarchive-custom-player-analysis-status" data-audioarchive-frequency-profile-status>
+							<?php echo $escape($frequencyProfileLoadingLabel); ?>
 						</p>
 					</div>
 				<?php endif; ?>

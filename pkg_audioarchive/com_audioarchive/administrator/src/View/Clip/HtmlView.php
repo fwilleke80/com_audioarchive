@@ -27,6 +27,7 @@ class HtmlView extends BaseHtmlView
     protected string $playbackUrl = '';
     protected string $waveformUrl = '';
     protected string $spectrogramUrl = '';
+	protected string $frequencyProfileUrl = '';
 
     /**
      * @brief Display the edit form.
@@ -91,6 +92,20 @@ class HtmlView extends BaseHtmlView
                     false
                 );
             }
+			$frequencyProfile = $repository->get((int) $this->item->id, 'frequency_profile');
+
+			if (
+				$frequencyProfile !== null
+				&& (int) ($frequencyProfile->is_available ?? 0) === 1
+				&& (string) ($frequencyProfile->status ?? '') === 'available'
+			)
+			{
+				$this->frequencyProfileUrl = Route::_(
+					'index.php?option=com_audioarchive&task=media.analysis&id=' . (int) $this->item->id
+					. '&type=frequency_profile&' . Session::getFormToken() . '=1',
+					false
+				);
+			}
         }
 
         if (count($errors = $this->get('Errors')))

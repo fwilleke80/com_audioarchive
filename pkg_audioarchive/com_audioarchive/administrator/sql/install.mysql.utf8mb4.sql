@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS `#__audioarchive_clips` (
     `preview_status` varchar(24) NOT NULL DEFAULT 'not_required',
     `waveform_status` varchar(24) NOT NULL DEFAULT 'missing',
     `spectrogram_status` varchar(24) NOT NULL DEFAULT 'missing',
+    `frequency_profile_status` varchar(24) NOT NULL DEFAULT 'missing',
     `technical_metadata` mediumtext NOT NULL,
     `params` mediumtext NOT NULL,
     `version` int unsigned NOT NULL DEFAULT 1,

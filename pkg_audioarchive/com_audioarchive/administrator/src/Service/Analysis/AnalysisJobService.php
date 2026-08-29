@@ -72,6 +72,20 @@ final class AnalysisJobService
 	}
 
 	/**
+	 * @brief Queue a frequency profile for one clip unless an active job already exists.
+	 *
+	 * @param int $clipId Clip identifier.
+	 * @param array<string, mixed> $options Generator options.
+	 * @param int $priority Job priority.
+	 *
+	 * @return bool True when a new job was queued.
+	 */
+	public function queueFrequencyProfile(int $clipId, array $options = [], int $priority = 0): bool
+	{
+		return $this->queueAnalysis('frequency_profile', $clipId, $options, $priority);
+	}
+
+	/**
 	 * @brief Queue one registered analysis type for a clip.
 	 *
 	 * @param string $analysisType Stable analysis type.
@@ -110,7 +124,7 @@ final class AnalysisJobService
 	{
 		$analysisType = strtolower(trim($analysisType));
 
-		if (!in_array($analysisType, ['waveform', 'spectrogram'], true))
+		if (!in_array($analysisType, ['waveform', 'spectrogram', 'frequency_profile'], true))
 		{
 			throw new \InvalidArgumentException(Text::_('COM_AUDIOARCHIVE_ANALYSIS_ERROR_UNSUPPORTED_BULK_TYPE'));
 		}
@@ -122,7 +136,12 @@ final class AnalysisJobService
 			return 0;
 		}
 
-		$statusField = $analysisType === 'waveform' ? 'waveform_status' : 'spectrogram_status';
+		$statusField = match ($analysisType)
+		{
+			'waveform' => 'waveform_status',
+			'spectrogram' => 'spectrogram_status',
+			'frequency_profile' => 'frequency_profile_status',
+		};
 		$query = $this->database->getQuery(true)
 			->select($this->database->quoteName('a.id'))
 			->from($this->database->quoteName('#__audioarchive_clips', 'a'))
@@ -162,7 +181,7 @@ final class AnalysisJobService
 	{
 		$analysisType = strtolower(trim($analysisType));
 
-		if (!in_array($analysisType, ['waveform', 'spectrogram'], true))
+		if (!in_array($analysisType, ['waveform', 'spectrogram', 'frequency_profile'], true))
 		{
 			throw new \InvalidArgumentException(Text::_('COM_AUDIOARCHIVE_ANALYSIS_ERROR_UNSUPPORTED_BULK_TYPE'));
 		}
@@ -209,6 +228,16 @@ final class AnalysisJobService
 	public function getSpectrogramSummary(): array
 	{
 		return $this->getAnalysisSummary('spectrogram', 'spectrogram_status');
+	}
+
+	/**
+	 * @brief Return frequency-profile status and queue counts for maintenance UI.
+	 *
+	 * @return array<string, int> Summary counts.
+	 */
+	public function getFrequencyProfileSummary(): array
+	{
+		return $this->getAnalysisSummary('frequency_profile', 'frequency_profile_status');
 	}
 
 	/**
@@ -321,7 +350,7 @@ final class AnalysisJobService
 	{
 		$analysisType = strtolower(trim($analysisType));
 
-		if (!in_array($analysisType, ['waveform', 'spectrogram'], true))
+		if (!in_array($analysisType, ['waveform', 'spectrogram', 'frequency_profile'], true))
 		{
 			throw new \InvalidArgumentException(Text::_('COM_AUDIOARCHIVE_ANALYSIS_ERROR_UNSUPPORTED_BULK_TYPE'));
 		}
@@ -423,6 +452,10 @@ final class AnalysisJobService
 					(int) ($result->parameters['width'] ?? 0),
 					(int) ($result->parameters['height'] ?? 0)
 				),
+				'frequency_profile' => Text::sprintf(
+					'COM_AUDIOARCHIVE_FREQUENCY_PROFILE_JOB_SUCCESS',
+					(int) ($result->parameters['bin_count'] ?? 0)
+				),
 				default => Text::sprintf('COM_AUDIOARCHIVE_ANALYSIS_JOB_SUCCESS', $analysisType),
 			};
 			$this->finishJob((int) $job->id, 'completed', '');
@@ -477,6 +510,7 @@ final class AnalysisJobService
 		if (
 			($analysisType === 'waveform' && (int) $this->params->get('enable_waveform_generation', 1) !== 1)
 			|| ($analysisType === 'spectrogram' && (int) $this->params->get('enable_spectrogram_generation', 1) !== 1)
+			|| ($analysisType === 'frequency_profile' && (int) $this->params->get('enable_frequency_profile_generation', 1) !== 1)
 		)
 		{
 			return false;

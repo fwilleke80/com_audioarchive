@@ -56,12 +56,14 @@ class DashboardModel extends BaseDatabaseModel
             ->where($db->quoteName('analysis_type') . ' IN (' . implode(',', [
                 $db->quote('waveform'),
                 $db->quote('spectrogram'),
+                $db->quote('frequency_profile'),
             ]) . ')')
             ->where($db->quoteName('storage_key') . ' <> ' . $db->quote(''))
             ->group($db->quoteName('analysis_type'));
         $analysisStorageRows = $db->setQuery($query)->loadAssocList('analysis_type') ?: [];
         $waveformStorage = (int) ($analysisStorageRows['waveform']['storage_size'] ?? 0);
         $spectrogramStorage = (int) ($analysisStorageRows['spectrogram']['storage_size'] ?? 0);
+        $frequencyProfileStorage = (int) ($analysisStorageRows['frequency_profile']['storage_size'] ?? 0);
 
         return [
             'total' => (int) ($row['total'] ?? 0),
@@ -76,7 +78,8 @@ class DashboardModel extends BaseDatabaseModel
             'clip_storage' => $clipStorage,
             'waveform_storage' => $waveformStorage,
             'spectrogram_storage' => $spectrogramStorage,
-            'total_storage' => $clipStorage + $waveformStorage + $spectrogramStorage,
+            'frequency_profile_storage' => $frequencyProfileStorage,
+            'total_storage' => $clipStorage + $waveformStorage + $spectrogramStorage + $frequencyProfileStorage,
         ];
     }
 

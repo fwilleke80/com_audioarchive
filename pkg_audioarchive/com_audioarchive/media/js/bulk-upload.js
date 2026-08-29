@@ -536,7 +536,7 @@
                 {
                     analysisStatus.textContent = translate(
                         'COM_AUDIOARCHIVE_BULK_UPLOAD_ANALYSIS_PROCESSING',
-                        'Processing waveform and spectral analyses for %s…'
+                        'Processing generated audio analyses for %s…'
                     ).replace('%s', String(job.result?.title || job.file.name));
                 }
 

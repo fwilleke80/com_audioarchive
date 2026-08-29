@@ -10,6 +10,7 @@ const initialiseAudioArchivePlayers = () =>
 	const animationFrames = new WeakMap();
 	const waveformStates = new WeakMap();
 	const spectrogramStates = new WeakMap();
+	const frequencyProfileStates = new WeakMap();
 
 	const getArchiveRoot = (element) => element.closest('.com-audioarchive');
 
@@ -183,6 +184,24 @@ const initialiseAudioArchivePlayers = () =>
 			});
 		}
 
+		if (selected.dataset.audioarchiveAnalysisPanel === 'frequency_profile')
+		{
+			requestAnimationFrame(() =>
+			{
+				const profile = player.querySelector('[data-audioarchive-player-frequency-profile]');
+				const state = profile instanceof HTMLElement ? frequencyProfileStates.get(profile) : null;
+
+				if (!state)
+				{
+					return;
+				}
+
+				state.width = 0;
+				state.height = 0;
+				drawPlayerFrequencyProfile(player, state);
+			});
+		}
+
 		if (switcher instanceof HTMLElement)
 		{
 			switcher.hidden = panels.length < 2;
@@ -204,8 +223,19 @@ const initialiseAudioArchivePlayers = () =>
 	{
 		if (panel instanceof HTMLElement)
 		{
+			const analysisType = panel.dataset.audioarchiveAnalysisPanel || '';
 			panel.dataset.analysisUnavailable = 'true';
 			panel.hidden = true;
+
+			if (analysisType !== '')
+			{
+				const button = player.querySelector(`[data-audioarchive-analysis-switch="${analysisType}"]`);
+
+				if (button instanceof HTMLButtonElement)
+				{
+					button.hidden = true;
+				}
+			}
 		}
 
 		selectAnalysisPanel(player, '');
@@ -516,6 +546,247 @@ const initialiseAudioArchivePlayers = () =>
 		image.src = url;
 	};
 
+	const formatProfileFrequency = (frequency) =>
+	{
+		if (!Number.isFinite(frequency) || frequency < 0)
+		{
+			return '0';
+		}
+
+		if (frequency >= 1000)
+		{
+			return `${Number.parseFloat((frequency / 1000).toFixed(frequency >= 10000 ? 0 : 1))}k`;
+		}
+
+		return String(Math.round(frequency));
+	};
+
+	const drawPlayerFrequencyProfile = (player, state) =>
+	{
+		const profile = state.canvas.closest('[data-audioarchive-player-frequency-profile]');
+
+		if (!(profile instanceof HTMLElement) || profile.hidden)
+		{
+			return;
+		}
+
+		state.canvas.style.removeProperty('width');
+		state.canvas.style.removeProperty('height');
+		const bounds = state.canvas.getBoundingClientRect();
+		const width = Math.round(bounds.width);
+		const height = Math.round(bounds.height);
+		const ratio = Math.max(1, window.devicePixelRatio || 1);
+
+		if (width <= 1 || height <= 1)
+		{
+			return;
+		}
+
+		if (state.width === width && state.height === height && state.ratio === ratio)
+		{
+			return;
+		}
+
+		state.width = width;
+		state.height = height;
+		state.ratio = ratio;
+		state.canvas.width = Math.max(1, Math.round(width * ratio));
+		state.canvas.height = Math.max(1, Math.round(height * ratio));
+		const context = state.canvas.getContext('2d');
+
+		if (!context)
+		{
+			return;
+		}
+
+		const styles = getComputedStyle(player);
+		const background = styles.getPropertyValue('--audioarchive-frequency-profile-background').trim() || '#111827';
+		const fill = styles.getPropertyValue('--audioarchive-frequency-profile-fill').trim() || '#0d6efd';
+		const line = styles.getPropertyValue('--audioarchive-frequency-profile-line').trim() || '#8bb9fe';
+		const grid = styles.getPropertyValue('--audioarchive-frequency-profile-grid').trim() || '#94a3b8';
+		context.setTransform(ratio, 0, 0, ratio, 0, 0);
+		context.clearRect(0, 0, width, height);
+		context.fillStyle = background;
+		context.fillRect(0, 0, width, height);
+		const left = 8;
+		const right = 8;
+		const top = 8;
+		const bottom = 19;
+		const plotWidth = Math.max(1, width - left - right);
+		const plotHeight = Math.max(1, height - top - bottom);
+		context.strokeStyle = grid;
+		context.lineWidth = 1;
+		context.globalAlpha = 0.28;
+		context.beginPath();
+
+		for (let division = 0; division <= 4; division += 1)
+		{
+			const y = top + (plotHeight * division / 4);
+			context.moveTo(left, y);
+			context.lineTo(left + plotWidth, y);
+		}
+
+		for (let division = 0; division <= 4; division += 1)
+		{
+			const x = left + (plotWidth * division / 4);
+			context.moveTo(x, top);
+			context.lineTo(x, top + plotHeight);
+		}
+
+		context.stroke();
+		context.globalAlpha = 1;
+		const points = state.levels.map((level, index) =>
+		{
+			const x = left + (index / Math.max(1, state.levels.length - 1)) * plotWidth;
+			const normalised = Math.min(1, Math.max(0, 1 + (Number(level) / state.dynamicRange)));
+			const y = top + ((1 - normalised) * plotHeight);
+
+			return [x, y];
+		});
+
+		context.beginPath();
+		context.moveTo(points[0][0], top + plotHeight);
+		points.forEach(([x, y]) => context.lineTo(x, y));
+		context.lineTo(points[points.length - 1][0], top + plotHeight);
+		context.closePath();
+		context.fillStyle = fill;
+		context.globalAlpha = 0.46;
+		context.fill();
+		context.globalAlpha = 1;
+		context.beginPath();
+		points.forEach(([x, y], index) =>
+		{
+			if (index === 0)
+			{
+				context.moveTo(x, y);
+			}
+			else
+			{
+				context.lineTo(x, y);
+			}
+		});
+		context.strokeStyle = line;
+		context.lineWidth = 1.6;
+		context.stroke();
+		context.fillStyle = grid;
+		context.font = '600 10px system-ui, sans-serif';
+		context.textBaseline = 'bottom';
+		context.globalAlpha = 0.88;
+		context.fillText(`${formatProfileFrequency(state.frequencies[0])} Hz`, left, height - 2);
+		const lastLabel = `${formatProfileFrequency(state.frequencies[state.frequencies.length - 1])} Hz`;
+		context.fillText(lastLabel, left + plotWidth - context.measureText(lastLabel).width, height - 2);
+		context.globalAlpha = 1;
+	};
+
+	const initialisePlayerFrequencyProfile = (player) =>
+	{
+		const profile = player.querySelector('[data-audioarchive-player-frequency-profile]');
+
+		if (!(profile instanceof HTMLElement))
+		{
+			return;
+		}
+
+		const canvas = profile.querySelector('canvas');
+		const status = profile.querySelector('[data-audioarchive-frequency-profile-status]');
+		const url = profile.dataset.frequencyProfileUrl || '';
+
+		if (!(canvas instanceof HTMLCanvasElement) || url === '')
+		{
+			player.classList.remove('has-frequency-profile');
+			player.classList.add('no-frequency-profile');
+			markAnalysisUnavailable(player, profile);
+			return;
+		}
+
+		fetch(url, {
+			credentials: 'same-origin',
+			headers: {
+				'Accept': 'application/json',
+			},
+		})
+			.then((response) =>
+			{
+				if (!response.ok)
+				{
+					throw new Error(`HTTP ${response.status}`);
+				}
+
+				return response.json();
+			})
+			.then((data) =>
+			{
+				if (
+					data?.dataFormat !== 'json-frequency-profile-v1'
+					|| !Array.isArray(data.frequenciesHz)
+					|| !Array.isArray(data.levelsDb)
+					|| data.frequenciesHz.length < 2
+					|| data.frequenciesHz.length !== data.levelsDb.length
+				)
+				{
+					throw new Error('Unsupported frequency-profile data.');
+				}
+
+				const frequencies = data.frequenciesHz.map(Number);
+				const levels = data.levelsDb.map(Number);
+
+				if (!frequencies.every(Number.isFinite) || !levels.every(Number.isFinite))
+				{
+					throw new Error('Frequency-profile data contains invalid values.');
+				}
+
+				const state = {
+					canvas,
+					frequencies,
+					levels,
+					dynamicRange: Math.max(1, Number(data.dynamicRangeDb) || 80),
+					width: 0,
+					height: 0,
+					ratio: 0,
+				};
+				frequencyProfileStates.set(profile, state);
+
+				if (status instanceof HTMLElement)
+				{
+					const template = profile.dataset.summaryTemplate || 'Peak: %1$s Hz · Centroid: %2$s Hz';
+					status.textContent = template
+						.replace('%1$s', String(Math.round(Number(data.dominantFrequencyHz) || 0)))
+						.replace('%2$s', String(Math.round(Number(data.spectralCentroidHz) || 0)));
+					status.classList.add('is-frequency-profile-summary');
+				}
+
+				drawPlayerFrequencyProfile(player, state);
+
+				if ('ResizeObserver' in window)
+				{
+					new ResizeObserver(() =>
+					{
+						if (!profile.hidden)
+						{
+							state.width = 0;
+							state.height = 0;
+							drawPlayerFrequencyProfile(player, state);
+						}
+					}).observe(profile);
+				}
+				else
+				{
+					window.addEventListener('resize', () =>
+					{
+						state.width = 0;
+						state.height = 0;
+						drawPlayerFrequencyProfile(player, state);
+					});
+				}
+			})
+			.catch(() =>
+			{
+				player.classList.remove('has-frequency-profile');
+				player.classList.add('no-frequency-profile');
+				markAnalysisUnavailable(player, profile);
+			});
+	};
+
 	const initialiseAnalysisSwitcher = (player) =>
 	{
 		player.querySelectorAll('[data-audioarchive-analysis-switch]').forEach((button) =>
@@ -787,6 +1058,7 @@ const initialiseAudioArchivePlayers = () =>
 		updateCustomPlayerMuteState(player, audio);
 		initialisePlayerWaveform(player, audio);
 		initialisePlayerSpectrogram(player, audio);
+		initialisePlayerFrequencyProfile(player);
 		initialiseAnalysisSwitcher(player);
 
 		toggle.addEventListener('click', async () =>

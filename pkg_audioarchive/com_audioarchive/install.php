@@ -14,7 +14,7 @@ use Joomla\Registry\Registry;
 
 return new class () implements InstallerScriptInterface
 {
-	private const SCHEMA_VERSION = '0.11.1';
+	private const SCHEMA_VERSION = '0.11.20';
 
 	private const CATEGORY_MENU_LINK = 'index.php?option=com_categories&view=categories&extension=com_audioarchive';
 
@@ -390,6 +390,7 @@ return new class () implements InstallerScriptInterface
 
 			$this->repairAnalysisSchema($database);
 			$this->ensureSpectrogramStatusColumn($database);
+			$this->ensureFrequencyProfileStatusColumn($database);
 			$this->repairCheckoutColumns($database);
 			$this->ensureFileRoleUniqueIndex($database);
 			$this->ensureGloballyUniqueAliases($database);
@@ -481,6 +482,28 @@ return new class () implements InstallerScriptInterface
 			. ' ADD COLUMN ' . $database->quoteName('spectrogram_status')
 			. " varchar(24) NOT NULL DEFAULT 'missing' AFTER "
 			. $database->quoteName('waveform_status');
+		$database->setQuery($query)->execute();
+	}
+
+	/**
+	 * @brief Ensure the denormalised frequency-profile status column exists.
+	 *
+	 * @param DatabaseInterface $database Joomla database connection.
+	 * @return void
+	 */
+	private function ensureFrequencyProfileStatusColumn(DatabaseInterface $database): void
+	{
+		$columns = $database->getTableColumns('#__audioarchive_clips', false);
+
+		if (isset($columns['frequency_profile_status']))
+		{
+			return;
+		}
+
+		$query = 'ALTER TABLE ' . $database->quoteName('#__audioarchive_clips')
+			. ' ADD COLUMN ' . $database->quoteName('frequency_profile_status')
+			. " varchar(24) NOT NULL DEFAULT 'missing' AFTER "
+			. $database->quoteName('spectrogram_status');
 		$database->setQuery($query)->execute();
 	}
 

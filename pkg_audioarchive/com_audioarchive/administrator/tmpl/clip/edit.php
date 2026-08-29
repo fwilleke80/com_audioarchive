@@ -43,6 +43,7 @@ $renderAudioPreview = function (string $headingId): void
 				'streamUrl' => $this->playbackUrl,
 				'waveformUrl' => $this->waveformUrl,
 				'spectrogramUrl' => $this->spectrogramUrl,
+				'frequencyProfileUrl' => $this->frequencyProfileUrl,
 				'presentation' => (string) ComponentHelper::getParams('com_audioarchive')->get('admin_player_presentation', 'featured'),
 				'mime' => $mime,
 				'params' => ComponentHelper::getParams('com_audioarchive'),
@@ -56,9 +57,12 @@ $renderAudioPreview = function (string $headingId): void
 					'fallback' => Text::_('COM_AUDIOARCHIVE_ADMIN_PLAYER_FALLBACK'),
 					'waveformLoading' => Text::_('COM_AUDIOARCHIVE_ADMIN_WAVEFORM_LOADING'),
 					'spectrogramLoading' => Text::_('COM_AUDIOARCHIVE_ADMIN_SPECTROGRAM_LOADING'),
+					'frequencyProfileLoading' => Text::_('COM_AUDIOARCHIVE_ADMIN_FREQUENCY_PROFILE_LOADING'),
 					'analysisView' => Text::_('COM_AUDIOARCHIVE_ANALYSIS_VIEW'),
 					'waveform' => Text::_('COM_AUDIOARCHIVE_ANALYSIS_WAVEFORM'),
 					'spectrum' => Text::_('COM_AUDIOARCHIVE_ANALYSIS_SPECTRUM'),
+					'frequencyProfile' => Text::_('COM_AUDIOARCHIVE_ANALYSIS_FREQUENCY_PROFILE'),
+					'frequencyProfileSummary' => Text::_('COM_AUDIOARCHIVE_FREQUENCY_PROFILE_SUMMARY'),
 				],
 			],
 			JPATH_ROOT . '/components/com_audioarchive/layouts'
@@ -174,6 +178,12 @@ $renderAudioPreview = function (string $headingId): void
                                 ? 'COM_AUDIOARCHIVE_ACTION_REGENERATE_SPECTROGRAM'
                                 : 'COM_AUDIOARCHIVE_ACTION_GENERATE_SPECTROGRAM'); ?>
                         </button>
+						<button type="button" class="btn btn-secondary" onclick="Joomla.submitbutton('clip.generateFrequencyProfile');">
+							<span class="icon-chart" aria-hidden="true"></span>
+							<?php echo Text::_((string) $this->item->frequency_profile_status === 'available'
+								? 'COM_AUDIOARCHIVE_ACTION_REGENERATE_FREQUENCY_PROFILE'
+								: 'COM_AUDIOARCHIVE_ACTION_GENERATE_FREQUENCY_PROFILE'); ?>
+						</button>
                     </div>
                 <?php endif; ?>
             <?php endif; ?>
@@ -184,6 +194,7 @@ $renderAudioPreview = function (string $headingId): void
             <?php echo $this->form->renderField('preview_status'); ?>
             <?php echo $this->form->renderField('waveform_status'); ?>
             <?php echo $this->form->renderField('spectrogram_status'); ?>
+			<?php echo $this->form->renderField('frequency_profile_status'); ?>
             <?php echo $this->form->renderField('play_count'); ?>
             <?php echo $this->form->renderField('download_count'); ?>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>

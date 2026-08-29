@@ -32,7 +32,7 @@ if ($preferredDataView === 'inherit')
 	$preferredDataView = strtolower(trim((string) $componentParams->get('player_preferred_data_view', 'waveform')));
 }
 
-$preferredDataView = in_array($preferredDataView, ['waveform', 'spectrogram'], true)
+$preferredDataView = in_array($preferredDataView, ['waveform', 'spectrogram', 'frequency_profile'], true)
 	? $preferredDataView
 	: 'waveform';
 $params->set('presentation', $modulePresentation);

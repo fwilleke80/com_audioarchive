@@ -16,7 +16,7 @@ $modulePresentation = in_array((string) $params->get('presentation', 'default'),
 $playerPresentation = in_array((string) $params->get('player_presentation', 'default'), ['minimal', 'compact', 'default', 'featured'], true)
 	? (string) $params->get('player_presentation', 'default')
 	: 'default';
-$preferredDataView = in_array((string) $params->get('preferred_data_view', 'waveform'), ['waveform', 'spectrogram'], true)
+$preferredDataView = in_array((string) $params->get('preferred_data_view', 'waveform'), ['waveform', 'spectrogram', 'frequency_profile'], true)
 	? (string) $params->get('preferred_data_view', 'waveform')
 	: 'waveform';
 $moduleClass = trim(
@@ -90,6 +90,7 @@ $componentParams = ComponentHelper::getParams('com_audioarchive');
 								'streamUrl' => (string) $item->stream_url,
 								'waveformUrl' => (string) ($item->waveform_url ?? ''),
 								'spectrogramUrl' => (string) ($item->spectrogram_url ?? ''),
+								'frequencyProfileUrl' => (string) ($item->frequency_profile_url ?? ''),
 								'mime' => $mime,
 								'params' => $componentParams,
 								'presentation' => $playerPresentation,
@@ -104,9 +105,12 @@ $componentParams = ComponentHelper::getParams('com_audioarchive');
 									'fallback' => Text::_('MOD_AUDIOARCHIVE_PLAYER_FALLBACK'),
 									'waveformLoading' => Text::_('MOD_AUDIOARCHIVE_WAVEFORM_LOADING'),
 									'spectrogramLoading' => Text::_('MOD_AUDIOARCHIVE_SPECTROGRAM_LOADING'),
+									'frequencyProfileLoading' => Text::_('MOD_AUDIOARCHIVE_FREQUENCY_PROFILE_LOADING'),
 									'analysisView' => Text::_('MOD_AUDIOARCHIVE_ANALYSIS_VIEW'),
 									'waveform' => Text::_('MOD_AUDIOARCHIVE_ANALYSIS_WAVEFORM'),
 									'spectrum' => Text::_('MOD_AUDIOARCHIVE_ANALYSIS_SPECTRUM'),
+									'frequencyProfile' => Text::_('MOD_AUDIOARCHIVE_ANALYSIS_FREQUENCY_PROFILE'),
+									'frequencyProfileSummary' => Text::_('MOD_AUDIOARCHIVE_FREQUENCY_PROFILE_SUMMARY'),
 								],
 							],
 							null,

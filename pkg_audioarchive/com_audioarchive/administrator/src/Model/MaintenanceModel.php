@@ -68,6 +68,7 @@ class MaintenanceModel extends BaseDatabaseModel
 			'stale_items' => [],
 			'waveforms' => $analysisJobs->getWaveformSummary(),
 			'spectrograms' => $analysisJobs->getSpectrogramSummary(),
+			'frequency_profiles' => $analysisJobs->getFrequencyProfileSummary(),
 			'analysis_queue' => $analysisJobs->getQueuedJobs(),
 			'archive_zip_supported' => ArchiveImportService::isSupported(),
 			'archive_inbox_files' => ArchiveImportService::isSupported() ? $archiveImport->listInboxArchives() : [],
@@ -136,6 +137,18 @@ class MaintenanceModel extends BaseDatabaseModel
 	}
 
 	/**
+	 * @brief Queue frequency-profile jobs for one status group or every eligible clip.
+	 *
+	 * @param string $mode Missing, stale, failed, or all.
+	 *
+	 * @return int Number of newly queued jobs.
+	 */
+	public function queueFrequencyProfiles(string $mode): int
+	{
+		return $this->queueAnalysis('frequency_profile', $mode);
+	}
+
+	/**
 	 * @brief Process the next pending analysis job.
 	 *
 	 * @return array<string, mixed> Processing result.
@@ -157,7 +170,7 @@ class MaintenanceModel extends BaseDatabaseModel
 	 * Completed and failed job rows remain as history. Pending and running jobs
 	 * are retained but marked cancelled.
 	 *
-	 * @param string $analysisType Waveform or spectrogram.
+	 * @param string $analysisType Waveform, spectrogram, or frequency profile.
 	 *
 	 * @return array{records:int,cancelled:int,deleted:int,bytes:int,failed:int} Deletion summary.
 	 */
@@ -165,14 +178,19 @@ class MaintenanceModel extends BaseDatabaseModel
 	{
 		$analysisType = strtolower(trim($analysisType));
 
-		if (!in_array($analysisType, ['waveform', 'spectrogram'], true))
+		if (!in_array($analysisType, ['waveform', 'spectrogram', 'frequency_profile'], true))
 		{
 			throw new \InvalidArgumentException(Text::_('COM_AUDIOARCHIVE_ANALYSIS_ERROR_UNSUPPORTED_BULK_TYPE'));
 		}
 
 		$database = $this->getDatabase();
 		$params = ComponentHelper::getParams('com_audioarchive');
-		$statusField = $analysisType === 'waveform' ? 'waveform_status' : 'spectrogram_status';
+		$statusField = match ($analysisType)
+		{
+			'waveform' => 'waveform_status',
+			'spectrogram' => 'spectrogram_status',
+			'frequency_profile' => 'frequency_profile_status',
+		};
 		$query = $database->getQuery(true)
 			->select('COUNT(*)')
 			->from($database->quoteName('#__audioarchive_analyses'))

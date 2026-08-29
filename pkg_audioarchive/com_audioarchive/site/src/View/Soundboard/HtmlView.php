@@ -48,6 +48,12 @@ class HtmlView extends BaseHtmlView
 	/** @var bool */
 	public bool $polyphonic = true;
 
+	/** @var bool */
+	public bool $samplerEnabled = true;
+
+	/** @var bool */
+	public bool $playlistsEnabled = true;
+
 	/** @var string */
 	public string $interactionUrl = '';
 
@@ -86,6 +92,8 @@ class HtmlView extends BaseHtmlView
 
 		$this->padCount = max(4, min(36, (int) $this->params->get('soundboard_pad_count', 12)));
 		$this->polyphonic = (int) $this->params->get('soundboard_polyphony', 1) === 1;
+		$this->samplerEnabled = (int) $this->params->get('enable_soundboard_sampler', 1) === 1;
+		$this->playlistsEnabled = (int) $this->params->get('enable_playlists', 1) === 1;
 		$itemId = (int) ($item?->id ?? $application->getInput()->getInt('Itemid', 0));
 		$this->pageHeading = (string) $this->params->get(
 			'page_heading',
@@ -128,6 +136,11 @@ class HtmlView extends BaseHtmlView
 		$document->getWebAssetManager()
 			->useStyle('com_audioarchive.site')
 			->useScript('com_audioarchive.social');
+
+		if ($this->playlistsEnabled)
+		{
+			$document->getWebAssetManager()->useScript('com_audioarchive.playlist');
+		}
 
 		parent::display($tpl);
 	}

@@ -44,6 +44,9 @@ class HtmlView extends BaseHtmlView
 	public string $spectrogramUrl = '';
 
 	/** @var string */
+	public string $frequencyProfileUrl = '';
+
+	/** @var string */
 	public string $archiveUrl = '';
 
 	/** @var string */
@@ -162,6 +165,7 @@ class HtmlView extends BaseHtmlView
 		{
 			$waveform = $model->getAnalysis('waveform', (int) $item->id);
 			$spectrogram = $model->getAnalysis('spectrogram', (int) $item->id);
+			$frequencyProfile = $model->getAnalysis('frequency_profile', (int) $item->id);
 
 			if ($waveform !== null)
 			{
@@ -174,6 +178,13 @@ class HtmlView extends BaseHtmlView
 			{
 				$this->spectrogramUrl = Route::_(
 					RouteHelper::getAnalysisRoute((int) $item->id, 'spectrogram', $routeItemId)
+				);
+			}
+
+			if ($frequencyProfile !== null)
+			{
+				$this->frequencyProfileUrl = Route::_(
+					RouteHelper::getAnalysisRoute((int) $item->id, 'frequency_profile', $routeItemId)
 				);
 			}
 		}

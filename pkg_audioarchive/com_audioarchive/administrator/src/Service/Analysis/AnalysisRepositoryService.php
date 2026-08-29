@@ -365,6 +365,7 @@ final class AnalysisRepositoryService
 		{
 			'waveform' => 'waveform_status',
 			'spectrogram' => 'spectrogram_status',
+			'frequency_profile' => 'frequency_profile_status',
 			default => '',
 		};
 

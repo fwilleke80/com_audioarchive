@@ -154,7 +154,18 @@ class MediaMaintenanceService
 		$referencedPaths = $this->loadReferencedPaths();
 		$this->appendStalePreviewItems($items);
 		$this->appendStaleWaveformItems($items);
-		$this->appendStaleSpectrogramItems($items);
+		$this->appendStaleAnalysisItems(
+			$items,
+			'spectrogram',
+			'stale_spectrogram',
+			'COM_AUDIOARCHIVE_MAINTENANCE_STALE_REASON_SPECTROGRAM'
+		);
+		$this->appendStaleAnalysisItems(
+			$items,
+			'frequency_profile',
+			'stale_frequency_profile',
+			'COM_AUDIOARCHIVE_MAINTENANCE_STALE_REASON_FREQUENCY_PROFILE'
+		);
 
 		foreach (['original', 'preview', 'waveform'] as $role)
 		{
@@ -453,15 +464,22 @@ class MediaMaintenanceService
 	}
 
 	/**
-	 * @brief Append spectral analyses marked stale.
+	 * @brief Append generic analyses marked stale.
 	 *
 	 * @param array<int, array<string, mixed>> $items Candidate collection.
+	 * @param string $analysisType Stable analysis type.
+	 * @param string $kind Cleanup candidate kind.
+	 * @param string $reason Translation key describing the stale item.
 	 *
 	 * @return void
 	 */
-	private function appendStaleSpectrogramItems(array &$items): void
+	private function appendStaleAnalysisItems(
+		array &$items,
+		string $analysisType,
+		string $kind,
+		string $reason
+	): void
 	{
-		$analysisType = 'spectrogram';
 		$status = 'stale';
 		$query = $this->database->getQuery(true)
 			->select([
@@ -485,7 +503,7 @@ class MediaMaintenanceService
 		foreach ($this->database->setQuery($query)->loadObjectList() ?: [] as $row)
 		{
 			$items[] = $this->makeItem(
-				'stale_spectrogram',
+				$kind,
 				'analysis',
 				(string) $row->storage_key,
 				(int) $row->file_size,
@@ -493,7 +511,7 @@ class MediaMaintenanceService
 				(string) $row->clip_title,
 				(string) $row->original_filename,
 				(int) $row->record_id,
-				'COM_AUDIOARCHIVE_MAINTENANCE_STALE_REASON_SPECTROGRAM'
+				$reason
 			);
 		}
 	}
@@ -642,6 +660,15 @@ class MediaMaintenanceService
 		elseif ($kind === 'stale_spectrogram')
 		{
 			$this->deleteAnalysisRecord((int) $item['record_id'], (int) $item['clip_id'], 'spectrogram', 'spectrogram_status');
+		}
+		elseif ($kind === 'stale_frequency_profile')
+		{
+			$this->deleteAnalysisRecord(
+				(int) $item['record_id'],
+				(int) $item['clip_id'],
+				'frequency_profile',
+				'frequency_profile_status'
+			);
 		}
 		else
 		{
@@ -819,7 +846,7 @@ class MediaMaintenanceService
 	 */
 	private function updateClipStatus(int $clipId, string $field, string $status): void
 	{
-		if (!in_array($field, ['preview_status', 'waveform_status', 'spectrogram_status'], true))
+		if (!in_array($field, ['preview_status', 'waveform_status', 'spectrogram_status', 'frequency_profile_status'], true))
 		{
 			throw new \InvalidArgumentException('Invalid derivative status field.');
 		}

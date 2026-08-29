@@ -1866,6 +1866,66 @@
 	gap: 0.5rem;
 }
 
+.com-audioarchive-soundboard-mode
+{
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-bottom: 1rem;
+	padding: 0.65rem 0.75rem;
+	border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+	border-radius: 0.75rem;
+	background: color-mix(in srgb, currentColor 3%, Canvas);
+}
+
+.com-audioarchive-soundboard-mode-label
+{
+	font-weight: 700;
+}
+
+.com-audioarchive-soundboard-mode-options
+{
+	display: inline-flex;
+	border: 1px solid color-mix(in srgb, currentColor 26%, transparent);
+	border-radius: 0.55rem;
+	overflow: hidden;
+}
+
+.com-audioarchive-soundboard-mode-button
+{
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.4rem;
+	min-height: 2.35rem;
+	padding: 0.45rem 0.75rem;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.com-audioarchive-soundboard-mode-button + .com-audioarchive-soundboard-mode-button
+{
+	border-left: 1px solid color-mix(in srgb, currentColor 26%, transparent);
+}
+
+.com-audioarchive-soundboard-mode-button.is-active
+{
+	background: var(--audioarchive-accent, #0d6efd);
+	color: var(--audioarchive-accent-contrast, #fff);
+}
+
+.com-audioarchive-soundboard-mode-button:focus-visible
+{
+	position: relative;
+	z-index: 1;
+	outline: 0.2rem solid color-mix(in srgb, var(--audioarchive-accent, #0d6efd) 45%, transparent);
+	outline-offset: -0.2rem;
+}
+
 .com-audioarchive-soundboard-grid
 {
 	display: grid;
@@ -1920,6 +1980,12 @@
 	);
 }
 
+.com-audioarchive-soundboard-pad.is-sampler-selected .com-audioarchive-soundboard-trigger
+{
+	border-color: var(--audioarchive-soundboard-button-border, var(--audioarchive-accent));
+	box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--audioarchive-accent) 24%, transparent);
+}
+
 .com-audioarchive-soundboard-pad.is-empty .com-audioarchive-soundboard-trigger
 {
 	opacity: 0.62;
@@ -1970,6 +2036,8 @@
 .com-audioarchive-soundboard-detail
 {
 	top: auto;
+	left: 0.35rem;
+	right: auto;
 	bottom: 0.35rem;
 	font-size: 1rem;
 }
@@ -1987,6 +2055,182 @@
 .com-audioarchive-soundboard-pad.is-empty .com-audioarchive-soundboard-remove
 {
 	display: none;
+}
+
+.com-audioarchive-soundboard-sampler
+{
+	margin-top: 1.25rem;
+	padding: clamp(1rem, 2vw, 1.5rem);
+	border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+	border-radius: 0.9rem;
+	background: color-mix(in srgb, currentColor 4%, Canvas);
+}
+
+.com-audioarchive-soundboard-sampler[hidden],
+.com-audioarchive-soundboard-keyboard[hidden]
+{
+	display: none;
+}
+
+.com-audioarchive-soundboard-sampler-header
+{
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 1rem;
+}
+
+.com-audioarchive-soundboard-sampler-header h2
+{
+	margin: 0;
+	font-size: clamp(1.15rem, 2vw, 1.45rem);
+}
+
+.com-audioarchive-soundboard-sampler-header p
+{
+	margin: 0.35rem 0 0;
+}
+
+.com-audioarchive-soundboard-sampler-actions
+{
+	display: flex;
+	flex: 0 0 auto;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.com-audioarchive-soundboard-midi-status
+{
+	min-height: 1.4em;
+	margin: 0.75rem 0 0;
+	font-size: 0.925rem;
+	opacity: 0.8;
+}
+
+.com-audioarchive-soundboard-keyboard
+{
+	margin-top: 1rem;
+	padding-top: 1rem;
+	border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+}
+
+.com-audioarchive-soundboard-keyboard-toolbar
+{
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.75rem;
+	margin-bottom: 0.75rem;
+}
+
+.com-audioarchive-soundboard-keyboard-toolbar strong
+{
+	min-width: 7rem;
+	text-align: center;
+}
+
+.com-audioarchive-soundboard-piano
+{
+	position: relative;
+	width: 100%;
+	height: clamp(8rem, 14vw, 10.5rem);
+	margin-inline: auto;
+	padding-right: 1.4rem;
+	overflow: hidden;
+	touch-action: none;
+	user-select: none;
+}
+
+.com-audioarchive-soundboard-white-keys
+{
+	display: grid;
+	grid-template-columns: repeat(9, minmax(0, 1fr));
+	height: 100%;
+}
+
+.com-audioarchive-soundboard-piano-key
+{
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 0.4rem;
+	padding: 0.6rem 0.2rem;
+	font: inherit;
+	cursor: pointer;
+	transition: background 80ms ease, color 80ms ease, transform 80ms ease;
+}
+
+.com-audioarchive-soundboard-piano-key.is-white
+{
+	min-width: 0;
+	border: 1px solid color-mix(in srgb, CanvasText 34%, transparent);
+	border-right-width: 0;
+	border-radius: 0 0 0.35rem 0.35rem;
+	background: color-mix(in srgb, Canvas 96%, CanvasText 4%);
+	color: CanvasText;
+}
+
+.com-audioarchive-soundboard-piano-key.is-white:last-child
+{
+	border-right-width: 1px;
+}
+
+.com-audioarchive-soundboard-piano-key.is-black
+{
+	position: absolute;
+	top: 0;
+	left: var(--audioarchive-piano-key-position);
+	z-index: 2;
+	width: clamp(2rem, 6vw, 3.8rem);
+	height: 62%;
+	transform: translateX(-50%);
+	border: 1px solid color-mix(in srgb, Canvas 30%, transparent);
+	border-radius: 0 0 0.35rem 0.35rem;
+	background: color-mix(in srgb, CanvasText 91%, Canvas 9%);
+	color: Canvas;
+	box-shadow: 0 0.25rem 0.4rem color-mix(in srgb, #000 40%, transparent);
+}
+
+.com-audioarchive-soundboard-piano-key.is-pressed.is-white
+{
+	background: color-mix(in srgb, var(--audioarchive-accent) 28%, Canvas);
+	transform: translateY(2px);
+}
+
+.com-audioarchive-soundboard-piano-key.is-pressed.is-black
+{
+	background: color-mix(in srgb, var(--audioarchive-accent) 65%, CanvasText);
+	transform: translate(-50%, 2px);
+}
+
+.com-audioarchive-soundboard-piano-note
+{
+	font-size: 0.8rem;
+	opacity: 0.75;
+}
+
+.com-audioarchive-soundboard-piano-shortcut
+{
+	display: grid;
+	place-items: center;
+	min-width: 1.65rem;
+	height: 1.65rem;
+	padding-inline: 0.25rem;
+	border: 1px solid currentColor;
+	border-radius: 0.3rem;
+	font-size: 0.8rem;
+	font-weight: 700;
+	line-height: 1;
+	opacity: 0.8;
+}
+
+.com-audioarchive-soundboard-keyboard-hint
+{
+	margin: 0.75rem 0 0;
+	font-size: 0.9rem;
+	text-align: center;
+	opacity: 0.78;
 }
 
 .com-audioarchive-soundboard-note
@@ -2035,6 +2279,22 @@
 		flex: 1 1 12rem;
 	}
 
+	.com-audioarchive-soundboard-mode
+	{
+		align-items: stretch;
+		flex-direction: column;
+	}
+
+	.com-audioarchive-soundboard-mode-options
+	{
+		display: flex;
+	}
+
+	.com-audioarchive-soundboard-mode-button
+	{
+		flex: 1 1 50%;
+	}
+
 	.com-audioarchive-mobile-card-actions
 	{
 		justify-content: space-between;
@@ -2053,6 +2313,37 @@
 		grid-template-columns: 1fr;
 		justify-items: start;
 		min-height: 7rem;
+	}
+
+	.com-audioarchive-soundboard-sampler-header
+	{
+		flex-direction: column;
+	}
+
+	.com-audioarchive-soundboard-sampler-actions
+	{
+		width: 100%;
+	}
+
+	.com-audioarchive-soundboard-sampler-actions .btn
+	{
+		flex: 1 1 10rem;
+	}
+
+	.com-audioarchive-soundboard-piano
+	{
+		height: 8rem;
+		padding-right: 0.8rem;
+	}
+
+	.com-audioarchive-soundboard-piano-key.is-black
+	{
+		width: clamp(1.55rem, 7vw, 2.35rem);
+	}
+
+	.com-audioarchive-soundboard-piano-note
+	{
+		display: none;
 	}
 }
 
@@ -2196,6 +2487,18 @@
 .com-audioarchive-playlist-selector label
 {
 	font-weight: 700;
+}
+
+.com-audioarchive-conversion-status
+{
+	margin: .65rem 0 0;
+	font-size: .925rem;
+	color: color-mix(in srgb, currentColor 78%, transparent);
+}
+
+.com-audioarchive-conversion-status:empty
+{
+	display: none;
 }
 
 .com-audioarchive-playlist-manager-actions,

@@ -144,6 +144,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 	 * {audioarchive random}
 	 * {audioarchive random layout=compact}
 	 * {audioarchive random layout=featured dataview=spectrum}
+	 * {audioarchive random layout=featured dataview=profile}
 	 * {audioarchive longest}
 	 * {audioarchive longest count=3 layout=compact}
 	 * {audioarchive shortest}
@@ -273,7 +274,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 			)));
 		}
 
-		$configuredDataView = in_array($configuredDataView, ['waveform', 'spectrogram'], true)
+		$configuredDataView = in_array($configuredDataView, ['waveform', 'spectrogram', 'frequency_profile'], true)
 			? $configuredDataView
 			: 'waveform';
 		$dataView = strtolower(trim((string) ($attributes['dataview'] ?? $configuredDataView)));
@@ -282,8 +283,12 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 		{
 			$dataView = 'spectrogram';
 		}
+		elseif (in_array($dataView, ['profile', 'frequencyprofile', 'frequency-profile'], true))
+		{
+			$dataView = 'frequency_profile';
+		}
 
-		if (!in_array($dataView, ['waveform', 'spectrogram'], true))
+		if (!in_array($dataView, ['waveform', 'spectrogram', 'frequency_profile'], true))
 		{
 			return null;
 		}

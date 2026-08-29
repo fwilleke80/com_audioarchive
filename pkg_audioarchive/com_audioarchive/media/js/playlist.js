@@ -582,6 +582,106 @@ function addClipToSoundboard(clip, origin)
 }
 
 /**
+ * Return occupied Sound Board clips in pad order.
+ *
+ * @param {number} padCount Maximum number of pads.
+ * @returns {Array<{id:number,title:string}>} Occupied clips.
+ */
+function readOccupiedSoundboardClips(padCount)
+{
+	const rawBoard = playlistReadStorage(SOUNDBOARD_STORAGE_KEY, []);
+	const clips = [];
+
+	for (const candidate of Array.isArray(rawBoard) ? rawBoard.slice(0, padCount) : [])
+	{
+		const id = Math.max(0, Number.parseInt(String(candidate?.id || 0), 10) || 0);
+
+		if (id > 0)
+		{
+			clips.push({id, title: String(candidate?.title || '').trim().slice(0, 255)});
+		}
+	}
+
+	return clips;
+}
+
+/**
+ * Convert resolved Sound Board clips to playlist entries in pad order.
+ *
+ * @param {Array<{id:number,title:string}>} boardClips Occupied board clips.
+ * @param {object} resolvedById Public clip metadata keyed by numeric ID.
+ * @returns {Array<{uuid:string,id:number,title:string}>} Playlist entries.
+ */
+function buildPlaylistItemsFromSoundboard(boardClips, resolvedById)
+{
+	const items = [];
+	const seen = new Set();
+
+	for (const boardClip of boardClips)
+	{
+		const item = normalisePlaylistItem(resolvedById?.[String(boardClip.id)]);
+
+		if (!item || seen.has(item.uuid))
+		{
+			continue;
+		}
+
+		seen.add(item.uuid);
+		items.push(item);
+	}
+
+	return items;
+}
+
+/**
+ * Convert resolved playlist entries to Sound Board clips in playlist order.
+ *
+ * @param {object} playlist Source playlist.
+ * @param {Map<string, object>} resolvedItems Resolved public clip metadata.
+ * @param {number} padCount Maximum number of pads.
+ * @returns {Array<{id:number,title:string}>} Sound Board clips.
+ */
+function buildSoundboardFromPlaylist(playlist, resolvedItems, padCount)
+{
+	const board = [];
+
+	for (const entry of Array.isArray(playlist?.items) ? playlist.items : [])
+	{
+		const item = resolvedItems.get(entry.uuid);
+		const id = Math.max(0, Number.parseInt(String(item?.id || 0), 10) || 0);
+
+		if (id <= 0)
+		{
+			continue;
+		}
+
+		board.push({id, title: String(item?.title || entry.title || '').trim().slice(0, 255)});
+
+		if (board.length >= padCount)
+		{
+			break;
+		}
+	}
+
+	return board;
+}
+
+/**
+ * Substitute conversion labels supplied by Joomla language strings.
+ *
+ * @param {string} template Label containing optional %s and %d placeholders.
+ * @param {string} name Playlist name.
+ * @param {number} count Clip count.
+ * @returns {string} Formatted label.
+ */
+function formatPlaylistSoundboardLabel(template, name = '', count = 0)
+{
+	return String(template || '')
+		.replace('%s', name)
+		.replace('%d', String(count));
+}
+
+/**
  * Build playlist choices inside an Add to menu.
  *
  * @param {HTMLElement} container Choice container.
@@ -1225,6 +1325,110 @@ function createPlaylistRowShareMenu(root, item)
 }
 
 /**
+ * Initialise conversion of the current Sound Board into a new playlist.
+ *
+ * @returns {void}
+ */
+function initialiseSoundboardPlaylistConversion()
+{
+	const root = document.querySelector('[data-audioarchive-soundboard]');
+	const button = root?.querySelector('[data-audioarchive-soundboard-save-playlist]');
+
+	if (!(root instanceof HTMLElement) || !(button instanceof HTMLButtonElement))
+	{
+		return;
+	}
+
+	const status = root.querySelector('[data-audioarchive-soundboard-conversion-status]');
+	const setStatus = (message) =>
+	{
+		if (status)
+		{
+			status.textContent = message;
+		}
+	};
+
+	button.addEventListener('click', async () =>
+	{
+		const padCount = Math.max(4, Math.min(36, Number.parseInt(root.dataset.audioarchivePadCount || '12', 10)));
+		const boardClips = readOccupiedSoundboardClips(padCount);
+
+		if (boardClips.length === 0)
+		{
+			setStatus(root.dataset.audioarchiveLabelPlaylistEmpty || 'The Sound Board is empty.');
+			return;
+		}
+
+		const fallbackName = root.dataset.audioarchiveLabelPlaylistDefaultName || 'Sound Board';
+		const requestedName = window.prompt(
+			root.dataset.audioarchiveLabelPlaylistNamePrompt || 'Playlist name:',
+			fallbackName
+		);
+
+		if (requestedName === null || requestedName.trim() === '')
+		{
+			return;
+		}
+
+		button.disabled = true;
+
+		try
+		{
+			const body = new URLSearchParams();
+			body.set('ids', boardClips.map((clip) => clip.id).join(','));
+			const response = await fetch(root.dataset.audioarchiveRoutesUrl || '', {
+				method: 'POST',
+				headers: {
+					'Accept': 'application/json',
+					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+				},
+				body: body.toString(),
+				credentials: 'same-origin',
+			});
+			const payload = response.ok ? await response.json() : null;
+			const items = payload?.success === true
+				? buildPlaylistItemsFromSoundboard(boardClips, payload.items)
+				: [];
+
+			if (items.length === 0)
+			{
+				throw new Error('No public Sound Board clips could be resolved.');
+			}
+
+			const store = readPlaylistStore(fallbackName, false);
+			const playlist = createPlaylist(store, requestedName);
+			playlist.items = items;
+			playlist.modified = Date.now();
+
+			if (!writePlaylistStore(store))
+			{
+				throw new Error('Unable to save playlist storage.');
+			}
+
+			recordPlaylistInteraction(
+				root.dataset.audioarchiveInteractionUrl || '',
+				root.dataset.audioarchiveInteractionToken || '',
+				'audioarchive.playlist.created_from_soundboard',
+				{contextId: playlist.id, contextTitle: playlist.name}
+			);
+			setStatus(formatPlaylistSoundboardLabel(
+				root.dataset.audioarchiveLabelPlaylistSaved || 'Saved as playlist “%s” (%d clips).',
+				playlist.name,
+				items.length
+			));
+		}
+		catch (error)
+		{
+			setStatus(root.dataset.audioarchiveLabelPlaylistError || 'The playlist could not be created.');
+		}
+		finally
+		{
+			button.disabled = false;
+		}
+	});
+}
+
+/**
  * Initialise the full playlist manager page.
  *
  * @returns {void}
@@ -1859,6 +2063,66 @@ function initialisePlaylistPage()
 		}
 	};
 
+	root.querySelector('[data-audioarchive-playlist-load-soundboard]')?.addEventListener('click', async () =>
+	{
+		const playlist = getCurrentPlaylist();
+		const conversionStatus = root.querySelector('[data-audioarchive-playlist-conversion-status]');
+		const setConversionStatus = (message) =>
+		{
+			if (conversionStatus)
+			{
+				conversionStatus.textContent = message;
+			}
+		};
+
+		if (!playlist || playlist.items.length === 0)
+		{
+			setConversionStatus(root.dataset.audioarchiveLabelLoadSoundboardEmpty || 'This playlist has no available clips.');
+			return;
+		}
+
+		await refreshMetadata(true);
+		const padCount = Math.max(4, Math.min(36, Number.parseInt(root.dataset.audioarchiveSoundboardPadCount || '12', 10)));
+		const board = buildSoundboardFromPlaylist(playlist, resolvedItems, padCount);
+
+		if (board.length === 0)
+		{
+			setConversionStatus(root.dataset.audioarchiveLabelLoadSoundboardEmpty || 'This playlist has no available clips.');
+			return;
+		}
+
+		const existingBoard = readOccupiedSoundboardClips(padCount);
+
+		if (
+			existingBoard.length > 0
+			&& !window.confirm(formatPlaylistSoundboardLabel(
+				root.dataset.audioarchiveLabelLoadSoundboardConfirm || 'Replace your current Sound Board with the playlist “%s”?',
+				playlist.name
+			))
+		)
+		{
+			return;
+		}
+
+		if (!playlistWriteStorage(SOUNDBOARD_STORAGE_KEY, board))
+		{
+			setConversionStatus(root.dataset.audioarchiveLabelLoadSoundboardError || 'The Sound Board could not be saved.');
+			return;
+		}
+
+		recordPlaylistInteraction(
+			root.dataset.audioarchiveInteractionUrl || '',
+			root.dataset.audioarchiveInteractionToken || '',
+			'audioarchive.soundboard.loaded_from_playlist',
+			{contextId: playlist.id, contextTitle: playlist.name}
+		);
+		setConversionStatus(formatPlaylistSoundboardLabel(
+			root.dataset.audioarchiveLabelLoadSoundboardSuccess || 'Loaded %d clips into the Sound Board.',
+			'',
+			board.length
+		));
+	});
+
 	select?.addEventListener('change', () =>
 	{
 		if (!(select instanceof HTMLSelectElement) || temporaryPlaylist)
@@ -2267,6 +2531,7 @@ function initialiseAudioArchivePlaylists()
 {
 	initialiseAddToMenus();
 	initialiseArchiveAddAllMenus();
+	initialiseSoundboardPlaylistConversion();
 	initialisePlaylistPage();
 
 	document.addEventListener('click', (event) =>

@@ -114,23 +114,40 @@ class InteractionController extends BaseController
 		$itemId = $clip !== null ? (string) ($clip->id ?? '') : '';
 		$itemTitle = $clip !== null ? (string) ($clip->title ?? '') : '';
 		$eventName = 'onPungaAnalyticsRecord';
+		$eventArguments = [
+			'subject' => $this,
+			'event_type' => $eventType,
+			'component' => 'com_audioarchive',
+			'view_name' => $isPlaylistEvent ? 'playlists' : ($isSoundboardEvent ? 'soundboard' : ''),
+			'item_type' => $itemType,
+			'item_id' => $itemId,
+			'item_title' => $itemTitle,
+		];
+
+		if ($eventType === 'audioarchive.soundboard.play')
+		{
+			$playSource = strtolower(trim($application->getInput()->getString('play_source', 'pad')));
+			$allowedPlaySources = ['pad', 'midi', 'computer_keyboard', 'onscreen_keyboard'];
+			$midiNote = $application->getInput()->getInt('midi_note', -1);
+			$midiVelocity = $application->getInput()->getInt('midi_velocity', -1);
+			$eventArguments['play_source'] = in_array($playSource, $allowedPlaySources, true) ? $playSource : 'pad';
+
+			if ($midiNote >= 0 && $midiNote <= 127)
+			{
+				$eventArguments['midi_note'] = $midiNote;
+			}
+
+			if ($midiVelocity >= 1 && $midiVelocity <= 127)
+			{
+				$eventArguments['midi_velocity'] = $midiVelocity;
+			}
+		}
 
 		try
 		{
 			$application->getDispatcher()->dispatch(
 				$eventName,
-				new GenericEvent(
-					$eventName,
-					[
-						'subject' => $this,
-						'event_type' => $eventType,
-						'component' => 'com_audioarchive',
-						'view_name' => $isPlaylistEvent ? 'playlists' : ($isSoundboardEvent ? 'soundboard' : ''),
-						'item_type' => $itemType,
-						'item_id' => $itemId,
-						'item_title' => $itemTitle,
-					]
-				)
+				new GenericEvent($eventName, $eventArguments)
 			);
 		}
 		catch (\Throwable)

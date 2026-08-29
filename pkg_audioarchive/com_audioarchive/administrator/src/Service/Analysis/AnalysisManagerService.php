@@ -41,6 +41,7 @@ final class AnalysisManagerService
 		$this->storage = new ManagedStorageService($params);
 		$this->register(new WaveformGeneratorService($database, $params, $user));
 		$this->register(new SpectrogramGeneratorService($database, $params, $user));
+		$this->register(new FrequencyProfileGeneratorService($database, $params, $user));
 	}
 
 	/**
