@@ -20,6 +20,7 @@ class InteractionController extends BaseController
 	/** @var string[] */
 	private const ALLOWED_EVENTS = [
 		'audioarchive.playlist.created',
+		'audioarchive.playlist.created_from_soundboard',
 		'audioarchive.playlist.deleted',
 		'audioarchive.playlist.clip_added',
 		'audioarchive.playlist.clips_added',
@@ -28,6 +29,7 @@ class InteractionController extends BaseController
 		'audioarchive.playlist.shared',
 		'audioarchive.playlist.saved_shared',
 		'audioarchive.soundboard.play',
+		'audioarchive.soundboard.loaded_from_playlist',
 		'audioarchive.soundboard.shared',
 	];
 
