@@ -109,9 +109,11 @@ $soundboardStyle = StyleHelper::buildSoundboardVariables($this->params);
 		</div>
 	</section>
 
-	<?php if ($this->samplerEnabled) : ?>
-		<div class="com-audioarchive-soundboard-mode" data-audioarchive-soundboard-mode>
-			<span class="com-audioarchive-soundboard-mode-label"><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_MODE_LABEL'); ?></span>
+	<?php if ($this->samplerEnabled || $this->polyphonic) : ?>
+	<div class="com-audioarchive-soundboard-mode" data-audioarchive-soundboard-mode>
+		<span class="com-audioarchive-soundboard-mode-label"><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_MODE_LABEL'); ?></span>
+		<div class="com-audioarchive-soundboard-mode-controls">
+			<?php if ($this->samplerEnabled) : ?>
 			<div class="com-audioarchive-soundboard-mode-options" role="group" aria-label="<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_MODE_LABEL'); ?>">
 				<button
 					type="button"
@@ -132,25 +134,25 @@ $soundboardStyle = StyleHelper::buildSoundboardVariables($this->params);
 					<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_MODE_SAMPLER'); ?>
 				</button>
 			</div>
-		</div>
-	<?php endif; ?>
+			<?php endif; ?>
 
-	<?php if ($this->polyphonic) : ?>
-	<div
-		class="form-check form-switch com-audioarchive-soundboard-polyphony"
-		title="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_SAMPLER_POLYPHONY_DESC')); ?>"
-	>
-		<input
-			class="form-check-input"
-			type="checkbox"
-			role="switch"
-			id="audioarchive-soundboard-polyphony"
-			data-audioarchive-soundboard-polyphony
-			checked
-		>
-		<label class="form-check-label" for="audioarchive-soundboard-polyphony">
-			<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_SAMPLER_POLYPHONY'); ?>
-		</label>
+			<?php if ($this->polyphonic) : ?>
+			<label
+				class="com-audioarchive-soundboard-polyphony"
+				title="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_SAMPLER_POLYPHONY_DESC')); ?>"
+			>
+				<input
+					class="com-audioarchive-soundboard-polyphony-input"
+					type="checkbox"
+					role="switch"
+					data-audioarchive-soundboard-polyphony
+					checked
+				>
+				<span class="com-audioarchive-soundboard-polyphony-track" aria-hidden="true"></span>
+				<span class="com-audioarchive-soundboard-polyphony-label"><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_SAMPLER_POLYPHONY'); ?></span>
+			</label>
+			<?php endif; ?>
+		</div>
 	</div>
 	<?php endif; ?>
 

@@ -68,6 +68,6 @@ The Sound Board accepts optional URL parameters that choose its initial presenta
 
 For example, `/soundboard?mode=2&octave=3&pad=2` opens the board in chromatic mode at octave 3 with the third pad selected. Shared boards support the same parameters. Because the shared board itself is stored in the URL fragment, parameters may also be appended directly to the shared fragment, for example `#board=…&mode=2&octave=3&pad=2`. Invalid mode, octave, pad, or empty-pad selections are ignored.
 
-The Polyphony switch is shown for the whole Sound Board whenever polyphony is enabled in the component/menu configuration. Its state applies equally to Pad trigger and Chromatic keyboard playback.
+The Polyphony switch is shown inside the Sound Board Mode panel whenever polyphony is enabled in the component/menu configuration. Its state applies equally to Pad trigger and Chromatic keyboard playback.
 
 Shared Sound Board URLs retain the current polyphony state. When chromatic keyboard mode is active, the generated URL also includes the current `mode`, `octave`, and selected `pad`.

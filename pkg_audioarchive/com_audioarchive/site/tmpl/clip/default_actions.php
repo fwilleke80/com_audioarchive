@@ -18,7 +18,7 @@ if (!$showShare && !$showSoundboard && !$showPlaylists)
 	<h2 id="audioarchive-actions-heading"><?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_ACTIONS'); ?></h2>
 	<div class="com-audioarchive-detail-actions-toolbar" role="group" aria-label="<?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_ACTIONS'); ?>">
 		<?php if ($showShare) : ?>
-			<?php echo LayoutHelper::render('interaction.share', ['url' => $this->shareUrl, 'title' => (string) $this->item->title], null, ['component' => 'com_audioarchive', 'client' => 0]); ?>
+			<?php echo LayoutHelper::render('interaction.share', ['url' => $this->shareUrl, 'title' => (string) $this->item->title, 'includePlayerState' => true], null, ['component' => 'com_audioarchive', 'client' => 0]); ?>
 		<?php endif; ?>
 
 		<?php if ($showSoundboard) : ?>

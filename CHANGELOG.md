@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.11.30 — 2026-08-31
+
+- Fixed Pad Trigger monophonic playback: the Sound Board now checks the live Polyphony switch state instead of only the static component/menu configuration.
+- Redesigned the board-wide Polyphony control as a larger switch inside the Sound Board Mode panel, with responsive styling for narrow screens.
+- Clip Detail Share now captures the player's current playback position as `start` and the current Featured varispeed value as `pitch` when non-default.
+- Added the `0.11.30.sql` Joomla schema marker so database-schema bookkeeping remains synchronized with the release version.
+
 ## 0.11.29 — 2026-08-31
 
 - Made the Sound Board Polyphony switch a board-wide control: when polyphony is enabled by configuration, the switch is always visible and applies to both Pad trigger and Chromatic keyboard playback.

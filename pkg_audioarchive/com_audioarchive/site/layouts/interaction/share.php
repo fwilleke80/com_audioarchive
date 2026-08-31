@@ -6,12 +6,14 @@ use Joomla\CMS\Language\Text;
 
 $url = (string) ($displayData['url'] ?? '');
 $title = (string) ($displayData['title'] ?? '');
+$includePlayerState = !empty($displayData['includePlayerState']);
 ?>
 <div
 	class="com-audioarchive-share-menu"
 	data-audioarchive-share-menu
 	data-share-url="<?php echo htmlspecialchars($url, ENT_QUOTES, 'UTF-8'); ?>"
 	data-share-title="<?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?>"
+	<?php if ($includePlayerState) : ?>data-share-player-state="1"<?php endif; ?>
 	data-share-copied-label="<?php echo htmlspecialchars(Text::_('COM_AUDIOARCHIVE_SHARE_COPIED'), ENT_QUOTES, 'UTF-8'); ?>"
 >
 	<button

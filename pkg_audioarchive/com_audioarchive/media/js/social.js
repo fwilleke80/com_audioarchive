@@ -523,10 +523,56 @@ function initialiseShareButtons()
 		const nativeButton = menu.querySelector('[data-audioarchive-share-native]');
 		const copyTextElement = menu.querySelector('[data-audioarchive-share-copy-text]');
 		const status = menu.querySelector('[data-audioarchive-share-status]');
-		const url = menu.dataset.shareUrl || window.location.href;
+		const baseUrl = menu.dataset.shareUrl || window.location.href;
 		const title = menu.dataset.shareTitle || document.title;
 		const copiedLabel = menu.dataset.shareCopiedLabel || 'Link copied.';
 		const originalCopyLabel = copyTextElement?.textContent || '';
+
+		const formatStateNumber = (value) =>
+		{
+			return String(Math.round(value * 1000) / 1000);
+		};
+
+		const getShareUrl = () =>
+		{
+			if (menu.dataset.sharePlayerState !== '1')
+			{
+				return baseUrl;
+			}
+
+			try
+			{
+				const url = new URL(baseUrl, window.location.href);
+				url.searchParams.delete('start');
+				url.searchParams.delete('t');
+				url.searchParams.delete('pitch');
+
+				const player = document.querySelector('.com-audioarchive-detail-player [data-audioarchive-custom-player]');
+				const audio = player?.querySelector('[data-audioarchive-custom-audio]');
+				const pitchRange = player?.querySelector('[data-audioarchive-varispeed-range]');
+
+				if (audio instanceof HTMLAudioElement && Number.isFinite(audio.currentTime) && audio.currentTime > 0.0005)
+				{
+					url.searchParams.set('start', formatStateNumber(audio.currentTime));
+				}
+
+				if (pitchRange instanceof HTMLInputElement)
+				{
+					const pitch = Number.parseFloat(pitchRange.value);
+
+					if (Number.isFinite(pitch) && Math.abs(pitch) > 0.0005)
+					{
+						url.searchParams.set('pitch', formatStateNumber(pitch));
+					}
+				}
+
+				return url.toString();
+			}
+			catch (error)
+			{
+				return baseUrl;
+			}
+		};
 
 		if (nativeButton)
 		{
@@ -547,7 +593,7 @@ function initialiseShareButtons()
 
 		copyButton?.addEventListener('click', async () =>
 		{
-			const copied = await copyText(url);
+			const copied = await copyText(getShareUrl());
 
 			if (copied)
 			{
@@ -571,7 +617,7 @@ function initialiseShareButtons()
 
 		nativeButton?.addEventListener('click', async () =>
 		{
-			await openNativeShare(title, url);
+			await openNativeShare(title, getShareUrl());
 			setShareMenuOpen(menu, false);
 		});
 
@@ -1848,7 +1894,7 @@ function initialiseSoundboard()
 			return;
 		}
 
-		if (!polyphonic)
+		if (!soundboardPolyphonic)
 		{
 			stopAllVoices();
 		}
