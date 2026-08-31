@@ -869,7 +869,7 @@ function initialiseSoundboard()
 	const midiStatus = root.querySelector('[data-audioarchive-soundboard-midi-status]');
 	const keyboardToggle = root.querySelector('[data-audioarchive-soundboard-keyboard-toggle]');
 	const keyboardToggleLabel = root.querySelector('[data-audioarchive-soundboard-keyboard-toggle-label]');
-	const samplerPolyphonyToggle = root.querySelector('[data-audioarchive-soundboard-sampler-polyphony]');
+	const polyphonyToggle = root.querySelector('[data-audioarchive-soundboard-polyphony]');
 	const keyboard = root.querySelector('[data-audioarchive-soundboard-keyboard]');
 	const octaveLabel = root.querySelector('[data-audioarchive-soundboard-octave-label]');
 	const pianoKeys = Array.from(root.querySelectorAll('[data-audioarchive-soundboard-piano-key]'));
@@ -897,7 +897,7 @@ function initialiseSoundboard()
 	let selectedSamplerClipId = 0;
 	let samplerBaseNote = SAMPLER_ROOT_MIDI_NOTE;
 	let keyboardVisible = false;
-	let samplerPolyphonic = polyphonic && readStorage(SAMPLER_POLYPHONY_STORAGE_KEY, true) !== false;
+	let soundboardPolyphonic = polyphonic && readStorage(SAMPLER_POLYPHONY_STORAGE_KEY, true) !== false;
 	let samplerSelectionGeneration = 0;
 	let samplerMode = false;
 	let previousAudioSessionType = null;
@@ -924,6 +924,15 @@ function initialiseSoundboard()
 	const requestedMode = Number.parseInt(queryParameters.get('mode') || fragmentParameters.get('mode') || '0', 10);
 	const requestedOctave = Number.parseInt(queryParameters.get('octave') || fragmentParameters.get('octave') || '', 10);
 	const requestedPad = Number.parseInt(queryParameters.get('pad') || fragmentParameters.get('pad') || '', 10);
+	const requestedPolyphonyValue = queryParameters.get('polyphony') ?? fragmentParameters.get('polyphony');
+	const requestedPolyphony = requestedPolyphonyValue === null
+		? null
+		: !['0', 'false', 'off', 'no'].includes(String(requestedPolyphonyValue).trim().toLowerCase());
+
+	if (polyphonic && requestedPolyphony !== null)
+	{
+		soundboardPolyphonic = requestedPolyphony;
+	}
 
 	if (Number.isInteger(requestedOctave))
 	{
@@ -1630,13 +1639,9 @@ function initialiseSoundboard()
 			return;
 		}
 
-		if (!polyphonic)
+		if (!soundboardPolyphonic)
 		{
 			stopAllVoices();
-		}
-		else if (!samplerPolyphonic)
-		{
-			stopAllSamplerVoices();
 		}
 
 		const sourceNode = context.createBufferSource();
@@ -1910,17 +1915,17 @@ function initialiseSoundboard()
 		void enableMidi();
 	});
 
-	if (samplerPolyphonyToggle instanceof HTMLInputElement)
+	if (polyphonyToggle instanceof HTMLInputElement)
 	{
-		samplerPolyphonyToggle.checked = samplerPolyphonic;
-		samplerPolyphonyToggle.addEventListener('change', () =>
+		polyphonyToggle.checked = soundboardPolyphonic;
+		polyphonyToggle.addEventListener('change', () =>
 		{
-			samplerPolyphonic = polyphonic && samplerPolyphonyToggle.checked;
-			writeStorage(SAMPLER_POLYPHONY_STORAGE_KEY, samplerPolyphonic);
+			soundboardPolyphonic = polyphonic && polyphonyToggle.checked;
+			writeStorage(SAMPLER_POLYPHONY_STORAGE_KEY, soundboardPolyphonic);
 
-			if (!samplerPolyphonic)
+			if (!soundboardPolyphonic)
 			{
-				stopAllSamplerVoices();
+				stopAllVoices();
 			}
 		});
 	}
@@ -2109,6 +2114,11 @@ function initialiseSoundboard()
 	const getSharedSoundboardUrl = () =>
 	{
 		let url = `${canonicalUrl}#board=${encodeBoard(board)}`;
+
+		if (polyphonic)
+		{
+			url += `&polyphony=${soundboardPolyphonic ? 1 : 0}`;
+		}
 
 		if (samplerMode)
 		{

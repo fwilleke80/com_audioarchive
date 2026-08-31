@@ -39,3 +39,12 @@ Related Clips use the Archive-style responsive table/cards, inherit Archive list
 ## Return context
 
 When a visitor opens a detail page from an Archive or Sound Board, the exact same-origin origin URL can be retained in the current browser tab for 24 hours. The return link then restores the previous page state while the clip keeps a clean canonical URL.
+
+## Playback URL parameters
+
+Clip Detail URLs can initialise playback state without changing the clip or component configuration:
+
+- `start=<seconds>` starts the player at the requested position. Decimal seconds are supported, so `start=12.5` means 12.5 seconds. `t=<seconds>` is accepted as a compact alias.
+- `pitch=<octaves>` sets the Featured player's speed/pitch control from `-2` to `2` octaves. It is only applied when the Featured speed/pitch control is actually available for that player.
+
+For example, `?start=4.25&pitch=-0.5` opens the clip at 4.25 seconds with the Featured varispeed control half an octave down.

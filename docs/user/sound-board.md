@@ -64,7 +64,10 @@ The Sound Board accepts optional URL parameters that choose its initial presenta
 - `mode=2` opens **Chromatic keyboard** mode.
 - `octave=1` through `octave=7` chooses the initial keyboard octave when chromatic mode is used.
 - `pad=0` through `pad=n-1` selects the initial Sound Board pad in chromatic mode. Pad indexes are zero-based, so `pad=2` selects the third pad.
+- `polyphony=1` enables polyphony and `polyphony=0` disables it when polyphony is allowed by the Sound Board configuration.
 
 For example, `/soundboard?mode=2&octave=3&pad=2` opens the board in chromatic mode at octave 3 with the third pad selected. Shared boards support the same parameters. Because the shared board itself is stored in the URL fragment, parameters may also be appended directly to the shared fragment, for example `#board=…&mode=2&octave=3&pad=2`. Invalid mode, octave, pad, or empty-pad selections are ignored.
 
-When a Sound Board is shared while chromatic keyboard mode is active, the generated share URL automatically includes the current `mode`, `octave`, and selected `pad`. Pad-trigger mode keeps the compact shared URL without these parameters.
+The Polyphony switch is shown for the whole Sound Board whenever polyphony is enabled in the component/menu configuration. Its state applies equally to Pad trigger and Chromatic keyboard playback.
+
+Shared Sound Board URLs retain the current polyphony state. When chromatic keyboard mode is active, the generated URL also includes the current `mode`, `octave`, and selected `pad`.

@@ -170,6 +170,62 @@ def parse_package_manifest(
     return version, tuple(archive_names)
 
 
+def validate_component_schema_version(package_directory: Path, package_version: str) -> None:
+    """
+    @brief Ensure the component manifest and newest SQL schema marker match the package version.
+    @param package_directory pkg_audioarchive source directory.
+    @param package_version Package manifest version.
+    @return None.
+    @throws BuildError If component/schema release metadata is inconsistent.
+    """
+
+    component_directory = package_directory / "com_audioarchive"
+    component_manifest = component_directory / "audioarchive.xml"
+    schema_directory = component_directory / "administrator" / "sql" / "updates" / "mysql"
+
+    try:
+        component_root = ElementTree.parse(component_manifest).getroot()
+    except (ElementTree.ParseError, OSError) as error:
+        raise BuildError("Cannot read component manifest '%s': %s" % (component_manifest, error)) from error
+
+    component_version = ""
+
+    for element in component_root.iter():
+        if local_xml_name(element.tag) == "version":
+            component_version = (element.text or "").strip()
+            break
+
+    schema_versions = []
+
+    if schema_directory.is_dir():
+        for schema_file in schema_directory.glob("*.sql"):
+            if VALID_VERSION_PATTERN.fullmatch(schema_file.stem):
+                schema_versions.append(schema_file.stem)
+
+    def version_key(value: str) -> tuple[int, ...]:
+        parts = value.split(".")
+
+        try:
+            return tuple(int(part) for part in parts)
+        except ValueError as error:
+            raise BuildError("Schema version filenames must be numeric dotted versions: '%s'." % value) from error
+
+    newest_schema_version = max(schema_versions, key=version_key) if schema_versions else ""
+
+    if component_version != package_version:
+        raise BuildError(
+            "Component manifest version '%s' does not match package version '%s'."
+            % (component_version, package_version)
+        )
+
+    if newest_schema_version != package_version:
+        raise BuildError(
+            "Newest component SQL schema version '%s' does not match package version '%s'. "
+            "Add an administrator/sql/updates/mysql/%s.sql marker or migration."
+            % (newest_schema_version or "<none>", package_version, package_version)
+        )
+
+
 def make_default_output_name(version: str) -> str:
     """
     @brief Create the versioned outer package filename.
@@ -494,6 +550,7 @@ def build_package(
         )
 
     version, extension_archive_names = parse_package_manifest(manifest_path)
+    validate_component_schema_version(package_directory, version)
     package_language_files = collect_package_language_files(
         package_directory
     )

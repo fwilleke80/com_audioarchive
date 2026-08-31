@@ -14,8 +14,6 @@ use Joomla\Registry\Registry;
 
 return new class () implements InstallerScriptInterface
 {
-	private const SCHEMA_VERSION = '0.11.27';
-
 	private const CATEGORY_MENU_LINK = 'index.php?option=com_categories&view=categories&extension=com_audioarchive';
 
 	private const CONTENT_TYPE_ALIAS = 'com_audioarchive.clip';
@@ -395,7 +393,6 @@ return new class () implements InstallerScriptInterface
 			$this->ensureFileRoleUniqueIndex($database);
 			$this->ensureGloballyUniqueAliases($database);
 			$this->ensureContentType($database);
-			$this->recordSchemaVersion($database);
 
 			if (!$this->hasRequiredTables($database))
 			{
@@ -1312,54 +1309,5 @@ return new class () implements InstallerScriptInterface
 		}
 
 		return $normalised;
-	}
-
-	/**
-	 * @brief Record the baseline schema version for future Joomla updates.
-	 *
-	 * @param DatabaseInterface $database Joomla database connection.
-	 * @return void
-	 */
-	private function recordSchemaVersion(DatabaseInterface $database): void
-	{
-		$query = $database->getQuery(true)
-			->select($database->quoteName('extension_id'))
-			->from($database->quoteName('#__extensions'))
-			->where($database->quoteName('type') . ' = ' . $database->quote('component'))
-			->where($database->quoteName('element') . ' = ' . $database->quote('com_audioarchive'));
-
-		$extensionId = (int) $database->setQuery($query)->loadResult();
-
-		if ($extensionId <= 0)
-		{
-			return;
-		}
-
-		$query = $database->getQuery(true)
-			->select($database->quoteName('extension_id'))
-			->from($database->quoteName('#__schemas'))
-			->where($database->quoteName('extension_id') . ' = ' . $extensionId);
-
-		$existingId = (int) $database->setQuery($query)->loadResult();
-
-		if ($existingId > 0)
-		{
-			$query = $database->getQuery(true)
-				->update($database->quoteName('#__schemas'))
-				->set($database->quoteName('version_id') . ' = ' . $database->quote(self::SCHEMA_VERSION))
-				->where($database->quoteName('extension_id') . ' = ' . $extensionId);
-		}
-		else
-		{
-			$query = $database->getQuery(true)
-				->insert($database->quoteName('#__schemas'))
-				->columns([
-					$database->quoteName('extension_id'),
-					$database->quoteName('version_id'),
-				])
-				->values($extensionId . ', ' . $database->quote(self::SCHEMA_VERSION));
-		}
-
-		$database->setQuery($query)->execute();
 	}
 };

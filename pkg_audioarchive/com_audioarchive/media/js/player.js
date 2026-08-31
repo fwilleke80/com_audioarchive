@@ -125,7 +125,7 @@ const initialiseAudioArchivePlayers = () =>
 		}
 	};
 
-	const initialisePlayerVarispeed = (player, audio) =>
+	const initialisePlayerVarispeed = (player, audio, initialOctaves = 0) =>
 	{
 		const range = player.querySelector('[data-audioarchive-varispeed-range]');
 		const reset = player.querySelector('[data-audioarchive-varispeed-reset]');
@@ -175,8 +175,54 @@ const initialiseAudioArchivePlayers = () =>
 		});
 
 		reset.addEventListener('click', () => apply(0));
-		apply(0);
+		apply(initialOctaves);
 	};
+
+	const getClipDetailUrlState = () =>
+	{
+		if (!document.querySelector('[data-audioarchive-clip-return]'))
+		{
+			return {start: null, pitch: null};
+		}
+
+		const parameters = new URLSearchParams(window.location.search);
+		const rawStart = parameters.get('start') ?? parameters.get('t');
+		const rawPitch = parameters.get('pitch');
+		const start = rawStart === null ? null : Number.parseFloat(rawStart);
+		const pitch = rawPitch === null ? null : Number.parseFloat(rawPitch);
+
+		return {
+			start: Number.isFinite(start) && start >= 0 ? start : null,
+			pitch: Number.isFinite(pitch) ? Math.max(-2, Math.min(2, pitch)) : null,
+		};
+	};
+
+	const applyInitialStartTime = (audio, start) =>
+	{
+		if (!Number.isFinite(start) || start < 0)
+		{
+			return;
+		}
+
+		const apply = () =>
+		{
+			const maximum = Number.isFinite(audio.duration) && audio.duration > 0
+				? Math.max(0, audio.duration - 0.001)
+				: start;
+			audio.currentTime = Math.min(start, maximum);
+		};
+
+		if (audio.readyState >= 1)
+		{
+			apply();
+		}
+		else
+		{
+			audio.addEventListener('loadedmetadata', apply, {once: true});
+		}
+	};
+
+	const clipDetailUrlState = getClipDetailUrlState();
 
 	const setCustomPlayerState = (player, playing) =>
 	{
@@ -1131,7 +1177,8 @@ const initialiseAudioArchivePlayers = () =>
 		initialisePlayerSpectrogram(player, audio);
 		initialisePlayerFrequencyProfile(player);
 		initialiseAnalysisSwitcher(player);
-		initialisePlayerVarispeed(player, audio);
+		initialisePlayerVarispeed(player, audio, clipDetailUrlState.pitch ?? 0);
+		applyInitialStartTime(audio, clipDetailUrlState.start);
 
 		toggle.addEventListener('click', async () =>
 		{
@@ -1299,6 +1346,7 @@ const initialiseAudioArchivePlayers = () =>
 
 		const title = audio.dataset.clipTitle || '';
 		const clipId = audio.dataset.clipId || '';
+		applyInitialStartTime(audio, clipDetailUrlState.start);
 
 		audio.addEventListener('play', () =>
 		{

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.11.29 — 2026-08-31
+
+- Made the Sound Board Polyphony switch a board-wide control: when polyphony is enabled by configuration, the switch is always visible and applies to both Pad trigger and Chromatic keyboard playback.
+- Added the `polyphony` Sound Board URL parameter and preserve the current polyphony state in shared Sound Board URLs.
+- Added Clip Detail playback URL parameters: `start` (with `t` alias) accepts decimal seconds, and `pitch` accepts a Featured varispeed offset from -2 to +2 octaves when that control is enabled.
+- Repaired Joomla database-schema version bookkeeping by adding the `0.11.29.sql` schema marker and removing the component installer's manual `#__schemas` version override.
+- Added a package build-time consistency check that refuses releases whose package version, component manifest version, and newest SQL schema version do not match.
+
 Notable changes to Punga Audio Archive are recorded here.
 
 ## 0.11.28 — 2026-08-29
