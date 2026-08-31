@@ -23,7 +23,7 @@ Check the job error, FFmpeg availability, analysis directory permissions, timeou
 
 ## Audio does not play on one browser
 
-Browser support depends on the original container and codec. Punga Audio Archive 0.11.24 streams originals and does not generate compatibility playback previews. The authorised original may still be downloadable.
+Browser support depends on the original container and codec. Punga Audio Archive streams authorised originals and does not generate compatibility playback previews. The authorised original may still be downloadable.
 
 ## An external MIDI keyboard is unavailable
 
@@ -49,8 +49,8 @@ Run the integrity check first. Export refuses to silently omit missing requested
 
 ## Batch dialog Cancel does nothing
 
-This was corrected in 0.11.3. Update to 0.11.3 or later.
+Current releases close the Batch dialog normally. If Cancel still does nothing after an update, clear the Joomla administrator cache and browser cache, then confirm that the current administrator JavaScript assets are being served.
 
 ## Playlist rows show native play controls on iPhone
 
-This was corrected in 0.11.4. Playlist rows now use the unified Minimal player control.
+Current releases use the unified Minimal player control for playlist rows. If native controls unexpectedly appear, verify that the current `player.js` and player CSS assets are being served rather than cached files from an older installation.

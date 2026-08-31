@@ -1,6 +1,6 @@
 # Database schema
 
-Punga Audio Archive 0.11.24 uses these component tables:
+Punga Audio Archive uses these component tables:
 
 - `#__audioarchive_clips`
 - `#__audioarchive_files`
@@ -34,3 +34,5 @@ The ratings table stores Like/Dislike choices according to configured guest or r
 ## Schema changes
 
 Use Joomla schema updates rather than editing only the initial install SQL. Update code must preserve existing clips, managed-file references, UUIDs, tag relationships, counters, ratings, and derivatives.
+
+Every release carries a versioned SQL migration or no-op schema marker whose filename matches the package/component version. Joomla uses this sequence to maintain the component's `#__schemas` entry; extension code does not write that release number manually.

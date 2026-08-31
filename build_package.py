@@ -226,6 +226,62 @@ def validate_component_schema_version(package_directory: Path, package_version: 
         )
 
 
+def validate_release_documentation(package_directory: Path, package_version: str) -> None:
+    """
+    @brief Ensure release-facing documentation advertises the package version.
+    @param package_directory pkg_audioarchive source directory.
+    @param package_version Package manifest version.
+    @return None.
+    @throws BuildError If README or changelog release metadata is stale.
+    """
+
+    project_root = package_directory.parent
+    readme_path = project_root / "README.md"
+    changelog_path = project_root / "CHANGELOG.md"
+
+    try:
+        readme_text = readme_path.read_text(encoding="utf-8")
+        changelog_text = changelog_path.read_text(encoding="utf-8")
+    except OSError as error:
+        raise BuildError("Cannot read release documentation: %s" % error) from error
+
+    readme_match = re.search(
+        r"^>\s*\*\*Current version:\*\*\s*([^\s]+)\s*$",
+        readme_text,
+        flags=re.MULTILINE,
+    )
+
+    if readme_match is None:
+        raise BuildError(
+            "README.md must contain a '> **Current version:** <version>' line."
+        )
+
+    readme_version = readme_match.group(1)
+
+    if readme_version != package_version:
+        raise BuildError(
+            "README current version '%s' does not match package version '%s'."
+            % (readme_version, package_version)
+        )
+
+    changelog_match = re.search(
+        r"^##\s+([^\s]+)(?:\s+—.*)?$",
+        changelog_text,
+        flags=re.MULTILINE,
+    )
+
+    if changelog_match is None:
+        raise BuildError("CHANGELOG.md does not contain a release heading.")
+
+    changelog_version = changelog_match.group(1)
+
+    if changelog_version != package_version:
+        raise BuildError(
+            "Newest changelog version '%s' does not match package version '%s'."
+            % (changelog_version, package_version)
+        )
+
+
 def make_default_output_name(version: str) -> str:
     """
     @brief Create the versioned outer package filename.
@@ -551,6 +607,7 @@ def build_package(
 
     version, extension_archive_names = parse_package_manifest(manifest_path)
     validate_component_schema_version(package_directory, version)
+    validate_release_documentation(package_directory, version)
     package_language_files = collect_package_language_files(
         package_directory
     )

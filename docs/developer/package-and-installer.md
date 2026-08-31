@@ -2,7 +2,7 @@
 
 The outer manifest is `pkg_audioarchive/pkg_audioarchive.xml`.
 
-It declares package version 0.11.24, package-level language files, `install.php`, and these nested archives:
+It declares the release version, package-level language files, `install.php`, and these nested archives:
 
 - `com_audioarchive.zip`
 - `mod_audioarchive.zip`
@@ -29,7 +29,9 @@ Database changes belong in versioned SQL files under:
 pkg_audioarchive/com_audioarchive/administrator/sql/updates/mysql/
 ```
 
-The component and package manifest versions must remain aligned for a release.
+The component and package manifest versions must remain aligned for a release, and the newest SQL filename must carry the same version. Even releases without structural database changes include an empty/comment-only schema marker so Joomla can advance `#__schemas` normally.
+
+The component installer must not manually write release numbers into Joomla's `#__schemas` table. Joomla's schema updater owns that bookkeeping; `build_package.py` rejects a release when the package version, component manifest version, and newest SQL schema version disagree.
 
 ## Uninstallation
 

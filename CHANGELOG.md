@@ -1,5 +1,16 @@
 # Changelog
 
+Notable changes to Punga Audio Archive are recorded here.
+
+## 0.11.31 — 2026-08-31
+
+- Audited and refreshed the README plus the complete user/developer documentation against the current 0.11.30 feature set.
+- Corrected obsolete documentation that still described the pre-0.11.29 chromatic-only Polyphonic switch; the board-wide control now documents both Pad Trigger and Chromatic Keyboard behaviour.
+- Documented Sound Board `mode`, `octave`, `pad`, and `polyphony` state sharing plus Clip Detail `start`/`t` and `pitch` sharing in the user, developer-state, player, and testing documentation.
+- Updated Joomla schema-version and release-build documentation to describe mandatory per-release SQL markers and the build-time version consistency check.
+- Removed stale hard-coded release numbers from long-lived documentation pages and updated installer examples/current-version references.
+- Verified all relative Markdown links in the README and `docs/` tree.
+
 ## 0.11.30 — 2026-08-31
 
 - Fixed Pad Trigger monophonic playback: the Sound Board now checks the live Polyphony switch state instead of only the static component/menu configuration.
@@ -14,8 +25,6 @@
 - Added Clip Detail playback URL parameters: `start` (with `t` alias) accepts decimal seconds, and `pitch` accepts a Featured varispeed offset from -2 to +2 octaves when that control is enabled.
 - Repaired Joomla database-schema version bookkeeping by adding the `0.11.29.sql` schema marker and removing the component installer's manual `#__schemas` version override.
 - Added a package build-time consistency check that refuses releases whose package version, component manifest version, and newest SQL schema version do not match.
-
-Notable changes to Punga Audio Archive are recorded here.
 
 ## 0.11.28 — 2026-08-29
 
@@ -35,7 +44,7 @@ Notable changes to Punga Audio Archive are recorded here.
 - Prune legacy browser-local overflow entries when the Sound Board page is opened, so previously hidden entries no longer suppress the full-board warning.
 - Supersedes the incomplete 0.11.25 duplicate-detection fix; the underlying issue was capacity/configuration mismatch rather than clip-ID reuse.
 
-## 0.11.25
+## 0.11.25 — 2026-08-29
 
 - Fixed Sound Board duplicate detection for reused/stale numeric clip IDs by using clip UUIDs as stable identity where available.
 - Legacy Sound Board entries remain compatible and are upgraded with UUIDs when safely matched.

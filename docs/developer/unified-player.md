@@ -25,6 +25,9 @@ The markup includes a native `<audio controls>` fallback. JavaScript hides nativ
 
 Ordinary unified players coordinate one-player-at-a-time behaviour. Sound Board playback is intentionally separate to support optional polyphony.
 
+
+On Clip Detail pages, `start` (with `t` as an alias) initialises `currentTime` after metadata becomes available. When the Featured varispeed control exists, `pitch` initialises its octave offset in the supported −2…+2 range. Clip Detail sharing reads the live player position and current varispeed slider value and emits non-default `start` and `pitch` parameters.
+
 ## Analyses
 
 Featured players request protected waveform, spectrogram, or frequency-profile data. Only available derivatives are offered, the preferred view falls back to another available analysis, and the analysis area is omitted when no derivative exists.
