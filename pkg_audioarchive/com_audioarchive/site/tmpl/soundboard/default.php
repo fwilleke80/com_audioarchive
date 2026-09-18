@@ -38,6 +38,7 @@ $soundboardStyle = StyleHelper::buildSoundboardVariables($this->params);
 	data-audioarchive-pad-count="<?php echo $this->padCount; ?>"
 	data-audioarchive-polyphonic="<?php echo $this->polyphonic ? '1' : '0'; ?>"
 	data-audioarchive-sampler-enabled="<?php echo $this->samplerEnabled ? '1' : '0'; ?>"
+data-audioarchive-recordings-enabled="<?php echo $this->recordingsEnabled ? '1' : '0'; ?>"
 	data-audioarchive-record-soundboard-plays="<?php echo (int) $this->params->get('soundboard_record_plays', 1) === 1 ? '1' : '0'; ?>"
 	data-audioarchive-stream-template="<?php echo $this->escape($this->streamTemplate); ?>"
 	<?php if ($this->playCountUrl !== '') : ?>
@@ -77,6 +78,21 @@ $soundboardStyle = StyleHelper::buildSoundboardVariables($this->params);
 	data-audioarchive-label-playlist-empty="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_PLAYLIST_EMPTY')); ?>"
 	data-audioarchive-label-playlist-saved="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_PLAYLIST_SAVED')); ?>"
 	data-audioarchive-label-playlist-error="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_PLAYLIST_ERROR')); ?>"
+	data-audioarchive-label-recording-default-name="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_DEFAULT_NAME')); ?>"
+	data-audioarchive-label-recording-delete-confirm="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_DELETE_CONFIRM')); ?>"
+	data-audioarchive-label-recording-name-prompt="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_NAME_PROMPT')); ?>"
+	data-audioarchive-label-recording-saved="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_SAVED')); ?>"
+	data-audioarchive-label-recording-imported="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_IMPORTED')); ?>"
+	data-audioarchive-label-recording-invalid="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_INVALID')); ?>"
+	data-audioarchive-label-recording-storage-error="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_STORAGE_ERROR')); ?>"
+	data-audioarchive-label-recording-playback="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_PLAYBACK')); ?>"
+	data-audioarchive-label-recording-finished="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_FINISHED')); ?>"
+	data-audioarchive-label-recording-events="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_EVENTS')); ?>"
+	data-audioarchive-label-recording-overdub-saved="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_OVERDUB_SAVED')); ?>"
+	data-audioarchive-label-recording-undo-done="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_UNDO_DONE')); ?>"
+	data-audioarchive-label-recording-instrument="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_INSTRUMENT')); ?>"
+	data-audioarchive-label-recording-empty="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_EMPTY')); ?>"
+	data-audioarchive-label-recording-delete="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_DELETE')); ?>"
 >
 	<header class="com-audioarchive-page-header">
 		<?php if ((int) $this->params->get('show_page_heading', 1) === 1) : ?>
@@ -329,6 +345,68 @@ $soundboardStyle = StyleHelper::buildSoundboardVariables($this->params);
 	</div>
 
 	<p class="com-audioarchive-conversion-status" data-audioarchive-soundboard-conversion-status aria-live="polite"></p>
+
+	<?php if ($this->recordingsEnabled) : ?>
+	<section class="com-audioarchive-soundboard-recordings" data-audioarchive-soundboard-recordings>
+		<div class="com-audioarchive-soundboard-recordings-header">
+			<div>
+				<h2><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDER_TITLE'); ?></h2>
+				<p><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDINGS_DESC'); ?></p>
+			</div>
+			<div class="com-audioarchive-soundboard-recording-transport">
+				<button type="button" class="btn btn-danger" data-audioarchive-recording-record>
+					<span aria-hidden="true">●</span>
+					<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORD'); ?>
+				</button>
+				<button type="button" class="btn btn-outline-secondary" data-audioarchive-recording-stop disabled>
+					<span aria-hidden="true">■</span>
+					<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORD_STOP'); ?>
+				</button>
+				<output class="com-audioarchive-soundboard-recording-clock" data-audioarchive-recording-clock>00:00.000</output>
+			</div>
+		</div>
+
+		<div class="com-audioarchive-soundboard-recording-editor" data-audioarchive-recording-editor hidden>
+			<div class="com-audioarchive-soundboard-recording-editor-header">
+				<div>
+					<strong data-audioarchive-recording-title></strong>
+					<span class="com-audioarchive-soundboard-recording-meta" data-audioarchive-recording-meta></span>
+				</div>
+				<div class="com-audioarchive-soundboard-recording-editor-actions">
+					<button type="button" class="btn btn-sm btn-primary" data-audioarchive-recording-play><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_PLAY'); ?></button>
+					<button type="button" class="btn btn-sm btn-danger" data-audioarchive-recording-overdub><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_OVERDUB'); ?></button>
+					<button type="button" class="btn btn-sm btn-outline-secondary" data-audioarchive-recording-playback-stop disabled><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_STOP'); ?></button>
+					<button type="button" class="btn btn-sm btn-outline-secondary" data-audioarchive-recording-undo disabled><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_UNDO'); ?></button>
+					<button type="button" class="btn btn-sm btn-outline-secondary" data-audioarchive-recording-rename><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_RENAME'); ?></button>
+					<button type="button" class="btn btn-sm btn-outline-secondary" data-audioarchive-recording-export><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_EXPORT'); ?></button>
+				</div>
+			</div>
+			<div class="com-audioarchive-soundboard-recording-roll-toolbar">
+				<span><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_ROLL'); ?></span>
+				<div>
+					<button type="button" class="btn btn-sm btn-outline-secondary" data-audioarchive-recording-zoom-out aria-label="<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_ZOOM_OUT'); ?>" title="<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_ZOOM_OUT'); ?>">−</button>
+					<button type="button" class="btn btn-sm btn-outline-secondary" data-audioarchive-recording-zoom-in aria-label="<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_ZOOM_IN'); ?>" title="<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_ZOOM_IN'); ?>">+</button>
+				</div>
+			</div>
+			<div class="com-audioarchive-soundboard-recording-roll-viewport" data-audioarchive-recording-roll-viewport>
+				<div class="com-audioarchive-soundboard-recording-roll" data-audioarchive-recording-roll></div>
+			</div>
+		</div>
+
+		<div class="com-audioarchive-soundboard-recording-library">
+			<div class="com-audioarchive-soundboard-recording-library-actions">
+				<h3><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDINGS_TITLE'); ?></h3>
+				<div>
+					<button type="button" class="btn btn-sm btn-outline-secondary" data-audioarchive-recording-import><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_IMPORT'); ?></button>
+					<input class="visually-hidden" type="file" accept="application/json,.json" data-audioarchive-recording-file>
+				</div>
+			</div>
+			<div data-audioarchive-recording-list></div>
+		</div>
+
+		<p class="visually-hidden" aria-live="polite" data-audioarchive-recording-status></p>
+	</section>
+	<?php endif; ?>
 
 	<p class="com-audioarchive-soundboard-note"><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_STORAGE_NOTE'); ?></p>
 </div>

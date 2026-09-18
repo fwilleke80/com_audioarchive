@@ -92,6 +92,10 @@
                 <option value="0">JNO</option>
                 <option value="1">JYES</option>
             </field>
+            <field name="enable_soundboard_recordings" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_ENABLE_SOUNDBOARD_RECORDINGS_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ENABLE_SOUNDBOARD_RECORDINGS_DESC" default="1" showon="enable_soundboard:1">
+                <option value="0">JNO</option>
+                <option value="1">JYES</option>
+            </field>
         </fieldset>
         <fieldset name="soundboard_style" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_STYLE_LABEL">
             <field name="soundboard_style_note" type="note" class="alert alert-info" label="" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_NOTE_DESC" showon="enable_soundboard:1" />

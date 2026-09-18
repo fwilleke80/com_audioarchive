@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.12.1 — 2026-09-18
+
+- Made the Sound Board recording piano roll more compact and added an Instrument lane showing recorded chromatic sampler-pad changes with pad number and clip title.
+- Renamed the overall recording section to Recorder and added a separate Recordings heading directly above the saved-recording list.
+- Added Record overdub and one-level Undo overdub controls for saved Sound Board recordings.
+- Kept the recording JSON as one flat event array while adding a backward-compatible optional event `layer` number; 0.12.0 recordings without a layer remain layer 0.
+- Isolated recorded monophony per layer so independently overdubbed parts can remain simultaneous, including different sampler pads playing polyphonic melodies over a monophonic original take.
+- Changed recorded-note replay to address each event's stored pad directly instead of forcing the live sampler selection to follow the track.
+- Backing mode, pad-selection and octave events no longer take over the live Sound Board controls, so visitors can change pads and jam independently while a recording plays.
+- Separated backing-track polyphony from live-jam polyphony; monophonic backing events only cut voices in their own recording layer, while live monophonic playing does not cut the backing track.
+- Tightened recorder/editor locking during playback and overdub, and updated the playhead geometry for the denser piano roll.
+
+## 0.12.0 — 2026-09-18
+
+- Added optional browser-local Sound Board performance recordings, configurable globally and overridable per Sound Board menu item.
+- Added Record/Stop transport, persistent recording library, rename/delete controls, deterministic replay, and JSON import/export with the complete Sound Board snapshot.
+- Added a DAW-style piano-roll visualization: chromatic performances show MIDI-note bars with recorded note lengths and velocity metadata, while Pad Trigger performances use pad/drum lanes without waveform rendering.
+- Recorded Pad Trigger events, chromatic MIDI/note events, note-release timing, mode changes, polyphony changes, octave changes, and sampler source-pad selections so changing clips during a chromatic performance replays correctly.
+- Recording playback temporarily loads the embedded board/state without overwriting the visitor's personal Sound Board and restores the previous board afterwards.
+- Recording playback revalidates embedded clip IDs/UUIDs against currently accessible public clips so stale or inaccessible clips are not silently substituted.
+- Added bounded/versioned recording-file validation and mobile-responsive recording controls.
+- Updated Sound Board polyphony help text to describe its board-wide Pad Trigger and Chromatic Keyboard behavior.
+
 Notable changes to Punga Audio Archive are recorded here.
 
 ## 0.11.31 — 2026-08-31

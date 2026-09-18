@@ -36,4 +36,4 @@ The component follows Joomla MVC conventions with separate administrator and sit
 - Progressive enhancement for player and frontend interactions
 - No runtime CDN dependencies
 - External analysis performed through bounded, retryable jobs
-- Browser-local personal collections, with server resolution used only to enforce current clip visibility and stable identity
+- Browser-local personal collections and Sound Board performance recordings, with server resolution used only to enforce current clip visibility and stable identity

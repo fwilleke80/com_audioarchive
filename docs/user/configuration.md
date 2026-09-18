@@ -14,7 +14,7 @@ These features have separate tabs:
 
 - **Ratings** controls whether Like/Dislike voting is enabled and who may vote.
 - **Playlists** enables browser-local playlists and controls playlist-table colours.
-- **Sound Boards** separates general options from styling. General options enable the Sound Board, set pad count, play recording and whether visitor-selectable polyphony is available, and independently enable the chromatic sampler. When polyphony is permitted, one board-wide switch controls both Pad Trigger and Chromatic Keyboard playback. Styling controls optional pad colours.
+- **Sound Boards** separates general options from styling. General options enable the Sound Board, set pad count, play counting and whether visitor-selectable polyphony is available, independently enable the chromatic sampler, and enable or disable browser-local Sound Board performance recordings. The recordings setting can also be overridden by an individual Sound Board menu item. When polyphony is permitted, one board-wide switch controls both Pad Trigger and Chromatic Keyboard playback. Styling controls optional pad colours.
 
 Disabling the Sound Board hides its page and all **Add to Sound Board** actions. Disabling Playlists also removes Sound Board-to-playlist conversion.
 

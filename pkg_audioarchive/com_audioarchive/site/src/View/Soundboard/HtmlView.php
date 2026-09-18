@@ -54,6 +54,9 @@ class HtmlView extends BaseHtmlView
 	/** @var bool */
 	public bool $playlistsEnabled = true;
 
+	/** @var bool */
+	public bool $recordingsEnabled = true;
+
 	/** @var string */
 	public string $interactionUrl = '';
 
@@ -94,6 +97,7 @@ class HtmlView extends BaseHtmlView
 		$this->polyphonic = (int) $this->params->get('soundboard_polyphony', 1) === 1;
 		$this->samplerEnabled = (int) $this->params->get('enable_soundboard_sampler', 1) === 1;
 		$this->playlistsEnabled = (int) $this->params->get('enable_playlists', 1) === 1;
+		$this->recordingsEnabled = (int) $this->params->get('enable_soundboard_recordings', 1) === 1;
 		$itemId = (int) ($item?->id ?? $application->getInput()->getInt('Itemid', 0));
 		$this->pageHeading = (string) $this->params->get(
 			'page_heading',

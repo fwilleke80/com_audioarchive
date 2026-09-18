@@ -26,6 +26,11 @@
 				<option value="1">JYES</option>
 				<option value="0">JNO</option>
 			</field>
+			<field name="enable_soundboard_recordings" type="list" label="COM_AUDIOARCHIVE_CONFIG_ENABLE_SOUNDBOARD_RECORDINGS_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ENABLE_SOUNDBOARD_RECORDINGS_DESC" default="" validate="options">
+				<option value="">JGLOBAL_USE_GLOBAL</option>
+				<option value="1">JYES</option>
+				<option value="0">JNO</option>
+			</field>
 		</fieldset>
 	</fields>
 </metadata>

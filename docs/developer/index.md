@@ -16,6 +16,7 @@ This section documents the implementation and maintenance contracts of the curre
 - [Routing](routing.md)
 - [Unified player](unified-player.md)
 - [Frontend state](frontend-state.md)
+- [Sound Board recordings](soundboard-recordings.md)
 - [Analytics events](analytics-events.md)
 - [Template overrides](template-overrides.md)
 
