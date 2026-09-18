@@ -57,19 +57,19 @@ Sampler source-pad selection is a first-class event because the same MIDI note c
 
 ## Playback
 
-Playback temporarily replaces only the in-memory Sound Board with the recording's embedded board. The visitor's personal board in local storage is left untouched. The previous board, mode, polyphony, octave, and selected sampler pad are restored when replay stops or finishes.
+Playback resolves the recording's embedded Sound Board into a private backing-playback board. It does not replace the live in-memory Sound Board, so the visitor's current mode, polyphony, octave, and selected sampler pad remain under live control throughout replay.
 
 Before replay, board IDs are checked against the public Sound Board route-resolution endpoint. When an exported entry includes a UUID, that UUID must still match the public clip returned for the numeric ID. Inaccessible, deleted, or ID-reused clips therefore become empty pads rather than silently resolving to unrelated audio.
 
 Chromatic sample buffers referenced by note events are preloaded before the performance clock starts. Recorded note events address their stored `pad` directly instead of changing the live sampler selection first. Backing `select`, `mode`, and `octave` events therefore never take control of the user's live keyboard while the recording plays. Recorded polyphony is maintained per recording layer and affects only backing voices; live jamming uses the visitor's current Sound Board polyphony independently.
 
-Recorded events are dispatched against a monotonic `performance.now()` playback clock.
+Recorded events are dispatched against a monotonic `performance.now()` playback clock. During recording, the live preview is rebuilt at approximately 20 fps from the current event list. Active Note-On events are rendered with a temporary duration from their timestamp to the current recording clock, then settle to their recorded key-down/key-up duration after Note Off.
 
 ## Piano roll
 
 The visualization contains only performance events—no audio waveform data.
 
-Chromatic `note` events use MIDI-note rows and their stored key-down/key-up duration. Pad Trigger events use pad/drum rows and fixed-width trigger markers. A compact Instrument lane above the notes renders chromatic `select` events with the pad number and clip title. Mode, polyphony, and octave events remain metadata rather than pseudo-audio rows.
+Chromatic `note` events use MIDI-note rows and their stored key-down/key-up duration. Pad Trigger events use pad/drum rows and fixed-width trigger markers. Note and trigger colours are derived deterministically from the Sound Board pad using a golden-angle hue sequence, so all events using the same pad share a colour across the original take and overdubs. Pad-selection, mode, polyphony, and octave events remain metadata rather than separate visual lanes.
 
 ## Configuration
 

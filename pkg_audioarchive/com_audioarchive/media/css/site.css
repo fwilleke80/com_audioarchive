@@ -2469,57 +2469,6 @@
 	white-space: nowrap;
 }
 
-.com-audioarchive-soundboard-recording-instrument-lane
-{
-	position: absolute;
-	z-index: 1;
-	border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
-	border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent);
-	background: color-mix(in srgb, var(--audioarchive-accent) 4%, transparent);
-}
-
-.com-audioarchive-soundboard-recording-row-label.is-instrument
-{
-	font-size: 0.7rem;
-	text-transform: uppercase;
-	letter-spacing: 0.02em;
-	opacity: 0.75;
-}
-
-.com-audioarchive-soundboard-recording-instrument-marker
-{
-	position: absolute;
-	z-index: 3;
-	display: flex;
-	align-items: center;
-	gap: 0.25rem;
-	height: 18px;
-	pointer-events: none;
-}
-
-.com-audioarchive-soundboard-recording-instrument-marker-line
-{
-	width: 2px;
-	height: 18px;
-	background: var(--audioarchive-accent);
-}
-
-.com-audioarchive-soundboard-recording-instrument-marker-label
-{
-	display: block;
-	max-width: 11rem;
-	padding: 0.08rem 0.3rem;
-	border: 1px solid color-mix(in srgb, var(--audioarchive-accent) 36%, transparent);
-	border-radius: 0.22rem;
-	background: Canvas;
-	font-size: 0.68rem;
-	font-weight: 700;
-	line-height: 1.25;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
 .com-audioarchive-soundboard-recording-grid-line
 {
 	position: absolute;
@@ -2544,9 +2493,9 @@
 {
 	position: absolute;
 	z-index: 2;
-	border: 1px solid color-mix(in srgb, var(--audioarchive-accent) 72%, CanvasText);
+	border: 1px solid color-mix(in srgb, var(--audioarchive-recording-event-color, var(--audioarchive-accent)) 78%, CanvasText);
 	border-radius: 0.2rem;
-	background: color-mix(in srgb, var(--audioarchive-accent) 72%, Canvas);
+	background: color-mix(in srgb, var(--audioarchive-recording-event-color, var(--audioarchive-accent)) 76%, Canvas);
 }
 
 .com-audioarchive-soundboard-recording-event.is-pad

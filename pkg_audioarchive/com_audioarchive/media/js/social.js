@@ -1131,14 +1131,12 @@ function initialiseSoundboard()
 	const pianoKeys = Array.from(root.querySelectorAll('[data-audioarchive-soundboard-piano-key]'));
 	const recordingsRoot = root.querySelector('[data-audioarchive-soundboard-recordings]');
 	const recordingRecordButton = recordingsRoot?.querySelector('[data-audioarchive-recording-record]');
-	const recordingStopButton = recordingsRoot?.querySelector('[data-audioarchive-recording-stop]');
 	const recordingClock = recordingsRoot?.querySelector('[data-audioarchive-recording-clock]');
 	const recordingEditor = recordingsRoot?.querySelector('[data-audioarchive-recording-editor]');
 	const recordingTitle = recordingsRoot?.querySelector('[data-audioarchive-recording-title]');
 	const recordingMeta = recordingsRoot?.querySelector('[data-audioarchive-recording-meta]');
 	const recordingPlayButton = recordingsRoot?.querySelector('[data-audioarchive-recording-play]');
 	const recordingOverdubButton = recordingsRoot?.querySelector('[data-audioarchive-recording-overdub]');
-	const recordingPlaybackStopButton = recordingsRoot?.querySelector('[data-audioarchive-recording-playback-stop]');
 	const recordingUndoButton = recordingsRoot?.querySelector('[data-audioarchive-recording-undo]');
 	const recordingRenameButton = recordingsRoot?.querySelector('[data-audioarchive-recording-rename]');
 	const recordingExportButton = recordingsRoot?.querySelector('[data-audioarchive-recording-export]');
@@ -1186,7 +1184,59 @@ function initialiseSoundboard()
 	let recordingPlaybackFrame = 0;
 	let recordingZoom = 1;
 	let recordingUndo = null;
+	let recordingLiveRenderAt = 0;
 	const recordingActiveNotes = new Map();
+
+	const setRecordingTransportState = (button, active, startIcon, stopIcon) =>
+	{
+		if (!button)
+		{
+			return;
+		}
+
+		const icon = button.querySelector('[data-audioarchive-transport-icon]');
+		const label = button.querySelector('[data-audioarchive-transport-label]');
+
+		if (icon)
+		{
+			icon.textContent = active ? stopIcon : startIcon;
+		}
+
+		if (label)
+		{
+			label.textContent = active
+				? (button.dataset.stopLabel || '')
+				: (button.dataset.startLabel || '');
+		}
+
+		button.classList.toggle('is-active', active);
+	};
+
+	const syncRecordingTransport = () =>
+	{
+		const freshRecording = Boolean(recordingSession && !recordingSession.overdub);
+		const overdubActive = Boolean(recordingPlayback?.overdub);
+		const normalPlayback = Boolean(recordingPlayback && !recordingPlayback.overdub);
+
+		setRecordingTransportState(recordingRecordButton, freshRecording, '●', '■');
+		setRecordingTransportState(recordingPlayButton, normalPlayback, '▶', '■');
+		setRecordingTransportState(recordingOverdubButton, overdubActive, '●', '■');
+
+		if (recordingRecordButton)
+		{
+			recordingRecordButton.disabled = Boolean(recordingPlayback);
+		}
+
+		if (recordingPlayButton)
+		{
+			recordingPlayButton.disabled = freshRecording || overdubActive;
+		}
+
+		if (recordingOverdubButton)
+		{
+			recordingOverdubButton.disabled = freshRecording || normalPlayback;
+		}
+	};
 	const activeComputerRecordingNotes = new Map();
 
 	const fragmentParameters = new URLSearchParams(window.location.hash.replace(/^#/, ''));
@@ -1259,6 +1309,92 @@ function initialiseSoundboard()
 		return recordingSession ? Math.max(0, performance.now() - recordingSession.startedAt) : 0;
 	};
 
+	const getLiveRecordingPreview = () =>
+	{
+		if (!recordingSession)
+		{
+			return null;
+		}
+
+		const elapsed = Math.min(SOUNDBOARD_RECORDING_MAX_DURATION_MS, Math.round(getRecordingElapsed()));
+		const activeEvents = new Set();
+
+		recordingActiveNotes.forEach((events) =>
+		{
+			events.forEach((event) => activeEvents.add(event));
+		});
+
+		const liveEvents = recordingSession.events.map((event) =>
+		{
+			if (event.type === 'note' && activeEvents.has(event))
+			{
+				return {
+					...event,
+					duration: Math.max(40, elapsed - event.t),
+				};
+			}
+
+			return {...event};
+		});
+
+		if (recordingSession.overdub)
+		{
+			const target = recordings.find((recording) => recording.id === recordingSession.targetRecordingId) || null;
+
+			if (!target)
+			{
+				return null;
+			}
+
+			return {
+				...target,
+				durationMs: Math.max(target.durationMs, elapsed),
+				events: [...target.events.map((event) => ({...event})), ...liveEvents]
+					.sort((a, b) => a.t - b.t),
+			};
+		}
+
+		return {
+			id: recordingSession.id,
+			format: SOUNDBOARD_RECORDING_FORMAT,
+			version: SOUNDBOARD_RECORDING_VERSION,
+			name: root.dataset.audioarchiveLabelRecording || 'Recording',
+			created: recordingSession.created,
+			durationMs: elapsed,
+			board: recordingSession.board,
+			initialState: recordingSession.initialState,
+			events: liveEvents,
+		};
+	};
+
+	const renderLiveRecordingPreview = () =>
+	{
+		const preview = getLiveRecordingPreview();
+
+		if (!preview)
+		{
+			return;
+		}
+
+		if (recordingEditor)
+		{
+			recordingEditor.hidden = false;
+		}
+
+		if (recordingTitle)
+		{
+			recordingTitle.textContent = preview.name;
+		}
+
+		if (recordingMeta)
+		{
+			recordingMeta.textContent = `${formatSoundboardRecordingTime(preview.durationMs)} · ${formatSoundboardLabel(root.dataset.audioarchiveLabelRecordingEvents || '%d events', preview.events.length)}`;
+		}
+
+		renderRecordingRoll(preview);
+		updateRecordingPlayhead(preview.durationMs);
+	};
+
 	const setRecordingMutationDisabled = (disabled) =>
 	{
 		[
@@ -1284,7 +1420,7 @@ function initialiseSoundboard()
 		}
 	};
 
-	const updateRecordingClock = () =>
+	const updateRecordingClock = (frameTime = performance.now()) =>
 	{
 		if (!recordingClock)
 		{
@@ -1293,6 +1429,12 @@ function initialiseSoundboard()
 
 		const elapsed = getRecordingElapsed();
 		recordingClock.textContent = formatSoundboardRecordingTime(elapsed);
+
+		if (recordingSession && frameTime - recordingLiveRenderAt >= 50)
+		{
+			recordingLiveRenderAt = frameTime;
+			renderLiveRecordingPreview();
+		}
 
 		if (recordingSession && elapsed >= SOUNDBOARD_RECORDING_MAX_DURATION_MS)
 		{
@@ -1423,34 +1565,11 @@ function initialiseSoundboard()
 		};
 		renderSoundboardRecordings();
 
-		if (recordingRecordButton)
-		{
-			recordingRecordButton.disabled = true;
-		}
-
-		if (recordingStopButton)
-		{
-			recordingStopButton.disabled = false;
-		}
-
-		if (recordingPlayButton)
-		{
-			recordingPlayButton.disabled = true;
-		}
-
-		if (recordingOverdubButton)
-		{
-			recordingOverdubButton.disabled = true;
-		}
+		syncRecordingTransport();
 
 		if (recordingUndoButton)
 		{
 			recordingUndoButton.disabled = true;
-		}
-
-		if (recordingPlaybackStopButton)
-		{
-			recordingPlaybackStopButton.disabled = true;
 		}
 
 		setRecordingMutationDisabled(true);
@@ -1584,16 +1703,7 @@ function initialiseSoundboard()
 			}
 		}
 
-		if (recordingRecordButton)
-		{
-			recordingRecordButton.disabled = false;
-		}
-
-		if (recordingStopButton)
-		{
-			recordingStopButton.disabled = true;
-		}
-
+		syncRecordingTransport();
 		setRecordingMutationDisabled(false);
 		recordingsRoot?.classList.remove('is-recording');
 
@@ -2775,7 +2885,7 @@ function initialiseSoundboard()
 		const left = 64 + (Math.max(0, elapsedMs) / 1000) * pixelsPerSecond;
 		playhead.style.left = `${left}px`;
 
-		if (recordingRollViewport && recordingPlayback)
+		if (recordingRollViewport && (recordingPlayback || recordingSession))
 		{
 			const viewportLeft = recordingRollViewport.scrollLeft;
 			const viewportRight = viewportLeft + recordingRollViewport.clientWidth;
@@ -2785,6 +2895,13 @@ function initialiseSoundboard()
 				recordingRollViewport.scrollLeft = Math.max(0, left - recordingRollViewport.clientWidth * 0.7);
 			}
 		}
+	};
+
+	const getRecordingPadColor = (pad) =>
+	{
+		const safePad = Math.max(0, Number.parseInt(String(pad ?? '0'), 10) || 0);
+		const hue = Math.round((210 + safePad * 137.508) % 360);
+		return `hsl(${hue} 68% 52%)`;
 	};
 
 	const renderRecordingRoll = (recording) =>
@@ -2803,44 +2920,6 @@ function initialiseSoundboard()
 
 		const noteEvents = recording.events.filter((event) => event.type === 'note');
 		const padEvents = recording.events.filter((event) => event.type === 'pad');
-		const selectEvents = recording.events.filter((event) => event.type === 'select' && event.pad >= 0);
-		const instrumentChanges = [];
-		const lastInstrumentPadByLayer = new Map();
-
-		if (
-			recording.initialState.mode === 'chromatic'
-			&& recording.initialState.pad >= 0
-			&& recording.board[recording.initialState.pad]
-		)
-		{
-			instrumentChanges.push({t: 0, pad: recording.initialState.pad, layer: 0});
-			lastInstrumentPadByLayer.set(0, recording.initialState.pad);
-		}
-
-		selectEvents.forEach((event) =>
-		{
-			const layer = Math.max(0, Number.parseInt(String(event.layer ?? '0'), 10) || 0);
-
-			if (event.pad !== lastInstrumentPadByLayer.get(layer) && recording.board[event.pad])
-			{
-				instrumentChanges.push({t: event.t, pad: event.pad, layer});
-				lastInstrumentPadByLayer.set(layer, event.pad);
-			}
-		});
-
-		const groupedInstrumentChanges = Array.from(
-			instrumentChanges.reduce((groups, change) =>
-			{
-				if (!groups.has(change.t))
-				{
-					groups.set(change.t, []);
-				}
-
-				groups.get(change.t).push(change);
-				return groups;
-			}, new Map())
-		).map(([t, changes]) => ({t, changes}));
-
 		const usedNotes = Array.from(new Set(noteEvents.map((event) => event.note))).sort((a, b) => a - b);
 		const noteRows = [];
 
@@ -2858,7 +2937,7 @@ function initialiseSoundboard()
 			...padRows.map((pad) => ({key: `pad:${pad}`, label: `Pad ${pad + 1}`, type: 'pad', value: pad})),
 		];
 
-		if (rows.length === 0 && instrumentChanges.length === 0)
+		if (rows.length === 0)
 		{
 			const empty = document.createElement('p');
 			empty.className = 'com-audioarchive-soundboard-recording-roll-empty';
@@ -2872,67 +2951,21 @@ function initialiseSoundboard()
 		const rowHeight = 19;
 		const labelWidth = 64;
 		const rulerHeight = 22;
-		const instrumentLaneHeight = groupedInstrumentChanges.length > 0 ? 22 : 0;
-		const contentTop = rulerHeight + instrumentLaneHeight;
 		const durationSeconds = Math.max(1, recording.durationMs / 1000);
 		const pixelsPerSecond = 100 * recordingZoom;
 		const timelineWidth = Math.max(560, Math.ceil(durationSeconds * pixelsPerSecond));
 		const totalWidth = labelWidth + timelineWidth;
-		const totalHeight = contentTop + rows.length * rowHeight;
+		const totalHeight = rulerHeight + rows.length * rowHeight;
 
 		recordingRoll.style.width = `${totalWidth}px`;
-		recordingRoll.style.height = `${Math.max(totalHeight, rulerHeight + instrumentLaneHeight)}px`;
-
-		if (groupedInstrumentChanges.length > 0)
-		{
-			const instrumentLabel = document.createElement('div');
-			instrumentLabel.className = 'com-audioarchive-soundboard-recording-row-label is-instrument';
-			instrumentLabel.style.top = `${rulerHeight}px`;
-			instrumentLabel.style.width = `${labelWidth}px`;
-			instrumentLabel.style.height = `${instrumentLaneHeight}px`;
-			instrumentLabel.textContent = root.dataset.audioarchiveLabelRecordingInstrument || 'Instrument';
-			recordingRoll.appendChild(instrumentLabel);
-
-			const instrumentLane = document.createElement('div');
-			instrumentLane.className = 'com-audioarchive-soundboard-recording-instrument-lane';
-			instrumentLane.style.top = `${rulerHeight}px`;
-			instrumentLane.style.left = `${labelWidth}px`;
-			instrumentLane.style.width = `${timelineWidth}px`;
-			instrumentLane.style.height = `${instrumentLaneHeight}px`;
-			recordingRoll.appendChild(instrumentLane);
-
-			groupedInstrumentChanges.forEach((group) =>
-			{
-				const labels = group.changes.map((change) =>
-				{
-					const entry = recording.board[change.pad] || null;
-					const title = entry?.title || `Pad ${change.pad + 1}`;
-					return `Pad ${change.pad + 1}: ${title}`;
-				});
-				const marker = document.createElement('div');
-				marker.className = 'com-audioarchive-soundboard-recording-instrument-marker';
-				marker.style.left = `${labelWidth + (group.t / 1000) * pixelsPerSecond}px`;
-				marker.style.top = `${rulerHeight + 2}px`;
-				marker.title = labels.join(' · ');
-
-				const markerLine = document.createElement('span');
-				markerLine.className = 'com-audioarchive-soundboard-recording-instrument-marker-line';
-
-				const markerLabel = document.createElement('span');
-				markerLabel.className = 'com-audioarchive-soundboard-recording-instrument-marker-label';
-				markerLabel.textContent = labels.join(' + ');
-
-				marker.append(markerLine, markerLabel);
-				recordingRoll.appendChild(marker);
-			});
-		}
+		recordingRoll.style.height = `${totalHeight}px`;
 
 		const rowIndex = new Map();
 
 		rows.forEach((row, index) =>
 		{
 			rowIndex.set(row.key, index);
-			const y = contentTop + index * rowHeight;
+			const y = rulerHeight + index * rowHeight;
 
 			const lane = document.createElement('div');
 			lane.className = 'com-audioarchive-soundboard-recording-lane';
@@ -2973,7 +3006,7 @@ function initialiseSoundboard()
 			line.className = 'com-audioarchive-soundboard-recording-grid-line';
 			line.style.left = `${x}px`;
 			line.style.top = `${rulerHeight}px`;
-			line.style.height = `${instrumentLaneHeight + rows.length * rowHeight}px`;
+			line.style.height = `${rows.length * rowHeight}px`;
 			recordingRoll.appendChild(line);
 
 			const label = document.createElement('div');
@@ -2994,8 +3027,9 @@ function initialiseSoundboard()
 
 			const note = document.createElement('div');
 			note.className = 'com-audioarchive-soundboard-recording-event is-note';
+			note.style.setProperty('--audioarchive-recording-event-color', getRecordingPadColor(event.pad));
 			note.style.left = `${labelWidth + (event.t / 1000) * pixelsPerSecond}px`;
-			note.style.top = `${contentTop + index * rowHeight + 2}px`;
+			note.style.top = `${rulerHeight + index * rowHeight + 2}px`;
 			note.style.width = `${Math.max(5, (event.duration / 1000) * pixelsPerSecond)}px`;
 			note.style.height = `${rowHeight - 4}px`;
 
@@ -3015,8 +3049,9 @@ function initialiseSoundboard()
 
 			const trigger = document.createElement('div');
 			trigger.className = 'com-audioarchive-soundboard-recording-event is-pad';
+			trigger.style.setProperty('--audioarchive-recording-event-color', getRecordingPadColor(event.pad));
 			trigger.style.left = `${labelWidth + (event.t / 1000) * pixelsPerSecond}px`;
-			trigger.style.top = `${contentTop + index * rowHeight + 2}px`;
+			trigger.style.top = `${rulerHeight + index * rowHeight + 2}px`;
 			trigger.style.width = '7px';
 			trigger.style.height = `${rowHeight - 4}px`;
 			trigger.title = `Pad ${event.pad + 1} · ${formatSoundboardRecordingTime(event.t)}`;
@@ -3028,7 +3063,7 @@ function initialiseSoundboard()
 		playhead.dataset.audioarchiveRecordingPlayhead = '';
 		playhead.style.left = `${labelWidth}px`;
 		playhead.style.top = `${rulerHeight}px`;
-		playhead.style.height = `${instrumentLaneHeight + rows.length * rowHeight}px`;
+		playhead.style.height = `${rows.length * rowHeight}px`;
 		recordingRoll.appendChild(playhead);
 	};
 
@@ -3040,6 +3075,8 @@ function initialiseSoundboard()
 		}
 
 		const selected = getSelectedRecording();
+		const livePreview = getLiveRecordingPreview();
+		const displayedRecording = livePreview || selected;
 		const busy = Boolean(recordingSession || recordingPlayback);
 		recordingList.replaceChildren();
 
@@ -3084,10 +3121,10 @@ function initialiseSoundboard()
 
 		if (recordingEditor)
 		{
-			recordingEditor.hidden = !selected;
+			recordingEditor.hidden = !displayedRecording;
 		}
 
-		if (!selected)
+		if (!displayedRecording)
 		{
 			renderRecordingRoll(null);
 			return;
@@ -3095,34 +3132,21 @@ function initialiseSoundboard()
 
 		if (recordingTitle)
 		{
-			recordingTitle.textContent = selected.name;
+			recordingTitle.textContent = displayedRecording.name;
 		}
 
 		if (recordingMeta)
 		{
-			recordingMeta.textContent = `${formatSoundboardRecordingTime(selected.durationMs)} · ${formatSoundboardLabel(root.dataset.audioarchiveLabelRecordingEvents || '%d events', selected.events.length)}`;
+			recordingMeta.textContent = `${formatSoundboardRecordingTime(displayedRecording.durationMs)} · ${formatSoundboardLabel(root.dataset.audioarchiveLabelRecordingEvents || '%d events', displayedRecording.events.length)}`;
 		}
 
-		renderRecordingRoll(selected);
+		renderRecordingRoll(displayedRecording);
 
-		if (recordingPlayButton)
-		{
-			recordingPlayButton.disabled = busy;
-		}
-
-		if (recordingOverdubButton)
-		{
-			recordingOverdubButton.disabled = busy;
-		}
-
-		if (recordingPlaybackStopButton)
-		{
-			recordingPlaybackStopButton.disabled = !recordingPlayback;
-		}
+		syncRecordingTransport();
 
 		if (recordingUndoButton)
 		{
-			recordingUndoButton.disabled = busy || recordingUndo?.recordingId !== selected.id;
+			recordingUndoButton.disabled = busy || !selected || recordingUndo?.recordingId !== selected.id;
 		}
 
 		if (recordingRenameButton)
@@ -3293,26 +3317,7 @@ function initialiseSoundboard()
 		void restoreRecordingPlaybackState(playback.preserved);
 		setRecordingMutationDisabled(false);
 
-		if (recordingRecordButton)
-		{
-			recordingRecordButton.disabled = false;
-		}
-
-		if (recordingPlayButton)
-		{
-			recordingPlayButton.disabled = false;
-		}
-
-		if (recordingOverdubButton)
-		{
-			recordingOverdubButton.disabled = false;
-		}
-
-		if (recordingPlaybackStopButton)
-		{
-			recordingPlaybackStopButton.disabled = true;
-		}
-
+		syncRecordingTransport();
 		updateRecordingPlayhead(0);
 		renderSoundboardRecordings();
 
@@ -3440,34 +3445,15 @@ function initialiseSoundboard()
 		};
 		renderSoundboardRecordings();
 
-		if (recordingRecordButton)
-		{
-			recordingRecordButton.disabled = true;
-		}
-
-		if (recordingPlayButton)
-		{
-			recordingPlayButton.disabled = true;
-		}
-
-		if (recordingOverdubButton)
-		{
-			recordingOverdubButton.disabled = true;
-		}
+		syncRecordingTransport();
 
 		if (recordingUndoButton)
 		{
 			recordingUndoButton.disabled = true;
 		}
 
-		if (recordingPlaybackStopButton)
-		{
-			recordingPlaybackStopButton.disabled = false;
-		}
-
 		setRecordingMutationDisabled(true);
 		stopAllVoices();
-		setSamplerMode(false, false, false);
 		const resolvedBoard = await resolveRecordingBoard(recording);
 
 		if (!recordingPlayback || recordingPlayback.token !== token)
@@ -3475,6 +3461,7 @@ function initialiseSoundboard()
 			return;
 		}
 
+		setSamplerMode(false, false, false);
 		board = resolvedBoard;
 		setTemporarySharedBoard(false);
 		render();
@@ -3541,10 +3528,7 @@ function initialiseSoundboard()
 				recordingClock.textContent = '00:00.000';
 			}
 
-			if (recordingStopButton)
-			{
-				recordingStopButton.disabled = false;
-			}
+			syncRecordingTransport();
 
 			if (recordingTimerFrame)
 			{
@@ -3554,15 +3538,7 @@ function initialiseSoundboard()
 			recordingTimerFrame = window.requestAnimationFrame(updateRecordingClock);
 		}
 
-		if (recordingPlayButton)
-		{
-			recordingPlayButton.disabled = true;
-		}
-
-		if (recordingPlaybackStopButton)
-		{
-			recordingPlaybackStopButton.disabled = false;
-		}
+		syncRecordingTransport();
 
 		if (recordingStatus)
 		{
@@ -3576,25 +3552,44 @@ function initialiseSoundboard()
 		recordingPlaybackFrame = window.requestAnimationFrame(runRecordingPlaybackFrame);
 	};
 
-	recordingRecordButton?.addEventListener('click', startSoundboardRecording);
-	recordingStopButton?.addEventListener('click', stopSoundboardRecording);
-	recordingPlayButton?.addEventListener('click', () =>
+	recordingRecordButton?.addEventListener('click', () =>
 	{
-		void startSoundboardRecordingPlayback(getSelectedRecording());
-	});
-	recordingOverdubButton?.addEventListener('click', () =>
-	{
-		void startSoundboardRecordingPlayback(getSelectedRecording(), true);
-	});
-	recordingPlaybackStopButton?.addEventListener('click', () =>
-	{
-		if (recordingSession?.overdub)
+		if (recordingSession && !recordingSession.overdub)
 		{
 			stopSoundboardRecording();
 		}
 		else
 		{
+			startSoundboardRecording();
+		}
+	});
+	recordingPlayButton?.addEventListener('click', () =>
+	{
+		if (recordingPlayback && !recordingPlayback.overdub)
+		{
 			stopSoundboardRecordingPlayback(false);
+		}
+		else
+		{
+			void startSoundboardRecordingPlayback(getSelectedRecording());
+		}
+	});
+	recordingOverdubButton?.addEventListener('click', () =>
+	{
+		if (recordingPlayback?.overdub)
+		{
+			if (recordingSession?.overdub)
+			{
+				stopSoundboardRecording();
+			}
+			else
+			{
+				stopSoundboardRecordingPlayback(false);
+			}
+		}
+		else
+		{
+			void startSoundboardRecordingPlayback(getSelectedRecording(), true);
 		}
 	});
 	recordingUndoButton?.addEventListener('click', undoSoundboardOverdub);

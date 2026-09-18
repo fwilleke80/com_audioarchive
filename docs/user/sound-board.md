@@ -51,7 +51,7 @@ External MIDI requires browser Web MIDI support, an HTTPS page, visitor permissi
 
 When **Sound Board recordings** are enabled, the Sound Board can record a performance without recording or duplicating audio files. A recording stores a timestamped event sequence together with a snapshot of the Sound Board that was used.
 
-Press **Record** to start and **Stop recording** to finish. The completed recording is saved immediately in the current browser and appears in the Recordings library. Recordings can be renamed, replayed, deleted, imported from JSON, or exported as JSON.
+Press **Record** to start; while recording, the same button becomes **Stop recording**. The completed recording is saved immediately in the current browser and appears in the Recordings library. The **Play** button likewise becomes **Stop** during playback, and **Record overdub** becomes **Stop recording** while an overdub is active. Recordings can be renamed, replayed, deleted, imported from JSON, or exported as JSON.
 
 The recorded event stream includes:
 
@@ -63,9 +63,9 @@ The recorded event stream includes:
 - Chromatic octave changes.
 - **Sampler source-pad selections**, so changing from one Sound Board clip to another during a chromatic performance is reproduced at the correct time.
 
-The visualization is deliberately a conventional piano roll rather than an audio waveform. Chromatic notes are shown on MIDI-note rows; Pad Trigger events use pad/drum-style rows. State changes such as pad selection and polyphony are stored for playback but are not drawn as audio data.
+The visualization is deliberately a conventional piano roll rather than an audio waveform. Chromatic notes are shown on MIDI-note rows; Pad Trigger events use pad/drum-style rows. Note and trigger colours are assigned deterministically from their Sound Board pad, so performances and overdubs using different pads can be distinguished without a separate instrument-change lane. Hovering a note shows its pad number and clip title. State changes such as pad selection and polyphony remain stored for playback but are not drawn as separate lanes.
 
-During replay, Audio Archive temporarily uses the embedded Sound Board snapshot without overwriting the visitor's personal board. Backing events use their own recorded pad/instrument directly and do not take over the live Sound Board selection, octave, mode, or Polyphonic switch. You can therefore select another pad and jam on the chromatic keyboard while a recording is playing. Exported JSON contains the board entries, initial Sound Board state, timing information, and recorded events. Clip IDs are accompanied by their stable UUIDs; when replaying, Audio Archive checks the current public clip metadata so an inaccessible or mismatched clip is not silently substituted.
+During replay, Audio Archive resolves the embedded Sound Board snapshot into a private backing-playback board without replacing the visitor's live Sound Board. Backing events use their own recorded pad/instrument directly and do not take over the live Sound Board selection, octave, mode, or Polyphonic switch. You can therefore select another pad and jam on the chromatic keyboard while a recording is playing. Exported JSON contains the board entries, initial Sound Board state, timing information, and recorded events. Clip IDs are accompanied by their stable UUIDs; when replaying, Audio Archive checks the current public clip metadata so an inaccessible or mismatched clip is not silently substituted.
 
 ### Overdub and Undo
 
@@ -73,7 +73,7 @@ During replay, Audio Archive temporarily uses the embedded Sound Board snapshot 
 
 Each overdub receives an internal numeric `layer`. This is not a separate DAW track: the JSON remains one event list. The layer exists so monophonic behavior is isolated per take. A monophonic original melody can therefore continue underneath a separately recorded overdub instead of the new take cutting voices from the original. Old 0.12.0 recordings without a layer value are treated as layer 0.
 
-The piano roll is compact and includes an **Instrument** lane above the note rows. Chromatic sampler-pad selection changes are displayed there with the pad number and clip title, making changes of sampler source visible as well as audible.
+While recording a fresh take or overdub, new notes are drawn into the piano roll immediately. Held notes grow horizontally until key-up, so the display follows the performance in real time.
 
 ## Playlists
 
@@ -83,7 +83,7 @@ When Playlists are enabled, **Save as playlist** creates a new named playlist fr
 
 The Sound Board uses its own direct-audio voice system so several clips can overlap when polyphony is enabled.
 
-When **Record Sound Board plays** and aggregate play counting are enabled, every successful pad or chromatic-note trigger increments the clip and dispatches the configured analytics events, including repeated and overlapping triggers. Chromatic events identify MIDI/onscreen/computer input and include note and velocity values where applicable.
+When **Count Sound Board plays** and aggregate play counting are enabled, every successful pad or chromatic-note trigger increments the clip and dispatches the configured analytics events, including repeated and overlapping triggers. Chromatic events identify MIDI/onscreen/computer input and include note and velocity values where applicable.
 
 ## Opening a Sound Board in a specific mode
 

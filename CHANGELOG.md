@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.12.4 — 2026-09-19
+
+- Traced the Chromatic Keyboard regression specifically against 0.12.1 and confirmed that the live sampler engine itself had not changed in 0.12.2.
+- Rolled back the 0.12.2 recorder/playback integration changes that routed recorded audio through a private `recordingPlayback.board`; recorded Pad Trigger and chromatic playback now use the proven 0.12.1 temporary-board mechanism again.
+- Restored the 0.12.1 `play()`, `playSamplerNoteFromPad()`, recording-board restoration, and sampler playback-state integration exactly, while retaining the 0.12.2 recorder UI, live piano-roll drawing, pad-coloured notes, overdub layers, and stateful transport buttons.
+- Kept the live Chromatic Keyboard engine (`setSamplerMode`, sampler selection, AudioContext/buffer loading, `startSamplerVoice`, `playSamplerNote`, and MIDI handling) byte-for-byte equivalent to 0.12.1.
+- Moved the temporary internal Pad Trigger transition until after asynchronous recording-board resolution so the user's Chromatic Keyboard mode should not visibly sit in Pad Trigger mode while a recording loads.
+- Added regression checks comparing the restored sampler functions directly with the 0.12.1 source baseline.
+
+## 0.12.2 — 2026-09-19
+
+- Removed the piano-roll Instrument/change lane, which became ambiguous once recordings could contain independent overdub layers.
+- Assigned deterministic pseudo-random colours to piano-roll note and Pad Trigger events by Sound Board pad, so all events using the same pad share a stable colour across the original take and overdubs.
+- Added live piano-roll drawing while recording and overdubbing; new notes appear immediately and held notes grow until key-up.
+- Isolated the resolved recording Sound Board into private backing-playback state instead of replacing the live Sound Board during replay.
+- Fixed overdub startup so entering Record overdub from Chromatic Keyboard mode no longer temporarily switches the live Sound Board to Pad Trigger mode or resets the current live pad/octave selection.
+- Backing playback shutdown no longer restores stale live mode/pad/octave/polyphony state over changes the visitor made while jamming.
+- Replaced separate Record/Stop-recording controls with one stateful Record button that becomes Stop recording while active.
+- Replaced separate Play/Stop controls with one stateful Play button that becomes Stop during playback; Record overdub likewise becomes Stop recording while overdubbing.
+- Updated recording documentation and regression coverage for live drawing, per-pad colours, independent backing/live state, and stateful transport controls.
+
 ## 0.12.1 — 2026-09-18
 
 - Made the Sound Board recording piano roll more compact and added an Instrument lane showing recorded chromatic sampler-pad changes with pad number and clip title.
