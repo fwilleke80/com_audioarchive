@@ -135,6 +135,7 @@ class MediaController extends BaseController
 			->select([
 				$database->quoteName('a.id'),
 				$database->quoteName('a.created_by'),
+				$database->quoteName('a.visibility_mode'),
 				$database->quoteName('a.original_filename'),
 				$database->quoteName('f.storage_key'),
 				$database->quoteName('f.mime_type'),
@@ -176,6 +177,7 @@ class MediaController extends BaseController
 			->select([
 				$database->quoteName('a.id'),
 				$database->quoteName('a.created_by'),
+				$database->quoteName('a.visibility_mode'),
 				$database->quoteName('n.storage_key'),
 				$database->quoteName('n.data_format'),
 				$database->quoteName('n.status'),
@@ -204,23 +206,9 @@ class MediaController extends BaseController
 	 */
 	private function canPreview(object $clip): bool
 	{
-		$user = Factory::getApplication()->getIdentity();
-		$asset = 'com_audioarchive.clip.' . (int) $clip->id;
-
-		if (
-			$user->authorise('core.admin', 'com_audioarchive')
-			|| $user->authorise('core.edit', $asset)
-			|| $user->authorise('core.edit', 'com_audioarchive')
-		)
-		{
-			return true;
-		}
-
-		return (int) $clip->created_by === (int) $user->id
-			&& (
-				$user->authorise('core.edit.own', $asset)
-				|| $user->authorise('core.edit.own', 'com_audioarchive')
-			);
+		return (new \Punga\Component\Audioarchive\Administrator\Service\ClipAccessService(
+			Factory::getContainer()->get(DatabaseInterface::class), Factory::getApplication()->getIdentity()
+		))->canEdit($clip);
 	}
 
 	/**

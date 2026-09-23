@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <extension type="component" method="upgrade">
     <name>COM_AUDIOARCHIVE</name>
-    <version>0.12.4</version>
-    <creationDate>2026-09-19</creationDate>
+    <version>0.13.2.2</version>
+    <creationDate>2026-09-23</creationDate>
     <author>Frank Willeke</author>
     <copyright>Copyright (C) 2026 Frank Willeke.</copyright>
     <license>GNU General Public License version 2 or later</license>
@@ -44,6 +44,7 @@
             <menu link="option=com_audioarchive&amp;view=upload">COM_AUDIOARCHIVE_SUBMENU_UPLOAD</menu>
             <menu link="option=com_audioarchive&amp;view=import">COM_AUDIOARCHIVE_SUBMENU_IMPORT</menu>
             <menu link="option=com_audioarchive&amp;view=maintenance">COM_AUDIOARCHIVE_SUBMENU_MAINTENANCE</menu>
+            <menu link="option=com_audioarchive&amp;view=quotas">COM_AUDIOARCHIVE_QUOTAS</menu>
         </submenu>
         <files folder="administrator">
             <filename>access.xml</filename>

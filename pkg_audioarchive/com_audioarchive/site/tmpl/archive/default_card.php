@@ -12,7 +12,7 @@ $totalSeconds = (int) floor((int) $item->duration_ms / 1000);
 $duration = $totalSeconds >= 3600 ? gmdate('H:i:s', $totalSeconds) : gmdate('i:s', $totalSeconds);
 $audioId = 'audioarchive-mobile-player-' . (int) $item->id;
 $mime = trim((string) $item->mime_type) ?: 'application/octet-stream';
-$hasMetadata = $columns['category'] || $columns['duration'] || $columns['recorded'] || $columns['uploaded'];
+$hasMetadata = $columns['owner'] || $columns['category'] || $columns['duration'] || $columns['recorded'] || $columns['uploaded'];
 ?>
 <article class="com-audioarchive-mobile-card <?php echo $columns['play'] ? 'has-player' : 'no-player'; ?>">
 	<header class="com-audioarchive-mobile-card-header">
@@ -62,6 +62,7 @@ $hasMetadata = $columns['category'] || $columns['duration'] || $columns['recorde
 
 	<?php if ($hasMetadata) : ?>
 		<dl class="com-audioarchive-mobile-card-metadata">
+			<?php if ($columns['owner']) : ?><div><dt><?php echo Text::_('COM_AUDIOARCHIVE_OWNER'); ?></dt><dd><?php echo $this->escape($item->owner_name ?: ((int) $item->created_by > 0 ? Text::sprintf('COM_AUDIOARCHIVE_OWNER_UNKNOWN', $item->created_by) : Text::_('COM_AUDIOARCHIVE_OWNER_SYSTEM'))); ?></dd></div><?php endif; ?>
 			<?php if ($columns['category']) : ?>
 				<div class="com-audioarchive-mobile-card-metadata-item">
 					<dt><?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_CATEGORY'); ?></dt>

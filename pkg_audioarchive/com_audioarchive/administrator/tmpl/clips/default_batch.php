@@ -7,7 +7,21 @@ use Joomla\CMS\Language\Text;
 <template id="joomla-dialog-audioarchive-batch">
     <div class="p-4 com-audioarchive-batch-dialog">
         <p><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_DESC'); ?></p>
-        <div class="row g-3">
+        <?php if ($this->getCurrentUser()->authorise('audioarchive.change.owner', 'com_audioarchive')) : ?>
+<label for="batch-owner"><?php echo Text::_('COM_AUDIOARCHIVE_OWNER'); ?></label>
+<select id="batch-owner" name="batch[owner]" class="form-select mb-3">
+<option value=""><?php echo Text::_('COM_AUDIOARCHIVE_OWNER_NO_CHANGE'); ?></option>
+<option value="0"><?php echo Text::_('COM_AUDIOARCHIVE_OWNER_SYSTEM'); ?></option>
+<?php $ownerDb = \Joomla\CMS\Factory::getContainer()->get(\Joomla\Database\DatabaseInterface::class); ?>
+<?php foreach ($ownerDb->setQuery('SELECT id, name FROM ' . $ownerDb->quoteName('#__users') . ' ORDER BY name')->loadObjectList() as $owner) : ?>
+<option value="<?php echo (int) $owner->id; ?>"><?php echo $this->escape($owner->name); ?></option>
+<?php endforeach; ?>
+</select>
+<?php endif; ?>
+<?php if (\Joomla\CMS\Factory::getApplication()->getIdentity()->authorise('audioarchive.quota.override', 'com_audioarchive')) : ?>
+<div class="form-check my-3"><input class="form-check-input" type="checkbox" name="quota_override_confirm" id="quota-override-confirm" value="1"><label class="form-check-label" for="quota-override-confirm"><?php echo \Joomla\CMS\Language\Text::_('COM_AUDIOARCHIVE_QUOTA_OVERRIDE_CONFIRM'); ?></label></div>
+<?php endif; ?>
+<div class="row g-3">
             <div class="col-12 col-md-6">
                 <label class="form-label" for="audioarchive-batch-category"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_CATEGORY_LABEL'); ?></label>
                 <select class="form-select" id="audioarchive-batch-category" name="batch[category_id]">

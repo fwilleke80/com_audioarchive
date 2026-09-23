@@ -31,6 +31,8 @@ $listDirn = $this->escape($this->state->get('list.direction'));
                     <th scope="col"><?php echo HTMLHelper::_('searchtools.sort', 'COM_AUDIOARCHIVE_FIELD_UPLOAD_DATE', 'a.uploaded_at', $listDirn, $listOrder); ?></th>
                     <th scope="col"><?php echo HTMLHelper::_('searchtools.sort', 'JGRID_HEADING_ACCESS', 'access_level', $listDirn, $listOrder); ?></th>
                     <th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_TAGS'); ?></th>
+                    <th scope="col"><?php echo HTMLHelper::_('searchtools.sort', 'COM_AUDIOARCHIVE_OWNER', 'owner_name', $listDirn, $listOrder); ?></th>
+                    <th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_VISIBILITY'); ?></th>
                     <th scope="col" class="w-5"><?php echo HTMLHelper::_('searchtools.sort', 'JGRID_HEADING_ID', 'a.id', $listDirn, $listOrder); ?></th>
                 </tr>
             </thead>
@@ -61,6 +63,8 @@ $listDirn = $this->escape($this->state->get('list.direction'));
                         <td><?php echo HTMLHelper::_('date', $item->uploaded_at, Text::_('DATE_FORMAT_LC4')); ?></td>
                         <td><?php echo $this->escape($item->access_level); ?></td>
                         <td><?php echo $item->tags ? $this->escape(implode(', ', array_map(static fn($tag) => $tag->title, $item->tags))) : '&mdash;'; ?></td>
+                        <td><?php echo $this->escape($item->owner_name ?: ((int) $item->created_by === 0 ? Text::_('COM_AUDIOARCHIVE_OWNER_SYSTEM') : Text::sprintf('COM_AUDIOARCHIVE_OWNER_UNKNOWN', (int) $item->created_by))); ?></td>
+                        <td><?php echo Text::_('COM_AUDIOARCHIVE_VISIBILITY_' . strtoupper($item->visibility_mode)); ?></td>
                         <td><?php echo (int) $item->id; ?></td>
                     </tr>
                 <?php endforeach; ?>

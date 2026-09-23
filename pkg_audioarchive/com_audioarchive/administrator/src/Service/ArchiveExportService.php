@@ -68,6 +68,10 @@ final class ArchiveExportService
 	 */
 	public function create(string $scope, string $componentVersion): array
 	{
+		if (!$this->user->authorise('audioarchive.manage.private', 'com_audioarchive'))
+		{
+			throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+		}
 		$scope = strtolower(trim($scope));
 
 		if (!in_array($scope, self::SCOPES, true))
@@ -119,6 +123,24 @@ final class ArchiveExportService
 			$this->addJson($zip, 'data/categories.json', $categoryData['rows'], $checksums);
 			$this->addJson($zip, 'data/tags.json', $tagData['rows'], $checksums);
 			$this->addJson($zip, 'data/clips.json', $clips, $checksums);
+			$quotaRules = $this->database->setQuery('SELECT * FROM ' . $this->database->quoteName('#__audioarchive_group_quotas'))->loadAssocList();
+			foreach ($quotaRules as &$rule)
+			{
+				$rule['group_key'] = $userGroupKeys[(int) $rule['group_id']] ?? '';
+				unset($rule['id'], $rule['group_id']);
+			}
+			unset($rule);
+			$this->addJson($zip, 'data/group-quotas.json', $quotaRules, $checksums);
+			$profiles = $this->database->setQuery('SELECT p.*, u.username FROM ' . $this->database->quoteName('#__audioarchive_user_profiles') . ' p LEFT JOIN ' . $this->database->quoteName('#__users') . ' u ON u.id=p.user_id')->loadAssocList();
+			foreach ($profiles as &$profile)
+			{
+				$profile['category_key'] = $categoryData['id_to_key'][(int) $profile['default_category_id']] ?? '';
+				$profile['access_title'] = (string) $this->database->setQuery('SELECT title FROM ' . $this->database->quoteName('#__viewlevels') . ' WHERE id=' . (int) $profile['default_access_id'])->loadResult();
+				unset($profile['user_id'], $profile['default_category_id'], $profile['default_access_id'], $profile['default_soundboard_id']);
+			}
+			unset($profile);
+			$this->addJson($zip, 'data/user-profiles.json', $profiles, $checksums);
+			$this->addJson($zip, 'data/collections.json', CollectionArchiveService::export($this->database), $checksums);
 			$ratingRows = $this->loadRatings($clipUuidById);
 			$this->addJson($zip, 'data/ratings.json', $ratingRows, $checksums);
 			$this->addJson($zip, 'data/tag-relations.json', $this->loadTagRelations($clipUuidById, $tagData['id_to_key']), $checksums);

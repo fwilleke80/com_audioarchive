@@ -1,3 +1,5 @@
+import {prepareNormalization, releaseNormalization, validGain} from './normalization.js?v=0.13.2';
+import {Collections} from './collections.js?v=0.13.2';
 const BOARD_STORAGE_KEY = 'com_audioarchive.soundboard.v1';
 const SAMPLER_POLYPHONY_STORAGE_KEY = 'com_audioarchive.soundboard.sampler_polyphony.v1';
 const SOUNDBOARD_RECORDINGS_STORAGE_KEY = 'com_audioarchive.soundboard.recordings.v1';
@@ -23,6 +25,10 @@ const SAMPLER_NOTE_NAMES = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G�
  */
 function readStorage(key, fallback)
 {
+	if (key === BOARD_STORAGE_KEY)
+	{
+		return Collections.read(key, fallback);
+	}
 	try
 	{
 		const value = window.localStorage.getItem(key);
@@ -589,7 +595,7 @@ function initialiseShareButtons()
 			}
 		}
 
-		toggle?.addEventListener('click', () =>
+		toggle?.addEventListener('click', async () =>
 		{
 			const open = toggle.getAttribute('aria-expanded') !== 'true';
 			closeShareMenus(menu);
@@ -665,7 +671,7 @@ function normaliseBoard(board, padCount = 36)
 		const id = Number.parseInt(entry.id, 10);
 		const uuid = String(entry.uuid || '').trim().toLowerCase();
 		const title = String(entry.title || '').trim().slice(0, 255);
-		return Number.isInteger(id) && id > 0 && title !== '' ? {id, uuid, title} : null;
+		return Number.isInteger(id) && id > 0 && title !== '' ? {id, uuid, title} : (uuid !== '' ? {id: 0, uuid, title: ''} : null);
 	});
 }
 
@@ -718,13 +724,13 @@ function initialiseSoundboardAddButtons()
 	{
 		const id = Number.parseInt(button.dataset.clipId || '0', 10);
 		updateButtons(id, storedIds.has(id));
-		button.addEventListener('click', () =>
+		button.addEventListener('click', async () =>
 		{
 			const uuid = String(button.dataset.clipUuid || '').trim().toLowerCase();
 			const title = String(button.dataset.clipTitle || '').trim();
 			const root = button.closest('[data-audioarchive-soundboard-pad-count]') || document.querySelector('[data-audioarchive-soundboard-pad-count]');
 			const padCount = Math.max(4, Number.parseInt(root?.dataset.audioarchiveSoundboardPadCount || '12', 10));
-			const board = readBoard().slice(0, padCount);
+			const board = readBoard();
 			const existing = board.findIndex((entry) =>
 			{
 				if (!entry || entry.id !== id)
@@ -745,14 +751,14 @@ function initialiseSoundboardAddButtons()
 				if (uuid !== '' && board[existing] && board[existing].uuid === '')
 				{
 					board[existing].uuid = uuid;
-					writeStorage(BOARD_STORAGE_KEY, board);
+					await Collections.write(BOARD_STORAGE_KEY, board);
 				}
 
 				updateButtons(id, true);
 				return;
 			}
 
-			let slot = board.findIndex((entry) => entry === null);
+			let slot = board.slice(0, padCount).findIndex((entry) => entry === null);
 
 			if (slot < 0 && board.length < padCount)
 			{
@@ -768,7 +774,7 @@ function initialiseSoundboardAddButtons()
 
 			board[slot] = {id, uuid, title};
 
-			if (writeStorage(BOARD_STORAGE_KEY, board))
+			if (await Collections.write(BOARD_STORAGE_KEY, board))
 			{
 				updateButtons(id, true);
 			}
@@ -1092,7 +1098,7 @@ function formatSoundboardRecordingTime(milliseconds)
  *
  * @returns {void}
  */
-function initialiseSoundboard()
+async function initialiseSoundboard()
 {
 	const root = document.querySelector('[data-audioarchive-soundboard]');
 
@@ -1148,15 +1154,20 @@ function initialiseSoundboard()
 	const recordingImportButton = recordingsRoot?.querySelector('[data-audioarchive-recording-import]');
 	const recordingFileInput = recordingsRoot?.querySelector('[data-audioarchive-recording-file]');
 	const recordingStatus = recordingsRoot?.querySelector('[data-audioarchive-recording-status]');
+	const recorderDisclosure = recordingsRoot?.closest('details');
+	if (recorderDisclosure)
+	{
+		const key = `com_audioarchive.recorder.open.${Collections.userId}`;
+		recorderDisclosure.open = readSessionStorage(key, true) !== false;
+		recorderDisclosure.addEventListener('toggle', () => writeSessionStorage(key, recorderDisclosure.open));
+	}
 	const storedBoard = readBoard();
 	let board = storedBoard.slice(0, padCount);
 
-	if (storedBoard.length > padCount)
-	{
-		writeStorage(BOARD_STORAGE_KEY, board);
-	}
+	// A smaller menu must not truncate the account's saved board on page load.
 	let temporarySharedBoard = false;
 	const detailRoutes = new Map();
+	const normalizationGains = new Map();
 	const unavailableDetailIds = new Set();
 	const pendingDetailIds = new Set();
 	const countedClipIds = new Set();
@@ -1242,9 +1253,9 @@ function initialiseSoundboard()
 	const fragmentParameters = new URLSearchParams(window.location.hash.replace(/^#/, ''));
 	const fragment = fragmentParameters.get('board');
 
-	if (fragment)
+	if (fragment || Collections.shared?.kind === 'soundboard')
 	{
-		const imported = decodeBoard(fragment);
+		const imported = Collections.shared?.kind === 'soundboard' ? Collections.shared.items : decodeBoard(fragment);
 
 		if (imported)
 		{
@@ -1296,12 +1307,27 @@ function initialiseSoundboard()
 	{
 		const url = new URL(window.location.href);
 		url.hash = '';
+		url.searchParams.delete('aa_share');
 		window.history.replaceState(window.history.state, '', url.toString());
 	};
 
-	const saveCurrentBoard = () =>
+	const saveCurrentBoard = async () =>
 	{
-		return recordingPlayback !== null || temporarySharedBoard || writeStorage(BOARD_STORAGE_KEY, board);
+		if (recordingPlayback !== null || temporarySharedBoard)
+		{
+			return true;
+		}
+		// A menu exposing fewer pads must not erase saved pads beyond its visible range.
+		const saved = readBoard();
+		if (board.length > 0 && saved.length > padCount && board.length <= padCount)
+		{
+			while (board.length < padCount)
+			{
+				board.push(null);
+			}
+			board.push(...saved.slice(padCount));
+		}
+		return await Collections.write(BOARD_STORAGE_KEY, board);
 	};
 
 	const getRecordingElapsed = () =>
@@ -1819,6 +1845,10 @@ function initialiseSoundboard()
 				}
 			);
 			const payload = response.ok ? await response.json() : null;
+			for (const item of Object.values(payload?.items || {}))
+			{
+				normalizationGains.set(Number(item.id), validGain(item.normalization_gain ?? 1));
+			}
 			const routes = payload && payload.success === true && payload.routes && typeof payload.routes === 'object'
 				? payload.routes
 				: Object.create(null);
@@ -1985,6 +2015,7 @@ function initialiseSoundboard()
 			}
 		}
 
+		releaseNormalization(voice);
 		voice.removeAttribute('src');
 		voice.load();
 		updatePadPlayingState(index);
@@ -2009,6 +2040,7 @@ function initialiseSoundboard()
 		{
 			voice.sourceNode.disconnect();
 			voice.gainNode.disconnect();
+			voice.normalizationNode?.disconnect();
 		}
 		catch (error)
 		{
@@ -2534,15 +2566,18 @@ function initialiseSoundboard()
 
 		const sourceNode = context.createBufferSource();
 		const gainNode = context.createGain();
+		const normalizationNode = context.createGain();
+		normalizationNode.gain.value = normalizationGains.get(entry.id) || 1;
 		const safeNote = Math.max(0, Math.min(127, Math.round(midiNote)));
 		const safeVelocity = Math.max(1, Math.min(127, Math.round(velocity)));
 		sourceNode.buffer = buffer;
 		sourceNode.playbackRate.value = 2 ** ((safeNote - SAMPLER_ROOT_MIDI_NOTE) / 12);
 		gainNode.gain.value = safeVelocity / 127;
-		sourceNode.connect(gainNode);
+		sourceNode.connect(normalizationNode);
+		normalizationNode.connect(gainNode);
 		gainNode.connect(context.destination);
 
-		const voice = {sourceNode, gainNode, index, playSource, recordingLayer};
+		const voice = {sourceNode, gainNode, normalizationNode, index, playSource, recordingLayer};
 		activeSamplerVoices.add(voice);
 
 		if (!samplerVoicesByPad.has(index))
@@ -2860,7 +2895,13 @@ function initialiseSoundboard()
 		voice.addEventListener('ended', () => cleanupVoice(voice, index), {once: true});
 		voice.addEventListener('error', () => cleanupVoice(voice, index), {once: true});
 
-		voice.play().catch(() =>
+		prepareNormalization(voice, normalizationGains.get(entry.id) || 1).then(() =>
+		{
+			if (activeVoices.has(voice))
+			{
+				return voice.play();
+			}
+		}).catch(() =>
 		{
 			cleanupVoice(voice, index);
 		});
@@ -3227,6 +3268,10 @@ function initialiseSoundboard()
 				}
 			);
 			const payload = response.ok ? await response.json() : null;
+			for (const item of Object.values(payload?.items || {}))
+			{
+				normalizationGains.set(Number(item.id), validGain(item.normalization_gain ?? 1));
+			}
 			const items = payload && payload.success === true && payload.items && typeof payload.items === 'object'
 				? payload.items
 				: Object.create(null);
@@ -3552,7 +3597,7 @@ function initialiseSoundboard()
 		recordingPlaybackFrame = window.requestAnimationFrame(runRecordingPlaybackFrame);
 	};
 
-	recordingRecordButton?.addEventListener('click', () =>
+	recordingRecordButton?.addEventListener('click', async () =>
 	{
 		if (recordingSession && !recordingSession.overdub)
 		{
@@ -3563,7 +3608,7 @@ function initialiseSoundboard()
 			startSoundboardRecording();
 		}
 	});
-	recordingPlayButton?.addEventListener('click', () =>
+	recordingPlayButton?.addEventListener('click', async () =>
 	{
 		if (recordingPlayback && !recordingPlayback.overdub)
 		{
@@ -3574,7 +3619,7 @@ function initialiseSoundboard()
 			void startSoundboardRecordingPlayback(getSelectedRecording());
 		}
 	});
-	recordingOverdubButton?.addEventListener('click', () =>
+	recordingOverdubButton?.addEventListener('click', async () =>
 	{
 		if (recordingPlayback?.overdub)
 		{
@@ -3594,7 +3639,7 @@ function initialiseSoundboard()
 	});
 	recordingUndoButton?.addEventListener('click', undoSoundboardOverdub);
 
-	recordingRenameButton?.addEventListener('click', () =>
+	recordingRenameButton?.addEventListener('click', async () =>
 	{
 		const recording = getSelectedRecording();
 
@@ -3630,15 +3675,15 @@ function initialiseSoundboard()
 		renderSoundboardRecordings();
 	});
 
-	recordingExportButton?.addEventListener('click', () => exportSoundboardRecording(getSelectedRecording()));
+	recordingExportButton?.addEventListener('click', async () => exportSoundboardRecording(getSelectedRecording()));
 
-	recordingZoomOutButton?.addEventListener('click', () =>
+	recordingZoomOutButton?.addEventListener('click', async () =>
 	{
 		recordingZoom = Math.max(0.5, recordingZoom / 1.5);
 		renderRecordingRoll(getSelectedRecording());
 	});
 
-	recordingZoomInButton?.addEventListener('click', () =>
+	recordingZoomInButton?.addEventListener('click', async () =>
 	{
 		recordingZoom = Math.min(6, recordingZoom * 1.5);
 		renderRecordingRoll(getSelectedRecording());
@@ -3704,7 +3749,7 @@ function initialiseSoundboard()
 		}
 	});
 
-	recordingImportButton?.addEventListener('click', () => recordingFileInput?.click());
+	recordingImportButton?.addEventListener('click', async () => recordingFileInput?.click());
 	recordingFileInput?.addEventListener('change', async () =>
 	{
 		const file = recordingFileInput.files?.[0];
@@ -3759,7 +3804,7 @@ function initialiseSoundboard()
 
 	pads.forEach((pad, index) =>
 	{
-		pad.querySelector('[data-audioarchive-soundboard-trigger]')?.addEventListener('click', () =>
+		pad.querySelector('[data-audioarchive-soundboard-trigger]')?.addEventListener('click', async () =>
 		{
 			if (samplerMode)
 			{
@@ -3769,16 +3814,16 @@ function initialiseSoundboard()
 
 			play(index);
 		});
-		pad.querySelector('[data-audioarchive-soundboard-remove]')?.addEventListener('click', () =>
+		pad.querySelector('[data-audioarchive-soundboard-remove]')?.addEventListener('click', async () =>
 		{
 			stopPadVoices(index);
 			board[index] = null;
-			saveCurrentBoard();
+			await saveCurrentBoard();
 			render();
 		});
 	});
 
-	midiEnableButton?.addEventListener('click', () =>
+	midiEnableButton?.addEventListener('click', async () =>
 	{
 		void enableMidi();
 	});
@@ -3799,11 +3844,11 @@ function initialiseSoundboard()
 		});
 	}
 
-	padModeButton?.addEventListener('click', () => setSamplerMode(false));
-	samplerModeButton?.addEventListener('click', () => setSamplerMode(true));
-	keyboardToggle?.addEventListener('click', () => setKeyboardVisible(!keyboardVisible));
-	root.querySelector('[data-audioarchive-soundboard-octave-down]')?.addEventListener('click', () => shiftSamplerOctave(-1));
-	root.querySelector('[data-audioarchive-soundboard-octave-up]')?.addEventListener('click', () => shiftSamplerOctave(1));
+	padModeButton?.addEventListener('click', async () => setSamplerMode(false));
+	samplerModeButton?.addEventListener('click', async () => setSamplerMode(true));
+	keyboardToggle?.addEventListener('click', async () => setKeyboardVisible(!keyboardVisible));
+	root.querySelector('[data-audioarchive-soundboard-octave-down]')?.addEventListener('click', async () => shiftSamplerOctave(-1));
+	root.querySelector('[data-audioarchive-soundboard-octave-up]')?.addEventListener('click', async () => shiftSamplerOctave(1));
 
 	pianoKeys.forEach((key) =>
 	{
@@ -3856,19 +3901,19 @@ function initialiseSoundboard()
 		});
 	});
 
-	root.querySelector('[data-audioarchive-soundboard-clear]')?.addEventListener('click', () =>
+	root.querySelector('[data-audioarchive-soundboard-clear]')?.addEventListener('click', async () =>
 	{
 		stopAllVoices();
 		board = [];
-		saveCurrentBoard();
+		await saveCurrentBoard();
 		render();
 	});
 
-	root.querySelector('[data-audioarchive-soundboard-shared-add]')?.addEventListener('click', () =>
+	root.querySelector('[data-audioarchive-soundboard-shared-add]')?.addEventListener('click', async () =>
 	{
 		const result = mergeBoards(readBoard(), board, padCount);
 
-		if (!writeStorage(BOARD_STORAGE_KEY, result.board))
+		if (!await Collections.write(BOARD_STORAGE_KEY, result.board))
 		{
 			return;
 		}
@@ -3890,7 +3935,7 @@ function initialiseSoundboard()
 		}
 	});
 
-	root.querySelector('[data-audioarchive-soundboard-shared-replace]')?.addEventListener('click', () =>
+	root.querySelector('[data-audioarchive-soundboard-shared-replace]')?.addEventListener('click', async () =>
 	{
 		if (!window.confirm(root.dataset.audioarchiveLabelReplaceConfirm || ''))
 		{
@@ -3900,7 +3945,7 @@ function initialiseSoundboard()
 		stopAllVoices();
 		board = normaliseBoard(board, padCount);
 
-		if (!writeStorage(BOARD_STORAGE_KEY, board))
+		if (!await Collections.write(BOARD_STORAGE_KEY, board))
 		{
 			return;
 		}
@@ -3915,7 +3960,7 @@ function initialiseSoundboard()
 		}
 	});
 
-	root.querySelector('[data-audioarchive-soundboard-export]')?.addEventListener('click', () =>
+	root.querySelector('[data-audioarchive-soundboard-export]')?.addEventListener('click', async () =>
 	{
 		const blob = new Blob([JSON.stringify({version: 1, pads: board}, null, 2)], {type: 'application/json'});
 		const link = document.createElement('a');
@@ -3926,7 +3971,7 @@ function initialiseSoundboard()
 	});
 
 	const fileInput = root.querySelector('[data-audioarchive-soundboard-file]');
-	root.querySelector('[data-audioarchive-soundboard-import]')?.addEventListener('click', () => fileInput?.click());
+	root.querySelector('[data-audioarchive-soundboard-import]')?.addEventListener('click', async () => fileInput?.click());
 	fileInput?.addEventListener('change', async () =>
 	{
 		const file = fileInput.files?.[0];
@@ -3948,7 +3993,7 @@ function initialiseSoundboard()
 
 			const importedBoard = normaliseBoard(imported, padCount);
 
-			if (!writeStorage(BOARD_STORAGE_KEY, importedBoard))
+			if (!await Collections.write(BOARD_STORAGE_KEY, importedBoard))
 			{
 				throw new Error('Unable to store soundboard');
 			}
@@ -3985,16 +4030,30 @@ function initialiseSoundboard()
 		}
 	}
 
-	shareToggle?.addEventListener('click', () =>
+	shareToggle?.addEventListener('click', async () =>
 	{
 		const open = shareToggle.getAttribute('aria-expanded') !== 'true';
 		closeShareMenus(shareMenu);
 		setShareMenuOpen(shareMenu, open, open);
 	});
 
-	const getSharedSoundboardUrl = () =>
+	const getSharedSoundboardUrl = async () =>
 	{
 		let url = `${canonicalUrl}#board=${encodeBoard(board)}`;
+		if (Collections.backend === 'server' && !temporarySharedBoard)
+		{
+			if (!Collections.sharing || !(await saveCurrentBoard()))
+			{
+				return '';
+			}
+			url = await Collections.shareUrl(Collections.boardId, canonicalUrl);
+			if (!url) return '';
+			url += '#';
+		}
+		else if (Collections.shared?.kind === 'soundboard')
+		{
+			return window.location.href;
+		}
 
 		if (polyphonic)
 		{
@@ -4017,7 +4076,8 @@ function initialiseSoundboard()
 
 	shareCopy?.addEventListener('click', async () =>
 	{
-		const url = getSharedSoundboardUrl();
+		const url = await getSharedSoundboardUrl();
+		if (!url) return;
 
 		if (await copyText(url))
 		{
@@ -4030,7 +4090,8 @@ function initialiseSoundboard()
 
 	shareNative?.addEventListener('click', async () =>
 	{
-		const url = getSharedSoundboardUrl();
+		const url = await getSharedSoundboardUrl();
+		if (!url) return;
 		if (await openNativeShare(document.title, url))
 		{
 			recordInteraction('audioarchive.soundboard.shared');
@@ -4206,6 +4267,14 @@ function initialiseSoundboard()
 		setSamplerMode(false);
 	}
 
+	Collections.mount(root, 'soundboard', () => temporarySharedBoard ? '' : Collections.boardId, () =>
+	{
+		stopAllVoices();
+		board = normaliseBoard(readBoard(), padCount);
+		setTemporarySharedBoard(false);
+		leaveSharedUrl();
+		render();
+	}, () => recordingSession === null && recordingPlayback === null);
 	renderSoundboardRecordings();
 }
 
@@ -4329,6 +4398,9 @@ function initialiseRatings()
 
 initialiseReturnNavigation();
 initialiseShareButtons();
-initialiseSoundboardAddButtons();
-initialiseSoundboard();
+Collections.ready().then(async () =>
+{
+	initialiseSoundboardAddButtons();
+	await initialiseSoundboard();
+});
 initialiseRatings();

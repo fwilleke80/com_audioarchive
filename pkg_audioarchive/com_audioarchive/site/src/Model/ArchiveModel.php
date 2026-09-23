@@ -82,6 +82,8 @@ class ArchiveModel extends ListModel
 		$query = $db->getQuery(true)
 			->select([
 				$db->quoteName('a.id'),
+				$db->quoteName('a.created_by'),
+				$db->quoteName('owner.name', 'owner_name'),
 				$db->quoteName('a.uuid'),
 				$db->quoteName('a.title'),
 				$db->quoteName('a.alias'),
@@ -106,6 +108,7 @@ class ArchiveModel extends ListModel
 				'(SELECT COUNT(*) FROM ' . $db->quoteName('#__audioarchive_ratings', 'rd') . ' WHERE ' . $db->quoteName('rd.clip_id') . ' = ' . $db->quoteName('a.id') . ' AND ' . $db->quoteName('rd.vote') . ' = -1) AS ' . $db->quoteName('rating_down'),
 			])
 			->from($db->quoteName('#__audioarchive_clips', 'a'))
+			->leftJoin($db->quoteName('#__users', 'owner') . ' ON owner.id=a.created_by')
 			->innerJoin(
 				$db->quoteName('#__categories', 'c')
 				. ' ON ' . $db->quoteName('c.id') . ' = ' . $db->quoteName('a.catid')
@@ -123,6 +126,7 @@ class ArchiveModel extends ListModel
 		$categoryExtension = 'com_audioarchive';
 		$now = Factory::getDate()->toSql();
 		$query
+			->where($db->quoteName('a.visibility_mode') . ' = ' . $db->quote('normal'))
 			->where($db->quoteName('a.state') . ' = :published')
 			->where($db->quoteName('c.published') . ' = :categoryPublished')
 			->where($db->quoteName('c.extension') . ' = :categoryExtension')
@@ -170,6 +174,11 @@ class ArchiveModel extends ListModel
 				->bind(':searchFilename', $search, ParameterType::STRING);
 		}
 
+		$ownerId = (int) $this->getState('filter.owner', 0);
+		if ($ownerId > 0 && $this->getResolvedParams()->get('archive_show_owner_filter', 0))
+		{
+			$query->where('a.created_by=' . $ownerId);
+		}
 		$categoryId = (int) $this->getState('filter.category');
 		$menuCategoryId = (int) $this->getResolvedParams()->get('archive_category_restriction', 0);
 		if ($menuCategoryId > 0)
@@ -334,6 +343,7 @@ class ArchiveModel extends ListModel
 		$query->order(($orderMap[$sort] ?? $orderMap['uploaded']) . ' ' . $direction);
 		$query->order($db->quoteName('a.id') . ' ' . $direction);
 
+		(new \Punga\Component\Audioarchive\Administrator\Service\ClipAccessService($db, \Joomla\CMS\Factory::getApplication()->getIdentity()))->applyPublicVisibilityFilter($query);
 		return $query;
 	}
 
@@ -648,6 +658,10 @@ class ArchiveModel extends ListModel
 
 		$params = $this->getResolvedParams();
 		$values = [];
+		if ((int) $this->getState('filter.owner', 0) > 0)
+		{
+			$values['owner'] = (int) $this->getState('filter.owner');
+		}
 		$search = trim((string) $this->getState('filter.search', ''));
 		$category = (int) $this->getState('filter.category', 0);
 		$tagAliases = $this->loadTagAliasesById((array) $this->getState('filter.tags', []));
@@ -737,6 +751,27 @@ class ArchiveModel extends ListModel
 		);
 
 		return $this->canonicalQueryCache;
+	}
+
+	/** @brief Offer display names only for owners represented in eligible public results. */
+	public function getOwnerOptions(): array
+	{
+		if (!$this->getResolvedParams()->get('archive_show_owner_filter', 0))
+		{
+			return [];
+		}
+		$previous = $this->getState('filter.owner', 0);
+		$this->setState('filter.owner', 0);
+		try
+		{
+			$query = $this->getListQuery();
+			$query->clear('select')->clear('order')->select('DISTINCT a.created_by AS id, owner.name AS title')->where('a.created_by>0')->order('owner.name');
+			return $this->getDatabase()->setQuery($query)->loadObjectList() ?: [];
+		}
+		finally
+		{
+			$this->setState('filter.owner', $previous);
+		}
 	}
 
 	/**
@@ -980,7 +1015,7 @@ class ArchiveModel extends ListModel
 		$querySessionKey = self::getQuerySessionKey($this->sessionItemId);
 		$reset = (int) ($request['audioarchive_reset'] ?? 0) === 1;
 		$stateKeys = [
-			'q', 'category', 'tags', 'tag_mode', 'duration_min', 'duration_max',
+			'q', 'owner', 'category', 'tags', 'tag_mode', 'duration_min', 'duration_max',
 			'recorded_from', 'recorded_to', 'uploaded_from', 'uploaded_to',
 			'sort', 'direction', 'limit', 'limitstart', 'audioarchive_state',
 		];
@@ -1013,6 +1048,7 @@ class ArchiveModel extends ListModel
 
 		$search = trim((string) ($source['q'] ?? ''));
 		$category = max(0, (int) ($source['category'] ?? 0));
+		$owner = $params->get('archive_show_owner_filter', 0) ? max(0, (int) ($source['owner'] ?? 0)) : 0;
 		$durationMinimumInput = trim((string) ($source['duration_min'] ?? ''));
 		$durationMaximumInput = trim((string) ($source['duration_max'] ?? ''));
 		$recordedFromInput = trim((string) ($source['recorded_from'] ?? ''));
@@ -1022,6 +1058,7 @@ class ArchiveModel extends ListModel
 
 		$this->setState('filter.search', $search);
 		$this->setState('filter.category', $category);
+		$this->setState('filter.owner', $owner);
 		$this->setState('filter.duration_min', $durationMinimumInput);
 		$this->setState('filter.duration_max', $durationMaximumInput);
 		$this->setState('filter.recorded_from', $recordedFromInput);
@@ -1075,6 +1112,8 @@ class ArchiveModel extends ListModel
 		{
 			$app->setUserState($sessionKey, [
 				'q' => $search,
+				// getState() here would recursively re-enter lazy initialization.
+				'owner' => $owner,
 				'category' => $category,
 				'tags' => $requestedTags,
 				'tag_mode' => $tagMode === 'or' ? 'or' : 'and',

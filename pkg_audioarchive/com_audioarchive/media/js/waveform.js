@@ -1,3 +1,5 @@
+import {validGain} from './normalization.js?v=0.13.2';
+
 /**
  * @brief Load and render protected Punga Audio Archive waveform peak data.
  */
@@ -50,6 +52,7 @@ const initialiseAudioArchiveWaveforms = () =>
 			const centreColor = styles.getPropertyValue('--audioarchive-waveform-centre-color').trim() || waveformColor;
 			const centre = height / 2;
 			const amplitude = Math.max(1, centre - 4);
+			const gain = validGain(root.dataset.normalizationGain);
 			context.strokeStyle = centreColor;
 			context.globalAlpha = 0.2;
 			context.beginPath();
@@ -63,8 +66,8 @@ const initialiseAudioArchiveWaveforms = () =>
 
 			peaks.forEach((pair, index) =>
 			{
-				const minimum = Number(pair[0]) / 32768;
-				const maximum = Number(pair[1]) / 32768;
+				const minimum = Math.max(-1, Math.min(1, (Number(pair[0]) || 0) / 32768 * gain));
+				const maximum = Math.max(-1, Math.min(1, (Number(pair[1]) || 0) / 32768 * gain));
 				const x = ((index + 0.5) / peaks.length) * width;
 				context.moveTo(x, centre - maximum * amplitude);
 				context.lineTo(x, centre - minimum * amplitude);

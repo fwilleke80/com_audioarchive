@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form>
+	<fieldset name="details" label="COM_AUDIOARCHIVE_FIELDSET_DETAILS">
+		<field name="id" type="hidden" /><field name="original_audio" type="file" label="COM_AUDIOARCHIVE_FRONTEND_AUDIO_FILE" accept="audio/*" />
+		<field name="title" type="text" label="JGLOBAL_TITLE" required="true" maxlength="255" />
+		
+		<field
+			name="catid"
+			type="category"
+			extension="com_audioarchive"
+			published="0,1"
+			label="JCATEGORY"
+			required="true"
+		>
+			<option value="">JOPTION_SELECT_CATEGORY</option>
+		</field>
+		<field name="tags" type="tag" label="JTAG" multiple="true" mode="ajax" custom="deny" />
+		<field name="description" type="editor" label="JGLOBAL_DESCRIPTION" buttons="true" hide="fields" filter="\Joomla\CMS\Component\ComponentHelper::filterText" />
+		<field name="recorded_at" type="calendar" label="COM_AUDIOARCHIVE_FIELD_RECORDING_DATE" translateformat="true" showtime="true" filter="user_utc" />
+	<field name="normalization_mode" type="list" label="COM_AUDIOARCHIVE_NORMALIZATION_MODE" description="COM_AUDIOARCHIVE_NORMALIZATION_HELP" default="inherit" validate="options"><option value="inherit">COM_AUDIOARCHIVE_NORMALIZATION_INHERIT</option><option value="enabled">JENABLED</option><option value="disabled">JDISABLED</option></field>
+</fieldset>
+	<fieldset name="publishing" label="COM_AUDIOARCHIVE_FIELDSET_PUBLISHING">
+		<field name="state" type="list" label="JSTATUS" default="0" validate="options">
+			<option value="1">JPUBLISHED</option>
+			<option value="0">JUNPUBLISHED</option>
+		</field>
+		<field name="visibility_mode" type="list" label="COM_AUDIOARCHIVE_VISIBILITY" default="normal"><option value="normal">COM_AUDIOARCHIVE_VISIBILITY_NORMAL</option><option value="private">COM_AUDIOARCHIVE_VISIBILITY_PRIVATE</option></field>
+		<field name="access" type="accesslevel" label="JFIELD_ACCESS_LABEL" default="1" />
+	</fieldset>
+</form>

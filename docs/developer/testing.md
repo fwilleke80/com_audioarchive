@@ -46,3 +46,5 @@ Exercise unauthorised direct routes, inaccessible clips/categories, CSRF failure
 ## Media fixtures
 
 Maintain representative AAC/M4A, ALAC/M4A, MP3, Ogg Vorbis, Opus, WAV, FLAC, Unicode filenames, duplicates, invalid media, very short clips, and long clips.
+
+See the [0.13.2 setup and test guide](../user/0.13.2-testing.md).

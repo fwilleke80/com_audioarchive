@@ -81,6 +81,8 @@ class PublicMediaService
 				$database->quoteName('a.access'),
 				$database->quoteName('a.language'),
 				$database->quoteName('a.created_by'),
+				$database->quoteName('a.state'),
+				$database->quoteName('a.visibility_mode'),
 				$database->quoteName('u.name', 'author_name'),
 				$database->quoteName('a.play_count'),
 				$database->quoteName('a.download_count'),
@@ -114,41 +116,14 @@ class PublicMediaService
 					. ' ON ' . $database->quoteName('u.id') . ' = ' . $database->quoteName('a.created_by')
 			)
 			->where($database->quoteName('a.id') . ' = :id')
-			->where($database->quoteName('a.state') . ' = :published')
-			->where($database->quoteName('c.published') . ' = :categoryPublished')
-			->where($database->quoteName('c.extension') . ' = :extension')
-			->whereIn($database->quoteName('a.access'), $levels, ParameterType::INTEGER)
-			->whereIn($database->quoteName('c.access'), $levels, ParameterType::INTEGER)
-			->extendWhere(
-				'AND',
-				[
-					$database->quoteName('a.publish_up') . ' IS NULL',
-					$database->quoteName('a.publish_up') . ' <= :publishNow',
-				],
-				'OR'
-			)
-			->extendWhere(
-				'AND',
-				[
-					$database->quoteName('a.publish_down') . ' IS NULL',
-					$database->quoteName('a.publish_down') . ' >= :unpublishNow',
-				],
-				'OR'
-			)
 			->bind(':id', $id, ParameterType::INTEGER)
-			->bind(':published', $published, ParameterType::INTEGER)
-			->bind(':categoryPublished', $published, ParameterType::INTEGER)
-			->bind(':extension', $extension, ParameterType::STRING)
 			->bind(':fileRole', $fileRole, ParameterType::STRING)
-			->bind(':available', $available, ParameterType::INTEGER)
-			->bind(':publishNow', $now, ParameterType::STRING)
-			->bind(':unpublishNow', $now, ParameterType::STRING);
+			->bind(':available', $available, ParameterType::INTEGER);
 
-		$this->addAncestorCategoryRestrictions($query, 'c', $levels);
 		$database->setQuery($query, 0, 1);
 		$item = $database->loadObject();
 
-		if (!$item)
+		if (!$item || !(new \Punga\Component\Audioarchive\Administrator\Service\ClipAccessService($database, $this->user))->canView($item))
 		{
 			return null;
 		}
@@ -197,10 +172,12 @@ class PublicMediaService
 		$fileRole = 'original';
 		$now = Factory::getDate()->toSql();
 		$levels = $this->getAuthorisedViewLevels();
-		$frequencyExpression = '(SELECT COUNT(*) FROM '
-			. $database->quoteName('#__contentitem_tag_map', 'tf')
-			. ' WHERE ' . $database->quoteName('tf.type_alias') . ' = :frequencyTypeAlias'
-			. ' AND ' . $database->quoteName('tf.tag_id') . ' = ' . $database->quoteName('candidateMap.tag_id') . ')';
+		$frequency = $database->getQuery(true)->select('COUNT(*)')
+			->from($database->quoteName('#__contentitem_tag_map', 'tf'))
+			->innerJoin($database->quoteName('#__audioarchive_clips', 'frequencyClip') . ' ON frequencyClip.id = tf.content_item_id')
+			->where('tf.type_alias = :frequencyTypeAlias')->where('tf.tag_id = candidateMap.tag_id');
+		(new \Punga\Component\Audioarchive\Administrator\Service\ClipAccessService($database, $this->user))->applyPublicVisibilityFilter($frequency, 'frequencyClip');
+		$frequencyExpression = '(' . $frequency . ')';
 		$query = $database->getQuery(true)
 			->select([
 				$database->quoteName('a.id'),
@@ -265,7 +242,7 @@ class PublicMediaService
 			->bind(':relatedUnpublishNow', $now, ParameterType::STRING)
 			->bind(':minimumSharedTags', $minimumSharedTags, ParameterType::INTEGER);
 
-		$this->addAncestorCategoryRestrictions($query, 'c', $levels);
+		(new \Punga\Component\Audioarchive\Administrator\Service\ClipAccessService($database, $this->user))->applyPublicVisibilityFilter($query);
 
 		if ($ranking === 'same_category')
 		{

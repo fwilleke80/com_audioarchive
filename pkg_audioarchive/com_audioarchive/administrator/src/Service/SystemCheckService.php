@@ -17,6 +17,8 @@ class SystemCheckService
     /** @var string[] */
     private const REQUIRED_TABLES = [
         'audioarchive_clips',
+        'audioarchive_group_quotas',
+        'audioarchive_user_profiles',
         'audioarchive_files',
         'audioarchive_waveforms',
         'audioarchive_analyses',

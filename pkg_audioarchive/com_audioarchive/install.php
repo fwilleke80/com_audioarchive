@@ -25,6 +25,11 @@ return new class () implements InstallerScriptInterface
 	/** @var string[] */
 	private const REQUIRED_TABLES = [
 		'audioarchive_clips',
+        'audioarchive_group_quotas',
+        'audioarchive_user_profiles',
+        'audioarchive_collections',
+        'audioarchive_collection_items',
+        'audioarchive_collection_state',
 		'audioarchive_files',
 		'audioarchive_waveforms',
 		'audioarchive_analyses',
@@ -389,6 +394,15 @@ return new class () implements InstallerScriptInterface
 			$this->repairAnalysisSchema($database);
 			$this->ensureSpectrogramStatusColumn($database);
 			$this->ensureFrequencyProfileStatusColumn($database);
+			$columns = $database->getTableColumns('#__audioarchive_clips', false);
+			if (!isset($columns['normalization_mode']))
+			{
+				$database->setQuery('ALTER TABLE ' . $database->quoteName('#__audioarchive_clips') . " ADD COLUMN normalization_mode varchar(16) NOT NULL DEFAULT 'inherit'")->execute();
+			}
+			if (!isset($columns['visibility_mode']))
+			{
+				$database->setQuery('ALTER TABLE ' . $database->quoteName('#__audioarchive_clips') . " ADD COLUMN visibility_mode varchar(16) NOT NULL DEFAULT 'normal', ADD KEY idx_owner_visibility (created_by, visibility_mode), ADD KEY idx_visibility (visibility_mode)")->execute();
+			}
 			$this->repairCheckoutColumns($database);
 			$this->ensureFileRoleUniqueIndex($database);
 			$this->ensureGloballyUniqueAliases($database);

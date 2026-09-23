@@ -109,6 +109,7 @@ class HtmlView extends BaseHtmlView
 	 */
 	public function display($tpl = null)
 	{
+		Factory::getApplication()->setHeader('Cache-Control', 'private, no-store', true);
 		/** @var ClipModel $model */
 		$model = $this->getModel();
 		$model->setUseExceptions(true);

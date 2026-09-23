@@ -4,6 +4,7 @@ use Joomla\CMS\Language\Text;
 
 \defined('_JEXEC') or die;
 
+$showOwner = (bool) $this->params->get('archive_show_owner_filter', 0);
 $showSearch = (int) $this->params->get('archive_show_search', 1) === 1;
 $showCategory = (int) $this->params->get('archive_show_category_filter', 1) === 1
 	&& (int) $this->params->get('archive_category_restriction', 0) === 0;
@@ -18,7 +19,7 @@ $defaultExpanded = (string) $this->params->get('archive_filters_initial_state', 
 $filterContentId = 'audioarchive-filter-content';
 $tagListId = 'audioarchive-filter-tag-list';
 ?>
-<?php if ($showSearch || $showCategory || $showTags || $showDuration || $showRecorded || $showUploaded) : ?>
+<?php if ($showOwner || $showSearch || $showCategory || $showTags || $showDuration || $showRecorded || $showUploaded) : ?>
 	<section
 		class="com-audioarchive-filter-panel"
 		aria-labelledby="audioarchive-filter-heading"
@@ -54,6 +55,11 @@ $tagListId = 'audioarchive-filter-tag-list';
 		<div id="<?php echo $filterContentId; ?>" data-audioarchive-filter-content>
 			<form class="com-audioarchive-filters" method="get" action="<?php echo $this->getArchiveUrl(); ?>">
 				<input type="hidden" name="task" value="archive.applyFilters">
+<?php if ($showOwner) : ?>
+<div class="mb-3"><label for="archive-owner"><?php echo Text::_('COM_AUDIOARCHIVE_OWNER'); ?></label><select class="form-select" name="owner" id="archive-owner"><option value="0"><?php echo Text::_('JALL'); ?></option>
+<?php foreach ($this->ownerOptions as $owner) : ?><option value="<?php echo (int) $owner->id; ?>" <?php echo (int) $this->state->get('filter.owner') === (int) $owner->id ? 'selected' : ''; ?>><?php echo $this->escape($owner->title ?: Text::sprintf('COM_AUDIOARCHIVE_OWNER_UNKNOWN', $owner->id)); ?></option><?php endforeach; ?>
+</select></div>
+<?php endif; ?>
 
 				<div class="com-audioarchive-filter-grid">
 					<?php if ($showSearch) : ?>

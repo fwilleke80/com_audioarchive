@@ -110,7 +110,9 @@ final class WaveformGeneratorService implements AnalysisGeneratorInterface
 			$command = [
 				(string) $ffmpeg['path'],
 				'-v',
-				'error',
+				'info',
+				'-hide_banner',
+				'-nostats',
 				'-nostdin',
 				'-i',
 				$sourcePath,
@@ -119,6 +121,8 @@ final class WaveformGeneratorService implements AnalysisGeneratorInterface
 				'-vn',
 				'-sn',
 				'-dn',
+				'-af',
+				'aformat=sample_fmts=dbl,astats=metadata=0:reset=0:measure_perchannel=none:measure_overall=Peak_level,aformat=sample_fmts=s16:channel_layouts=mono,aresample=8000',
 				'-ac',
 				'1',
 				'-ar',
@@ -152,6 +156,7 @@ final class WaveformGeneratorService implements AnalysisGeneratorInterface
 				'pointCount' => $actualPointCount,
 				'durationMs' => max(0, (int) $source->duration_ms),
 				'peaks' => $peaks,
+				'global_peak_dbfs' => self::extractGlobalPeak((string) $process['stderr']),
 			];
 			$json = json_encode(
 				$payload,
@@ -192,6 +197,17 @@ final class WaveformGeneratorService implements AnalysisGeneratorInterface
 			@unlink($pcmPath);
 			@unlink($jsonPath);
 		}
+	}
+
+	/** @brief Read FFmpeg's original-channel overall sample peak; silence and malformed output remain null. */
+	public static function extractGlobalPeak(string $stderr): ?float
+	{
+		if (!preg_match_all('/Peak level dB:\s*([+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?)/', $stderr, $matches))
+		{
+			return null;
+		}
+		$peak = (float) end($matches[1]);
+		return is_finite($peak) ? $peak : null;
 	}
 
 	/**

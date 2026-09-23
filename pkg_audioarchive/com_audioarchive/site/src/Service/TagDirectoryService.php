@@ -220,6 +220,7 @@ class TagDirectoryService
 			)
 			->where($database->quoteName('tm.type_alias') . ' = :directoryTypeAlias')
 			->whereIn($database->quoteName('tm.tag_id'), $tagIds, ParameterType::INTEGER)
+			->where($database->quoteName('a.visibility_mode') . ' = ' . $database->quote('normal'))
 			->where($database->quoteName('a.state') . ' = :directoryClipPublished')
 			->where($database->quoteName('c.published') . ' = :directoryCategoryPublished')
 			->where($database->quoteName('c.extension') . ' = :directoryCategoryExtension')
@@ -301,6 +302,7 @@ class TagDirectoryService
 				->bind($typePlaceholder, $requiredTypeBindings[$index], ParameterType::STRING);
 		}
 
+		(new \Punga\Component\Audioarchive\Administrator\Service\ClipAccessService($database, \Joomla\CMS\Factory::getApplication()->getIdentity()))->applyPublicVisibilityFilter($query);
 		$query->group($database->quoteName('tm.tag_id'));
 		$rows = (array) $database->setQuery($query)->loadObjectList();
 		$counts = [];

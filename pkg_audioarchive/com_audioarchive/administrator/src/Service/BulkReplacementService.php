@@ -107,6 +107,7 @@ class BulkReplacementService
 				$this->database->quoteName('f.checksum_sha256'),
 			])
 			->from($this->database->quoteName('#__audioarchive_clips', 'a'))
+			->where($this->database->quoteName('a.visibility_mode') . ' = ' . $this->database->quote('normal'))
 			->innerJoin(
 				$this->database->quoteName('#__audioarchive_files', 'f')
 				. ' ON ' . $this->database->quoteName('f.clip_id') . ' = ' . $this->database->quoteName('a.id')

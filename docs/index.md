@@ -13,3 +13,5 @@ The [Developer documentation](developer/index.md) is for maintainers and extensi
 ## Images
 
 Screenshots and diagrams belong in [`docs/images/`](images/README.md). Documentation pages should use relative links so they work both on GitHub and in a later MkDocs site.
+
+See the [0.13.2 setup and test guide](user/0.13.2-testing.md).

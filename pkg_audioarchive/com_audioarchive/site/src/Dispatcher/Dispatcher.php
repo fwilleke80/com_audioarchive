@@ -33,6 +33,15 @@ class Dispatcher extends ComponentDispatcher
      */
     public function dispatch()
     {
+        // Contributor mutations reuse administrator services and their translated errors.
+        $this->app->getLanguage()->load('com_audioarchive', JPATH_ADMINISTRATOR);
+        $this->app->getLanguage()->load('com_audioarchive', JPATH_SITE, null, true);
+        $input = $this->app->getInput();
+        if ($this->app->getIdentity()->guest && in_array($input->getCmd('view'), ['upload', 'myclips'], true) && $input->getCmd('task') === '')
+        {
+            $this->app->redirect(Route::_('index.php?option=com_users&view=login&return=' . rawurlencode(base64_encode(Uri::getInstance()->toString())), false));
+            return;
+        }
         $params          = ComponentHelper::getParams('com_audioarchive');
         $requiredAccess  = (int) $params->get('frontend_access_level', 1);
         $authorisedViews = array_map('intval', $this->app->getIdentity()->getAuthorisedViewLevels());

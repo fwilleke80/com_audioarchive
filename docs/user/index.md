@@ -20,6 +20,8 @@ This guide is for Joomla administrators, site owners, and authorised editors.
 
 ## Frontend features
 
+- [Frontend Upload Clip, My Clips and quota testing](frontend-upload.md)
+
 - [Archive search, filtering, and pagination](frontend-archive.md)
 - [Tag Directory](tag-directory.md)
 - [Clip Detail pages and related clips](clip-detail.md)
@@ -31,3 +33,7 @@ This guide is for Joomla administrators, site owners, and authorised editors.
 ## Support
 
 See [Troubleshooting](troubleshooting.md) for installation, FFmpeg, playback, queue, routing, and cache problems.
+
+- [Ownership, visibility and quotas](multi-user.md)
+
+See the [0.13.2 setup and test guide](0.13.2-testing.md).

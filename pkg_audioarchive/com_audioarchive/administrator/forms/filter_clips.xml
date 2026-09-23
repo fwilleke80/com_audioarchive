@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form>
     <fields name="filter">
+        <field name="owner" type="sql" label="COM_AUDIOARCHIVE_OWNER" query="SELECT id AS value, name AS text FROM #__users ORDER BY name" onchange="this.form.submit();"><option value="">COM_AUDIOARCHIVE_OWNER</option><option value="0">COM_AUDIOARCHIVE_OWNER_SYSTEM</option></field>
+        <field name="visibility" type="list" label="COM_AUDIOARCHIVE_VISIBILITY" onchange="this.form.submit();"><option value="">COM_AUDIOARCHIVE_VISIBILITY</option><option value="normal">COM_AUDIOARCHIVE_VISIBILITY_NORMAL</option><option value="private">COM_AUDIOARCHIVE_VISIBILITY_PRIVATE</option></field>
         <field name="search" type="text" label="COM_AUDIOARCHIVE_FILTER_SEARCH_LABEL" hint="JSEARCH_FILTER" />
         <field name="state" type="status" label="JOPTION_SELECT_PUBLISHED" onchange="this.form.submit();">
             <option value="">JOPTION_SELECT_PUBLISHED</option>
@@ -20,6 +22,7 @@
             <option value="a.title DESC">JGLOBAL_TITLE_DESC</option>
             <option value="a.recorded_at DESC">COM_AUDIOARCHIVE_SORT_RECORDED_DESC</option>
             <option value="a.recorded_at ASC">COM_AUDIOARCHIVE_SORT_RECORDED_ASC</option>
+            <option value="owner_name ASC">COM_AUDIOARCHIVE_OWNER</option>
             <option value="a.id DESC">JGRID_HEADING_ID_DESC</option>
             <option value="a.id ASC">JGRID_HEADING_ID_ASC</option>
         </field>

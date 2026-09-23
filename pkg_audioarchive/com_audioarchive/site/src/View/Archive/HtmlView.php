@@ -34,6 +34,8 @@ class HtmlView extends BaseHtmlView
 
 	/** @var object[] */
 	public array $categoryOptions = [];
+	/** @var array Public owner choices. */
+	public array $ownerOptions = [];
 
 	/** @var object[] */
 	public array $tagOptions = [];
@@ -105,6 +107,7 @@ class HtmlView extends BaseHtmlView
 		$this->params = $model->getResolvedParams();
 		$this->preparePaginationQuery();
 		$this->categoryOptions = $model->getCategoryOptions();
+		$this->ownerOptions = $model->getOwnerOptions();
 		$this->tagOptions = $model->getTagOptions();
 		$this->filterErrors = $model->getFilterErrors();
 		$this->pageSizeOptions = $model->getPageSizeOptions();

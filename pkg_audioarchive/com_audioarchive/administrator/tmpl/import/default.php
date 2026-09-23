@@ -150,4 +150,7 @@ $tokenName = Session::getFormToken();
 	</div>
 
 	<?php echo HTMLHelper::_('form.token'); ?>
+<?php if (\Joomla\CMS\Factory::getApplication()->getIdentity()->authorise('audioarchive.quota.override', 'com_audioarchive')) : ?>
+<div class="form-check my-3"><input class="form-check-input" type="checkbox" name="quota_override_confirm" id="quota-override-confirm" value="1"><label class="form-check-label" for="quota-override-confirm"><?php echo \Joomla\CMS\Language\Text::_('COM_AUDIOARCHIVE_QUOTA_OVERRIDE_CONFIRM'); ?></label></div>
+<?php endif; ?>
 </form>

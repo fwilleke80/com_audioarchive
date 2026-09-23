@@ -38,23 +38,10 @@ class ClipController extends FormController
             return false;
         }
 
-        $user = Factory::getApplication()->getIdentity();
-        $asset = 'com_audioarchive.clip.' . $recordId;
-
-        if ($user->authorise('core.edit', $asset))
-        {
-            return true;
-        }
-
-        if (!$user->authorise('core.edit.own', $asset))
-        {
-            return false;
-        }
-
         $table = $this->getModel()->getTable();
-
-        return $table->load($recordId)
-            && (int) $table->created_by === (int) $user->id;
+        return $table->load($recordId) && (new \Punga\Component\Audioarchive\Administrator\Service\ClipAccessService(
+            Factory::getContainer()->get(DatabaseInterface::class), Factory::getApplication()->getIdentity()
+        ))->canEdit($table);
     }
 
     /**

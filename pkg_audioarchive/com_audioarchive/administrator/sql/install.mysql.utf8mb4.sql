@@ -1,4 +1,7 @@
 CREATE TABLE IF NOT EXISTS `#__audioarchive_clips` (
+ `visibility_mode` varchar(16) NOT NULL DEFAULT 'normal',
+ KEY `idx_owner_visibility` (`created_by`, `visibility_mode`),
+ KEY `idx_visibility` (`visibility_mode`),
     `id` int unsigned NOT NULL AUTO_INCREMENT,
     `asset_id` int unsigned NOT NULL DEFAULT 0,
     `uuid` char(36) NOT NULL,
@@ -27,6 +30,7 @@ CREATE TABLE IF NOT EXISTS `#__audioarchive_clips` (
     `download_count` bigint unsigned NOT NULL DEFAULT 0,
     `metadata_status` varchar(24) NOT NULL DEFAULT 'missing',
     `preview_status` varchar(24) NOT NULL DEFAULT 'not_required',
+    `normalization_mode` varchar(16) NOT NULL DEFAULT 'inherit',
     `waveform_status` varchar(24) NOT NULL DEFAULT 'missing',
     `spectrogram_status` varchar(24) NOT NULL DEFAULT 'missing',
     `frequency_profile_status` varchar(24) NOT NULL DEFAULT 'missing',
@@ -142,4 +146,55 @@ CREATE TABLE IF NOT EXISTS `#__audioarchive_ratings` (
     UNIQUE KEY `idx_audioarchive_rating_clip_voter` (`clip_id`, `voter_hash`),
     KEY `idx_audioarchive_rating_clip_vote` (`clip_id`, `vote`),
     KEY `idx_audioarchive_rating_modified` (`modified`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `#__audioarchive_group_quotas` (
+ `id` int unsigned NOT NULL AUTO_INCREMENT,
+ `group_id` int unsigned NOT NULL,
+ `storage_quota_bytes` bigint DEFAULT NULL,
+ `clip_quota` int DEFAULT NULL,
+ `created` datetime NOT NULL,
+ `modified` datetime DEFAULT NULL,
+ PRIMARY KEY (`id`), UNIQUE KEY `idx_group` (`group_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS `#__audioarchive_user_profiles` (
+ `user_id` int unsigned NOT NULL,
+ `collection_storage_preference` varchar(16) NOT NULL DEFAULT '',
+ `default_visibility` varchar(16) NOT NULL DEFAULT '',
+ `default_category_id` int unsigned NOT NULL DEFAULT 0,
+ `default_access_id` int unsigned NOT NULL DEFAULT 0,
+ `browser_import_prompt` tinyint NOT NULL DEFAULT 1,
+ `default_soundboard_id` int unsigned NOT NULL DEFAULT 0,
+ `storage_quota_override_bytes` bigint DEFAULT NULL,
+ `clip_quota_override` int DEFAULT NULL,
+ `created` datetime NOT NULL,
+ `modified` datetime DEFAULT NULL,
+ PRIMARY KEY (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `#__audioarchive_collections` (
+ `id` int unsigned NOT NULL AUTO_INCREMENT,
+ `uuid` varchar(80) NOT NULL,
+ `user_id` int unsigned NOT NULL,
+ `kind` varchar(16) NOT NULL,
+ `title` varchar(120) NOT NULL,
+ `pad_count` int unsigned NOT NULL DEFAULT 0,
+ `share_token` char(48) DEFAULT NULL,
+ `created` datetime NOT NULL,
+ `modified` datetime NOT NULL,
+ PRIMARY KEY (`id`), UNIQUE KEY `idx_uuid` (`uuid`),
+ UNIQUE KEY `idx_share` (`share_token`), KEY `idx_owner_kind` (`user_id`,`kind`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS `#__audioarchive_collection_items` (
+ `collection_id` int unsigned NOT NULL,
+ `position` int unsigned NOT NULL,
+ `clip_id` int unsigned NOT NULL,
+ PRIMARY KEY (`collection_id`,`position`), KEY `idx_clip` (`clip_id`),
+ FOREIGN KEY (`collection_id`) REFERENCES `#__audioarchive_collections` (`id`) ON DELETE CASCADE,
+ FOREIGN KEY (`clip_id`) REFERENCES `#__audioarchive_clips` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS `#__audioarchive_collection_state` (
+ `user_id` int unsigned NOT NULL,
+ `revision` int unsigned NOT NULL DEFAULT 0,
+ PRIMARY KEY (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;

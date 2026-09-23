@@ -386,6 +386,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 				$database->quoteName('#__categories', 'c')
 				. ' ON ' . $database->quoteName('c.id') . ' = ' . $database->quoteName('a.catid')
 			)
+			->where($database->quoteName('a.visibility_mode') . ' = ' . $database->quote('normal'))
 			->where($database->quoteName('a.state') . ' = :aggregateClipPublished')
 			->where($database->quoteName('c.published') . ' = :aggregateCategoryPublished')
 			->where($database->quoteName('c.extension') . ' = :aggregateCategoryExtension')
@@ -443,6 +444,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 			$query->whereIn($database->quoteName('a.catid'), $categoryIds, ParameterType::INTEGER);
 		}
 
+		(new \Punga\Component\Audioarchive\Administrator\Service\ClipAccessService($database, \Joomla\CMS\Factory::getApplication()->getIdentity()))->applyPublicVisibilityFilter($query);
 		$result = $database->setQuery($query)->loadObject();
 
 		return [

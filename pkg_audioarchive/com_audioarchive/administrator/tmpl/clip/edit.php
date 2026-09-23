@@ -39,6 +39,7 @@ $renderAudioPreview = function (string $headingId): void
 			[
 				'audioId' => $playerId,
 				'clipId' => 0,
+				'normalizationClipId' => (int) $this->item->id,
 				'title' => $title,
 				'streamUrl' => $this->playbackUrl,
 				'waveformUrl' => $this->waveformUrl,
@@ -92,6 +93,7 @@ $renderAudioPreview = function (string $headingId): void
                     <?php echo $this->form->renderField('catid'); ?>
                     <?php echo $this->form->renderField('tags'); ?>
                     <?php echo $this->form->renderField('recorded_at'); ?>
+                    <?php echo $this->form->renderField('normalization_mode'); ?>
                 </div>
             </div>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
@@ -217,4 +219,7 @@ $renderAudioPreview = function (string $headingId): void
     <input type="hidden" name="task" value="">
     <?php echo $this->form->getInput('id'); ?>
     <?php echo HTMLHelper::_('form.token'); ?>
+<?php if (\Joomla\CMS\Factory::getApplication()->getIdentity()->authorise('audioarchive.quota.override', 'com_audioarchive')) : ?>
+<div class="form-check my-3"><input class="form-check-input" type="checkbox" name="quota_override_confirm" id="quota-override-confirm" value="1"><label class="form-check-label" for="quota-override-confirm"><?php echo \Joomla\CMS\Language\Text::_('COM_AUDIOARCHIVE_QUOTA_OVERRIDE_CONFIRM'); ?></label></div>
+<?php endif; ?>
 </form>

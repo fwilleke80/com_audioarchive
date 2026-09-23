@@ -14,6 +14,26 @@ use Punga\Component\Audioarchive\Site\Service\FrontendEditingService;
  */
 class EditModel extends AdministratorClipModel
 {
+	/** @brief Revalidate all editable fields and preserve ownership/publication protections on save. */
+	public function save($data)
+	{
+		try
+		{
+			$old = $this->getItem((int) ($data['id'] ?? 0));
+			if (!$old || empty($old->id))
+			{
+				throw new \RuntimeException(\Joomla\CMS\Language\Text::_('JERROR_ALERTNOAUTHOR'), 403);
+			}
+			$policy = new \Punga\Component\Audioarchive\Site\Service\ContributionService($this->getDatabase(), $this->getCurrentUser());
+			return parent::save($policy->sanitise($data, $policy->settings(false), $old));
+		}
+		catch (\Throwable $exception)
+		{
+			$this->setError($exception->getMessage());
+			return false;
+		}
+	}
+
 	/**
 	 * @brief Return the administrator clip table from the site model.
 	 *
@@ -50,7 +70,7 @@ class EditModel extends AdministratorClipModel
 	{
 		Form::addFormPath(JPATH_SITE . '/components/com_audioarchive/forms');
 		$form = $this->loadForm(
-			'com_audioarchive.edit',
+			'com_audioarchive.clip',
 			'edit',
 			['control' => 'jform', 'load_data' => $loadData]
 		);
@@ -72,6 +92,8 @@ class EditModel extends AdministratorClipModel
 			}
 		}
 
+		$policy = new \Punga\Component\Audioarchive\Site\Service\ContributionService($this->getDatabase(), $user);
+		$policy->configureForm($form, $policy->settings(false), $item);
 		return $form;
 	}
 

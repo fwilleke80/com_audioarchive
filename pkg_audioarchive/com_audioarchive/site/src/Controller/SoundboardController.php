@@ -86,6 +86,7 @@ class SoundboardController extends BaseController
 					true
 				);
 				$items[(string) $id] = [
+					'normalization_gain' => \Punga\Component\Audioarchive\Administrator\Service\PlaybackNormalizationService::forClip((int) $clip->id),
 					'uuid' => strtolower((string) ($clip->uuid ?? '')),
 					'id' => $id,
 					'title' => (string) ($clip->title ?? ''),

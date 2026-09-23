@@ -1,0 +1,40 @@
+/** @brief Verify acknowledgement, conflict rollback and preservation of browser copies. */
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+const source = await readFile(new URL('../../../pkg_audioarchive/com_audioarchive/media/js/collections.js', import.meta.url), 'utf8');
+const storage = () => ({getItem() {return null;}, setItem() {throw new Error('Unexpected browser write');}});
+globalThis.localStorage = storage();
+globalThis.sessionStorage = {getItem() {return null;}, setItem() {}};
+globalThis.window = {location: {href: 'https://example.test/archive', origin: 'https://example.test'}, addEventListener() {}};
+globalThis.document = {querySelector() {return null;}, body: {prepend() {}}, addEventListener() {}, createElement() {return {setAttribute() {}, classList: {toggle() {}}};}};
+let revision = 0;
+let fail = false;
+const posted = [];
+const state = {backend: 'server', userId: 7, revision: 0, boards: [], playlists: [], token: 'csrf'};
+globalThis.fetch = async (url, options) =>
+{
+    if (!options.body) return {ok: true, json: async () => ({success: true, data: state})};
+    const payload = JSON.parse(options.body.get('payload'));
+    posted.push(payload);
+    assert.equal(options.body.get('csrf'), '1');
+    if (fail) return {ok: false, json: async () => ({success: false, message: 'Stale tab'})};
+    assert.equal(payload.revision, revision);
+    revision++;
+    const board = {...payload.board, items: payload.board.items.map((item) => item ? {...item, id: 42, title: 'Canonical'} : null)};
+    return {ok: true, json: async () => ({success: true, data: {id: board.id, state: {...state, revision, boards: [board]}}})};
+};
+const {Collections} = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
+await Collections.ready();
+const board = [{uuid: 'clip', id: 1}];
+assert.equal(await Collections.write('com_audioarchive.soundboard.v1', board), true);
+assert.equal(board[0].id, 42, 'server clip identity replaces stale imported ID');
+assert.equal(board[0].title, 'Canonical');
+board.push(null);
+assert.equal(await Collections.write('com_audioarchive.soundboard.v1', board), true);
+assert.equal(posted[1].revision, 1);
+fail = true;
+board.splice(0);
+assert.equal(await Collections.write('com_audioarchive.soundboard.v1', board), false);
+assert.equal(board.length, 2, 'rejected change restores acknowledged board');
+assert.equal(Collections.read('com_audioarchive.soundboard.v1', []).length, 2);
+console.log('Collection browser logic assertions passed.');

@@ -27,3 +27,7 @@ This section documents the implementation and maintenance contracts of the curre
 - [Testing](testing.md)
 
 The user-facing behaviour is documented separately in the [User guide](../user/index.md).
+
+- [Multi-user foundation](multi-user.md)
+
+- [Full 0.13 series plan](multi-user-plan.md)

@@ -57,7 +57,7 @@ Sampler source-pad selection is a first-class event because the same MIDI note c
 
 ## Playback
 
-Playback resolves the recording's embedded Sound Board into a private backing-playback board. It does not replace the live in-memory Sound Board, so the visitor's current mode, polyphony, octave, and selected sampler pad remain under live control throughout replay.
+Playback retains the 0.12.4 mechanism: resolve the recording's embedded Sound Board, temporarily swap the in-memory board, and restore the saved live board/state when playback finishes. The mode change follows asynchronous board resolution. Do not replace this mechanism with the abandoned private backing-board implementation.
 
 Before replay, board IDs are checked against the public Sound Board route-resolution endpoint. When an exported entry includes a UUID, that UUID must still match the public clip returned for the numeric ID. Inaccessible, deleted, or ID-reused clips therefore become empty pads rather than silently resolving to unrelated audio.
 

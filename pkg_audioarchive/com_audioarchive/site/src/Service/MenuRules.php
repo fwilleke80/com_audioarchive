@@ -24,6 +24,14 @@ class MenuRules extends CoreMenuRules
 	 */
 	public function preprocess(&$query)
 	{
+		if (in_array(($query['view'] ?? ''), ['upload', 'myclips'], true) && (int) ($query['Itemid'] ?? 0) > 0)
+		{
+			$item = $this->router->menu->getItem((int) $query['Itemid']);
+			if ($item !== null && (string) $item->component === 'com_audioarchive' && ($item->query['view'] ?? '') === $query['view'])
+			{
+				return;
+			}
+		}
 		if (in_array(($query['view'] ?? ''), ['clip', 'edit'], true) && (int) ($query['Itemid'] ?? 0) > 0)
 		{
 			$item = $this->router->menu->getItem((int) $query['Itemid']);

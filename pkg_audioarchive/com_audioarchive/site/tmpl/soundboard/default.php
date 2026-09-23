@@ -346,6 +346,8 @@ data-audioarchive-recordings-enabled="<?php echo $this->recordingsEnabled ? '1' 
 	<p class="com-audioarchive-conversion-status" data-audioarchive-soundboard-conversion-status aria-live="polite"></p>
 
 	<?php if ($this->recordingsEnabled) : ?>
+	<details class="com-audioarchive-recorder-disclosure" open>
+	<summary class="h4"><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDER_TITLE'); ?></summary>
 	<section class="com-audioarchive-soundboard-recordings" data-audioarchive-soundboard-recordings>
 		<div class="com-audioarchive-soundboard-recordings-header">
 			<div>
@@ -424,6 +426,7 @@ data-audioarchive-recordings-enabled="<?php echo $this->recordingsEnabled ? '1' 
 
 		<p class="visually-hidden" aria-live="polite" data-audioarchive-recording-status></p>
 	</section>
+	</details>
 	<?php endif; ?>
 
 	<p class="com-audioarchive-soundboard-note"><?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_STORAGE_NOTE'); ?></p>

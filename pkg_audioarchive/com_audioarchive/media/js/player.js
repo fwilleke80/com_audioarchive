@@ -1,3 +1,4 @@
+import {prepareNormalization, updateNormalization, validGain} from './normalization.js?v=0.13.2';
 /**
  * @brief Manage all shared Punga Audio Archive player presentations and legacy play buttons.
  */
@@ -358,7 +359,8 @@ const initialiseAudioArchivePlayers = () =>
 		selectAnalysisPanel(player, '');
 	};
 
-	const drawPeakLayer = (canvas, peaks, color, width, height, ratio) =>
+	/** @brief Draw original PCM peaks using the clip playback gain without modifying the cached data. */
+	const drawPeakLayer = (canvas, peaks, color, width, height, ratio, gain) =>
 	{
 		canvas.width = Math.max(1, Math.round(width * ratio));
 		canvas.height = Math.max(1, Math.round(height * ratio));
@@ -379,8 +381,8 @@ const initialiseAudioArchivePlayers = () =>
 
 		peaks.forEach((pair, index) =>
 		{
-			const minimum = Number(pair[0]) / 32768;
-			const maximum = Number(pair[1]) / 32768;
+			const minimum = Math.max(-1, Math.min(1, (Number(pair[0]) || 0) / 32768 * gain));
+			const maximum = Math.max(-1, Math.min(1, (Number(pair[1]) || 0) / 32768 * gain));
 			const x = ((index + 0.5) / peaks.length) * width;
 			context.moveTo(x, centre - maximum * amplitude);
 			context.lineTo(x, centre - minimum * amplitude);
@@ -418,8 +420,9 @@ const initialiseAudioArchivePlayers = () =>
 		}
 
 		const ratio = Math.max(1, window.devicePixelRatio || 1);
+		const gain = validGain(player.dataset.normalizationGain);
 
-		if (state.width === width && state.height === height && state.ratio === ratio)
+		if (state.width === width && state.height === height && state.ratio === ratio && state.gain === gain)
 		{
 			return true;
 		}
@@ -427,13 +430,14 @@ const initialiseAudioArchivePlayers = () =>
 		state.width = width;
 		state.height = height;
 		state.ratio = ratio;
+		state.gain = gain;
 		canvas.width = Math.max(1, Math.round(width * ratio));
 		canvas.height = Math.max(1, Math.round(height * ratio));
 		const styles = getComputedStyle(player);
 		const unplayed = styles.getPropertyValue('--audioarchive-waveform-unplayed').trim() || '#6c757d';
 		const played = styles.getPropertyValue('--audioarchive-waveform-played').trim() || '#0d6efd';
-		drawPeakLayer(state.canvas, state.peaks, unplayed, width, height, ratio);
-		drawPeakLayer(state.playedCanvas, state.peaks, played, width, height, ratio);
+		drawPeakLayer(state.canvas, state.peaks, unplayed, width, height, ratio, gain);
+		drawPeakLayer(state.playedCanvas, state.peaks, played, width, height, ratio, gain);
 
 		return true;
 	};
@@ -707,6 +711,7 @@ const initialiseAudioArchivePlayers = () =>
 		state.width = width;
 		state.height = height;
 		state.ratio = ratio;
+		state.gain = gain;
 		state.canvas.width = Math.max(1, Math.round(width * ratio));
 		state.canvas.height = Math.max(1, Math.round(height * ratio));
 		const context = state.canvas.getContext('2d');
@@ -1096,6 +1101,7 @@ const initialiseAudioArchivePlayers = () =>
 
 			try
 			{
+				await prepareNormalization(audio, audio.closest('[data-audioarchive-custom-player]')?.dataset.normalizationGain || 1);
 				await audio.play();
 			}
 			catch (error)
@@ -1195,6 +1201,7 @@ const initialiseAudioArchivePlayers = () =>
 
 			try
 			{
+				await prepareNormalization(audio, audio.closest('[data-audioarchive-custom-player]')?.dataset.normalizationGain || 1);
 				await audio.play();
 			}
 			catch (error)
@@ -1239,8 +1246,10 @@ const initialiseAudioArchivePlayers = () =>
 			});
 		}
 
-		player.addEventListener('audioarchive:sourcechanged', () =>
+		player.addEventListener('audioarchive:sourcechanged', (event) =>
 		{
+			player.dataset.normalizationGain = String(event.detail?.item?.normalization_gain ?? 1);
+			updateNormalization(audio, player.dataset.normalizationGain);
 			stopProgressAnimation(player);
 			setCustomPlayerState(player, false);
 			player.classList.remove('has-error');

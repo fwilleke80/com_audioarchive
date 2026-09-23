@@ -111,7 +111,7 @@ class ClipModel extends AdminModel
             }
         }
 
-        if (!$this->getCurrentUser()->authorise('core.manage', 'com_users'))
+        if (!$this->getCurrentUser()->authorise('audioarchive.change.owner', 'com_audioarchive'))
         {
             $form->setFieldAttribute('created_by', 'disabled', 'true');
             $form->setFieldAttribute('created_by', 'filter', 'unset');
@@ -183,6 +183,11 @@ class ClipModel extends AdminModel
     {
         $item = parent::getItem($pk);
 
+        if ($item && !empty($item->id) && !(new \Punga\Component\Audioarchive\Administrator\Service\ClipAccessService($this->getDatabase(), $this->getCurrentUser()))->canAccessPrivate($item))
+        {
+            throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+        }
+
         if ($item && !empty($item->id))
         {
             $item->tags = new TagsHelper();
@@ -219,6 +224,10 @@ class ClipModel extends AdminModel
         $recordingDateWasGenerated = false;
         $task = $app->getInput()->getCmd('task');
         $existingClipId = $task === 'save2copy' ? 0 : (int) ($data['id'] ?? 0);
+        if ($existingClipId === 0 && !array_key_exists('created_by', $data))
+        {
+            $data['created_by'] = (int) $this->getCurrentUser()->id;
+        }
         $existingRecordedAt = null;
 
         if ($existingClipId > 0)
@@ -358,7 +367,10 @@ class ClipModel extends AdminModel
             if ($existingOriginal === null)
             {
                 $uploadService->storeForClip($clipId, (string) $table->uuid, $preparedUpload);
-                $app->enqueueMessage(Text::_('COM_AUDIOARCHIVE_UPLOAD_STORED_SUCCESS'), 'success');
+                if ($app->isClient('administrator'))
+                {
+                    $app->enqueueMessage(Text::_('COM_AUDIOARCHIVE_UPLOAD_STORED_SUCCESS'), 'success');
+                }
             }
             else
             {
@@ -546,7 +558,35 @@ class ClipModel extends AdminModel
 	 */
 	public function batchUpdate(array $ids, array $batch): bool
 	{
+		$db = $this->getDatabase();
+		$ids = array_values(array_filter(array_map('intval', $ids), static fn(int $id): bool => $id > 0));
+		$owners = $ids ? $db->setQuery('SELECT DISTINCT created_by FROM ' . $db->quoteName('#__audioarchive_clips') . ' WHERE id IN (' . implode(',', $ids) . ')')->loadColumn() : [];
+		if (isset($batch['owner']) && $batch['owner'] !== '')
+		{
+			if (!$this->getCurrentUser()->authorise('audioarchive.change.owner', 'com_audioarchive'))
+			{
+				$this->setError(Text::_('JERROR_ALERTNOAUTHOR'));
+				return false;
+			}
+			$owners[] = max(0, (int) $batch['owner']);
+		}
+		$quota = new \Punga\Component\Audioarchive\Administrator\Service\UserQuotaService($db, ComponentHelper::getParams('com_audioarchive'), $this->getCurrentUser());
+		try
+		{
+			return $quota->withOwnerLocks($owners, fn(): bool => $this->batchUpdateLocked($ids, $batch));
+		}
+		catch (\Throwable $exception)
+		{
+			$this->setError($exception->getMessage());
+			return false;
+		}
+	}
+
+	/** @brief Apply a batch while all involved owners remain locked through commit. */
+	private function batchUpdateLocked(array $ids, array $batch): bool
+	{
 		$ids = array_values(array_unique(ArrayHelper::toInteger($ids)));
+		$changeOwner = isset($batch['owner']) && $batch['owner'] !== '';
 		$categoryId = (int) ($batch['category_id'] ?? 0);
 		$applyTags = (int) ($batch['apply_tags'] ?? 0) === 1;
 		$tagMode = ($batch['tag_mode'] ?? 'add') === 'replace' ? 'replace' : 'add';
@@ -556,7 +596,7 @@ class ClipModel extends AdminModel
 		$replaceTitles = $titleSearch !== '';
 		$updateAliases = $replaceTitles && (int) ($batch['update_alias'] ?? 0) === 1;
 
-		if (!$ids || ($categoryId <= 0 && !$applyTags && !$replaceTitles))
+		if (!$ids || ($categoryId <= 0 && !$applyTags && !$replaceTitles && !$changeOwner))
 		{
 			$this->setError(Text::_('COM_AUDIOARCHIVE_BATCH_NOTHING_TO_APPLY'));
 			return false;
@@ -602,6 +642,10 @@ class ClipModel extends AdminModel
 					throw new \RuntimeException(Text::sprintf('COM_AUDIOARCHIVE_BATCH_CLIP_NOT_FOUND', $id));
 				}
 
+				if ($changeOwner)
+				{
+					$table->created_by = max(0, (int) $batch['owner']);
+				}
 				$titleChanged = false;
 
 				if ($replaceTitles)
@@ -625,7 +669,7 @@ class ClipModel extends AdminModel
 					}
 				}
 
-				if ($categoryId <= 0 && !$applyTags && !$titleChanged)
+				if ($categoryId <= 0 && !$applyTags && !$titleChanged && !$changeOwner)
 				{
 					continue;
 				}
@@ -718,6 +762,10 @@ class ClipModel extends AdminModel
 	 */
 	private function notifyFinderAfterSave(int $clipId): void
 	{
+		$db = $this->getDatabase();
+		$db->setQuery('UPDATE ' . $db->quoteName('#__ucm_content') . ' SET core_state=0 WHERE core_type_alias=' . $db->quote('com_audioarchive.clip')
+			. ' AND core_content_item_id=' . $clipId . ' AND EXISTS (SELECT 1 FROM ' . $db->quoteName('#__audioarchive_clips')
+			. ' WHERE id=' . $clipId . ' AND visibility_mode=' . $db->quote('private') . ')')->execute();
 		if ($clipId <= 0)
 		{
 			return;
@@ -927,6 +975,13 @@ class ClipModel extends AdminModel
             return false;
         }
 
+        // Permanent deletion removes membership, while Trash preserves it.
+        if ($ids !== [])
+        {
+            $db = $this->getDatabase();
+            $db->setQuery('DELETE FROM ' . $db->quoteName('#__audioarchive_collection_items') . ' WHERE clip_id IN (' . implode(',', $ids) . ')')->execute();
+        }
+
         try
         {
             $service = new AudioUploadService(
@@ -951,6 +1006,20 @@ class ClipModel extends AdminModel
         return true;
     }
 
+    /** @brief Keep private clips out of Finder and Joomla Tags after state changes. */
+    public function publish(&$pks, $value = 1)
+    {
+        $result = parent::publish($pks, $value);
+        if ($result)
+        {
+            foreach ($pks as $id)
+            {
+                $this->notifyFinderAfterSave((int) $id);
+            }
+        }
+        return $result;
+    }
+
     /**
      * @brief Prepare database values before saving.
      *
@@ -967,7 +1036,10 @@ class ClipModel extends AdminModel
         {
             $table->uuid = self::createUuid();
             $table->created = $now;
-            $table->created_by = (int) $user->id;
+            if (!Factory::getApplication()->isClient('administrator') || !$user->authorise('audioarchive.change.owner', 'com_audioarchive'))
+            {
+                $table->created_by = (int) $user->id;
+            }
             $table->uploaded_at = $now;
             $table->technical_metadata = '{}';
             $table->params = '{}';
@@ -995,7 +1067,7 @@ class ClipModel extends AdminModel
             return false;
         }
 
-        return $this->getCurrentUser()->authorise('core.delete', 'com_audioarchive.clip.' . (int) $record->id);
+        return (new \Punga\Component\Audioarchive\Administrator\Service\ClipAccessService($this->getDatabase(), $this->getCurrentUser()))->canDelete($record);
     }
 
     /**
@@ -1011,7 +1083,8 @@ class ClipModel extends AdminModel
 
         if (!empty($record->id))
         {
-            return $user->authorise('core.edit.state', 'com_audioarchive.clip.' . (int) $record->id);
+            $table = $this->getTable();
+            return $table->load((int) $record->id) && (new \Punga\Component\Audioarchive\Administrator\Service\ClipAccessService($this->getDatabase(), $user))->canEditState($table);
         }
 
         if (!empty($record->catid))

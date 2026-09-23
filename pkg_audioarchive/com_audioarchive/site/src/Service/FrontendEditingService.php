@@ -13,7 +13,7 @@ use Joomla\CMS\User\User;
 abstract class FrontendEditingService
 {
 	/**
-	 * @brief Return whether Joomla frontend editing is enabled globally.
+	 * @brief Return whether Audio Archive frontend editing is enabled.
 	 *
 	 * @param CMSApplicationInterface $application Current Joomla application.
 	 *
@@ -21,7 +21,7 @@ abstract class FrontendEditingService
 	 */
 	public static function isEnabled(CMSApplicationInterface $application): bool
 	{
-		return (int) $application->get('frontediting', 0) > 0;
+		return (bool) \Joomla\CMS\Component\ComponentHelper::getParams('com_audioarchive')->get('frontend_editing_enabled', 1);
 	}
 
 	/**
@@ -34,20 +34,9 @@ abstract class FrontendEditingService
 	 */
 	public static function canEdit(User $user, object $item): bool
 	{
-		if ((int) $user->id <= 0 || (int) ($item->id ?? 0) <= 0)
-		{
-			return false;
-		}
-
-		$asset = 'com_audioarchive.clip.' . (int) $item->id;
-
-		if ($user->authorise('core.edit', $asset))
-		{
-			return true;
-		}
-
-		return (int) ($item->created_by ?? 0) === (int) $user->id
-			&& $user->authorise('core.edit.own', $asset);
+		return (new \Punga\Component\Audioarchive\Administrator\Service\ClipAccessService(
+			\Joomla\CMS\Factory::getContainer()->get(\Joomla\Database\DatabaseInterface::class), $user
+		))->canEdit($item);
 	}
 
 	/**

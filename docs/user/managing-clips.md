@@ -44,6 +44,6 @@ The component uses Joomla states: Published, Unpublished, Archived, and Trashed.
 
 ## Frontend editing
 
-When Joomla frontend editing is enabled and the current user has suitable `core.edit` or `core.edit.own` permission, Clip Detail pages show **Edit clip**.
+When Audio Archive’s own frontend-editing option is enabled and the current user has suitable `core.edit` or `core.edit.own` permission, Clip Detail pages show **Edit clip**.
 
 The frontend form supports public metadata and, with `core.edit.state`, publication fields. Original replacement and analysis controls remain administrator-only.

@@ -14,11 +14,12 @@
 		>
 			<option value="">JOPTION_SELECT_CATEGORY</option>
 		</field>
-		<field name="tags" type="tag" label="JTAG" multiple="true" mode="ajax" custom="allow" />
-		<field name="description" type="editor" label="JGLOBAL_DESCRIPTION" buttons="true" filter="\Joomla\CMS\Component\ComponentHelper::filterText" />
+		<field name="tags" type="tag" label="JTAG" multiple="true" mode="ajax" custom="deny" />
+		<field name="description" type="editor" label="JGLOBAL_DESCRIPTION" buttons="true" hide="fields" filter="\Joomla\CMS\Component\ComponentHelper::filterText" />
 		<field name="recorded_at" type="calendar" label="COM_AUDIOARCHIVE_FIELD_RECORDING_DATE" translateformat="true" showtime="true" filter="user_utc" />
-	</fieldset>
-	<fieldset name="publishing" label="COM_AUDIOARCHIVE_FIELDSET_PUBLISHING">
+	<field name="normalization_mode" type="list" label="COM_AUDIOARCHIVE_NORMALIZATION_MODE" description="COM_AUDIOARCHIVE_NORMALIZATION_HELP" default="inherit" validate="options"><option value="inherit">COM_AUDIOARCHIVE_NORMALIZATION_INHERIT</option><option value="enabled">JENABLED</option><option value="disabled">JDISABLED</option></field>
+</fieldset>
+	<fieldset name="publishing" label="COM_AUDIOARCHIVE_FIELDSET_PUBLISHING"><field name="visibility_mode" type="list" label="COM_AUDIOARCHIVE_VISIBILITY"><option value="normal">COM_AUDIOARCHIVE_VISIBILITY_NORMAL</option><option value="private">COM_AUDIOARCHIVE_VISIBILITY_PRIVATE</option></field>
 		<field name="state" type="list" label="JSTATUS" default="0" validate="options">
 			<option value="1">JPUBLISHED</option>
 			<option value="0">JUNPUBLISHED</option>

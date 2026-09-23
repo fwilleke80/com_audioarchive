@@ -101,7 +101,7 @@ class AudioUploadService
             throw new \RuntimeException(Text::sprintf('COM_AUDIOARCHIVE_ERROR_UPLOAD_EXTENSION', $extension !== '' ? $extension : '?'));
         }
 
-        $fileSize = max(0, (int) ($upload['size'] ?? filesize($temporaryPath)));
+        $fileSize = max(0, (int) filesize($temporaryPath));
         $maximumMegabytes = max(0, (int) $this->params->get('maximum_file_size', 0));
 
         if ($maximumMegabytes > 0 && $fileSize > $maximumMegabytes * 1024 * 1024)
@@ -234,6 +234,37 @@ class AudioUploadService
      */
     public function storeForClip(int $clipId, string $uuid, array $prepared): object
     {
+		$clip = $this->database->setQuery('SELECT * FROM ' . $this->database->quoteName('#__audioarchive_clips') . ' WHERE id=' . $clipId)->loadObject();
+		if (!$clip || !(new ClipAccessService($this->database, $this->user))->canAccessPrivate($clip))
+		{
+			throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+		}
+		$quota = new UserQuotaService($this->database, $this->params, $this->user);
+		$loadOwner = fn(): int => (int) $this->database->setQuery('SELECT created_by FROM ' . $this->database->quoteName('#__audioarchive_clips') . ' WHERE id = ' . $clipId)->loadResult();
+		$owner = $loadOwner();
+		return $quota->withOwnerLocks([$owner], function () use ($quota, $loadOwner, $owner, $clipId, $uuid, $prepared): object
+		{
+			if ($loadOwner() !== $owner)
+			{
+				throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_QUOTA_BUSY'));
+			}
+			$clip = $this->database->setQuery('SELECT * FROM ' . $this->database->quoteName('#__audioarchive_clips') . ' WHERE id=' . $clipId)->loadObject();
+			if (!$clip || !(new ClipAccessService($this->database, $this->user))->canAccessPrivate($clip))
+			{
+				throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+			}
+			$current = $this->getOriginalFile($clipId);
+			$prepared['file_size'] = (int) filesize((string) $prepared['temporary_path']);
+			$delta = max(0, $prepared['file_size'] - (int) ($current->file_size ?? 0));
+			$confirmed = Factory::getApplication()->isClient('administrator') && Factory::getApplication()->getInput()->post->getInt('quota_override_confirm', 0) === 1;
+			$quota->assertIncrease($owner, $delta, 0, $confirmed);
+			return $this->storeForClipLocked($clipId, $uuid, $prepared);
+		});
+    }
+
+    /** @brief Commit an original while the owner's quota lock is held. */
+    private function storeForClipLocked(int $clipId, string $uuid, array $prepared): object
+    {
         if ($clipId <= 0)
         {
             throw new \InvalidArgumentException(Text::_('COM_AUDIOARCHIVE_ERROR_INVALID_CLIP_ID'));
@@ -329,6 +360,37 @@ class AudioUploadService
      * @return array{file:object,warnings:string[],previous_original_retained:bool} Updated file and cleanup warnings.
      */
     public function replaceForClip(int $clipId, string $uuid, array $prepared): array
+    {
+		$clip = $this->database->setQuery('SELECT * FROM ' . $this->database->quoteName('#__audioarchive_clips') . ' WHERE id=' . $clipId)->loadObject();
+		if (!$clip || !(new ClipAccessService($this->database, $this->user))->canAccessPrivate($clip))
+		{
+			throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+		}
+		$quota = new UserQuotaService($this->database, $this->params, $this->user);
+		$loadOwner = fn(): int => (int) $this->database->setQuery('SELECT created_by FROM ' . $this->database->quoteName('#__audioarchive_clips') . ' WHERE id = ' . $clipId)->loadResult();
+		$owner = $loadOwner();
+		return $quota->withOwnerLocks([$owner], function () use ($quota, $loadOwner, $owner, $clipId, $uuid, $prepared): array
+		{
+			if ($loadOwner() !== $owner)
+			{
+				throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_QUOTA_BUSY'));
+			}
+			$clip = $this->database->setQuery('SELECT * FROM ' . $this->database->quoteName('#__audioarchive_clips') . ' WHERE id=' . $clipId)->loadObject();
+			if (!$clip || !(new ClipAccessService($this->database, $this->user))->canAccessPrivate($clip))
+			{
+				throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+			}
+			$current = $this->getOriginalFile($clipId);
+			$prepared['file_size'] = (int) filesize((string) $prepared['temporary_path']);
+			$delta = max(0, $prepared['file_size'] - (int) ($current->file_size ?? 0));
+			$confirmed = Factory::getApplication()->isClient('administrator') && Factory::getApplication()->getInput()->post->getInt('quota_override_confirm', 0) === 1;
+			$quota->assertIncrease($owner, $delta, 0, $confirmed);
+			return $this->replaceForClipLocked($clipId, $uuid, $prepared);
+		});
+    }
+
+    /** @brief Commit an original while the owner's quota lock is held. */
+    private function replaceForClipLocked(int $clipId, string $uuid, array $prepared): array
     {
         $current = $this->getOriginalFile($clipId);
 
@@ -1208,6 +1270,14 @@ class AudioUploadService
         {
             $query->where($this->database->quoteName('f.clip_id') . ' <> :excludeClipId')
                 ->bind(':excludeClipId', $excludeClipId, ParameterType::INTEGER);
+        }
+        if (Factory::getApplication()->isClient('site'))
+        {
+            (new ClipAccessService($this->database, $this->user))->applyPublicVisibilityFilter($query, 'c');
+        }
+        else
+        {
+            (new ClipAccessService($this->database, $this->user))->applyPrivacyFilter($query, 'c');
         }
         $result = $this->database->setQuery($query, 0, 1)->loadObject();
 

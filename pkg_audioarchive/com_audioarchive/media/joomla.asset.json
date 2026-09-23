@@ -1,7 +1,7 @@
 {
   "$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
   "name": "com_audioarchive",
-  "version": "0.12.4",
+  "version": "0.13.2.2",
   "description": "Joomla Punga Audio Archive assets",
   "license": "GPL-2.0-or-later",
   "assets": [
@@ -27,7 +27,7 @@
       "name": "com_audioarchive.bulk-upload",
       "type": "script",
       "uri": "com_audioarchive/bulk-upload.js",
-      "version": "0.11.11",
+      "version": "0.13.0",
       "attributes": {
         "type": "module"
       },
@@ -39,7 +39,7 @@
       "name": "com_audioarchive.directory-import",
       "type": "script",
       "uri": "com_audioarchive/directory-import.js",
-      "version": "0.11.4",
+      "version": "0.13.0",
       "attributes": {
         "type": "module"
       },
@@ -51,7 +51,7 @@
       "name": "com_audioarchive.player",
       "type": "script",
       "uri": "com_audioarchive/player.js",
-      "version": "0.11.29",
+      "version": "0.13.2.2",
       "attributes": {
         "type": "module"
       },
@@ -87,7 +87,7 @@
       "name": "com_audioarchive.waveform",
       "type": "script",
       "uri": "com_audioarchive/waveform.js",
-      "version": "0.11.4",
+      "version": "0.13.2.2",
       "attributes": {
         "type": "module"
       },
@@ -111,7 +111,7 @@
       "name": "com_audioarchive.social",
       "type": "script",
       "uri": "com_audioarchive/social.js",
-      "version": "0.12.4",
+      "version": "0.13.2",
       "attributes": {
         "type": "module"
       },
@@ -123,7 +123,7 @@
       "name": "com_audioarchive.playlist",
       "type": "script",
       "uri": "com_audioarchive/playlist.js",
-      "version": "0.11.27",
+      "version": "0.13.2",
       "attributes": {
         "type": "module"
       },

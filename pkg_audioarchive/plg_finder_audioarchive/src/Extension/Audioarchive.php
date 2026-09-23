@@ -216,7 +216,10 @@ final class Audioarchive extends Adapter implements SubscriberInterface
 
 		if ($context === 'com_audioarchive.clip')
 		{
-			$this->itemStateChange($pks, $value);
+			foreach ($pks as $id)
+			{
+				$this->reindex((int) $id);
+			}
 		}
 
 		if ($context === 'com_plugins.plugin' && $value === 0)
@@ -234,6 +237,12 @@ final class Audioarchive extends Adapter implements SubscriberInterface
 	 */
 	protected function index(Result $item)
 	{
+		if (($item->visibility_mode ?? 'normal') !== 'normal')
+		{
+			$this->remove((int) $item->id);
+			return;
+		}
+
 		$item->setLanguage();
 
 		if (!ComponentHelper::isEnabled($this->extension))
@@ -346,6 +355,7 @@ final class Audioarchive extends Adapter implements SubscriberInterface
 				'a.description AS summary',
 				'a.description AS body',
 				'a.state',
+				'a.visibility_mode',
 				'a.catid',
 				'a.uploaded_at AS start_date',
 				'a.created',

@@ -20,6 +20,10 @@ $formattedSize = $fileSize > 0
 	? number_format($sizeValue, $unitIndex === 0 ? 0 : 1) . ' ' . $units[$unitIndex]
 	: '—';
 $rows = [];
+if ($this->params->get('detail_show_owner', 0))
+{
+	$rows[] = [Text::_('COM_AUDIOARCHIVE_OWNER'), $this->escape($this->item->author_name ?: ((int) $this->item->created_by > 0 ? Text::sprintf('COM_AUDIOARCHIVE_OWNER_UNKNOWN', $this->item->created_by) : Text::_('COM_AUDIOARCHIVE_OWNER_SYSTEM')))];
+}
 
 if ((int) $this->params->get('detail_show_duration', 1) === 1)
 {

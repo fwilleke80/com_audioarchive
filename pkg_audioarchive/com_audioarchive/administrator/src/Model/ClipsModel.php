@@ -25,7 +25,7 @@ class ClipsModel extends ListModel
         if (empty($config['filter_fields']))
         {
             $config['filter_fields'] = [
-                'id', 'a.id',
+                'id', 'a.id', 'owner_name', 'a.created_by', 'a.visibility_mode',
                 'title', 'a.title',
                 'state', 'a.state',
                 'catid', 'a.catid', 'category_title',
@@ -51,16 +51,28 @@ class ClipsModel extends ListModel
         $db = $this->getDatabase();
         $query = $db->getQuery(true)
             ->select([
-                'a.*',
+                'a.*', $db->quoteName('owner.name', 'owner_name'),
                 $db->quoteName('c.title', 'category_title'),
                 $db->quoteName('vl.title', 'access_level'),
                 $db->quoteName('u.name', 'editor'),
             ])
             ->from($db->quoteName('#__audioarchive_clips', 'a'))
+            ->leftJoin($db->quoteName('#__users', 'owner') . ' ON owner.id = a.created_by')
             ->leftJoin($db->quoteName('#__categories', 'c') . ' ON c.id = a.catid')
             ->leftJoin($db->quoteName('#__viewlevels', 'vl') . ' ON vl.id = a.access')
             ->leftJoin($db->quoteName('#__users', 'u') . ' ON u.id = a.checked_out');
 
+        (new \Punga\Component\Audioarchive\Administrator\Service\ClipAccessService($db, $this->getCurrentUser()))->applyPrivacyFilter($query);
+        $owner = $this->getState('filter.owner', '');
+        if ($owner !== '' && $owner !== null)
+        {
+            $query->where('a.created_by = ' . max(0, (int) $owner));
+        }
+        $visibility = (string) $this->getState('filter.visibility', '');
+        if (in_array($visibility, ['normal', 'private'], true))
+        {
+            $query->where('a.visibility_mode = ' . $db->quote($visibility));
+        }
         $state = $this->getState('filter.state');
 
         if ($state !== '')
@@ -190,6 +202,14 @@ class ClipsModel extends ListModel
         $this->setState('filter.category_id', $this->getUserStateFromRequest($this->context . '.filter.category_id', 'filter_category_id', 0, 'int'));
         $this->setState('filter.access', $this->getUserStateFromRequest($this->context . '.filter.access', 'filter_access', 0, 'int'));
         parent::populateState($ordering, $direction);
+        $filters = Factory::getApplication()->getInput()->get('filter', [], 'array');
+        foreach (['owner', 'visibility'] as $filter)
+        {
+            if (array_key_exists($filter, $filters))
+            {
+                $this->setState('filter.' . $filter, $filters[$filter]);
+            }
+        }
 
         // Joomla currently posts the pagination offset as a top-level
         // control field. Accept the list-scoped form as well so this remains

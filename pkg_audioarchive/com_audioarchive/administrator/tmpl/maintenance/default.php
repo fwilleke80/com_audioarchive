@@ -200,7 +200,10 @@ $checkUrl = static fn(string $check): string => Route::_('index.php?option=com_a
 									<input class="form-check-input" type="checkbox" value="1" id="audioarchive-confirm-restore" name="confirm_restore" required>
 									<label class="form-check-label fw-semibold" for="audioarchive-confirm-restore"><?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_CONFIRM_LABEL'); ?></label>
 								</div>
-								<input type="hidden" name="task" value="maintenance.restoreArchive">
+								<?php if ($this->getCurrentUser()->authorise('audioarchive.quota.override', 'com_audioarchive')) : ?>
+<div class="form-check my-3"><input class="form-check-input" type="checkbox" name="quota_override_confirm" id="archive-quota-override" value="1"><label class="form-check-label" for="archive-quota-override"><?php echo Text::_('COM_AUDIOARCHIVE_QUOTA_OVERRIDE_CONFIRM'); ?></label></div>
+<?php endif; ?>
+<input type="hidden" name="task" value="maintenance.restoreArchive">
 								<button type="submit" class="btn btn-danger" onclick="return confirm(<?php echo htmlspecialchars(json_encode(Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_CONFIRM_DIALOG')), ENT_QUOTES, 'UTF-8'); ?>);">
 									<span class="icon-upload" aria-hidden="true"></span>
 									<?php echo Text::_('COM_AUDIOARCHIVE_ARCHIVE_IMPORT_RESTORE_BUTTON'); ?>

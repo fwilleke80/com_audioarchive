@@ -439,6 +439,7 @@
 		job.analysis = null;
 		renderJob(job);
 		const data = new FormData();
+		data.append('quota_override_confirm', document.querySelector('input[name="quota_override_confirm"]')?.checked ? '1' : '0');
 		data.append('path', job.path);
 		data.append('operation_mode', currentMode());
 		data.append('duplicate_policy', document.getElementById('jform_duplicate_policy')?.value || 'component');
@@ -520,6 +521,7 @@
 		job.message = '';
 		renderJob(job);
 		const data = new FormData();
+		data.append('quota_override_confirm', document.querySelector('input[name="quota_override_confirm"]')?.checked ? '1' : '0');
 		data.append('path', job.path);
 		let endpoint = importEndpoint;
 
@@ -568,6 +570,7 @@
 		setJobs([]);
 		updateControls();
 		const data = new FormData();
+		data.append('quota_override_confirm', document.querySelector('input[name="quota_override_confirm"]')?.checked ? '1' : '0');
 		data.append('recursive', document.querySelector('input[name="jform[recursive]"]:checked')?.value || '0');
 
 		try

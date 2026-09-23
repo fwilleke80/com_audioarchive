@@ -21,6 +21,7 @@ class Category extends Categories
 	 */
 	public function __construct($options = [])
 	{
+		$options['countItems'] = false;
 		$options['table'] = '#__audioarchive_clips';
 		$options['extension'] = 'com_audioarchive';
 		$options['field'] = 'catid';

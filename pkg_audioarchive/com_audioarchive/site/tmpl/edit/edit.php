@@ -52,6 +52,10 @@ if ($this->itemId > 0)
 			<?php endif; ?>
 		</div>
 
+        <?php foreach ($this->form->getFieldsets() as $fieldset) : ?>
+        <?php if (in_array($fieldset->name, ['details', 'publishing'], true)) { continue; } ?>
+        <fieldset class="mt-4"><legend><?php echo Text::_($fieldset->label ?: $fieldset->name); ?></legend><?php echo $this->form->renderFieldset($fieldset->name); ?></fieldset>
+        <?php endforeach; ?>
 		<input type="hidden" name="return" value="<?php echo $this->escape($this->returnValue); ?>">
 		<?php echo $this->form->getInput('id'); ?>
 		<?php echo HTMLHelper::_('form.token'); ?>

@@ -160,7 +160,6 @@ class EditController extends FormController
 		return $targetCategory > 0
 			&& (
 				$user->authorise('core.create', $targetAsset)
-				|| $user->authorise('core.edit', $targetAsset)
 			);
 	}
 
@@ -182,6 +181,11 @@ class EditController extends FormController
 			$append .= '&Itemid=' . $itemId;
 		}
 
+		$return = $this->input->get('return', '', 'base64');
+		if ($return !== '')
+		{
+			$append .= '&return=' . rawurlencode($return);
+		}
 		return $append;
 	}
 

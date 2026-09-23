@@ -132,6 +132,7 @@ class PlaylistController extends BaseController
 					true
 				);
 				$items[$uuid] = [
+					'normalization_gain' => \Punga\Component\Audioarchive\Administrator\Service\PlaybackNormalizationService::forClip((int) $clip->id),
 					'uuid' => (string) $clip->uuid,
 					'id' => $id,
 					'title' => (string) $clip->title,

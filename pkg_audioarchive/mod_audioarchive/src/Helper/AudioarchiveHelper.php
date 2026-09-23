@@ -132,6 +132,7 @@ abstract class AudioarchiveHelper
 				. ' AND ' . $database->quoteName('f.file_role') . ' = :fileRole'
 				. ' AND ' . $database->quoteName('f.is_available') . ' = :fileAvailable'
 			)
+			->where($database->quoteName('a.visibility_mode') . ' = ' . $database->quote('normal'))
 			->where($database->quoteName('a.state') . ' = :clipPublished')
 			->where($database->quoteName('c.published') . ' = :categoryPublished')
 			->where($database->quoteName('c.extension') . ' = :categoryExtension')
@@ -196,6 +197,7 @@ abstract class AudioarchiveHelper
 			}
 		}
 
+		(new \Punga\Component\Audioarchive\Administrator\Service\ClipAccessService($database, \Joomla\CMS\Factory::getApplication()->getIdentity()))->applyPublicVisibilityFilter($query);
 		return $query;
 	}
 

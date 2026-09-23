@@ -1,5 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<config>
+<config addruleprefix="Punga\Component\Audioarchive\Administrator\Rule">
+    <fieldset name="personal_collections" label="COM_AUDIOARCHIVE_COLLECTIONS">
+<field name="collections_storage" type="list" label="COM_AUDIOARCHIVE_COLLECTION_STORAGE" default="browser"><option value="browser">COM_AUDIOARCHIVE_COLLECTION_BROWSER</option><option value="server">COM_AUDIOARCHIVE_COLLECTION_SERVER</option><option value="choice">COM_AUDIOARCHIVE_COLLECTION_CHOICE</option></field>
+<field name="collections_default" type="list" label="COM_AUDIOARCHIVE_COLLECTION_DEFAULT_STORAGE" default="server" showon="collections_storage:choice"><option value="server">COM_AUDIOARCHIVE_COLLECTION_SERVER</option><option value="browser">COM_AUDIOARCHIVE_COLLECTION_BROWSER</option></field>
+<field name="collections_guest_browser" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLLECTION_GUEST" default="1"><option value="0">JNO</option><option value="1">JYES</option></field>
+<field name="collections_sharing" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLLECTION_SHARING" default="1"><option value="0">JNO</option><option value="1">JYES</option></field>
+</fieldset>
+<fieldset name="frontend_contribution" label="COM_AUDIOARCHIVE_FRONTEND_CONTRIBUTION">
+<field name="frontend_upload_enabled" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_FRONTEND_UPLOAD_ENABLED" default="1"><option value="0">JNO</option><option value="1">JYES</option></field>
+<field name="frontend_editing_enabled" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_FRONTEND_EDITING_ENABLED" default="1"><option value="0">JNO</option><option value="1">JYES</option></field>
+<field name="frontend_upload_categories" type="category" extension="com_audioarchive" multiple="true" published="1" label="COM_AUDIOARCHIVE_UPLOAD_ALLOWED_CATEGORIES" description="COM_AUDIOARCHIVE_UPLOAD_CATEGORIES_HELP" />
+<field name="frontend_allowed_access" type="accesslevel" multiple="true" label="COM_AUDIOARCHIVE_UPLOAD_ALLOWED_ACCESS" description="COM_AUDIOARCHIVE_UPLOAD_ACCESS_HELP" default="1" />
+<field name="archive_column_owner" type="list" label="COM_AUDIOARCHIVE_ARCHIVE_OWNER_COLUMN" default="0"><option value="0">JNO</option><option value="1">JYES</option></field>
+<field name="archive_show_owner_filter" type="list" label="COM_AUDIOARCHIVE_ARCHIVE_OWNER_FILTER" default="0"><option value="0">JNO</option><option value="1">JYES</option></field>
+<field name="detail_show_owner" type="list" label="COM_AUDIOARCHIVE_DETAIL_OWNER" default="0"><option value="0">JNO</option><option value="1">JYES</option></field>
+</fieldset>
+<fieldset name="users_quotas" label="COM_AUDIOARCHIVE_USERS_QUOTAS">
+        <field name="quota_storage_enabled" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_QUOTA_STORAGE_ENABLED" default="0"><option value="0">JNO</option><option value="1">JYES</option></field>
+        <field name="quota_storage_mode" type="list" label="COM_AUDIOARCHIVE_QUOTA_STORAGE_MB" default="unlimited"><option value="unlimited">COM_AUDIOARCHIVE_QUOTA_UNLIMITED</option><option value="custom">COM_AUDIOARCHIVE_QUOTA_CUSTOM</option></field>
+        <field name="quota_storage_default_mb" type="number" label="COM_AUDIOARCHIVE_QUOTA_STORAGE_MB" default="1024" min="0" max="2147483647" step="1" filter="integer" showon="quota_storage_mode:custom" />
+        <field name="quota_clips_enabled" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_QUOTA_CLIPS_ENABLED" default="0"><option value="0">JNO</option><option value="1">JYES</option></field>
+        <field name="quota_clips_mode" type="list" label="COM_AUDIOARCHIVE_QUOTA_CLIPS" default="unlimited"><option value="unlimited">COM_AUDIOARCHIVE_QUOTA_UNLIMITED</option><option value="custom">COM_AUDIOARCHIVE_QUOTA_CUSTOM</option></field>
+        <field name="quota_clips_default" type="number" label="COM_AUDIOARCHIVE_QUOTA_CLIPS" default="250" min="0" max="2147483647" step="1" filter="integer" showon="quota_clips_mode:custom" />
+        <field name="allow_private_clips" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_ALLOW_PRIVATE" default="0"><option value="0">JNO</option><option value="1">JYES</option></field>
+    </fieldset>
     <fieldset name="general" label="COM_AUDIOARCHIVE_CONFIG_GENERAL_LABEL">
         <field
             name="default_category"
@@ -271,6 +295,10 @@
     </fieldset>
 
     <fieldset name="playback" label="COM_AUDIOARCHIVE_CONFIG_PLAYBACK_LABEL">
+        <fieldset name="playback_normalization" label="COM_AUDIOARCHIVE_NORMALIZATION_MODE">
+        <field name="normalize_playback" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_NORMALIZE_PLAYBACK" description="COM_AUDIOARCHIVE_NORMALIZATION_HELP" default="0"><option value="0">JNO</option><option value="1">JYES</option></field>
+<field name="normalization_target_dbfs" validate="normalizationtarget" type="number" label="COM_AUDIOARCHIVE_NORMALIZATION_TARGET" description="COM_AUDIOARCHIVE_NORMALIZATION_HELP" default="-1.0" min="-60" max="0" step="0.1" filter="float" />
+        </fieldset>
         <fieldset name="player_style" label="COM_AUDIOARCHIVE_CONFIG_PLAYER_STYLE_SECTION_LABEL">
             <field
                 name="default_embed_presentation"

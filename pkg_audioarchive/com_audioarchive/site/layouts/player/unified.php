@@ -63,6 +63,7 @@ $initialAnalysisView = match (true)
 };
 $mime = trim((string) ($data['mime'] ?? '')) ?: 'application/octet-stream';
 $clipId = max(0, (int) ($data['clipId'] ?? 0));
+$normalizationGain = \Punga\Component\Audioarchive\Administrator\Service\PlaybackNormalizationService::forClip((int) ($data['normalizationClipId'] ?? $clipId));
 $labels = is_array($data['labels'] ?? null) ? $data['labels'] : [];
 $playLabel = (string) ($labels['play'] ?? 'Play');
 $pauseLabel = (string) ($labels['pause'] ?? 'Pause');
@@ -124,6 +125,7 @@ $style = implode(';', [
 	class="<?php echo $escape($className); ?>"
 	style="<?php echo $escape($style); ?>"
 	data-audioarchive-custom-player
+	data-normalization-gain="<?php echo $normalizationGain; ?>"
 	data-player-presentation="<?php echo $escape($presentation); ?>"
 	data-preferred-analysis-view="<?php echo $escape($initialAnalysisView); ?>"
 >

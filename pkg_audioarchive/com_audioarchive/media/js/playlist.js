@@ -1,3 +1,5 @@
+import {prepareNormalization, updateNormalization} from './normalization.js?v=0.13.2';
+import {Collections} from './collections.js?v=0.13.2';
 const PLAYLIST_STORAGE_KEY = 'com_audioarchive.playlists.v1';
 const PLAYLIST_STORAGE_VERSION = 1;
 const PLAYLIST_RESOLUTION_BATCH_SIZE = 500;
@@ -12,6 +14,10 @@ const SOUNDBOARD_STORAGE_KEY = 'com_audioarchive.soundboard.v1';
  */
 function playlistReadStorage(key, fallback)
 {
+	if ([PLAYLIST_STORAGE_KEY, SOUNDBOARD_STORAGE_KEY].includes(key))
+	{
+		return Collections.read(key, fallback);
+	}
 	try
 	{
 		const value = window.localStorage.getItem(key);
@@ -206,12 +212,10 @@ function readPlaylistStore(fallbackName = 'Playlist', ensurePlaylist = false)
  * @param {object} store Store to persist.
  * @returns {boolean} True on success.
  */
-function writePlaylistStore(store)
+async function writePlaylistStore(store)
 {
-	return playlistWriteStorage(
-		PLAYLIST_STORAGE_KEY,
-		normalisePlaylistStore(store, 'Playlist', false)
-	);
+	// Pass the live working copy so failed writes can restore it before UI rendering.
+	return Collections.write(PLAYLIST_STORAGE_KEY, store);
 }
 
 /**
@@ -549,7 +553,7 @@ function closePlaylistPopovers(retained = null)
  * @param {HTMLElement} origin Origin element.
  * @returns {boolean} True when present after the operation.
  */
-function addClipToSoundboard(clip, origin)
+async function addClipToSoundboard(clip, origin)
 {
 	const configurationRoot = origin.closest('[data-audioarchive-soundboard-pad-count]')
 		|| document.querySelector('[data-audioarchive-soundboard-pad-count]');
@@ -581,7 +585,7 @@ function addClipToSoundboard(clip, origin)
 		if (clipUuid !== '' && String(board[existing]?.uuid || '').trim() === '')
 		{
 			board[existing].uuid = clipUuid;
-			playlistWriteStorage(SOUNDBOARD_STORAGE_KEY, board);
+			await Collections.write(SOUNDBOARD_STORAGE_KEY, board);
 		}
 
 		return true;
@@ -601,7 +605,7 @@ function addClipToSoundboard(clip, origin)
 	}
 
 	board[slot] = {id: clip.id, uuid: clipUuid, title: clipTitle};
-	return playlistWriteStorage(SOUNDBOARD_STORAGE_KEY, board);
+	return await Collections.write(SOUNDBOARD_STORAGE_KEY, board);
 }
 
 /**
@@ -736,9 +740,9 @@ function renderAddToPlaylistChoices(container, menu)
 		const name = document.createElement('span');
 		name.textContent = playlist.name;
 		button.append(stateIcon, name);
-		button.addEventListener('click', () =>
+		button.addEventListener('click', async () =>
 		{
-			if (addClipToPlaylist(playlist, clip) && writePlaylistStore(store))
+			if (addClipToPlaylist(playlist, clip) && await writePlaylistStore(store))
 			{
 				recordPlaylistInteraction(
 					menu.dataset.interactionUrl || '',
@@ -771,7 +775,7 @@ function renderAddToPlaylistChoices(container, menu)
 	createButton.className = 'com-audioarchive-add-to-option';
 	createButton.setAttribute('role', 'menuitem');
 	createButton.innerHTML = `<span aria-hidden="true">＋</span><span>${menu.dataset.labelCreate || 'Create new playlist…'}</span>`;
-	createButton.addEventListener('click', () =>
+	createButton.addEventListener('click', async () =>
 	{
 		const requestedName = window.prompt(menu.dataset.labelNamePrompt || 'Playlist name:', fallbackName);
 
@@ -784,7 +788,7 @@ function renderAddToPlaylistChoices(container, menu)
 		const playlist = createPlaylist(currentStore, requestedName);
 		addClipToPlaylist(playlist, clip);
 
-		if (writePlaylistStore(currentStore))
+		if (await writePlaylistStore(currentStore))
 		{
 			recordPlaylistInteraction(
 				menu.dataset.interactionUrl || '',
@@ -943,7 +947,7 @@ function renderArchiveAddAllPlaylistChoices(container, menu, clips)
 		count.className = 'com-audioarchive-add-to-count';
 		count.textContent = missingCount > 0 ? '+' + missingCount : '';
 		button.append(stateIcon, name, count);
-		button.addEventListener('click', () =>
+		button.addEventListener('click', async () =>
 		{
 			const added = addClipsToPlaylist(playlist, clips);
 
@@ -953,7 +957,7 @@ function renderArchiveAddAllPlaylistChoices(container, menu, clips)
 				return;
 			}
 
-			if (!writePlaylistStore(store))
+			if (!await writePlaylistStore(store))
 			{
 				setArchivePlaylistStatus(
 					menu,
@@ -1000,7 +1004,7 @@ function renderArchiveAddAllPlaylistChoices(container, menu, clips)
 	createButton.innerHTML = '<span aria-hidden="true">＋</span><span>'
 		+ (menu.dataset.labelCreate || 'Create new playlist…')
 		+ '</span>';
-	createButton.addEventListener('click', () =>
+	createButton.addEventListener('click', async () =>
 	{
 		const requestedName = window.prompt(menu.dataset.labelNamePrompt || 'Playlist name:', fallbackName);
 
@@ -1018,7 +1022,7 @@ function renderArchiveAddAllPlaylistChoices(container, menu, clips)
 			return;
 		}
 
-		if (!writePlaylistStore(currentStore))
+		if (!await writePlaylistStore(currentStore))
 		{
 			setArchivePlaylistStatus(
 				menu,
@@ -1172,7 +1176,7 @@ function initialiseAddToMenus()
 				soundboardButton.className = 'com-audioarchive-add-to-option';
 				soundboardButton.setAttribute('role', 'menuitem');
 				soundboardButton.innerHTML = `<span aria-hidden="true">▦</span><span>${menu.dataset.labelSoundboard || 'Sound Board'}</span>`;
-				soundboardButton.addEventListener('click', () =>
+				soundboardButton.addEventListener('click', async () =>
 				{
 					addClipToSoundboard(
 						{
@@ -1211,7 +1215,7 @@ function initialiseAddToMenus()
 				submenu.className = 'com-audioarchive-add-to-submenu';
 				submenu.setAttribute('role', 'menu');
 				submenu.hidden = true;
-				submenuToggle.addEventListener('click', () =>
+				submenuToggle.addEventListener('click', async () =>
 				{
 					renderAddToPlaylistChoices(submenu, menu);
 					const open = submenu.hidden;
@@ -1229,7 +1233,7 @@ function initialiseAddToMenus()
 			popover.appendChild(status);
 		};
 
-		toggle.addEventListener('click', () =>
+		toggle.addEventListener('click', async () =>
 		{
 			const open = toggle.getAttribute('aria-expanded') !== 'true';
 			closePlaylistPopovers(open ? menu : null);
@@ -1314,7 +1318,7 @@ function createPlaylistRowShareMenu(root, item)
 		native.title = root.dataset.audioarchiveLabelBrowserUnavailable || '';
 	}
 	native.innerHTML = `<span class="icon-share-alt" aria-hidden="true"></span><span>${root.dataset.audioarchiveLabelBrowserShare || 'Share with browser'}</span>`;
-	toggle.addEventListener('click', () =>
+	toggle.addEventListener('click', async () =>
 	{
 		const open = toggle.getAttribute('aria-expanded') !== 'true';
 		closePlaylistPopovers(open ? menu : null);
@@ -1424,7 +1428,7 @@ function initialiseSoundboardPlaylistConversion()
 			playlist.items = items;
 			playlist.modified = Date.now();
 
-			if (!writePlaylistStore(store))
+			if (!await writePlaylistStore(store))
 			{
 				throw new Error('Unable to save playlist storage.');
 			}
@@ -1457,7 +1461,7 @@ function initialiseSoundboardPlaylistConversion()
  *
  * @returns {void}
  */
-function initialisePlaylistPage()
+async function initialisePlaylistPage()
 {
 	const root = document.querySelector('[data-audioarchive-playlists]');
 
@@ -1467,8 +1471,7 @@ function initialisePlaylistPage()
 	}
 
 	const fallbackName = root.dataset.audioarchiveLabelDefaultName || 'My playlist';
-	let store = readPlaylistStore(fallbackName, true);
-	writePlaylistStore(store);
+	let store = readPlaylistStore(fallbackName, Collections.backend === 'browser');
 	let temporaryPlaylist = null;
 	let resolvedItems = new Map();
 	let currentIndex = -1;
@@ -1491,9 +1494,9 @@ function initialisePlaylistPage()
 
 	const fragment = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('playlist');
 
-	if (fragment)
+	if (fragment || Collections.shared?.kind === 'playlist')
 	{
-		const decoded = decodePlaylistPayload(fragment);
+		const decoded = Collections.shared?.kind === 'playlist' ? Collections.shared : decodePlaylistPayload(fragment);
 		const candidate = normalisePlaylist(
 			decoded && typeof decoded === 'object'
 				? {
@@ -1528,15 +1531,13 @@ function initialisePlaylistPage()
 	{
 		const url = new URL(window.location.href);
 		url.hash = '';
+		url.searchParams.delete('aa_share');
 		window.history.replaceState(window.history.state, '', url.toString());
 	};
 
-	const saveStore = () =>
+	const saveStore = async () =>
 	{
-		if (!temporaryPlaylist)
-		{
-			writePlaylistStore(store);
-		}
+		return temporaryPlaylist ? true : writePlaylistStore(store);
 	};
 
 	const setStatus = (message) =>
@@ -1619,6 +1620,8 @@ function initialisePlaylistPage()
 		}
 
 		audio.pause();
+		player.dataset.normalizationGain = String(item.normalization_gain ?? 1);
+		updateNormalization(audio, item.normalization_gain ?? 1);
 		audio.src = item.stream_url;
 		audio.dataset.clipId = String(item.id);
 		audio.dataset.clipTitle = item.title;
@@ -1683,6 +1686,7 @@ function initialisePlaylistPage()
 		{
 			try
 			{
+				await prepareNormalization(audio, player.dataset.normalizationGain || 1);
 				await audio.play();
 			}
 			catch (error)
@@ -1692,7 +1696,7 @@ function initialisePlaylistPage()
 		}
 	};
 
-	const moveItem = (index, direction) =>
+	const moveItem = async (index, direction) =>
 	{
 		const playlist = getCurrentPlaylist();
 		const target = index + direction;
@@ -1709,12 +1713,15 @@ function initialisePlaylistPage()
 		{
 			currentIndex = playlist.items.findIndex((entry) => entry.uuid === currentUuid);
 		}
-		saveStore();
+		if (!(await saveStore()))
+		{
+			return;
+		}
 		renderRows();
 		updateManager();
 	};
 
-	const removeItem = (index) =>
+	const removeItem = async (index) =>
 	{
 		const playlist = getCurrentPlaylist();
 
@@ -1725,7 +1732,10 @@ function initialisePlaylistPage()
 
 		const [removed] = playlist.items.splice(index, 1);
 		playlist.modified = Date.now();
-		saveStore();
+		if (!(await saveStore()))
+		{
+			return;
+		}
 		const resolved = resolvedItems.get(removed.uuid);
 		recordPlaylistInteraction(
 			root.dataset.audioarchiveInteractionUrl || '',
@@ -1947,7 +1957,7 @@ function initialisePlaylistPage()
 					soundboard.title = root.dataset.audioarchiveLabelAddSoundboard || 'Add to Sound Board';
 					soundboard.setAttribute('aria-label', `${soundboard.title}: ${item.title}`);
 					soundboard.innerHTML = `<span aria-hidden="true">▦</span><span>${root.dataset.audioarchiveLabelAddSoundboard || 'Add to Sound Board'}</span>`;
-					soundboard.addEventListener('click', () => addClipToSoundboard({id: item.id, title: item.title}, root));
+					soundboard.addEventListener('click', async () => addClipToSoundboard({id: item.id, title: item.title}, root));
 					actions.appendChild(soundboard);
 				}
 			}
@@ -2059,7 +2069,10 @@ function initialisePlaylistPage()
 
 			if (!temporaryPlaylist)
 			{
-				saveStore();
+				if (!(await saveStore()))
+		{
+			return;
+		}
 			}
 		}
 		catch (error)
@@ -2128,7 +2141,7 @@ function initialisePlaylistPage()
 			return;
 		}
 
-		if (!playlistWriteStorage(SOUNDBOARD_STORAGE_KEY, board))
+		if (!await Collections.write(SOUNDBOARD_STORAGE_KEY, board))
 		{
 			setConversionStatus(root.dataset.audioarchiveLabelLoadSoundboardError || 'The Sound Board could not be saved.');
 			return;
@@ -2147,7 +2160,7 @@ function initialisePlaylistPage()
 		));
 	});
 
-	select?.addEventListener('change', () =>
+	select?.addEventListener('change', async () =>
 	{
 		if (!(select instanceof HTMLSelectElement) || temporaryPlaylist)
 		{
@@ -2155,13 +2168,16 @@ function initialisePlaylistPage()
 		}
 
 		store.selectedId = select.value;
-		writePlaylistStore(store);
+		if (!(await writePlaylistStore(store)))
+		{
+			return;
+		}
 		currentIndex = -1;
 		currentUuid = '';
 		void refreshMetadata(false);
 	});
 
-	root.querySelector('[data-audioarchive-playlist-create]')?.addEventListener('click', () =>
+	root.querySelector('[data-audioarchive-playlist-create]')?.addEventListener('click', async () =>
 	{
 		const name = window.prompt(root.dataset.audioarchiveLabelNamePrompt || 'Playlist name:', fallbackName);
 
@@ -2182,7 +2198,10 @@ function initialisePlaylistPage()
 		}
 
 		const playlist = createPlaylist(store, name);
-		writePlaylistStore(store);
+		if (!(await writePlaylistStore(store)))
+		{
+			return;
+		}
 		recordPlaylistInteraction(
 			root.dataset.audioarchiveInteractionUrl || '',
 			root.dataset.audioarchiveInteractionToken || '',
@@ -2194,7 +2213,7 @@ function initialisePlaylistPage()
 		void refreshMetadata(false);
 	});
 
-	root.querySelector('[data-audioarchive-playlist-rename]')?.addEventListener('click', () =>
+	root.querySelector('[data-audioarchive-playlist-rename]')?.addEventListener('click', async () =>
 	{
 		const playlist = getCurrentPlaylist();
 
@@ -2215,11 +2234,14 @@ function initialisePlaylistPage()
 			name
 		);
 		playlist.modified = Date.now();
-		writePlaylistStore(store);
+		if (!(await writePlaylistStore(store)))
+		{
+			return;
+		}
 		updateManager();
 	});
 
-	root.querySelector('[data-audioarchive-playlist-delete]')?.addEventListener('click', () =>
+	root.querySelector('[data-audioarchive-playlist-delete]')?.addEventListener('click', async () =>
 	{
 		const playlist = getCurrentPlaylist();
 
@@ -2234,7 +2256,10 @@ function initialisePlaylistPage()
 			createPlaylist(store, fallbackName);
 		}
 		store.selectedId = store.playlists[0].id;
-		writePlaylistStore(store);
+		if (!(await writePlaylistStore(store)))
+		{
+			return;
+		}
 		recordPlaylistInteraction(
 			root.dataset.audioarchiveInteractionUrl || '',
 			root.dataset.audioarchiveInteractionToken || '',
@@ -2284,7 +2309,7 @@ function initialisePlaylistPage()
 				}
 				else
 				{
-					void audio.play();
+					void prepareNormalization(audio, player.dataset.normalizationGain || 1).then(() => audio.play());
 				}
 			}
 			else
@@ -2294,7 +2319,7 @@ function initialisePlaylistPage()
 		}
 	});
 
-	previousButton?.addEventListener('click', () =>
+	previousButton?.addEventListener('click', async () =>
 	{
 		const index = findPlayableIndex(currentIndex - 1, -1);
 		if (index >= 0)
@@ -2303,7 +2328,7 @@ function initialisePlaylistPage()
 		}
 	});
 
-	nextButton?.addEventListener('click', () =>
+	nextButton?.addEventListener('click', async () =>
 	{
 		const index = findPlayableIndex(currentIndex + 1, 1);
 		if (index >= 0)
@@ -2345,7 +2370,7 @@ function initialisePlaylistPage()
 		});
 	}
 
-	root.querySelector('[data-audioarchive-playlist-save-shared]')?.addEventListener('click', () =>
+	root.querySelector('[data-audioarchive-playlist-save-shared]')?.addEventListener('click', async () =>
 	{
 		if (!temporaryPlaylist)
 		{
@@ -2370,7 +2395,10 @@ function initialisePlaylistPage()
 
 		store.playlists.push(saved);
 		store.selectedId = saved.id;
-		writePlaylistStore(store);
+		if (!(await writePlaylistStore(store)))
+		{
+			return;
+		}
 		recordPlaylistInteraction(
 			root.dataset.audioarchiveInteractionUrl || '',
 			root.dataset.audioarchiveInteractionToken || '',
@@ -2388,7 +2416,7 @@ function initialisePlaylistPage()
 		void refreshMetadata(true);
 	});
 
-	root.querySelector('[data-audioarchive-playlist-export]')?.addEventListener('click', () =>
+	root.querySelector('[data-audioarchive-playlist-export]')?.addEventListener('click', async () =>
 	{
 		const playlist = getCurrentPlaylist();
 
@@ -2413,7 +2441,7 @@ function initialisePlaylistPage()
 	});
 
 	const fileInput = root.querySelector('[data-audioarchive-playlist-file]');
-	root.querySelector('[data-audioarchive-playlist-import]')?.addEventListener('click', () => fileInput?.click());
+	root.querySelector('[data-audioarchive-playlist-import]')?.addEventListener('click', async () => fileInput?.click());
 	fileInput?.addEventListener('change', async () =>
 	{
 		const file = fileInput.files?.[0];
@@ -2445,7 +2473,10 @@ function initialisePlaylistPage()
 			imported.name = makeUniquePlaylistName(store, imported.name);
 			store.playlists.push(imported);
 			store.selectedId = imported.id;
-			writePlaylistStore(store);
+			if (!(await writePlaylistStore(store)))
+		{
+			return;
+		}
 			setStatus(root.dataset.audioarchiveLabelImported || 'Playlist imported.');
 			currentIndex = -1;
 			currentUuid = '';
@@ -2472,7 +2503,7 @@ function initialisePlaylistPage()
 		shareNative.disabled = typeof navigator.share !== 'function';
 	}
 
-	const getShareUrl = () =>
+	const getShareUrl = async () =>
 	{
 		const playlist = getCurrentPlaylist();
 		const payload = {
@@ -2480,10 +2511,18 @@ function initialisePlaylistPage()
 			name: playlist?.name || fallbackName,
 			items: (playlist?.items || []).map((item) => ({uuid: item.uuid, title: item.title})),
 		};
+		if (Collections.backend === 'server' && !temporaryPlaylist)
+		{
+			return playlist && Collections.sharing ? Collections.shareUrl(playlist.id, root.dataset.audioarchiveCanonicalUrl || window.location.href) : '';
+		}
+		if (Collections.shared?.kind === 'playlist')
+		{
+			return window.location.href;
+		}
 		return `${root.dataset.audioarchiveCanonicalUrl || window.location.href.split('#')[0]}#playlist=${encodePlaylistPayload(payload)}`;
 	};
 
-	shareToggle?.addEventListener('click', () =>
+	shareToggle?.addEventListener('click', async () =>
 	{
 		if (!(shareToggle instanceof HTMLButtonElement) || !(sharePopover instanceof HTMLElement))
 		{
@@ -2503,7 +2542,8 @@ function initialisePlaylistPage()
 	shareCopy?.addEventListener('click', async () =>
 	{
 		const playlist = getCurrentPlaylist();
-		if (await playlistCopyText(getShareUrl()))
+		const url = await getShareUrl();
+		if (url && await playlistCopyText(url))
 		{
 			setStatus(root.dataset.audioarchiveLabelCopied || 'Link copied.');
 			recordPlaylistInteraction(
@@ -2519,7 +2559,8 @@ function initialisePlaylistPage()
 	shareNative?.addEventListener('click', async () =>
 	{
 		const playlist = getCurrentPlaylist();
-		if (await playlistNativeShare(playlist?.name || document.title, getShareUrl()))
+		const url = await getShareUrl();
+		if (url && await playlistNativeShare(playlist?.name || document.title, url))
 		{
 			recordPlaylistInteraction(
 				root.dataset.audioarchiveInteractionUrl || '',
@@ -2538,10 +2579,16 @@ function initialisePlaylistPage()
 			return;
 		}
 
-		store = readPlaylistStore(fallbackName, true);
+		store = readPlaylistStore(fallbackName, Collections.backend === 'browser');
 		void refreshMetadata(true);
 	});
 
+	Collections.mount(root, 'playlist', () => temporaryPlaylist ? '' : store.selectedId, () =>
+	{
+		store = readPlaylistStore(fallbackName, false);
+		updateManager();
+		void refreshMetadata(true);
+	});
 	updateManager();
 	void refreshMetadata(false);
 }
@@ -2551,8 +2598,9 @@ function initialisePlaylistPage()
  *
  * @returns {void}
  */
-function initialiseAudioArchivePlaylists()
+async function initialiseAudioArchivePlaylists()
 {
+	await Collections.ready();
 	initialiseAddToMenus();
 	initialiseArchiveAddAllMenus();
 	initialiseSoundboardPlaylistConversion();
@@ -2574,4 +2622,11 @@ function initialiseAudioArchivePlaylists()
 	window.addEventListener('scroll', () => closePlaylistPopovers(), true);
 }
 
-document.addEventListener('DOMContentLoaded', initialiseAudioArchivePlaylists);
+if (document.readyState === 'loading')
+{
+	document.addEventListener('DOMContentLoaded', initialiseAudioArchivePlaylists);
+}
+else
+{
+	void initialiseAudioArchivePlaylists();
+}

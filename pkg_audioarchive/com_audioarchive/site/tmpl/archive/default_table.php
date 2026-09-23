@@ -20,6 +20,7 @@ if (!$this->items)
 }
 
 $columns = [
+	'owner' => (bool) $this->params->get('archive_column_owner', 0),
 	'play' => (int) $this->params->get('archive_column_play', 1) === 1,
 	'title' => (int) $this->params->get('archive_column_title', 1) === 1,
 	'category' => (int) $this->params->get('archive_column_category', 0) === 1,
@@ -103,6 +104,7 @@ $mobileSortFields = array_filter($mobileSortFields);
 						</a>
 					</th>
 				<?php endif; ?>
+				<?php if ($columns['owner']) : ?><th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_OWNER'); ?></th><?php endif; ?>
 				<?php if ($columns['category']) : ?><th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_CATEGORY'); ?></th><?php endif; ?>
 				<?php if ($columns['duration']) : ?>
 					<th scope="col" aria-sort="<?php echo $ariaSort('duration'); ?>">

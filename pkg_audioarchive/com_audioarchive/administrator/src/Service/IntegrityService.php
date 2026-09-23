@@ -36,6 +36,11 @@ class IntegrityService
      */
     public function __construct(DatabaseInterface $database, Registry $params)
     {
+		if (!\Joomla\CMS\Factory::getApplication()->getIdentity()->authorise('audioarchive.manage.private', 'com_audioarchive'))
+		{
+			throw new \RuntimeException(\Joomla\CMS\Language\Text::_('JERROR_ALERTNOAUTHOR'), 403);
+		}
+
         $this->database = $database;
         $this->storage = new ManagedStorageService($params);
     }

@@ -1,5 +1,54 @@
 # Changelog
 
+## 0.13.2.2
+
+- Rename the Processing tab’s Clip analysis section to Waveform generation (English and German).
+
+- Scale played and unplayed waveform heights using the clip’s effective peak-normalization gain, including per-clip overrides and target level.
+- Redraw cached waveform layers when gain changes and constrain drawing to the canvas amplitude range.
+- Apply the same behavior to the standalone waveform renderer; stored peaks and original media remain unchanged.
+
+## 0.13.2.1
+
+- Fix hidden normalization options: place the controls in a nested Playback normalization section within Playback and Downloads.
+
+## 0.13.2
+
+- Add account-stored playlists and named Sound Boards, configurable storage policy, explicit browser import, ownership checks and revision conflict protection.
+- Add revocable short collection share links with viewer-specific clip access checks and portable archive export/restore.
+- Add optional non-destructive peak normalization, per-clip overrides and original-channel peak measurement during waveform generation.
+- Make the recorder collapsible and remember its state for the current user in the browser session.
+- Hide the unsupported CMS Field insertion button in frontend clip editors.
+
+## 0.13.1.1 — Archive initialization hotfix
+
+- Fix infinite recursion when opening the frontend Archive, caused by reading model state from inside its own lazy initialization while persisting the Owner filter.
+- Resolve the owner once and reuse the local value for model/session state, preserving disabled-filter behavior, request filters, session restoration and reset.
+- Add an executable regression test using the production Archive model and a Joomla-style lazy-state adapter: the 0.13.1 code reproduces recursive entry; the fixed code passes 24 assertions.
+- No feature or database layout changes. Install over 0.13.1; 0.13.2 remains the planned account-collections milestone.
+
+## 0.13.1 — Frontend contribution
+
+- Add Upload Clip and My Clips menu types for authenticated contributors.
+- Reuse the existing upload, metadata and processing services; enforce Create permission, menu/category restrictions and quotas server-side.
+- Provide moderated creation, normal/private visibility and globally allowed Access Levels narrowed by menu policy. Posted ownership and managed fields cannot override server values.
+- Show owned clips, quota usage, filters, processing status, permitted preview/edit actions and permission-checked trash/permanent deletion.
+- Refine the existing frontend editor with restricted categories, Access Levels, tags, visibility and preserved publication controls. Audio Archive now has its own frontend-editing option.
+- Add opt-in public Owner column, Owner filter and Clip Detail attribution; owner options derive only from eligible public results.
+- Add contributor setup and quota-test instructions, 27 additional production-policy assertions, and a no-op schema marker. Full Joomla/MySQL browser and concurrency validation remains a staging gate.
+
+## 0.13.0 — 2026-09-19
+
+- Added normal/private visibility, shared clip policy and permission-based owner previews; protected media and analyses recheck current access.
+- Added private-content management, ownership transfer and explicit quota-override ACL actions.
+- Added backend Owner/Visibility filters and columns, guarded owner changes and batch transfers.
+- Added original-storage and retained-clip quotas with site defaults, additive group rules, user-profile schema, and a Quota Rules page.
+- Serialized owner usage changes around upload/replacement, clip creation, ownership transfer and archive restore. Smaller replacements remain permitted when over quota.
+- Excluded private clips from public discovery, modules, tag counts, related ranking, Finder indexing and Joomla Tags UCM publication.
+- Added portable group quota rules and profile data to exports/restores, preserving clip visibility and unresolved private ownership.
+- Corrected recorder documentation while leaving recorder/player JavaScript and browser collection formats unchanged.
+- Added executable access/quota regression tests; full Joomla/MySQL staging validation remains required.
+
 ## 0.12.4 — 2026-09-19
 
 - Traced the Chromatic Keyboard regression specifically against 0.12.1 and confirmed that the live sampler engine itself had not changed in 0.12.2.

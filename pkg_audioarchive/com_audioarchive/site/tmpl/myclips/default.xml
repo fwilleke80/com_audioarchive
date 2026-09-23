@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata><layout title="COM_AUDIOARCHIVE_MY_CLIPS"><message>COM_AUDIOARCHIVE_MY_CLIPS_DESC</message></layout><fields name="params"><fieldset name="basic" label="JGLOBAL_FIELDSET_BASIC"><field name="myclips_show_quota" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_MY_CLIPS_SHOW_QUOTA" default="1"><option value="0">JNO</option><option value="1">JYES</option></field></fieldset></fields></metadata>

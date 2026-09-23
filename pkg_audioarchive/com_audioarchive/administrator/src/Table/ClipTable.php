@@ -84,6 +84,11 @@ class ClipTable extends Table implements TaggableTableInterface, CurrentUserInte
      */
     public function check()
     {
+        if (!in_array($this->normalization_mode ?? 'inherit', ['inherit', 'enabled', 'disabled'], true))
+        {
+            $this->setError(\Joomla\CMS\Language\Text::_('COM_AUDIOARCHIVE_NORMALIZATION_INVALID'));
+            return false;
+        }
         if (!parent::check())
         {
             return false;
@@ -154,7 +159,68 @@ class ClipTable extends Table implements TaggableTableInterface, CurrentUserInte
      */
     public function store($updateNulls = true)
     {
-        return parent::store($updateNulls);
+        
+		$db = $this->getDatabase();
+		$actor = $this->getCurrentUser();
+		$old = !empty($this->id) ? $db->setQuery($db->getQuery(true)->select('*')->from($db->quoteName('#__audioarchive_clips'))->where('id = ' . (int) $this->id))->loadObject() : null;
+		$oldOwner = $old ? (int) $old->created_by : (int) $actor->id;
+		$newOwner = isset($this->created_by) ? (int) $this->created_by : $oldOwner;
+		if ($newOwner !== $oldOwner && (!$actor->authorise('audioarchive.change.owner', 'com_audioarchive') || !Factory::getApplication()->isClient('administrator')))
+		{
+			$this->setError(Text::_('JERROR_ALERTNOAUTHOR'));
+			return false;
+		}
+		if ($newOwner > 0 && $newOwner !== $oldOwner && !(int) $db->setQuery('SELECT id FROM ' . $db->quoteName('#__users') . ' WHERE id = ' . $newOwner)->loadResult())
+		{
+			$this->setError(Text::_('JERROR_ALERTNOAUTHOR'));
+			return false;
+		}
+		$this->created_by = $newOwner;
+		if (!in_array($this->visibility_mode ?? 'normal', ['normal', 'private'], true))
+		{
+			$this->setError(Text::_('COM_AUDIOARCHIVE_INVALID_VISIBILITY'));
+			return false;
+		}
+		$access = new \Punga\Component\Audioarchive\Administrator\Service\ClipAccessService($db, $actor);
+		if ($old && !$access->canAccessPrivate($old))
+		{
+			$this->setError(Text::_('JERROR_ALERTNOAUTHOR'));
+			return false;
+		}
+
+		$quota = new \Punga\Component\Audioarchive\Administrator\Service\UserQuotaService($db, \Joomla\CMS\Component\ComponentHelper::getParams('com_audioarchive'), $actor);
+		try
+		{
+			return $quota->withOwnerLocks([$oldOwner, $newOwner], function () use ($quota, $db, $old, $oldOwner, $newOwner, $updateNulls): bool
+			{
+				if ($old)
+				{
+					$current = $db->setQuery('SELECT * FROM ' . $db->quoteName('#__audioarchive_clips') . ' WHERE id=' . (int) $this->id)->loadObject();
+					if (!$current || !(new \Punga\Component\Audioarchive\Administrator\Service\ClipAccessService($db, $this->getCurrentUser()))->canAccessPrivate($current))
+					{
+						throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+					}
+				}
+				// Detect concurrent reassignment instead of checking the wrong owner's quota.
+				if ($old && (int) $db->setQuery('SELECT created_by FROM ' . $db->quoteName('#__audioarchive_clips') . ' WHERE id = ' . (int) $this->id)->loadResult() !== $oldOwner)
+				{
+					throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_QUOTA_BUSY'));
+				}
+				$bytes = $old && $oldOwner !== $newOwner ? (int) $db->setQuery('SELECT COALESCE(SUM(file_size), 0) FROM ' . $db->quoteName('#__audioarchive_files') . ' WHERE file_role = ' . $db->quote('original') . ' AND clip_id = ' . (int) $this->id)->loadResult() : 0;
+				$confirmed = Factory::getApplication()->isClient('administrator') && Factory::getApplication()->getInput()->post->getInt('quota_override_confirm', 0) === 1;
+				$quota->assertIncrease($newOwner, $bytes, !$old || $oldOwner !== $newOwner ? 1 : 0, $confirmed);
+				if ($old && $oldOwner !== $newOwner)
+				{
+					$this->modified_by = (int) $this->getCurrentUser()->id;
+				}
+				return parent::store($updateNulls);
+			});
+		}
+		catch (\Throwable $exception)
+		{
+			$this->setError($exception->getMessage());
+			return false;
+		}
     }
 
     /**

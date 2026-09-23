@@ -53,6 +53,7 @@ $mime = trim((string) $item->mime_type) ?: 'application/octet-stream';
 			<a class="com-audioarchive-title-link" data-audioarchive-detail-link href="<?php echo $item->detail_url; ?>"><?php echo $this->escape($item->title); ?></a>
 		</th>
 	<?php endif; ?>
+	<?php if ($columns['owner']) : ?><td data-label="<?php echo Text::_('COM_AUDIOARCHIVE_OWNER'); ?>"><?php echo $this->escape($item->owner_name ?: ((int) $item->created_by > 0 ? Text::sprintf('COM_AUDIOARCHIVE_OWNER_UNKNOWN', $item->created_by) : Text::_('COM_AUDIOARCHIVE_OWNER_SYSTEM'))); ?></td><?php endif; ?>
 	<?php if ($columns['category']) : ?><td class="com-audioarchive-category-cell" data-label="<?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_CATEGORY'); ?>"><?php echo $this->escape($item->category_title); ?></td><?php endif; ?>
 	<?php if ($columns['duration']) : ?><td class="com-audioarchive-duration-cell" data-label="<?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_DURATION'); ?>"><time datetime="PT<?php echo $totalSeconds; ?>S"><?php echo $duration; ?></time></td><?php endif; ?>
 	<?php if ($columns['recorded']) : ?><td class="com-audioarchive-date-cell" data-label="<?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_RECORDED'); ?>"><?php echo $item->recorded_at ? HTMLHelper::_('date', $item->recorded_at, Text::_('DATE_FORMAT_LC4')) : '—'; ?></td><?php endif; ?>

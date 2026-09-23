@@ -406,6 +406,19 @@ final class ArchiveImportService
 		bool $restoreConfiguration
 	): array
 	{
+		if (!$this->user->authorise('audioarchive.manage.private', 'com_audioarchive') || !$this->user->authorise('audioarchive.change.owner', 'com_audioarchive'))
+		{
+			throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+		}
+		$db = $this->database;
+		$owners = $db->setQuery('SELECT id FROM ' . $db->quoteName('#__users') . ' UNION SELECT created_by FROM ' . $db->quoteName('#__audioarchive_clips'))->loadColumn();
+		$quota = new UserQuotaService($db, $this->params, $this->user);
+		return $quota->withOwnerLocks($owners, fn(): array => $this->restoreLocked($path, $restoreMode, $conflictPolicy, $restoreConfiguration));
+	}
+
+	/** @brief Restore while account locks remain held through the archive transaction. */
+	private function restoreLocked(string $path, string $restoreMode, string $conflictPolicy, bool $restoreConfiguration): array
+	{
 		$restoreMode = strtolower(trim($restoreMode));
 		$conflictPolicy = strtolower(trim($conflictPolicy));
 
@@ -433,6 +446,9 @@ final class ArchiveImportService
 		try
 		{
 			foreach ([
+				'group-quotas',
+				'user-profiles',
+				'collections',
 				'categories',
 				'tags',
 				'clips',
@@ -554,9 +570,13 @@ final class ArchiveImportService
 				if ($restoreConfiguration)
 				{
 					$this->restoreConfiguration((array) $data['configuration'], $categoryMap, $accessMap);
+					$this->restoreQuotaData((array) $data['group-quotas'], (array) $data['user-profiles'], $categoryMap, $accessMap, $userMap, $result);
 					$result['configuration_restored'] = true;
 				}
 
+				CollectionArchiveService::restore($this->database, (array) $data['collections'], $userMap, $clipResult['uuid_to_id'], $conflictPolicy, $restoreConfiguration, $result);
+
+				$this->database->setQuery('UPDATE ' . $this->database->quoteName('#__ucm_content') . ' SET core_state=0 WHERE core_type_alias=' . $this->database->quote('com_audioarchive.clip') . ' AND core_content_item_id IN (SELECT id FROM ' . $this->database->quoteName('#__audioarchive_clips') . ' WHERE visibility_mode=' . $this->database->quote('private') . ')')->execute();
 				$this->database->transactionCommit();
 			}
 			catch (\Throwable $exception)
@@ -574,6 +594,69 @@ final class ArchiveImportService
 		finally
 		{
 			$zip->close();
+		}
+	}
+
+	/** @brief Restore quota settings only with configuration, using portable group/user identity. */
+	private function restoreQuotaData(array $rules, array $profiles, array $categories, array $access, array $users, array &$result): void
+	{
+		if (!$this->user->authorise('core.options', 'com_audioarchive'))
+		{
+			throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+		}
+		$db = $this->database;
+		$groups = $this->loadUserGroupMap();
+		foreach ($rules as $rule)
+		{
+			$groupId = (int) ($groups[strtolower((string) ($rule['group_key'] ?? ''))] ?? 0);
+			if ($groupId <= 0)
+			{
+				$result['warnings'][] = Text::_('COM_AUDIOARCHIVE_QUOTA_RESTORE_UNRESOLVED');
+				continue;
+			}
+			foreach (['storage_quota_bytes', 'clip_quota'] as $field)
+			{
+				if (isset($rule[$field]) && (!is_numeric($rule[$field]) || (int) $rule[$field] < -1))
+				{
+					throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_QUOTA_INVALID'));
+				}
+			}
+			$existing = (int) $db->setQuery('SELECT id FROM ' . $db->quoteName('#__audioarchive_group_quotas') . ' WHERE group_id=' . $groupId)->loadResult();
+			$this->upsertById('#__audioarchive_group_quotas', ['group_id' => $groupId, 'storage_quota_bytes' => $rule['storage_quota_bytes'] ?? null, 'clip_quota' => $rule['clip_quota'] ?? null, 'created' => Factory::getDate()->toSql()], $existing);
+		}
+		foreach ($profiles as $profile)
+		{
+			$userId = (int) ($users[strtolower((string) ($profile['username'] ?? ''))] ?? 0);
+			if ($userId <= 0)
+			{
+				$result['warnings'][] = Text::_('COM_AUDIOARCHIVE_QUOTA_RESTORE_UNRESOLVED');
+				continue;
+			}
+			$record = (object) [
+				'user_id' => $userId,
+				'collection_storage_preference' => in_array($profile['collection_storage_preference'] ?? '', ['browser', 'server'], true) ? $profile['collection_storage_preference'] : '',
+				'default_visibility' => in_array($profile['default_visibility'] ?? '', ['normal', 'private'], true) ? $profile['default_visibility'] : '',
+				'default_category_id' => (int) ($categories[(string) ($profile['category_key'] ?? '')] ?? 0),
+				'default_access_id' => (int) ($access[strtolower((string) ($profile['access_title'] ?? ''))] ?? 0),
+				'browser_import_prompt' => !empty($profile['browser_import_prompt']) ? 1 : 0,
+				'created' => Factory::getDate()->toSql(),
+			];
+			foreach (['storage_quota_override_bytes', 'clip_quota_override'] as $field)
+			{
+				if (isset($profile[$field]) && (!is_numeric($profile[$field]) || (int) $profile[$field] < -1))
+				{
+					throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_QUOTA_INVALID'));
+				}
+				$record->$field = isset($profile[$field]) ? (int) $profile[$field] : null;
+			}
+			if ($db->setQuery('SELECT user_id FROM ' . $db->quoteName('#__audioarchive_user_profiles') . ' WHERE user_id=' . $userId)->loadResult())
+			{
+				$db->updateObject('#__audioarchive_user_profiles', $record, 'user_id', true);
+			}
+			else
+			{
+				$db->insertObject('#__audioarchive_user_profiles', $record);
+			}
 		}
 	}
 
@@ -810,7 +893,13 @@ final class ArchiveImportService
 			$data['uuid'] = $uuid;
 			$data['catid'] = (int) ($categoryMap[(string) ($row['category_key'] ?? '')] ?? $fallbackCategory);
 			$data['access'] = $this->resolveAccess((string) ($row['access_level_title'] ?? ''), $accessMap);
-			$data['created_by'] = $this->resolveUser((string) ($row['created_by_username'] ?? ''), $userMap);
+			$data['created_by'] = $this->resolveUser((string) ($row['created_by_username'] ?? ''), $userMap, 0);
+			$data['visibility_mode'] = (string) ($row['visibility_mode'] ?? 'normal');
+			$data['normalization_mode'] = in_array(($row['normalization_mode'] ?? ''), ['enabled', 'disabled'], true) ? $row['normalization_mode'] : 'inherit';
+			if (!empty($row['created_by_username']) && $data['created_by'] === 0)
+			{
+				$result['warnings'][] = Text::sprintf('COM_AUDIOARCHIVE_RESTORE_UNKNOWN_OWNER', (string) $row['created_by_username']);
+			}
 			$data['modified_by'] = $this->resolveUser((string) ($row['modified_by_username'] ?? ''), $userMap, 0);
 			$data['checked_out'] = null;
 			$data['checked_out_time'] = null;
@@ -1044,6 +1133,7 @@ final class ArchiveImportService
 			if ($included)
 			{
 				$temporaryPath = $this->extractEntryToTemporaryFile($zip, $archivePath);
+				$row['file_size'] = (int) filesize($temporaryPath);
 				$extension = strtolower(trim((string) ($row['file_extension'] ?? pathinfo($archivePath, PATHINFO_EXTENSION))));
 
 				try
@@ -1094,6 +1184,13 @@ final class ArchiveImportService
 				$record['file_included'],
 				$record['source_storage_key']
 			);
+						if ($role === 'original')
+			{
+				$owner = (int) $this->database->setQuery('SELECT created_by FROM ' . $this->database->quoteName('#__audioarchive_clips') . ' WHERE id = ' . $clipId)->loadResult();
+				$quota = new UserQuotaService($this->database, $this->params, $this->user);
+				$quota->assertIncrease($owner, max(0, (int) $record['file_size'] - (int) ($existing->file_size ?? 0)), 0,
+					Factory::getApplication()->getInput()->post->getInt('quota_override_confirm', 0) === 1);
+			}
 			$this->upsertById('#__audioarchive_files', $record, $existing?->id ?? 0);
 		}
 	}
@@ -1673,7 +1770,8 @@ final class ArchiveImportService
 			}
 		}
 
-		foreach (['#__audioarchive_ratings', '#__audioarchive_jobs', '#__audioarchive_waveforms', '#__audioarchive_analyses', '#__audioarchive_files', '#__audioarchive_clips'] as $tableName)
+		$this->database->setQuery('UPDATE ' . $this->database->quoteName('#__audioarchive_collection_state') . ' SET revision=revision+1')->execute();
+		foreach (['#__audioarchive_collection_items', '#__audioarchive_collections', '#__audioarchive_ratings', '#__audioarchive_jobs', '#__audioarchive_waveforms', '#__audioarchive_analyses', '#__audioarchive_files', '#__audioarchive_clips'] as $tableName)
 		{
 			$this->database->setQuery(
 				$this->database->getQuery(true)->delete($this->database->quoteName($tableName))

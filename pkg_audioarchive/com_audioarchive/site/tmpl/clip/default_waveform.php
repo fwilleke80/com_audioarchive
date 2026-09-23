@@ -14,6 +14,7 @@ if ($this->waveformUrl === '')
 	<div
 		class="com-audioarchive-waveform"
 		data-audioarchive-waveform
+		data-normalization-gain="<?php echo \Punga\Component\Audioarchive\Administrator\Service\PlaybackNormalizationService::forClip((int) $this->item->id); ?>"
 		data-waveform-url="<?php echo $this->escape($this->waveformUrl); ?>"
 	>
 		<canvas aria-hidden="true"></canvas>

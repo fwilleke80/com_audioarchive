@@ -291,7 +291,7 @@ class StreamController extends BaseController
 		header('Content-Length: ' . $size);
 		header('ETag: ' . $etag);
 		header('Last-Modified: ' . gmdate('D, d M Y H:i:s', (int) filemtime($path)) . ' GMT');
-		header('Cache-Control: private, max-age=86400, must-revalidate');
+		header('Cache-Control: private, no-store');
 		header('X-Content-Type-Options: nosniff');
 
 		if ($headOnly)
@@ -392,7 +392,7 @@ class StreamController extends BaseController
 		header('Accept-Ranges: bytes');
 		header('ETag: ' . $etag);
 		header('Last-Modified: ' . gmdate('D, d M Y H:i:s', (int) filemtime($path)) . ' GMT');
-		header('Cache-Control: private, max-age=0, must-revalidate');
+		header('Cache-Control: private, no-store');
 		header('X-Content-Type-Options: nosniff');
 		header(
 			'Content-Disposition: ' . $disposition

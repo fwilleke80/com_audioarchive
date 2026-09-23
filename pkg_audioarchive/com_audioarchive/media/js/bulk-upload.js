@@ -397,6 +397,7 @@
     const buildRequest = (job) =>
     {
         const data = new FormData();
+		data.append('quota_override_confirm', document.querySelector('input[name="quota_override_confirm"]')?.checked ? '1' : '0');
         data.append('jform[catid]', batchMetadata.catid);
         data.append('jform[access]', batchMetadata.access);
         data.append('jform[state]', batchMetadata.state);
