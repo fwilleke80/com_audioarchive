@@ -1,4 +1,4 @@
-import {prepareNormalization, updateNormalization, validGain} from './normalization.js?v=0.13.2';
+import {playbackFor, playNormalized, updateNormalization, validGain} from './normalization.js?v=0.13.2.7';
 /**
  * @brief Manage all shared Punga Audio Archive player presentations and legacy play buttons.
  */
@@ -106,7 +106,7 @@ const initialiseAudioArchivePlayers = () =>
 		button.style.setProperty('--audioarchive-progress', `${getProgress(audio) * 360}deg`);
 	};
 
-	const getCustomPlayerAudio = (player) => player.querySelector('[data-audioarchive-custom-audio]');
+	const getCustomPlayerAudio = (player) => playbackFor(player.querySelector('[data-audioarchive-custom-audio]'));
 
 	const configureVarispeedPitch = (audio) =>
 	{
@@ -711,7 +711,6 @@ const initialiseAudioArchivePlayers = () =>
 		state.width = width;
 		state.height = height;
 		state.ratio = ratio;
-		state.gain = gain;
 		state.canvas.width = Math.max(1, Math.round(width * ratio));
 		state.canvas.height = Math.max(1, Math.round(height * ratio));
 		const context = state.canvas.getContext('2d');
@@ -998,8 +997,8 @@ const initialiseAudioArchivePlayers = () =>
 			}
 
 			/*
-			 * HTMLMediaElement.currentTime is the browser's authoritative media
-			 * clock and is synchronized with audible playback. The animation
+			 * The playback facade reads either the native media clock or the
+			 * AudioContext clock used by normalised buffer playback. The animation
 			 * frame only determines when the visual position is repainted.
 			 */
 			updateCustomPlayerVisualProgress(player, audio);
@@ -1076,7 +1075,7 @@ const initialiseAudioArchivePlayers = () =>
 	document.querySelectorAll('[data-audioarchive-play]').forEach((button) =>
 	{
 		const audioId = button.getAttribute('aria-controls');
-		const audio = audioId ? document.getElementById(audioId) : null;
+		const audio = playbackFor(audioId ? document.getElementById(audioId) : null);
 		const title = button.dataset.clipTitle || '';
 		const clipId = button.dataset.clipId || '';
 
@@ -1101,8 +1100,7 @@ const initialiseAudioArchivePlayers = () =>
 
 			try
 			{
-				await prepareNormalization(audio, audio.closest('[data-audioarchive-custom-player]')?.dataset.normalizationGain || 1);
-				await audio.play();
+				await playNormalized(audio, audio.closest('[data-audioarchive-custom-player]')?.dataset.normalizationGain || 1);
 			}
 			catch (error)
 			{
@@ -1201,11 +1199,11 @@ const initialiseAudioArchivePlayers = () =>
 
 			try
 			{
-				await prepareNormalization(audio, audio.closest('[data-audioarchive-custom-player]')?.dataset.normalizationGain || 1);
-				await audio.play();
+				await playNormalized(audio, audio.closest('[data-audioarchive-custom-player]')?.dataset.normalizationGain || 1);
 			}
 			catch (error)
 			{
+				toggle.removeAttribute('aria-busy');
 				setCustomPlayerState(player, false);
 				player.classList.add('has-error');
 				announce(player, 'Error', getTitle());
@@ -1290,10 +1288,16 @@ const initialiseAudioArchivePlayers = () =>
 			announce(player, 'Playing', getTitle());
 		});
 
-		audio.addEventListener('playing', () => startProgressAnimation(player, audio));
+		audio.addEventListener('playing', () =>
+		{
+			toggle.removeAttribute('aria-busy');
+			startProgressAnimation(player, audio);
+		});
 
 		audio.addEventListener('waiting', () =>
 		{
+			toggle.setAttribute('aria-busy', 'true');
+			setCustomPlayerState(player, true);
 			updateCustomPlayerTimeDisplay(player, audio);
 		});
 
@@ -1315,6 +1319,7 @@ const initialiseAudioArchivePlayers = () =>
 
 		audio.addEventListener('pause', () =>
 		{
+			toggle.removeAttribute('aria-busy');
 			stopProgressAnimation(player);
 			setCustomPlayerState(player, false);
 			updateCustomPlayerProgress(player, audio);
@@ -1337,6 +1342,7 @@ const initialiseAudioArchivePlayers = () =>
 
 		audio.addEventListener('error', () =>
 		{
+			toggle.removeAttribute('aria-busy');
 			stopProgressAnimation(player);
 			setCustomPlayerState(player, false);
 			player.classList.add('has-error');

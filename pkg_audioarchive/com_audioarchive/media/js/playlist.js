@@ -1,4 +1,4 @@
-import {prepareNormalization, updateNormalization} from './normalization.js?v=0.13.2';
+import {playbackFor, playNormalized, updateNormalization} from './normalization.js?v=0.13.2.7';
 import {Collections} from './collections.js?v=0.13.2.3';
 const PLAYLIST_STORAGE_KEY = 'com_audioarchive.playlists.v1';
 const PLAYLIST_STORAGE_VERSION = 1;
@@ -1485,7 +1485,7 @@ async function initialisePlaylistPage()
 	const sharedPanel = root.querySelector('[data-audioarchive-playlist-shared]');
 	const status = root.querySelector('[data-audioarchive-playlist-status]');
 	const player = root.querySelector('[data-audioarchive-custom-player]');
-	const audio = player?.querySelector('[data-audioarchive-custom-audio]');
+	const audio = playbackFor(player?.querySelector('[data-audioarchive-custom-audio]'));
 	const playerTitle = player?.querySelector('[data-audioarchive-playlist-player-title]');
 	const playerPosition = player?.querySelector('[data-audioarchive-playlist-player-position]');
 	const previousButton = player?.querySelector('[data-audioarchive-playlist-previous]');
@@ -1686,8 +1686,7 @@ async function initialisePlaylistPage()
 		{
 			try
 			{
-				await prepareNormalization(audio, player.dataset.normalizationGain || 1);
-				await audio.play();
+				await playNormalized(audio, player.dataset.normalizationGain || 1);
 			}
 			catch (error)
 			{
@@ -2309,7 +2308,10 @@ async function initialisePlaylistPage()
 				}
 				else
 				{
-					void prepareNormalization(audio, player.dataset.normalizationGain || 1).then(() => audio.play());
+					void playNormalized(audio, player.dataset.normalizationGain || 1).catch(() =>
+					{
+						player?.classList.add('has-error');
+					});
 				}
 			}
 			else

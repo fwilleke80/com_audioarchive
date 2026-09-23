@@ -1,4 +1,4 @@
-import {validGain} from './normalization.js?v=0.13.2';
+import {validGain} from './normalization.js?v=0.13.2.7';
 
 /**
  * @brief Load and render protected Punga Audio Archive waveform peak data.

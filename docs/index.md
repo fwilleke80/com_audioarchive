@@ -17,3 +17,7 @@ Screenshots and diagrams belong in [`docs/images/`](images/README.md). Documenta
 See the [0.13.2 setup and test guide](user/0.13.2-testing.md).
 
 See the [0.13.2.4 frontend/module test guide](user/0.13.2.4-testing.md).
+
+See the [0.13.2.6 normalisation playback test guide](user/0.13.2.6-testing.md).
+
+See the [0.13.2.7 iPhone and frequency-profile test guide](user/0.13.2.7-testing.md).

@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.13.2.7
+
+- Request the iOS media-playback audio session before starting normalised buffer playback, addressing the missing session setup that can silence Web Audio when the phone is in Silent mode. Retain the 0.13.2.6 buffer engine and continuous speed control.
+- Coordinate playback-session ownership with the chromatic sampler. Restore the previous session category only when the last owner releases it; preserve existing microphone/call sessions and tolerate unsupported APIs.
+- Recheck/resume the audio context if interrupted while a clip downloads or decodes, with the existing cancellation checks before starting it.
+- Fix a frequency-profile rendering ReferenceError caused by a stray waveform-gain assignment introduced in 0.13.2.2. Add production-renderer and audio-session regression tests.
+
+## 0.13.2.6
+
+- Replace media-element Web Audio routing for normalised enhanced players with speed controls with decoded-buffer playback to avoid gapped varispeed audio on affected Safari/WebKit versions. Speed, gain and the playback clock now use the same audio engine.
+- Preserve pause/resume, seeking, volume/mute, playlist advance and shared-link playback position through a common playback facade. Cancel stale starts when pausing, switching clips or stopping sound-board voices during loading.
+- Bound the page-local decoded cache and release inactive buffers. Oversized clips, decode failures and unavailable Web Audio use native streaming without normalisation. First normalised playback waits for download/decode; no server-side audio regeneration is needed.
+- Keep fixed-speed sound-board pad streaming, the chromatic sampler and recorder data unchanged. Bump player module URLs to invalidate cached pre-fix code.
+
 ## 0.13.2.5
 
 - Fix clip detail return navigation from My clips: restore the originating workspace URL, including filters and pagination, and use its menu title in the back link. Reuse the existing same-tab return navigation used by Archive and Sound Board.

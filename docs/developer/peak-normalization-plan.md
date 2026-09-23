@@ -1,3 +1,5 @@
+> **0.13.2.6 compatibility update:** The media-element graph proposed below has been superseded by decoded-buffer playback for enhanced players. See [the compatibility notes and tests](../user/0.13.2.6-testing.md). The remainder records the original feature design.
+
 > Implemented in 0.13.2. See [setup and acceptance tests](../user/0.13.2-testing.md).
 
 # Punga Audio Archive — Peak Analysis and Playback Normalization Plan

@@ -1,4 +1,5 @@
-import {prepareNormalization, releaseNormalization, validGain} from './normalization.js?v=0.13.2';
+import {acquirePlaybackSession, releasePlaybackSession} from './audio-session.js?v=0.13.2.7';
+import {playbackFor, prepareNormalization, releaseNormalization, validGain} from './normalization.js?v=0.13.2.7';
 import {Collections} from './collections.js?v=0.13.2.3';
 const BOARD_STORAGE_KEY = 'com_audioarchive.soundboard.v1';
 const SAMPLER_POLYPHONY_STORAGE_KEY = 'com_audioarchive.soundboard.sampler_polyphony.v1';
@@ -559,7 +560,7 @@ function initialiseShareButtons()
 				url.searchParams.delete('pitch');
 
 				const player = document.querySelector('.com-audioarchive-detail-player [data-audioarchive-custom-player]');
-				const audio = player?.querySelector('[data-audioarchive-custom-audio]');
+				const audio = playbackFor(player?.querySelector('[data-audioarchive-custom-audio]'));
 				const pitchRange = player?.querySelector('[data-audioarchive-varispeed-range]');
 
 				if (audio instanceof HTMLAudioElement && Number.isFinite(audio.currentTime) && audio.currentTime > 0.0005)
@@ -1186,7 +1187,7 @@ async function initialiseSoundboard()
 	let soundboardPolyphonic = polyphonic && readStorage(SAMPLER_POLYPHONY_STORAGE_KEY, true) !== false;
 	let samplerSelectionGeneration = 0;
 	let samplerMode = false;
-	let previousAudioSessionType = null;
+	const samplerAudioSessionOwner = Object.create(null);
 	let recordings = recordingsEnabled ? readSoundboardRecordings(padCount) : [];
 	let selectedRecordingId = recordings[0]?.id || '';
 	let recordingSession = null;
@@ -2369,49 +2370,16 @@ async function initialiseSoundboard()
 		return promise;
 	};
 
+	/** @brief Share iOS session ownership with any concurrently playing clip. */
 	const setSamplerAudioSessionActive = (active) =>
 	{
-		const audioSession = navigator.audioSession;
-
-		if (!audioSession || typeof audioSession.type !== 'string')
-		{
-			return;
-		}
-
 		if (active)
 		{
-			try
-			{
-				const currentType = audioSession.type;
-				audioSession.type = 'playback';
-
-				if (previousAudioSessionType === null)
-				{
-					previousAudioSessionType = currentType;
-				}
-			}
-			catch (error)
-			{
-				// Browsers without a writable AudioSession type keep their default behaviour.
-			}
-
-			return;
+			acquirePlaybackSession(samplerAudioSessionOwner);
 		}
-
-		if (previousAudioSessionType !== null)
+		else
 		{
-			try
-			{
-				audioSession.type = previousAudioSessionType;
-			}
-			catch (error)
-			{
-				// The session may no longer be writable while the page is being hidden.
-			}
-			finally
-			{
-				previousAudioSessionType = null;
-			}
+			releasePlaybackSession(samplerAudioSessionOwner);
 		}
 	};
 
