@@ -234,10 +234,10 @@ final class ContributionService
 			}
 			$form->setField($field, null, true, $name === 'catid' ? 'details' : 'publishing');
 		}
-		if (!$old && $params->get('upload_category_mode', 'choose') === 'fixed')
+		if (!$old && ($params->get('upload_category_mode', 'choose') === 'fixed' || count($categories) === 1))
 		{
 			$form->setFieldAttribute('catid', 'type', 'hidden');
-			$form->setValue('catid', null, (int) $params->get('upload_fixed_category'));
+			$form->setValue('catid', null, $params->get('upload_category_mode', 'choose') === 'fixed' ? (int) $params->get('upload_fixed_category') : (int) $categories[0]->id);
 		}
 		if (count($levels) === 1)
 		{

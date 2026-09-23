@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.13.2.5
+
+- Fix clip detail return navigation from My clips: restore the originating workspace URL, including filters and pagination, and use its menu title in the back link. Reuse the existing same-tab return navigation used by Archive and Sound Board.
+
+## 0.13.2.4
+
+- Automatically process enabled analyses for successful frontend uploads, with incremental progress and same-session resumption from My clips. The server grants only the exact jobs created for that owned upload; general Process Audio permissions remain unchanged.
+- Reuse Archive table styling and its shared inline player in My clips, fix the Actions translation, and collapse processing details behind a short summary.
+- Hide and select the category when a frontend upload has only one permitted category.
+- Fix All/Any module tag matching and prepared-statement failures; Clip of the day uses the same eligible set. Show a translated empty state and use searchable AJAX tag selection.
+
 ## 0.13.2.3
 
 - Remove account-storage status labels and Not now controls from Playlists and Sound Boards; keep useful browser-only notices.

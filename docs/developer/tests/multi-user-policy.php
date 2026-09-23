@@ -414,6 +414,11 @@ namespace
 	$contributions->configureForm($form, $config);
 	$options = array_map(static fn($option): string => (string) $option['value'], iterator_to_array($form->fields['visibility_mode']->option, false));
 	check(in_array('registered', $options, true) && !in_array('private', $options, true), 'form offers Registered independently of Private');
+	check((string) $form->fields['catid']['type'] === 'list', 'multiple permitted categories keep the selector');
+	$config->data['frontend_upload_categories'] = [2];
+	$contributions->configureForm($form, $config);
+	check((string) $form->fields['catid']['type'] === 'hidden' && $form->values['catid'] === 2, 'single permitted category is selected and hidden');
+	unset($config->data['frontend_upload_categories']);
 	$config->data['allow_private_clips'] = 1;
 	$edited = $contributions->sanitise(array_replace($input, ['state'=>-2, 'publish_up'=>'2999-01-01']), $config, $clip(1));
 	check($edited['state'] === 1 && $edited['publish_up'] === null, 'edit-own cannot forge state or publication dates');

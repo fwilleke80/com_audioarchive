@@ -169,32 +169,16 @@ abstract class AudioarchiveHelper
 		$tags = self::normaliseIds($params->get('tags', []));
 		if ($tags !== [])
 		{
-			$typeAlias = 'com_audioarchive.clip';
-			if ((string) $params->get('tag_mode', 'all') === 'any')
-			{
-				$tagQuery = $database->getQuery(true)
-					->select('1')->from($database->quoteName('#__contentitem_tag_map', 'tm'))
-					->where($database->quoteName('tm.content_item_id') . ' = ' . $database->quoteName('a.id'))
-					->where($database->quoteName('tm.type_alias') . ' = :tagType')
-					->whereIn($database->quoteName('tm.tag_id'), $tags, ParameterType::INTEGER);
-				$query->where('EXISTS (' . $tagQuery . ')')->bind(':tagType', $typeAlias, ParameterType::STRING);
-			}
-			else
-			{
-				foreach ($tags as $index => $tagId)
-				{
-					$placeholder = ':tagId' . $index;
-					$typePlaceholder = ':tagType' . $index;
-					$tagQuery = $database->getQuery(true)
-						->select('1')->from($database->quoteName('#__contentitem_tag_map', 'tm' . $index))
-						->where($database->quoteName('tm' . $index . '.content_item_id') . ' = ' . $database->quoteName('a.id'))
-						->where($database->quoteName('tm' . $index . '.type_alias') . ' = ' . $typePlaceholder)
-						->where($database->quoteName('tm' . $index . '.tag_id') . ' = ' . $placeholder);
-					$query->where('EXISTS (' . $tagQuery . ')')
-						->bind($placeholder, $tagId, ParameterType::INTEGER)
-						->bind($typePlaceholder, $typeAlias, ParameterType::STRING);
-				}
-			}
+			// IDs are normalized integers. Literal IDs avoid nested-query bindings and loop-reference aliasing.
+			$tagQuery = $database->getQuery(true)
+				->select((string) $params->get('tag_mode', 'all') === 'any' ? '1' : 'COUNT(DISTINCT tm.tag_id)')
+				->from($database->quoteName('#__contentitem_tag_map', 'tm'))
+				->where('tm.content_item_id = a.id')
+				->where('tm.type_alias = ' . $database->quote('com_audioarchive.clip'))
+				->where('tm.tag_id IN (' . implode(',', $tags) . ')');
+			$query->where((string) $params->get('tag_mode', 'all') === 'any'
+				? 'EXISTS (' . $tagQuery . ')'
+				: '(' . $tagQuery . ') = ' . count($tags));
 		}
 
 		(new \Punga\Component\Audioarchive\Administrator\Service\ClipAccessService($database, \Joomla\CMS\Factory::getApplication()->getIdentity()))->applyPublicVisibilityFilter($query);

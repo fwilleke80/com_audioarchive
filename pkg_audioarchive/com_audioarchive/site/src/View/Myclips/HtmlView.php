@@ -23,6 +23,9 @@ class HtmlView extends BaseHtmlView
 	public $pagination;
 	public $params;
 	public string $uploadUrl = '';
+	/** @brief Display name of the originating workspace menu item. */
+	public string $returnTitle = '';
+	public array $processingIds = [];
 
 	/** @brief Add actual ACL decisions and quotas to owned clip rows. */
 	public function display($tpl = null)
@@ -36,6 +39,8 @@ class HtmlView extends BaseHtmlView
 		$db = Factory::getContainer()->get(DatabaseInterface::class);
 		$this->params = clone ComponentHelper::getParams('com_audioarchive');
 		$menu = $app->getMenu()->getActive();
+		$this->returnTitle = (($menu->query['view'] ?? '') === 'myclips' && trim((string) $menu->title) !== '')
+			? (string) $menu->title : Text::_('COM_AUDIOARCHIVE_MY_CLIPS');
 		if (($menu->query['view'] ?? '') === 'myclips')
 		{
 			$this->params->set('myclips_show_quota', $menu->getParams()->get('myclips_show_quota', 1));
@@ -48,6 +53,7 @@ class HtmlView extends BaseHtmlView
 		foreach ($this->items as $item)
 		{
 			$item->canView = (int) $item->is_available === 1 && $access->canView($item);
+			$item->stream_url = $item->canView ? \Joomla\CMS\Router\Route::_(\Punga\Component\Audioarchive\Site\Helper\RouteHelper::getPlaybackRoute((int) $item->id)) : '';
 			$item->canEdit = FrontendEditingService::isEnabled($app) && $access->canEdit($item);
 			$item->canTrash = (int) $item->state !== -2 && $access->canEditState($item);
 			$item->canDelete = (int) $item->state === -2 && $access->canDelete($item);
@@ -59,6 +65,29 @@ class HtmlView extends BaseHtmlView
 		if ($this->params->get('frontend_upload_enabled', 1) && $policy->categories($this->params) !== [])
 		{
 			$this->uploadUrl = $policy->route('upload');
+		}
+		$grants = (array) $app->getUserState('com_audioarchive.upload.analyses', []);
+		$processing = new \Punga\Component\Audioarchive\Site\Service\UploadAnalysisService($db, $this->params, $user);
+		foreach ($grants as $id => $grant)
+		{
+			if (!empty($grant['done']))
+			{
+				continue;
+			}
+			try
+			{
+				$processing->validate((int) $id, (array) $grant);
+				$this->processingIds[] = (int) $id;
+			}
+			catch (\Throwable)
+			{
+				// Expired receipts and removed/reassigned clips never grant new processing access.
+			}
+		}
+		$this->getDocument()->getWebAssetManager()->useStyle('com_audioarchive.site')->useStyle('com_audioarchive.player-style')->useScript('com_audioarchive.player')->useScript('com_audioarchive.social');
+		if ($this->processingIds !== [])
+		{
+			$this->getDocument()->getWebAssetManager()->useScript('com_audioarchive.upload-analysis');
 		}
 		$app->setHeader('Cache-Control', 'private, no-store', true);
 		$this->setDocumentTitle(Text::_('COM_AUDIOARCHIVE_MY_CLIPS'));

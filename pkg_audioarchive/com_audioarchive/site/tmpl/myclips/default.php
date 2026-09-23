@@ -10,7 +10,14 @@ use Punga\Component\Audioarchive\Site\Helper\RouteHelper;
 $input = Factory::getApplication()->getInput();
 $states = ['1' => 'JPUBLISHED', '0' => 'JUNPUBLISHED', '2' => 'JARCHIVED', '-2' => 'JTRASHED'];
 ?>
-<div class="com-audioarchive">
+<div class="com-audioarchive com-audioarchive-archive com-audioarchive-myclips" style="<?php echo $this->escape(\Punga\Component\Audioarchive\Site\Helper\StyleHelper::buildArchiveListVariables($this->params)); ?>"
+ data-audioarchive-return-origin
+ data-audioarchive-return-title="<?php echo $this->escape($this->returnTitle); ?>"
+ data-audioarchive-status-playing="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_PLAYING')); ?>"
+ data-audioarchive-status-paused="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_PAUSED')); ?>"
+ data-audioarchive-status-error="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_STATUS_ERROR')); ?>">
+<?php echo LayoutHelper::render('contribution.processing', ['ids' => $this->processingIds], JPATH_SITE . '/components/com_audioarchive/layouts'); ?>
+<div class="visually-hidden" aria-live="polite" data-audioarchive-status></div>
 <div class="d-flex align-items-center justify-content-between gap-3 mb-3"><h1><?php echo Text::_('COM_AUDIOARCHIVE_MY_CLIPS'); ?></h1>
 <?php if ($this->uploadUrl) : ?><a class="btn btn-primary" href="<?php echo Route::_($this->uploadUrl); ?>"><?php echo Text::_('COM_AUDIOARCHIVE_FRONTEND_UPLOAD'); ?></a><?php endif; ?></div>
 <?php if ($this->params->get('myclips_show_quota', 1)) : ?>
@@ -28,7 +35,7 @@ foreach ($this->categories as $category)
 $filters = [
 'category' => ['JCATEGORY', $categories],
 'state' => ['JSTATUS', $states],
-'visibility' => ['COM_AUDIOARCHIVE_VISIBILITY', ['normal' => 'COM_AUDIOARCHIVE_VISIBILITY_NORMAL', 'private' => 'COM_AUDIOARCHIVE_VISIBILITY_PRIVATE']],
+'visibility' => ['COM_AUDIOARCHIVE_VISIBILITY', ['public' => 'COM_AUDIOARCHIVE_VISIBILITY_NORMAL', 'registered' => 'COM_AUDIOARCHIVE_VISIBILITY_REGISTERED', 'private' => 'COM_AUDIOARCHIVE_VISIBILITY_PRIVATE']],
 'processing' => ['COM_AUDIOARCHIVE_PROCESSING', ['available'=>'COM_AUDIOARCHIVE_PROCESSING_AVAILABLE','missing'=>'COM_AUDIOARCHIVE_PROCESSING_MISSING','pending'=>'COM_AUDIOARCHIVE_PROCESSING_PENDING','failed'=>'COM_AUDIOARCHIVE_PROCESSING_FAILED','stale'=>'COM_AUDIOARCHIVE_PROCESSING_STALE']],
 'order' => ['JGLOBAL_SORT_BY', ['newest'=>'COM_AUDIOARCHIVE_SORT_UPLOAD_DESC','oldest'=>'COM_AUDIOARCHIVE_SORT_UPLOAD_ASC','title'=>'JGLOBAL_TITLE','size'=>'COM_AUDIOARCHIVE_FRONTEND_FILE_SIZE']]];
 ?>
@@ -40,16 +47,26 @@ $filters = [
 <?php endforeach; ?>
 <div class="col-auto align-self-end"><button class="btn btn-secondary" type="submit"><?php echo Text::_('JSEARCH_FILTER_SUBMIT'); ?></button></div></form>
 <?php if (!$this->items) : ?><div class="alert alert-info"><?php echo Text::_('COM_AUDIOARCHIVE_MY_CLIPS_EMPTY'); ?></div><?php else : ?>
-<div class="table-responsive"><table class="table align-middle"><thead><tr>
-<?php foreach (['JGLOBAL_TITLE','JCATEGORY','JSTATUS','COM_AUDIOARCHIVE_VISIBILITY','JFIELD_ACCESS_LABEL','COM_AUDIOARCHIVE_FIELD_DURATION','COM_AUDIOARCHIVE_FIELD_UPLOAD_DATE','COM_AUDIOARCHIVE_FRONTEND_FILE_SIZE','COM_AUDIOARCHIVE_PROCESSING','JACTIONS'] as $label) : ?><th scope="col"><?php echo Text::_($label); ?></th><?php endforeach; ?>
+<div class="com-audioarchive-table-wrapper"><table class="com-audioarchive-table"><thead><tr>
+<?php foreach (['COM_AUDIOARCHIVE_COLUMN_PLAY','JGLOBAL_TITLE','JCATEGORY','JSTATUS','COM_AUDIOARCHIVE_VISIBILITY','JFIELD_ACCESS_LABEL','COM_AUDIOARCHIVE_FIELD_DURATION','COM_AUDIOARCHIVE_FIELD_UPLOAD_DATE','COM_AUDIOARCHIVE_FRONTEND_FILE_SIZE','COM_AUDIOARCHIVE_PROCESSING','COM_AUDIOARCHIVE_COLUMN_ACTIONS'] as $label) : ?><th scope="col"><?php echo Text::_($label); ?></th><?php endforeach; ?>
 </tr></thead><tbody>
 <?php foreach ($this->items as $item) : ?>
-<tr><th scope="row"><?php if ($item->canView) : ?><a href="<?php echo Route::_(RouteHelper::getClipRoute((int) $item->id)); ?>"><?php echo $this->escape($item->title); ?></a><?php else : ?><?php echo $this->escape($item->title); ?><?php endif; ?></th>
+<tr class="com-audioarchive-result-row <?php echo $item->canView ? 'has-player' : 'no-player'; ?>">
+<td class="com-audioarchive-play-cell" data-label="<?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_PLAY'); ?>">
+<?php if ($item->canView) : ?><?php echo LayoutHelper::render('player.list', ['item' => $item, 'params' => $this->params], null, ['component' => 'com_audioarchive', 'client' => 0]); ?><?php else : ?><span aria-label="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PROCESSING_MISSING')); ?>">—</span><?php endif; ?>
+</td><th class="com-audioarchive-title-cell" scope="row"><?php if ($item->canView) : ?><a data-audioarchive-detail-link href="<?php echo Route::_(RouteHelper::getClipRoute((int) $item->id)); ?>"><?php echo $this->escape($item->title); ?></a><?php else : ?><?php echo $this->escape($item->title); ?><?php endif; ?></th>
 <td><?php echo $this->escape($item->category_title ?? ''); ?></td><td><?php echo Text::_($states[(string) $item->state] ?? 'JUNPUBLISHED'); ?></td>
-<td><?php echo Text::_('COM_AUDIOARCHIVE_VISIBILITY_' . strtoupper($item->visibility_mode)); ?></td><td><?php echo $this->escape($item->access_title ?? ''); ?></td>
+<td><?php echo Text::_($item->visibility_mode === 'private' ? 'COM_AUDIOARCHIVE_VISIBILITY_PRIVATE' : ((int) $item->access === (int) $this->params->get('frontend_registered_access', 2) ? 'COM_AUDIOARCHIVE_VISIBILITY_REGISTERED' : ((int) $item->access === 1 ? 'COM_AUDIOARCHIVE_VISIBILITY_NORMAL' : 'COM_AUDIOARCHIVE_VISIBILITY_CUSTOM'))); ?></td><td><?php echo $this->escape($item->access_title ?? ''); ?></td>
 <td><?php echo gmdate((int) $item->duration_ms >= 3600000 ? 'H:i:s' : 'i:s', (int) floor($item->duration_ms / 1000)); ?></td><td><?php echo HTMLHelper::_('date', $item->uploaded_at, Text::_('DATE_FORMAT_LC4')); ?></td>
 <td><?php echo number_format((int) $item->file_size / 1048576, 2); ?> MB</td>
-<td><?php foreach (['metadata_status','preview_status','waveform_status','spectrogram_status','frequency_profile_status'] as $status) : ?><div class="small"><?php echo Text::_('COM_AUDIOARCHIVE_STATUS_' . strtoupper($status)) . ': ' . $this->escape(Text::_('COM_AUDIOARCHIVE_PROCESSING_' . strtoupper($item->$status))); ?></div><?php endforeach; ?></td>
+<td>
+<?php
+$statusFields = ['metadata_status','preview_status','waveform_status','spectrogram_status','frequency_profile_status'];
+$summary = \Punga\Component\Audioarchive\Site\Service\ProcessingStatusService::summary($item);
+?>
+<details class="com-audioarchive-processing-details"><summary><?php echo Text::_('COM_AUDIOARCHIVE_PROCESSING_SUMMARY_' . strtoupper($summary)); ?></summary>
+<?php foreach ($statusFields as $status) : ?><div class="small"><?php echo Text::_('COM_AUDIOARCHIVE_STATUS_' . strtoupper($status)) . ': ' . $this->escape(Text::_('COM_AUDIOARCHIVE_PROCESSING_' . strtoupper($item->$status))); ?></div><?php endforeach; ?>
+</details></td>
 <td><div class="d-flex flex-wrap gap-2">
 <?php if ($item->canEdit) : ?><a class="btn btn-sm btn-outline-primary" href="<?php echo Route::_('index.php?option=com_audioarchive&task=edit.edit&id=' . (int) $item->id . '&return=' . rawurlencode(base64_encode(Uri::getInstance()->toString()))); ?>"><?php echo Text::_('JACTION_EDIT'); ?></a><?php endif; ?>
 <?php if ($item->canTrash || $item->canDelete) : ?>

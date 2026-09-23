@@ -34,7 +34,7 @@ class MyclipsModel extends ListModel
 	{
 		$db = $this->getDatabase();
 		$id = (int) Factory::getApplication()->getIdentity()->id;
-		$query = $db->getQuery(true)->select('a.*, c.title AS category_title, v.title AS access_title, f.file_size, f.is_available')
+		$query = $db->getQuery(true)->select('a.*, c.title AS category_title, v.title AS access_title, f.file_size, f.is_available, f.mime_type')
 			->from($db->quoteName('#__audioarchive_clips', 'a'))
 			->leftJoin($db->quoteName('#__categories', 'c') . ' ON c.id=a.catid')
 			->leftJoin($db->quoteName('#__viewlevels', 'v') . ' ON v.id=a.access')
@@ -56,7 +56,15 @@ class MyclipsModel extends ListModel
 			$query->where('a.state=' . (int) $state);
 		}
 		$visibility = $this->getState('filter.visibility');
-		if (in_array($visibility, ['normal', 'private'], true))
+		if ($visibility === 'registered')
+		{
+			$query->where("a.visibility_mode='normal'")->where('a.access=' . (int) \Joomla\CMS\Component\ComponentHelper::getParams('com_audioarchive')->get('frontend_registered_access', 2));
+		}
+		if (in_array($visibility, ['normal', 'public'], true))
+		{
+			$query->where("a.visibility_mode='normal'")->where('a.access=1');
+		}
+		if ($visibility === 'private')
 		{
 			$query->where('a.visibility_mode=' . $db->quote($visibility));
 		}

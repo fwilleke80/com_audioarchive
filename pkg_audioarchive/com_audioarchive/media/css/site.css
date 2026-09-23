@@ -3112,3 +3112,20 @@
 {
 	justify-content: flex-end;
 }
+
+/* @brief Keep the owner table accessible on mobile, where Archive uses a separate card layout. */
+.com-audioarchive-myclips .com-audioarchive-table-wrapper
+{
+	display: block;
+	overflow-x: auto;
+}
+
+.com-audioarchive-myclips .com-audioarchive-processing-details
+{
+	min-width: 10rem;
+}
+
+.com-audioarchive-processing-details summary
+{
+	cursor: pointer;
+}

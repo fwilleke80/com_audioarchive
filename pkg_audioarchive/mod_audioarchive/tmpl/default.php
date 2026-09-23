@@ -10,6 +10,13 @@ use Punga\Component\Audioarchive\Site\Helper\RouteHelper;
 
 \defined('_JEXEC') or die;
 
+if ($items === [])
+{
+	echo '<div class="mod-audioarchive"><p class="mod-audioarchive-empty" role="status">'
+		. htmlspecialchars(Text::_('MOD_AUDIOARCHIVE_NO_MATCHES'), ENT_QUOTES, 'UTF-8') . '</p></div>';
+	return;
+}
+
 $modulePresentation = in_array((string) $params->get('presentation', 'default'), ['default', 'compact', 'featured'], true)
 	? (string) $params->get('presentation', 'default')
 	: 'default';

@@ -16,6 +16,9 @@ use Joomla\Registry\Registry;
  */
 final class AnalysisJobService
 {
+	/** @var int[]|null Exact jobs granted by a successful frontend upload. */
+	private ?array $permittedJobIds = null;
+
 	/** @var DatabaseInterface */
 	private DatabaseInterface $database;
 
@@ -408,6 +411,38 @@ final class AnalysisJobService
 		return $this->processNextJob($clipId);
 	}
 
+	/** @brief Process only the exact analysis jobs captured for an authenticated frontend upload. */
+	public function processGrantedForClip(int $clipId, array $jobIds): array
+	{
+		$ids = array_values(array_filter(array_unique(array_map('intval', $jobIds)), static fn(int $id): bool => $id > 0));
+		if ($clipId <= 0 || $ids === [])
+		{
+			return ['processed' => false, 'success' => true, 'remaining' => 0];
+		}
+		$this->permittedJobIds = $ids;
+		try
+		{
+			return $this->processNextJob($clipId);
+		}
+		finally
+		{
+			$this->permittedJobIds = null;
+		}
+	}
+
+	/** @brief Apply an exact job scope, keeping recovery and counts inside the upload grant too. */
+	private function scopeJobs(object $query, ?int $clipId, string $alias = ''): void
+	{
+		if ($clipId !== null)
+		{
+			$query->where($this->database->quoteName($alias . 'clip_id') . ' = ' . $clipId);
+		}
+		if ($this->permittedJobIds !== null)
+		{
+			$query->where($this->database->quoteName($alias . 'id') . ' IN (' . implode(',', $this->permittedJobIds) . ')');
+		}
+	}
+
 	/**
 	 * @brief Claim and process the next pending analysis job in a requested scope.
 	 *
@@ -417,7 +452,7 @@ final class AnalysisJobService
 	 */
 	private function processNextJob(?int $clipId): array
 	{
-		$this->releaseExpiredJobs();
+		$this->releaseExpiredJobs($clipId);
 		$job = $this->claimNextJob($clipId);
 
 		if ($job === null)
@@ -575,7 +610,7 @@ final class AnalysisJobService
 	 *
 	 * @return void
 	 */
-	private function releaseExpiredJobs(): void
+	private function releaseExpiredJobs(?int $clipId = null): void
 	{
 		$now = Factory::getDate()->toSql();
 		$pending = 'pending';
@@ -596,6 +631,7 @@ final class AnalysisJobService
 			->bind(':retryMessage', $retryMessage, ParameterType::STRING)
 			->bind(':running', $running, ParameterType::STRING)
 			->bind(':now', $now, ParameterType::STRING);
+		$this->scopeJobs($query, $clipId);
 		$this->database->setQuery($query)->execute();
 
 		$failed = 'failed';
@@ -614,6 +650,7 @@ final class AnalysisJobService
 			->where($this->database->quoteName('attempts') . ' >= ' . $this->database->quoteName('maximum_attempts'))
 			->bind(':running', $running, ParameterType::STRING)
 			->bind(':now', $now, ParameterType::STRING);
+		$this->scopeJobs($query, $clipId);
 		$exhaustedJobs = $this->database->setQuery($query)->loadObjectList() ?: [];
 
 		foreach ($exhaustedJobs as $exhaustedJob)
@@ -649,6 +686,7 @@ final class AnalysisJobService
 			->bind(':finished', $now, ParameterType::STRING)
 			->bind(':running', $running, ParameterType::STRING)
 			->bind(':now', $now, ParameterType::STRING);
+		$this->scopeJobs($query, $clipId);
 		$this->database->setQuery($query)->execute();
 	}
 
@@ -691,6 +729,7 @@ final class AnalysisJobService
 					->bind(':clipId', $clipId, ParameterType::INTEGER);
 			}
 
+			$this->scopeJobs($query, $clipId, 'j.');
 			$job = $this->database->setQuery($query, 0, 1)->loadObject();
 
 			if (!is_object($job))
@@ -789,6 +828,7 @@ final class AnalysisJobService
 				->bind(':clipId', $clipId, ParameterType::INTEGER);
 		}
 
+		$this->scopeJobs($query, $clipId);
 		return (int) $this->database->setQuery($query)->loadResult();
 	}
 

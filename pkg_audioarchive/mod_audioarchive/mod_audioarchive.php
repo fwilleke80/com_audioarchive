@@ -40,11 +40,6 @@ $params->set('player_presentation', $playerPresentation);
 $params->set('preferred_data_view', $preferredDataView);
 $items = AudioarchiveHelper::getItems($params, $module);
 
-if ($items === [])
-{
-	return;
-}
-
 $app = Factory::getApplication();
 $document = $app->getDocument();
 $assets = $document->getWebAssetManager();

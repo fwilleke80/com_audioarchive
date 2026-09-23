@@ -65,6 +65,23 @@ class UploadController extends BaseController
 			{
 				$return = $policy->route('myclips');
 			}
+			try
+			{
+				$grant = (new \Punga\Component\Audioarchive\Site\Service\UploadAnalysisService($db, ComponentHelper::getParams('com_audioarchive'), $user))->grant($id, Route::_($return, false));
+				if ($grant['jobs'] !== [])
+				{
+					$grants = (array) $app->getUserState('com_audioarchive.upload.analyses', []);
+					$grants = array_filter($grants, static fn(array $entry): bool => (int) ($entry['expires'] ?? 0) >= time());
+					$grants[$id] = $grant;
+					$app->setUserState('com_audioarchive.upload.analyses', $grants);
+					$return = 'index.php?option=com_audioarchive&view=upload&layout=processing&id=' . $id . '&Itemid=' . $itemId;
+				}
+			}
+			catch (\Throwable)
+			{
+				$app->enqueueMessage(Text::_('COM_AUDIOARCHIVE_UPLOAD_ANALYSIS_ERROR'), 'warning');
+			}
+
 		}
 		catch (\Throwable $exception)
 		{
@@ -73,4 +90,37 @@ class UploadController extends BaseController
 		}
 		$this->setRedirect(Route::_($return, false));
 	}
+	/** @brief CSRF-protected incremental processing of server-issued upload jobs only. */
+	public function processAnalysis(): void
+	{
+		$app = Factory::getApplication();
+		$app->setHeader('Cache-Control', 'private, no-store', true);
+		try
+		{
+			if (strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET')) !== 'POST' || !Session::checkToken('post'))
+			{
+				throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+			}
+			$id = $app->getInput()->post->getInt('id');
+			$grants = (array) $app->getUserState('com_audioarchive.upload.analyses', []);
+			$service = new \Punga\Component\Audioarchive\Site\Service\UploadAnalysisService(Factory::getContainer()->get(DatabaseInterface::class), ComponentHelper::getParams('com_audioarchive'), $app->getIdentity());
+			$result = $service->process($id, (array) ($grants[$id] ?? []));
+			if ($result['done'])
+			{
+				$grants[$id]['done'] = true;
+				$app->setUserState('com_audioarchive.upload.analyses', $grants);
+			}
+			header('Content-Type: application/json; charset=utf-8');
+			header('Cache-Control: private, no-store');
+			echo new \Joomla\CMS\Response\JsonResponse($result);
+		}
+		catch (\Throwable $error)
+		{
+			http_response_code($error->getCode() === 403 ? 403 : 500);
+			header('Content-Type: application/json; charset=utf-8');
+			echo new \Joomla\CMS\Response\JsonResponse(null, Text::_('COM_AUDIOARCHIVE_UPLOAD_ANALYSIS_ERROR'), true);
+		}
+		$app->close();
+	}
+
 }
