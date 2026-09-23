@@ -24,7 +24,7 @@
 			<option value="1">JPUBLISHED</option>
 			<option value="0">JUNPUBLISHED</option>
 		</field>
-		<field name="visibility_mode" type="list" label="COM_AUDIOARCHIVE_VISIBILITY" default="normal"><option value="normal">COM_AUDIOARCHIVE_VISIBILITY_NORMAL</option><option value="private">COM_AUDIOARCHIVE_VISIBILITY_PRIVATE</option></field>
+		<field name="visibility_mode" type="list" label="COM_AUDIOARCHIVE_VISIBILITY" default="normal"><option value="public">COM_AUDIOARCHIVE_VISIBILITY_NORMAL</option><option value="registered">COM_AUDIOARCHIVE_VISIBILITY_REGISTERED</option><option value="private">COM_AUDIOARCHIVE_VISIBILITY_PRIVATE</option></field>
 		<field name="access" type="accesslevel" label="JFIELD_ACCESS_LABEL" default="1" />
 	</fieldset>
 </form>

@@ -49,6 +49,10 @@ final class ContributionService
 				}
 			}
 		}
+		if ($upload && $params->get('upload_default_visibility', 'normal') === 'normal')
+		{
+			$params->set('upload_default_visibility', 'public');
+		}
 		return $params;
 	}
 
@@ -135,6 +139,25 @@ final class ContributionService
 		}
 		$data['catid'] = $category;
 		$levels = array_map(static fn(object $row): int => (int) $row->id, $this->accessLevels($params));
+		$visibility = (string) ($input['visibility_mode'] ?? $old->visibility_mode ?? $params->get('upload_default_visibility', 'normal'));
+		if (!$old && !$params->get('upload_choose_visibility', 1))
+		{
+			$visibility = (string) $params->get('upload_default_visibility', 'normal');
+		}
+		if ($visibility === 'private' && !$params->get('allow_private_clips', 0))
+		{
+			$visibility = (string) ($old->visibility_mode ?? 'normal');
+		}
+		if (!in_array($visibility, ['normal', 'public', 'registered', 'private'], true))
+		{
+			throw new \InvalidArgumentException(Text::_('COM_AUDIOARCHIVE_INVALID_VISIBILITY'));
+		}
+		// Public/Registered are frontend presets; persisted visibility and Joomla ACL remain independent.
+		if ($visibility === 'public' || $visibility === 'registered')
+		{
+			$input['access'] = $visibility === 'public' ? 1 : (int) $params->get('frontend_registered_access', 2);
+		}
+		$data['visibility_mode'] = $visibility === 'private' ? 'private' : 'normal';
 		$requestedAccess = (int) ($input['access'] ?? $old->access ?? (in_array((int) $params->get('upload_default_access', 0), $levels, true) ? (int) $params->get('upload_default_access') : ($levels[0] ?? 0)));
 		if (!in_array($requestedAccess, $levels, true) && (!$old || $requestedAccess !== (int) $old->access))
 		{
@@ -161,20 +184,6 @@ final class ContributionService
 				$data[$key] = $mayPublish ? ($input[$key] ?? $old->$key) : $old->$key;
 			}
 		}
-		$visibility = (string) ($input['visibility_mode'] ?? $old->visibility_mode ?? $params->get('upload_default_visibility', 'normal'));
-		if (!$old && !$params->get('upload_choose_visibility', 1))
-		{
-			$visibility = (string) $params->get('upload_default_visibility', 'normal');
-		}
-		if (!$params->get('allow_private_clips', 0))
-		{
-			$visibility = (string) ($old->visibility_mode ?? 'normal');
-		}
-		if (!in_array($visibility, ['normal', 'private'], true))
-		{
-			throw new \InvalidArgumentException(Text::_('COM_AUDIOARCHIVE_INVALID_VISIBILITY'));
-		}
-		$data['visibility_mode'] = $visibility;
 		$tags = (array) ($input['tags'] ?? []);
 		if (count($tags) > 100)
 		{
@@ -235,7 +244,44 @@ final class ContributionService
 			$form->setFieldAttribute('access', 'type', 'hidden');
 			$form->setValue('access', null, (int) $levels[0]->id);
 		}
-		if (!$params->get('allow_private_clips', 0) || (!$old && !$params->get('upload_choose_visibility', 1)))
+		$registeredAccess = (int) $params->get('frontend_registered_access', 2);
+		$selected = (string) $form->getValue('visibility_mode', null, $old->visibility_mode ?? $params->get('upload_default_visibility', 'normal'));
+		$currentAccess = (int) $form->getValue('access', null, $old->access ?? $params->get('upload_default_access', $levels[0]->id ?? 1));
+		if ($selected === 'normal' || (!$old && $selected === 'private' && !$params->get('allow_private_clips', 0)))
+		{
+			$selected = $currentAccess === 1 ? 'public' : ($currentAccess === $registeredAccess ? 'registered' : 'normal');
+		}
+		$visibilityField = new \SimpleXMLElement('<field name="visibility_mode" type="list" label="COM_AUDIOARCHIVE_VISIBILITY"/>');
+		$allowedAccess = array_map(static fn(object $row): int => (int) $row->id, $levels);
+		$options = [];
+		if (in_array(1, $allowedAccess, true))
+		{
+			$options['public'] = 'COM_AUDIOARCHIVE_VISIBILITY_NORMAL';
+		}
+		if (in_array($registeredAccess, $allowedAccess, true))
+		{
+			$options['registered'] = 'COM_AUDIOARCHIVE_VISIBILITY_REGISTERED';
+		}
+		if ($params->get('allow_private_clips', 0) || ($old && $old->visibility_mode === 'private'))
+		{
+			$options['private'] = 'COM_AUDIOARCHIVE_VISIBILITY_PRIVATE';
+		}
+		if ($selected === 'normal')
+		{
+			$options['normal'] = 'COM_AUDIOARCHIVE_VISIBILITY_CUSTOM';
+		}
+		foreach ($options as $value => $label)
+		{
+			$visibilityField->addChild('option', $label)->addAttribute('value', $value);
+		}
+		$form->setField($visibilityField, null, true, 'publishing');
+		$form->setValue('visibility_mode', null, $selected);
+		// Preserve existing custom ACL choices; ordinary presets need no second audience selector.
+		if ($selected !== 'normal')
+		{
+			$form->setFieldAttribute('access', 'type', 'hidden');
+		}
+		if (!$old && !$params->get('upload_choose_visibility', 1))
 		{
 			$form->removeField('visibility_mode');
 		}

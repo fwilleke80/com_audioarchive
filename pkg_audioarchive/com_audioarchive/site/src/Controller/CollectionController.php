@@ -131,7 +131,7 @@ class CollectionController extends BaseController
 	private function labels(): array
 	{
 		$result = [];
-		foreach (['SERVER', 'BROWSER', 'DISABLED', 'SAVING', 'ERROR', 'CONFLICT', 'NEW', 'RENAME', 'DELETE', 'DEFAULT', 'NAME', 'CONFIRM', 'IMPORT', 'LATER', 'IMPORT_DONE', 'REVOKE', 'REVOKED', 'SHARED', 'UNAVAILABLE', 'DEFAULT_NAME', 'IMPORT_FOUND', 'SHARE_HELP', 'RESTORE'] as $key)
+		foreach (['BROWSER_PLAYLISTS', 'BROWSER_BOARD', 'IMPORT_RETAINED', 'SERVER', 'BROWSER', 'DISABLED', 'SAVING', 'ERROR', 'CONFLICT', 'NEW', 'RENAME', 'DELETE', 'DEFAULT', 'NAME', 'CONFIRM', 'IMPORT', 'LATER', 'IMPORT_DONE', 'REVOKE', 'REVOKED', 'SHARED', 'UNAVAILABLE', 'DEFAULT_NAME', 'IMPORT_FOUND', 'SHARE_HELP', 'RESTORE'] as $key)
 		{
 			$result[strtolower($key)] = Text::_('COM_AUDIOARCHIVE_COLLECTION_' . $key);
 		}

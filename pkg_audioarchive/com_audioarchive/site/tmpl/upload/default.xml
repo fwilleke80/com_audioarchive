@@ -4,7 +4,7 @@
 <field name="upload_category_mode" type="list" label="COM_AUDIOARCHIVE_UPLOAD_CATEGORY_MODE" default="choose"><option value="choose">COM_AUDIOARCHIVE_UPLOAD_CATEGORY_CHOOSE</option><option value="fixed">COM_AUDIOARCHIVE_UPLOAD_CATEGORY_FIXED</option></field>
 <field name="upload_fixed_category" type="category" extension="com_audioarchive" published="1" label="JCATEGORY" showon="upload_category_mode:fixed" />
 <field name="upload_allowed_categories" type="category" extension="com_audioarchive" published="1" multiple="true" label="COM_AUDIOARCHIVE_UPLOAD_ALLOWED_CATEGORIES" />
-<field name="upload_default_visibility" type="list" label="COM_AUDIOARCHIVE_UPLOAD_DEFAULT_VISIBILITY" default="normal"><option value="normal">COM_AUDIOARCHIVE_VISIBILITY_NORMAL</option><option value="private">COM_AUDIOARCHIVE_VISIBILITY_PRIVATE</option></field>
+<field name="upload_default_visibility" type="list" label="COM_AUDIOARCHIVE_UPLOAD_DEFAULT_VISIBILITY" default="normal"><option value="normal">COM_AUDIOARCHIVE_VISIBILITY_NORMAL</option><option value="registered">COM_AUDIOARCHIVE_VISIBILITY_REGISTERED</option><option value="private">COM_AUDIOARCHIVE_VISIBILITY_PRIVATE</option></field>
 <field name="upload_choose_visibility" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_UPLOAD_CHOOSE_VISIBILITY" default="1"><option value="0">JNO</option><option value="1">JYES</option></field>
 <field name="upload_allowed_access" type="accesslevel" multiple="true" label="COM_AUDIOARCHIVE_UPLOAD_ALLOWED_ACCESS" />
 <field name="upload_default_access" type="accesslevel" label="JFIELD_ACCESS_LABEL" default="1" />

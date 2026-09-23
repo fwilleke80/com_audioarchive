@@ -51,7 +51,7 @@ class UploadModel extends ClipModel
 		if (!$data)
 		{
 			$data = ['id' => 0, 'catid' => (int) ($categories[0]->id ?? 0), 'access' => $defaultAccess,
-				'visibility_mode' => $params->get('allow_private_clips', 0) ? $params->get('upload_default_visibility', 'normal') : 'normal',
+				'visibility_mode' => $params->get('upload_default_visibility', 'normal'),
 				'state' => (int) $params->get('upload_default_state', 0)];
 		}
 		$this->preprocessData('com_audioarchive.clip', $data);

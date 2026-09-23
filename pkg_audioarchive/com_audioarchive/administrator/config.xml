@@ -10,6 +10,7 @@
 <field name="frontend_upload_enabled" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_FRONTEND_UPLOAD_ENABLED" default="1"><option value="0">JNO</option><option value="1">JYES</option></field>
 <field name="frontend_editing_enabled" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_FRONTEND_EDITING_ENABLED" default="1"><option value="0">JNO</option><option value="1">JYES</option></field>
 <field name="frontend_upload_categories" type="category" extension="com_audioarchive" multiple="true" published="1" label="COM_AUDIOARCHIVE_UPLOAD_ALLOWED_CATEGORIES" description="COM_AUDIOARCHIVE_UPLOAD_CATEGORIES_HELP" />
+<field name="frontend_registered_access" type="accesslevel" label="COM_AUDIOARCHIVE_REGISTERED_ACCESS" description="COM_AUDIOARCHIVE_REGISTERED_ACCESS_HELP" default="2" />
 <field name="frontend_allowed_access" type="accesslevel" multiple="true" label="COM_AUDIOARCHIVE_UPLOAD_ALLOWED_ACCESS" description="COM_AUDIOARCHIVE_UPLOAD_ACCESS_HELP" default="1" />
 <field name="archive_column_owner" type="list" label="COM_AUDIOARCHIVE_ARCHIVE_OWNER_COLUMN" default="0"><option value="0">JNO</option><option value="1">JYES</option></field>
 <field name="archive_show_owner_filter" type="list" label="COM_AUDIOARCHIVE_ARCHIVE_OWNER_FILTER" default="0"><option value="0">JNO</option><option value="1">JYES</option></field>

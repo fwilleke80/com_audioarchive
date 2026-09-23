@@ -12,6 +12,13 @@ let shared = null;
 let statusNode;
 let activeBoard = '';
 let selectedPlaylist = '';
+const observers = new Set();
+
+/** @brief Refresh mounted controls after acknowledged state and caller selections settle. */
+function refreshControls()
+{
+	observers.forEach((refresh) => window.setTimeout(refresh, 0));
+}
 
 /** @brief Read optional browser/session data without making storage availability mandatory. */
 function read(key, fallback, session = false)
@@ -100,6 +107,7 @@ async function request(action, payload = null, shareToken = '')
 function accept(data)
 {
 	state = {...state, ...data};
+	refreshControls();
 	if (!state.boards.some((board) => board.id === activeBoard))
 	{
 		activeBoard = state.defaultBoard || state.boards[0]?.id || '';
@@ -277,6 +285,7 @@ export const Collections = {
 			{
 				Object.assign(value, acknowledged);
 			}
+			refreshControls();
 			return true;
 		}
 		catch (error)
@@ -319,11 +328,12 @@ export const Collections = {
 		}
 		const panel = document.createElement('div');
 		panel.className = 'border rounded p-3 mb-3 d-flex flex-wrap gap-2 align-items-center';
-		const label = document.createElement('span');
-		label.textContent = labels[state.backend] || state.backend;
-		panel.append(label);
 		root.prepend(panel);
-		root.querySelectorAll('.com-audioarchive-soundboard-note, .com-audioarchive-playlists-note').forEach((node) => { node.textContent = label.textContent; });
+		root.querySelectorAll('.com-audioarchive-soundboard-note, .com-audioarchive-playlists-note').forEach((node) =>
+		{
+			node.hidden = state.backend === 'server';
+			node.textContent = state.backend === 'disabled' ? labels.disabled : labels[kind === 'playlist' ? 'browser_playlists' : 'browser_board'];
+		});
 		const button = (key, operation) =>
 		{
 			const control = document.createElement('button');
@@ -348,6 +358,7 @@ export const Collections = {
 				finally
 				{
 					control.disabled = false;
+					refreshControls();
 				}
 			});
 			panel.append(control);
@@ -355,6 +366,7 @@ export const Collections = {
 		};
 		if (state.backend !== 'server')
 		{
+			panel.remove();
 			return;
 		}
 		let selector;
@@ -417,9 +429,10 @@ export const Collections = {
 			});
 			render();
 		}
+		let revoke;
 		if (state.sharing)
 		{
-			button('revoke', async () =>
+			revoke = button('revoke', async () =>
 			{
 				const id = selected();
 				if (!id || !confirm(labels.confirm)) return;
@@ -427,6 +440,19 @@ export const Collections = {
 				notice(labels.revoked);
 			});
 		}
+		/** @brief Only the selected owned collection can expose its active share link. */
+		const refresh = () =>
+		{
+			const collection = (kind === 'playlist' ? state.playlists : state.boards).find((item) => item.id === selected());
+			if (revoke)
+			{
+				revoke.hidden = !collection?.shared;
+			}
+			panel.classList.toggle('d-none', !Array.from(panel.children).some((child) => !child.hidden));
+		};
+		observers.add(refresh);
+		root.addEventListener('change', refreshControls);
+		root.addEventListener('click', refreshControls);
 		const browser = read(kind === 'playlist' ? PLAYLIST_KEY : BOARD_KEY, null);
 		const candidates = kind === 'playlist' ? (browser?.playlists || []) : (Array.isArray(browser) && browser.some(Boolean) ? [{name: labels.default_name, items: browser}] : []);
 		if (candidates.length)
@@ -438,23 +464,63 @@ export const Collections = {
 			importPanel.append(message);
 			const importButton = button('import', async () =>
 			{
-				let skipped = 0;
-				while (candidates.length)
+				let retained = false;
+				try
 				{
-					const candidate = candidates[0];
-					const result = await mutate(kind === 'playlist' ? 'importPlaylist' : 'importBoard', {collection: candidate});
-					skipped += result.skipped;
-					candidates.shift();
-					if (kind === 'soundboard') activeBoard = result.id;
+					for (const candidate of [...candidates])
+					{
+						const result = await mutate(kind === 'playlist' ? 'importPlaylist' : 'importBoard', {collection: candidate});
+						if (result.skipped)
+						{
+							retained = true;
+							continue;
+						}
+						// Compare against fresh storage so another tab's edits are never deleted.
+						const key = kind === 'playlist' ? PLAYLIST_KEY : BOARD_KEY;
+						const current = read(key, null);
+						if (kind === 'playlist' && Array.isArray(current?.playlists))
+						{
+							const index = current.playlists.findIndex((item) => JSON.stringify(item) === JSON.stringify(candidate));
+							if (index < 0)
+							{
+								retained = true;
+								continue;
+							}
+							current.playlists.splice(index, 1);
+							if (!current.playlists.some((item) => item.id === current.selectedId))
+							{
+								current.selectedId = current.playlists[0]?.id || '';
+							}
+							localStorage.setItem(key, JSON.stringify(current));
+						}
+						else if (kind === 'soundboard' && JSON.stringify(current) === JSON.stringify(candidate.items))
+						{
+							localStorage.removeItem(key);
+							activeBoard = result.id;
+						}
+						else
+						{
+							retained = true;
+							continue;
+						}
+						candidates.splice(candidates.indexOf(candidate), 1);
+					}
+					notice(retained ? labels.import_retained : labels.import_done, retained);
 				}
-				importPanel.remove();
-				render();
-				changed();
-				notice(`${labels.import_done} ${skipped ? `${labels.unavailable} (${skipped})` : ''}`);
+				finally
+				{
+					if (!candidates.length)
+					{
+						importPanel.remove();
+					}
+					render();
+					changed();
+					refresh();
+				}
 			});
-			const later = button('later', () => importPanel.remove());
-			importPanel.append(importButton, later);
+			importPanel.append(importButton);
 			panel.append(importPanel);
 		}
+		refresh();
 	},
 };

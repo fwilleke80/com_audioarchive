@@ -107,7 +107,7 @@ check($result['token'] === $token, 'copying share again preserves existing links
 $result = $service->share($id,true,5);
 rejectContribution(fn() => $guestService->shared($token), 'revocation invalidates token');
 $result = $service->importCollection('playlist',['name'=>'Imported','items'=>[['uuid'=>'public-clip'],['uuid'=>'other-private']]],6);
-check($result['skipped'] === 1 && count($result['state']['playlists']) === 2, 'explicit import creates separate copy and reports skipped clip');
+check($result['skipped'] === 1 && count($result['state']['playlists']) === 1, 'incomplete import preserves browser collection without partial server copy');
 $db->pdo->exec('UPDATE test_audioarchive_clips SET state=-2 WHERE id=1');
 $result = $service->board(['id'=>$boardId,'name'=>'Renamed','items'=>[null,['uuid'=>'public-clip']]],7);
 check($result['state']['boards'][0]['items'][1]['id'] === 0, 'retained inaccessible pad is opaque');
@@ -122,11 +122,17 @@ Punga\Component\Audioarchive\Administrator\Service\CollectionArchiveService::res
 check($restoreResult['warnings'] === [], 'portable collection restore resolves owner and clips');
 check((int) $db->setQuery('SELECT COUNT(*) FROM test_audioarchive_collections WHERE share_token IS NOT NULL')->loadResult() === 0, 'restore revokes previous share secrets');
 check($service->state()['defaultBoard'] === $boardId, 'restore preserves default board preference');
-check($service->state()['revision'] === 11, 'restore invalidates stale tabs');
+check($service->state()['revision'] === 10, 'restore invalidates stale tabs');
 $db->pdo->exec('DELETE FROM test_audioarchive_clips WHERE id=1');
 check((int) $db->setQuery('SELECT COUNT(*) FROM test_audioarchive_collection_items WHERE clip_id=1')->loadResult() === 0, 'permanent clip deletion cascades membership');
-$result = $service->deleteBoard($boardId,11);
+$result = $service->deleteBoard($boardId,10);
 check($result['state']['boards'] === [] && $result['state']['defaultBoard'] === '', 'deleted default gracefully falls back');
+$import = ['name'=>'Complete','items'=>[['uuid'=>'private-clip']]];
+$first = $service->importCollection('playlist', $import, $service->state()['revision']);
+$retry = $service->importCollection('playlist', $import, $service->state()['revision']);
+check($first['id'] === $retry['id'] && count($retry['state']['playlists']) === 2, 'complete import retry cannot duplicate collections');
+$db->setQuery('UPDATE test_audioarchive_collections SET title=' . $db->quote('Edited after import') . ' WHERE uuid=' . $db->quote($first['id']))->execute();
+rejectContribution(fn() => $service->importCollection('playlist', $import, $service->state()['revision']), 'retry cannot confirm cleanup after destination was edited');
 $options->data['collections_storage'] = 'browser';
 rejectContribution(fn() => $service->playlists([],9), 'browser-only policy blocks server mutation');
 $options->data['collections_guest_browser'] = 0;

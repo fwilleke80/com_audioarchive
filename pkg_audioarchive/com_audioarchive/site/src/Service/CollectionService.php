@@ -340,7 +340,26 @@ final class CollectionService
 					}
 				}
 			}
-			$row = $this->save($kind, ['id' => bin2hex(random_bytes(16)), 'name' => $data['name'] ?? 'Imported', 'items' => $clean]);
+			if ($skipped > 0)
+			{
+				// Keep an incomplete collection wholly in the browser for a safe retry.
+				return ['id' => '', 'skipped' => $skipped];
+			}
+			// A stable import identity makes retries safe after a lost response or browser cleanup failure.
+			$uuid = hash('sha256', (int) $this->user->id . ':' . $kind . ':' . json_encode($data));
+			$existing = $this->db->setQuery('SELECT * FROM ' . $this->db->quoteName('#__audioarchive_collections') . ' WHERE uuid=' . $this->db->quote($uuid) . ' AND user_id=' . (int) $this->user->id)->loadObject();
+			if ($existing)
+			{
+				$snapshot = $this->serialise($existing);
+				$references = array_map(static fn($item) => $item === null ? null : ['uuid' => $item['uuid']], $snapshot['items']);
+				if ($existing->title !== ($data['name'] ?? 'Imported') || $references !== $clean)
+				{
+					// Do not discard a browser source when its earlier destination was subsequently edited.
+					throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_COLLECTION_CONFLICT'), 409);
+				}
+				return ['id' => $existing->uuid, 'skipped' => 0];
+			}
+			$row = $this->save($kind, ['id' => $uuid, 'name' => $data['name'] ?? 'Imported', 'items' => $clean]);
 			return ['id' => $row->uuid, 'skipped' => $skipped];
 		});
 	}

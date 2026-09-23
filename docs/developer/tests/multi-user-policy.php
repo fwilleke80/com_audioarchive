@@ -96,6 +96,38 @@ namespace Joomla\CMS
 		}
 	}
 }
+namespace Joomla\CMS\Form
+{
+	/** @brief Minimal form adapter for production choice generation and bound values. */
+	class Form
+	{
+		public array $fields = [];
+		public array $values = [];
+		public function getValue($name, $group = null, $default = null)
+		{
+			return $this->values[$name] ?? $default;
+		}
+		public function setValue($name, $group, $value): void
+		{
+			$this->values[$name] = $value;
+		}
+		public function setField($field, $group, $replace, $fieldset): void
+		{
+			$this->fields[(string) $field['name']] = $field;
+		}
+		public function setFieldAttribute($name, $attribute, $value): void
+		{
+			if (isset($this->fields[$name]))
+			{
+				$this->fields[$name][$attribute] = $value;
+			}
+		}
+		public function removeField($name): void
+		{
+			unset($this->fields[$name]);
+		}
+	}
+}
 namespace
 {
 	define('_JEXEC', 1);
@@ -356,6 +388,33 @@ namespace
 	$config->data['upload_default_visibility'] = 'normal';
 	check($contributions->sanitise($input, $config)['visibility_mode'] === 'normal', 'fixed menu visibility enforced');
 	unset($config->data['upload_choose_visibility']);
+	$registered = $contributions->sanitise(array_replace($input, ['visibility_mode'=>'registered','access'=>1]), $config);
+	check($registered['access'] === 2 && $registered['visibility_mode'] === 'normal', 'registered preset uses Joomla ACL');
+	$public = $contributions->sanitise(array_replace($input, ['visibility_mode'=>'public','access'=>2]), $config);
+	check($public['access'] === 1 && $public['visibility_mode'] === 'normal', 'public preset resolves conflicting posted access');
+	$config->data['upload_allowed_access'] = [1];
+	rejectContribution(fn() => $contributions->sanitise(array_replace($input, ['visibility_mode'=>'registered']), $config), 'registered preset cannot bypass menu access restrictions');
+	unset($config->data['upload_allowed_access']);
+	$config->data['allow_private_clips'] = 0;
+	check($contributions->sanitise(array_replace($input, ['visibility_mode'=>'registered']), $config)['access'] === 2, 'registered choice independent of private feature');
+	$config->data['allow_private_clips'] = 1;
+	$config->data['upload_choose_visibility'] = 0;
+	$config->data['upload_default_visibility'] = 'registered';
+	check($contributions->sanitise(array_replace($input, ['visibility_mode'=>'public']), $config)['access'] === 2, 'fixed registered default cannot be bypassed');
+	unset($config->data['upload_choose_visibility']);
+	$form = new \Joomla\CMS\Form\Form();
+	$form->values = ['visibility_mode'=>'normal','access'=>2];
+	$registeredClip = clone $clip(1);
+	$registeredClip->access = 2;
+	$contributions->configureForm($form, $config, $registeredClip);
+	check($form->values['visibility_mode'] === 'registered', 'editing reconstructs Registered visibility from stored ACL');
+	$config->data['allow_private_clips'] = 0;
+	$form = new \Joomla\CMS\Form\Form();
+	$form->values = ['visibility_mode'=>'normal','access'=>1];
+	$contributions->configureForm($form, $config);
+	$options = array_map(static fn($option): string => (string) $option['value'], iterator_to_array($form->fields['visibility_mode']->option, false));
+	check(in_array('registered', $options, true) && !in_array('private', $options, true), 'form offers Registered independently of Private');
+	$config->data['allow_private_clips'] = 1;
 	$edited = $contributions->sanitise(array_replace($input, ['state'=>-2, 'publish_up'=>'2999-01-01']), $config, $clip(1));
 	check($edited['state'] === 1 && $edited['publish_up'] === null, 'edit-own cannot forge state or publication dates');
 	check($edited['id'] === 1 && $edited['created_by'] === 7, 'editing preserves persisted identity');

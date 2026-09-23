@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.13.2.3
+
+- Remove account-storage status labels and Not now controls from Playlists and Sound Boards; keep useful browser-only notices.
+- Show share revocation only for the selected collection with an active link, updating after selection, sharing and revocation.
+- Move fully imported browser collections into the account, remove acknowledged browser copies and prevent duplicate retries. Keep incomplete collections in the browser with an explanation.
+- Add Public, Registered users and Private frontend visibility choices, using Joomla access levels and preserving allowed-access restrictions. Simplify English and German visibility labels.
+
 ## 0.13.2.2
 
 - Rename the Processing tab’s Clip analysis section to Waveform generation (English and German).

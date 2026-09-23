@@ -1,5 +1,5 @@
 import {prepareNormalization, releaseNormalization, validGain} from './normalization.js?v=0.13.2';
-import {Collections} from './collections.js?v=0.13.2';
+import {Collections} from './collections.js?v=0.13.2.3';
 const BOARD_STORAGE_KEY = 'com_audioarchive.soundboard.v1';
 const SAMPLER_POLYPHONY_STORAGE_KEY = 'com_audioarchive.soundboard.sampler_polyphony.v1';
 const SOUNDBOARD_RECORDINGS_STORAGE_KEY = 'com_audioarchive.soundboard.recordings.v1';
