@@ -94,7 +94,7 @@ final class CollectionService
 	private function readState(): array
 	{
 		$backend = $this->backend();
-		$result = ['backend' => $backend, 'userId' => (int) $this->user->id, 'revision' => 0, 'playlists' => [], 'boards' => [], 'defaultBoard' => ''];
+		$result = ['backend' => $backend, 'userId' => (int) $this->user->id, 'revision' => 0, 'playlists' => [], 'boards' => [], 'recordings' => [], 'defaultBoard' => ''];
 		if ($backend !== 'server')
 		{
 			return $result;
@@ -109,6 +109,8 @@ final class CollectionService
 				$result['defaultBoard'] = $row->uuid;
 			}
 		}
+		$payload = $this->db->setQuery('SELECT payload FROM ' . $this->db->quoteName('#__audioarchive_recordings') . ' WHERE user_id=' . (int) $this->user->id)->loadResult();
+		$result['recordings'] = $payload ? (json_decode($payload, true) ?: []) : [];
 		$result['defaultBoard'] = $result['defaultBoard'] ?: ($result['boards'][0]['id'] ?? '');
 		$result['revision'] = (int) $this->db->setQuery('SELECT revision FROM ' . $this->db->quoteName('#__audioarchive_collection_state') . ' WHERE user_id=' . (int) $this->user->id)->loadResult();
 		return $result;
@@ -148,6 +150,42 @@ final class CollectionService
 				$db->transactionRollback();
 				throw $error;
 			}
+		});
+	}
+
+	/** @brief Persist bounded private performances atomically with collection revision checks. */
+	public function recordings(array $recordings, int $revision): array
+	{
+		if (!array_is_list($recordings) || count($recordings) > 100)
+		{
+			throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_COLLECTION_LIMIT'), 413);
+		}
+		$seen = [];
+		foreach ($recordings as $recording)
+		{
+			if (!is_array($recording) || !is_string($recording['id'] ?? null)
+				|| !preg_match('/^[a-zA-Z0-9-]{1,128}$/D', $recording['id']) || isset($seen[$recording['id']])
+				|| ($recording['format'] ?? '') !== 'punga-audioarchive-soundboard-recording' || ($recording['version'] ?? 0) !== 1
+				|| !is_string($recording['name'] ?? null) || mb_strlen($recording['name']) > 120
+				|| !is_array($recording['board'] ?? null) || !array_is_list($recording['board']) || count($recording['board']) > 36
+				|| !is_array($recording['events'] ?? null) || !array_is_list($recording['events']) || count($recording['events']) > 20000
+				|| !is_numeric($recording['durationMs'] ?? null) || $recording['durationMs'] < 0 || $recording['durationMs'] > 7200000)
+			{
+				throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_COLLECTION_INVALID'), 400);
+			}
+			$seen[$recording['id']] = true;
+		}
+		$payload = json_encode($recordings, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+		if (strlen($payload) > 4 * 1024 * 1024)
+		{
+			throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_COLLECTION_LIMIT'), 413);
+		}
+		return $this->mutate($revision, function () use ($payload): array
+		{
+			$row = (object) ['user_id' => (int) $this->user->id, 'payload' => $payload];
+			$this->db->setQuery('DELETE FROM ' . $this->db->quoteName('#__audioarchive_recordings') . ' WHERE user_id=' . $row->user_id)->execute();
+			$this->db->insertObject('#__audioarchive_recordings', $row);
+			return [];
 		});
 	}
 

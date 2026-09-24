@@ -86,7 +86,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 		if ($choices['categories'] !== [] && $choices['levels'] !== [])
 		{
 			$this->field($fieldset, 'default_visibility', 'list', 'PLG_USER_AUDIOARCHIVE_VISIBILITY', $choices['visibility']);
-			foreach (['default_category_id' => 'categories', 'default_access_id' => 'levels'] as $field => $list)
+			foreach (['default_category_id' => 'categories'] as $field => $list)
 			{
 				$options = [0 => 'PLG_USER_AUDIOARCHIVE_SITE_DEFAULT'];
 				foreach ($choices[$list] as $row) $options[(int) $row->id] = $row->title;
@@ -99,10 +99,19 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 			foreach ($choices['boards'] as $board) $options[(int) $board->id] = $board->title;
 			$this->field($fieldset, 'default_soundboard_id', 'list', 'PLG_USER_AUDIOARCHIVE_DEFAULT_BOARD', $options);
 		}
-		foreach (['owned_clips', 'private_clips', 'storage_usage', 'clip_usage', 'playlist_count', 'soundboard_count', 'quota_status'] as $name)
+		$isFrontendEdit = $this->getApplication()->isClient('site')
+			&& $this->getApplication()->getInput()->getCmd('layout', '') === 'edit';
+		if (!$isFrontendEdit)
 		{
-			$this->field($fieldset, $name, 'text', 'PLG_USER_AUDIOARCHIVE_' . strtoupper($name), [], ['readonly' => 'true', 'filter' => 'unset']);
+			$information = $xml->fields->addChild('fieldset');
+			$information->addAttribute('name', 'audioarchive_information');
+			$information->addAttribute('label', 'PLG_USER_AUDIOARCHIVE_INFORMATION');
+			foreach (['owned_clips', 'private_clips', 'storage_usage', 'clip_usage', 'playlist_count', 'soundboard_count', 'quota_status'] as $name)
+			{
+				$this->field($information, $name, 'text', 'PLG_USER_AUDIOARCHIVE_' . strtoupper($name), [], ['readonly' => 'true', 'filter' => 'unset']);
+			}
 		}
+
 		if ($service->canOverride())
 		{
 			$this->field($fieldset, 'quota_source', 'text', 'PLG_USER_AUDIOARCHIVE_QUOTA_SOURCE', [], ['readonly' => 'true', 'filter' => 'unset']);
@@ -125,8 +134,8 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 		$id = (int) $data->id;
 		if (!$service->canEdit($id)) return;
 		$stored = $service->read($id);
-		$values = array_intersect_key($stored, array_flip(['default_visibility', 'default_category_id', 'default_access_id', 'default_soundboard_id']));
-		$values += ['default_visibility' => '', 'default_category_id' => 0, 'default_access_id' => 0, 'default_soundboard_id' => 0];
+		$values = array_intersect_key($stored, array_flip(['default_visibility', 'default_category_id', 'default_soundboard_id']));
+		$values += ['default_visibility' => '', 'default_category_id' => 0, 'default_soundboard_id' => 0];
 		if ($service->canOverride())
 		{
 			foreach (['storage' => ['storage_quota_override_bytes', 'storage_mb', 1048576], 'clips' => ['clip_quota_override', 'clips_limit', 1]] as $dimension => [$column, $field, $factor])

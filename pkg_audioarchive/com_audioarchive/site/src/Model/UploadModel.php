@@ -55,7 +55,7 @@ class UploadModel extends ClipModel
 				'state' => (int) $params->get('upload_default_state', 0)];
 			// Preferences are defaults only; current menu and category permissions always win.
 			$id = (int) $this->getCurrentUser()->id;
-			$profile = $id > 0 ? $this->getDatabase()->setQuery('SELECT default_category_id, default_access_id, default_visibility FROM '
+			$profile = $id > 0 ? $this->getDatabase()->setQuery('SELECT default_category_id, default_visibility FROM '
 				. $this->getDatabase()->quoteName('#__audioarchive_user_profiles') . ' WHERE user_id=' . $id)->loadObject() : null;
 			if ($profile)
 			{
@@ -64,12 +64,11 @@ class UploadModel extends ClipModel
 				if ($params->get('upload_choose_visibility', 1))
 				{
 					$visibility = (string) $profile->default_visibility;
-					$permitted = ['normal'];
+					$permitted = [];
 					if (in_array(1, $allowed, true)) $permitted[] = 'public';
 					if (in_array((int) $params->get('frontend_registered_access', 2), $allowed, true)) $permitted[] = 'registered';
 					if ($params->get('allow_private_clips', 0)) $permitted[] = 'private';
 					if (in_array($visibility, $permitted, true)) $data['visibility_mode'] = $visibility;
-					if (in_array((int) $profile->default_access_id, $allowed, true)) $data['access'] = (int) $profile->default_access_id;
 				}
 			}
 

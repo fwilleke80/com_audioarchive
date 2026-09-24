@@ -20,6 +20,7 @@ globalThis.fetch = async (url, options) =>
     if (fail) return {ok: false, json: async () => ({success: false, message: 'Stale tab'})};
     assert.equal(payload.revision, revision);
     revision++;
+    if (payload.recordings) return {ok:true,json:async()=>({success:true,data:{state:{...state,revision,recordings:payload.recordings}}})};
     const board = {...payload.board, items: payload.board.items.map((item) => item ? {...item, id: 42, title: 'Canonical'} : null)};
     return {ok: true, json: async () => ({success: true, data: {id: board.id, state: {...state, revision, boards: [board]}}})};
 };
@@ -38,3 +39,14 @@ assert.equal(await Collections.write('com_audioarchive.soundboard.v1', board), f
 assert.equal(board.length, 2, 'rejected change restores acknowledged board');
 assert.equal(Collections.read('com_audioarchive.soundboard.v1', []).length, 2);
 console.log('Collection browser logic assertions passed.');
+
+fail = false;
+const performances = [{id:'performance',events:[{type:'pad',pad:0}]}];
+assert.equal(await Collections.write('com_audioarchive.soundboard.recordings.v1', performances),true);
+assert.equal(Collections.read('com_audioarchive.soundboard.recordings.v1',[])[0].id,'performance');
+fail = true;
+performances.push({id:'unsaved',events:[]});
+assert.equal(await Collections.write('com_audioarchive.soundboard.recordings.v1', performances),false);
+assert.equal(performances.length,2,'failed recording save retains exportable unsaved work');
+assert.equal(Collections.read('com_audioarchive.soundboard.recordings.v1',[]).length,1,'failed save does not modify acknowledged server snapshot');
+console.log('Recording account acknowledgement and failure recovery checks passed.');

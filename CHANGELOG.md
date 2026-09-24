@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.13.4.1
+
+- Keep Play, Record overdub, Undo overdub and Actions only on the active recording toolbar. List rows select recordings without duplicating controls.
+
+## 0.13.4
+
+- Store signed-in users’ recordings in their accounts with owner isolation, transactional revision checks and explicit browser import. Guests retain browser storage. Import removes only acknowledged unchanged browser copies.
+- Play recordings using independent embedded clip mappings without replacing the visible sound board. Overdub layers retain their own board mappings.
+- Add per-recording Play, Overdub and Undo controls; move Rename, Export, Load sound board and Delete into Actions menus. Add space above Recorder.
+- Explicitly loaded recording boards remain temporary, with Return and Save as new account board controls.
+- Include account recordings in full archive backup/restore, remapping users and clips. Retain failed recording saves in memory for retry/export.
+
+## 0.13.3.1
+
+- Remove the redundant profile access-level setting and custom visibility option. Legacy personal access defaults no longer affect uploads.
+- Group the seven read-only statistics under My Audio Archive on the profile display; hide them on frontend Edit profile. Retain administrator usage and quota controls.
+- Show names and usernames in the backend Owner filter; label deleted owners explicitly.
+
 ## 0.13.3
 
 - Guests always use browser collections; signed-in users always use account collections. Existing browser import remains available, with successful imports removing acknowledged browser copies.

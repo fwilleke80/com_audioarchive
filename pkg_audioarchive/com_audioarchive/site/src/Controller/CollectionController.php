@@ -24,6 +24,11 @@ class CollectionController extends BaseController
 	{
 		$this->run('playlists', true);
 	}
+	/** @brief Save the authenticated owner’s recordings. */
+	public function recordings(): void
+	{
+		$this->run('recordings', true);
+	}
 	/** @brief Save one board. */
 	public function board(): void
 	{
@@ -91,7 +96,7 @@ class CollectionController extends BaseController
 				throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_COLLECTION_LIMIT'), 413);
 			}
 			$data = json_decode($raw, true);
-			if (!is_array($data) || ($action === 'playlists' && !is_array($data['playlists'] ?? null)))
+			if (!is_array($data) || (in_array($action, ['playlists', 'recordings'], true) && !is_array($data[$action] ?? null)))
 			{
 				throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_COLLECTION_INVALID'), 400);
 			}
@@ -102,6 +107,7 @@ class CollectionController extends BaseController
 				'state' => $service->state() + ['token' => Session::getFormToken(), 'sharing' => (bool) $params->get('collections_sharing', 1), 'labels' => $this->labels()],
 				'playlists' => $service->playlists(is_array($data['playlists'] ?? null) ? $data['playlists'] : [], $revision),
 				'importPlaylist', 'importBoard' => $service->importCollection($action === 'importPlaylist' ? 'playlist' : 'soundboard', is_array($data['collection'] ?? null) ? $data['collection'] : [], $revision),
+				'recordings' => $service->recordings(is_array($data['recordings'] ?? null) ? $data['recordings'] : [], $revision),
 				'board' => $service->board(is_array($data['board'] ?? null) ? $data['board'] : [], $revision),
 				'deleteBoard' => $service->deleteBoard($id, $revision),
 				'defaultBoard' => $service->defaultBoard($id, $revision),

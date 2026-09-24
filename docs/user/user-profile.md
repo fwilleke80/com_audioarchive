@@ -4,7 +4,7 @@ Signed-in users always use account playlists and sound boards. Guests always use
 
 ## Personal preferences
 
-Open Joomla’s frontend **Edit profile**, then **Audio Archive**. For an existing account this section offers permitted upload defaults (visibility, category and access), a default sound board when boards exist, and read-only clip, collection and quota usage. These are private account settings, not a public profile. The current upload menu, category ACL and component settings always take precedence. A removed or no-longer-permitted preference falls back to permitted defaults. Validation-error submissions are preserved.
+Open Joomla’s frontend **Edit profile**, then **Audio Archive**. For an existing account this section offers permitted upload defaults (visibility and category), a default sound board when boards exist, and read-only clip, collection and quota usage. These are private account settings, not a public profile. The current upload menu, category ACL and component settings always take precedence. A removed or no-longer-permitted preference falls back to permitted defaults. Validation-error submissions are preserved.
 
 The **User – Audio Archive** plugin is enabled on its first installation, including an upgrade that adds the plugin. Later updates preserve an administrator’s decision to disable it. Disabling this plugin hides profile fields; it does not disable account collections.
 
@@ -35,3 +35,9 @@ Clips, profiles and collections are retained for administrator recovery; nothing
 7. Smoke-test playback and the frequency-profile display on the devices used for 0.13.2.7.
 
 Automated checks use PHP/SQLite with Joomla adapters and JavaScript test fixtures. A live Joomla/MySQL upgrade and device-browser smoke test are still required.
+
+### 0.13.3.1 usability update
+
+Visibility preferences offer Site default, Public, Registered users and Private where permitted. The separate access-level preference has been removed and previously stored personal access levels are ignored for new uploads. Read-only statistics appear on the frontend profile display, but not Edit profile. Administrator usage and quota controls remain available. The Clips Owner filter displays names and usernames, including explicit deleted-user labels.
+
+The seven read-only statistics are grouped in a separate **My Audio Archive** section. Joomla’s standard profile display renders these as plain label/value information, not editable inputs.

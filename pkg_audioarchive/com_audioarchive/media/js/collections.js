@@ -1,5 +1,6 @@
 /** @brief Shared asynchronous account adapter; browser copies are never silently imported or overwritten. */
 const PLAYLIST_KEY = 'com_audioarchive.playlists.v1';
+const RECORDINGS_KEY = 'com_audioarchive.soundboard.recordings.v1';
 const BOARD_KEY = 'com_audioarchive.soundboard.v1';
 const clone = (value) => JSON.parse(JSON.stringify(value));
 let state = {backend: 'disabled', playlists: [], boards: [], revision: 0, userId: 0};
@@ -7,6 +8,7 @@ let token = '';
 let labels = {};
 let readyPromise;
 let pending = 0;
+let unsavedRecordings = false;
 let tail = Promise.resolve();
 let shared = null;
 let statusNode;
@@ -179,7 +181,7 @@ async function initialise()
 	}
 	window.addEventListener('beforeunload', (event) =>
 	{
-		if (pending)
+		if (pending || unsavedRecordings)
 		{
 			event.preventDefault();
 			event.returnValue = '';
@@ -222,16 +224,28 @@ export const Collections = {
 	{
 		return state.userId;
 	},
+	/** @brief Save an explicitly loaded recording board as a separate named account board. */
+	async newBoard(name, items)
+	{
+		const result = await mutate('board', {board: {id: crypto.randomUUID(), name, items: clone(items)}});
+		activeBoard = result.id;
+		return result.id;
+	},
+
 	/** @brief Read a copy of already-loaded server data; recording/rating keys remain browser-local. */
 	read(key, fallback)
 	{
-		if (state.backend === 'disabled' && [PLAYLIST_KEY, BOARD_KEY].includes(key))
+		if (state.backend === 'disabled' && [PLAYLIST_KEY, BOARD_KEY, RECORDINGS_KEY].includes(key))
 		{
 			return clone(fallback);
 		}
 		if (state.backend !== 'server')
 		{
 			return read(key, fallback);
+		}
+		if (key === RECORDINGS_KEY)
+		{
+			return clone(state.recordings || []);
 		}
 		if (key === PLAYLIST_KEY)
 		{
@@ -258,7 +272,12 @@ export const Collections = {
 				localStorage.setItem(key, JSON.stringify(value));
 				return true;
 			}
-			if (key === PLAYLIST_KEY)
+			if (key === RECORDINGS_KEY)
+			{
+				await mutate('recordings', {recordings: clone(value)});
+				unsavedRecordings = false;
+			}
+			else if (key === PLAYLIST_KEY)
 			{
 				selectedPlaylist = value.selectedId;
 				// Selecting a playlist or refreshing its titles does not change server membership.
@@ -290,11 +309,12 @@ export const Collections = {
 		}
 		catch (error)
 		{
-			if (Array.isArray(value))
+			if (key === RECORDINGS_KEY) unsavedRecordings = true;
+			if (Array.isArray(value) && key !== RECORDINGS_KEY)
 			{
 				value.splice(0, value.length, ...previous);
 			}
-			else
+			else if (key !== RECORDINGS_KEY)
 			{
 				Object.keys(value).forEach((key) => delete value[key]);
 				Object.assign(value, previous);
@@ -370,6 +390,7 @@ export const Collections = {
 			return;
 		}
 		let selector;
+		let temporaryBoardLabel = '';
 		const render = () =>
 		{
 			session(`com_audioarchive.activeBoard.${state.userId}`, activeBoard);
@@ -377,8 +398,18 @@ export const Collections = {
 			{
 				selector.replaceChildren(...state.boards.map((board) => new Option(board.name + (board.id === state.defaultBoard ? ' ★' : ''), board.id)));
 				selector.value = activeBoard;
+				if (temporaryBoardLabel)
+				{
+					selector.add(new Option(temporaryBoardLabel, '__temporary__'));
+					selector.value = '__temporary__';
+				}
 			}
 		};
+		root.addEventListener('audioarchive:temporary-board', (event) =>
+		{
+			temporaryBoardLabel = String(event.detail?.label || '');
+			render();
+		});
 		if (kind === 'soundboard')
 		{
 			selector = document.createElement('select');
@@ -391,6 +422,8 @@ export const Collections = {
 					selector.value = activeBoard;
 					return;
 				}
+				if (selector.value === '__temporary__') return;
+				temporaryBoardLabel = '';
 				activeBoard = selector.value;
 				session(`com_audioarchive.activeBoard.${state.userId}`, activeBoard);
 				changed();
@@ -443,6 +476,7 @@ export const Collections = {
 		/** @brief Only the selected owned collection can expose its active share link. */
 		const refresh = () =>
 		{
+			render();
 			const collection = (kind === 'playlist' ? state.playlists : state.boards).find((item) => item.id === selected());
 			if (revoke)
 			{

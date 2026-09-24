@@ -449,6 +449,7 @@ final class ArchiveImportService
 				'group-quotas',
 				'user-profiles',
 				'collections',
+				'recordings',
 				'categories',
 				'tags',
 				'clips',
@@ -575,6 +576,7 @@ final class ArchiveImportService
 				}
 
 				CollectionArchiveService::restore($this->database, (array) $data['collections'], $userMap, $clipResult['uuid_to_id'], $conflictPolicy, $restoreConfiguration, $result);
+				RecordingArchiveService::restore($this->database, (array) $data['recordings'], $userMap, $clipResult['uuid_to_id'], $conflictPolicy, $result);
 
 				$this->database->setQuery('UPDATE ' . $this->database->quoteName('#__ucm_content') . ' SET core_state=0 WHERE core_type_alias=' . $this->database->quote('com_audioarchive.clip') . ' AND core_content_item_id IN (SELECT id FROM ' . $this->database->quoteName('#__audioarchive_clips') . ' WHERE visibility_mode=' . $this->database->quote('private') . ')')->execute();
 				$this->database->transactionCommit();
@@ -1771,7 +1773,7 @@ final class ArchiveImportService
 		}
 
 		$this->database->setQuery('UPDATE ' . $this->database->quoteName('#__audioarchive_collection_state') . ' SET revision=revision+1')->execute();
-		foreach (['#__audioarchive_collection_items', '#__audioarchive_collections', '#__audioarchive_ratings', '#__audioarchive_jobs', '#__audioarchive_waveforms', '#__audioarchive_analyses', '#__audioarchive_files', '#__audioarchive_clips'] as $tableName)
+		foreach (['#__audioarchive_recordings', '#__audioarchive_collection_items', '#__audioarchive_collections', '#__audioarchive_ratings', '#__audioarchive_jobs', '#__audioarchive_waveforms', '#__audioarchive_analyses', '#__audioarchive_files', '#__audioarchive_clips'] as $tableName)
 		{
 			$this->database->setQuery(
 				$this->database->getQuery(true)->delete($this->database->quoteName($tableName))

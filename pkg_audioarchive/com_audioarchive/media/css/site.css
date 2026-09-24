@@ -3129,3 +3129,8 @@
 {
 	cursor: pointer;
 }
+
+/* Recording actions are secondary to the performance transport. */
+.com-audioarchive-recording-actions { position: relative; }
+.com-audioarchive-recording-actions-menu { position: absolute; right: 0; z-index: 20; min-width: 16rem; padding: .5rem; background: var(--body-bg, #fff); border: 1px solid #aaa; border-radius: .3rem; box-shadow: 0 .25rem .75rem #0002; display: grid; gap: .35rem; }
+.com-audioarchive-soundboard-recording-row { flex-wrap: wrap; }

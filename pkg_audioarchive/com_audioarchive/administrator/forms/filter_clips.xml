@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<form>
+<form addfieldprefix="Punga\Component\Audioarchive\Administrator\Field">
     <fields name="filter">
-        <field name="owner" type="sql" label="COM_AUDIOARCHIVE_OWNER" query="SELECT id AS value, name AS text FROM #__users ORDER BY name" onchange="this.form.submit();"><option value="">COM_AUDIOARCHIVE_OWNER</option><option value="0">COM_AUDIOARCHIVE_OWNER_SYSTEM</option></field>
+        <field name="owner" type="clipowner" label="COM_AUDIOARCHIVE_OWNER" onchange="this.form.submit();"><option value="">COM_AUDIOARCHIVE_OWNER</option><option value="0">COM_AUDIOARCHIVE_OWNER_SYSTEM</option></field>
         <field name="visibility" type="list" label="COM_AUDIOARCHIVE_VISIBILITY" onchange="this.form.submit();"><option value="">COM_AUDIOARCHIVE_VISIBILITY</option><option value="normal">COM_AUDIOARCHIVE_VISIBILITY_NORMAL</option><option value="private">COM_AUDIOARCHIVE_VISIBILITY_PRIVATE</option></field>
         <field name="search" type="text" label="COM_AUDIOARCHIVE_FILTER_SEARCH_LABEL" hint="JSEARCH_FILTER" />
         <field name="state" type="status" label="JOPTION_SELECT_PUBLISHED" onchange="this.form.submit();">

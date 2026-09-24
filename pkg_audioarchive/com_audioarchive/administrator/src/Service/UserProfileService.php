@@ -63,7 +63,6 @@ final class UserProfileService
 		if (in_array(1, $accessIds, true)) $visibility['public'] = 'PLG_USER_AUDIOARCHIVE_PUBLIC';
 		if (in_array((int) $this->params->get('frontend_registered_access', 2), $accessIds, true)) $visibility['registered'] = 'PLG_USER_AUDIOARCHIVE_REGISTERED';
 		if ($this->params->get('allow_private_clips', 0)) $visibility['private'] = 'PLG_USER_AUDIOARCHIVE_PRIVATE';
-		if ($levels !== []) $visibility['normal'] = 'PLG_USER_AUDIOARCHIVE_CUSTOM_ACCESS';
 		$boards = $this->db->setQuery('SELECT id, title FROM ' . $this->db->quoteName('#__audioarchive_collections') . ' WHERE user_id=' . $id . " AND kind='soundboard' ORDER BY title, id")->loadObjectList() ?: [];
 		return ['categories' => $categories, 'levels' => $levels, 'visibility' => $visibility, 'boards' => $boards];
 	}
@@ -89,7 +88,7 @@ final class UserProfileService
 			$value = is_string($input['default_visibility']) ? $input['default_visibility'] : '';
 			$result['default_visibility'] = $choices['categories'] !== [] && array_key_exists($value, $choices['visibility']) ? $value : '';
 		}
-		foreach (['default_category_id' => 'categories', 'default_access_id' => 'levels', 'default_soundboard_id' => 'boards'] as $field => $list)
+		foreach (['default_category_id' => 'categories', 'default_soundboard_id' => 'boards'] as $field => $list)
 		{
 			if (!array_key_exists($field, $input)) continue;
 			$value = self::integer($input[$field]);

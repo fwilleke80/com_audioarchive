@@ -1,6 +1,6 @@
 import {acquirePlaybackSession, releasePlaybackSession} from './audio-session.js?v=0.13.2.7';
 import {playbackFor, prepareNormalization, releaseNormalization, validGain} from './normalization.js?v=0.13.2.7';
-import {Collections} from './collections.js?v=0.13.2.3';
+import {Collections} from './collections.js?v=0.13.4';
 const BOARD_STORAGE_KEY = 'com_audioarchive.soundboard.v1';
 const SAMPLER_POLYPHONY_STORAGE_KEY = 'com_audioarchive.soundboard.sampler_polyphony.v1';
 const SOUNDBOARD_RECORDINGS_STORAGE_KEY = 'com_audioarchive.soundboard.recordings.v1';
@@ -1028,7 +1028,8 @@ function normaliseSoundboardRecording(value, padCount)
 		name,
 		created,
 		durationMs,
-		board: normaliseBoard(value.board, padCount),
+		board: normaliseBoard(value.board, 36),
+		layerBoards: Object.fromEntries(Object.entries(value.layerBoards || {}).filter(([layer, items]) => /^\d+$/.test(layer) && Number(layer) < 64 && Array.isArray(items)).map(([layer, items]) => [layer, normaliseBoard(items, 36)])),
 		initialState:
 		{
 			mode: initialMode,
@@ -1048,7 +1049,7 @@ function normaliseSoundboardRecording(value, padCount)
  */
 function readSoundboardRecordings(padCount)
 {
-	const stored = readStorage(SOUNDBOARD_RECORDINGS_STORAGE_KEY, []);
+	const stored = Collections.read(SOUNDBOARD_RECORDINGS_STORAGE_KEY, []);
 
 	if (!Array.isArray(stored))
 	{
@@ -1056,7 +1057,7 @@ function readSoundboardRecordings(padCount)
 	}
 
 	return stored
-		.map((recording) => normaliseSoundboardRecording(recording, padCount))
+		.map((recording) => normaliseSoundboardRecording(recording, 36))
 		.filter(Boolean)
 		.slice(0, 100);
 }
@@ -1067,9 +1068,15 @@ function readSoundboardRecordings(padCount)
  * @param {object[]} recordings Recordings to store.
  * @returns {boolean} True when storage succeeded.
  */
-function writeSoundboardRecordings(recordings)
+async function writeSoundboardRecordings(recordings)
 {
-	return writeStorage(SOUNDBOARD_RECORDINGS_STORAGE_KEY, recordings.slice(0, 100));
+	const controls = Array.from(document.querySelectorAll('[data-audioarchive-soundboard-recordings] button'));
+	const previous = controls.map((control) => control.disabled);
+	controls.forEach((control) => { control.disabled = true; });
+	const success = await Collections.write(SOUNDBOARD_RECORDINGS_STORAGE_KEY, recordings);
+	controls.forEach((control, index) => { control.disabled = previous[index]; });
+	document.querySelector('[data-audioarchive-soundboard]')?.dispatchEvent(new CustomEvent('audioarchive:recording-save', {detail: {success}}));
+	return success;
 }
 
 /**
@@ -1615,7 +1622,7 @@ async function initialiseSoundboard()
 		recordingTimerFrame = window.requestAnimationFrame(updateRecordingClock);
 	};
 
-	const stopSoundboardRecording = () =>
+	const stopSoundboardRecording = async () =>
 	{
 		if (!recordingSession)
 		{
@@ -1630,6 +1637,7 @@ async function initialiseSoundboard()
 
 		const session = recordingSession;
 		recordingSession = null;
+		if (session.overdub) stopSoundboardRecordingPlayback(false);
 
 		if (recordingTimerFrame)
 		{
@@ -1649,14 +1657,17 @@ async function initialiseSoundboard()
 				const overdubEvents = session.events.slice(0, availableEventSlots).map((event) => ({...event}));
 				const mergedEvents = [...target.events.map((event) => ({...event})), ...overdubEvents]
 					.sort((a, b) => a.t - b.t);
+				const previousLayerBoards = {...(target.layerBoards || {})};
+				target.layerBoards = {...previousLayerBoards, [session.layer]: session.board};
 				target.events = mergedEvents;
 				target.durationMs = Math.max(target.durationMs, durationMs);
 
-				if (writeSoundboardRecordings(recordings))
+				if (await writeSoundboardRecordings(recordings))
 				{
 					recordingUndo = {
 						recordingId: target.id,
 						events: previousEvents,
+						layerBoards: previousLayerBoards,
 						durationMs: previousDurationMs,
 					};
 					selectedRecordingId = target.id;
@@ -1671,6 +1682,7 @@ async function initialiseSoundboard()
 				}
 				else
 				{
+					target.layerBoards = previousLayerBoards;
 					target.events = previousEvents;
 					target.durationMs = previousDurationMs;
 
@@ -1711,7 +1723,7 @@ async function initialiseSoundboard()
 			{
 				recordings = [recording, ...recordings.filter((item) => item.id !== recording.id)].slice(0, 100);
 
-				if (writeSoundboardRecordings(recordings))
+				if (await writeSoundboardRecordings(recordings))
 				{
 					selectedRecordingId = recording.id;
 
@@ -1742,7 +1754,7 @@ async function initialiseSoundboard()
 		renderSoundboardRecordings();
 	};
 
-	const undoSoundboardOverdub = () =>
+	const undoSoundboardOverdub = async () =>
 	{
 		if (!recordingUndo || recordingSession || recordingPlayback)
 		{
@@ -1759,13 +1771,16 @@ async function initialiseSoundboard()
 		}
 
 		const undo = recordingUndo;
+		const currentLayerBoards = target.layerBoards;
+		target.layerBoards = undo.layerBoards || {};
 		const currentEvents = target.events;
 		const currentDurationMs = target.durationMs;
 		target.events = undo.events.map((event) => ({...event}));
 		target.durationMs = undo.durationMs;
 
-		if (!writeSoundboardRecordings(recordings))
+		if (!await writeSoundboardRecordings(recordings))
 		{
+			target.layerBoards = currentLayerBoards;
 			target.events = currentEvents;
 			target.durationMs = currentDurationMs;
 
@@ -1996,8 +2011,8 @@ async function initialiseSoundboard()
 
 	const updatePadPlayingState = (index) =>
 	{
-		const hasAudioVoices = (voicesByPad.get(index)?.size || 0) > 0;
-		const hasSamplerVoices = (samplerVoicesByPad.get(index)?.size || 0) > 0;
+		const hasAudioVoices = Array.from(voicesByPad.get(index) || []).some((voice) => voice.dataset.audioarchivePlaySource !== 'recording');
+		const hasSamplerVoices = Array.from(samplerVoicesByPad.get(index) || []).some((voice) => voice.playSource !== 'recording');
 		pads[index]?.classList.toggle('is-playing', hasAudioVoices || hasSamplerVoices);
 	};
 
@@ -2626,12 +2641,12 @@ async function initialiseSoundboard()
 
 	const playSamplerNoteFromPad = (index, midiNote, velocity, playSource = 'recording', recordingLayer = 0) =>
 	{
-		if (!samplerEnabled || index < 0 || index >= padCount || streamTemplate === '')
+		if (!samplerEnabled || index < 0 || index >= (playSource === 'recording' ? 36 : padCount) || streamTemplate === '')
 		{
 			return;
 		}
 
-		const entry = board[index] || null;
+		const entry = (playSource === 'recording' ? (recordingPlayback?.layerBoards?.[recordingLayer] || recordingPlayback?.board) : board)?.[index] || null;
 
 		if (!entry)
 		{
@@ -2667,10 +2682,12 @@ async function initialiseSoundboard()
 			return;
 		}
 
+		const playbackToken = recordingPlayback?.token;
 		void (async () =>
 		{
 			const context = await getAudioContext();
 			const buffer = await loadSamplerBuffer(entry);
+			if (playSource === 'recording' && recordingPlayback?.token !== playbackToken) return;
 			startSamplerVoice(context, buffer, entry, index, midiNote, velocity, playSource, false, recordingLayer);
 		})().catch(() => {});
 	};
@@ -2798,7 +2815,7 @@ async function initialiseSoundboard()
 
 	const play = (index, playSource = 'pad', shouldRecord = true, recordingLayer = 0) =>
 	{
-		const entry = board[index] || null;
+		const entry = (playSource === 'recording' ? (recordingPlayback?.layerBoards?.[recordingLayer] || recordingPlayback?.board) : board)?.[index] || null;
 
 		if (!entry || streamTemplate === '')
 		{
@@ -2848,7 +2865,7 @@ async function initialiseSoundboard()
 		voicesByPad.get(index).add(voice);
 		voice.addEventListener('play', () =>
 		{
-			pads[index]?.classList.add('is-playing');
+			updatePadPlayingState(index);
 			recordPlay(entry.id);
 			if (recordSoundboardPlays)
 			{
@@ -3116,14 +3133,7 @@ async function initialiseSoundboard()
 				detail.textContent = `${formatSoundboardRecordingTime(recording.durationMs)} · ${formatSoundboardLabel(root.dataset.audioarchiveLabelRecordingEvents || '%d events', recording.events.length)}`;
 				select.append(name, detail);
 
-				const remove = document.createElement('button');
-				remove.type = 'button';
-				remove.className = 'btn btn-sm btn-outline-danger';
-				remove.dataset.audioarchiveRecordingDelete = recording.id;
-				remove.disabled = busy;
-				remove.textContent = root.dataset.audioarchiveLabelRecordingDelete || 'Delete';
-
-				row.append(select, remove);
+				row.append(select);
 				recordingList.appendChild(row);
 			});
 		}
@@ -3158,6 +3168,11 @@ async function initialiseSoundboard()
 			recordingUndoButton.disabled = busy || !selected || recordingUndo?.recordingId !== selected.id;
 		}
 
+		root.querySelectorAll('[data-audioarchive-recording-load-board], [data-audioarchive-recording-delete]').forEach((button) =>
+		{
+			button.disabled = busy;
+		});
+
 		if (recordingRenameButton)
 		{
 			recordingRenameButton.disabled = busy;
@@ -3183,6 +3198,7 @@ async function initialiseSoundboard()
 			created: recording.created,
 			durationMs: recording.durationMs,
 			board: recording.board,
+			layerBoards: recording.layerBoards || {},
 			initialState: recording.initialState,
 			events: recording.events,
 		};
@@ -3201,7 +3217,7 @@ async function initialiseSoundboard()
 
 	const resolveRecordingBoard = async (recording) =>
 	{
-		const candidate = normaliseBoard(recording.board, padCount);
+		const candidate = normaliseBoard(recording.board, 36);
 
 		if (routesUrl === '')
 		{
@@ -3282,35 +3298,6 @@ async function initialiseSoundboard()
 		}
 	};
 
-	const restoreRecordingPlaybackState = async (preserved) =>
-	{
-		stopAllVoices();
-		setSamplerMode(false, false, false);
-		board = preserved.board;
-		soundboardPolyphonic = preserved.polyphony;
-		samplerBaseNote = preserved.baseNote;
-		setTemporarySharedBoard(preserved.temporarySharedBoard);
-		render();
-		updatePianoNotes();
-
-		if (polyphonyToggle instanceof HTMLInputElement)
-		{
-			polyphonyToggle.checked = soundboardPolyphonic;
-		}
-
-		setSamplerMode(preserved.samplerMode, false, false);
-
-		if (
-			preserved.samplerMode
-			&& preserved.selectedPad >= 0
-			&& preserved.selectedPad < padCount
-			&& board[preserved.selectedPad]
-		)
-		{
-			await selectSamplerPad(preserved.selectedPad, false, false);
-		}
-	};
-
 	const stopSoundboardRecordingPlayback = (finished = false) =>
 	{
 		if (!recordingPlayback)
@@ -3327,7 +3314,7 @@ async function initialiseSoundboard()
 			recordingPlaybackFrame = 0;
 		}
 
-		void restoreRecordingPlaybackState(playback.preserved);
+		stopRecordingVoices();
 		setRecordingMutationDisabled(false);
 
 		syncRecordingTransport();
@@ -3427,6 +3414,11 @@ async function initialiseSoundboard()
 			stopSoundboardRecordingPlayback(false);
 		}
 
+		if (overdub && recording.events.some((event) => Number(event.layer) >= 63))
+		{
+			if (recordingStatus) recordingStatus.textContent = root.dataset.audioarchiveLabelRecordingLayerLimit || 'Maximum overdub layers reached.';
+			return;
+		}
 		const token = createSoundboardRecordingId();
 		const preserved = {
 			board,
@@ -3465,8 +3457,7 @@ async function initialiseSoundboard()
 			recordingUndoButton.disabled = true;
 		}
 
-		setRecordingMutationDisabled(true);
-		stopAllVoices();
+		setRecordingMutationDisabled(overdub);
 		const resolvedBoard = await resolveRecordingBoard(recording);
 
 		if (!recordingPlayback || recordingPlayback.token !== token)
@@ -3474,30 +3465,21 @@ async function initialiseSoundboard()
 			return;
 		}
 
-		setSamplerMode(false, false, false);
-		board = resolvedBoard;
-		setTemporarySharedBoard(false);
-		render();
-
-		samplerBaseNote = preserved.baseNote;
-		updatePianoNotes();
-		setSamplerMode(preserved.samplerMode, false, false);
-
-		if (
-			preserved.samplerMode
-			&& preserved.selectedPad >= 0
-			&& board[preserved.selectedPad]
-		)
+		recordingPlayback.board = resolvedBoard;
+		const layerBoards = {};
+		for (const [layer, items] of Object.entries(recording.layerBoards || {}))
 		{
-			await selectSamplerPad(preserved.selectedPad, false, false);
+			layerBoards[layer] = await resolveRecordingBoard({...recording, board: items});
 		}
+		if (!recordingPlayback || recordingPlayback.token !== token) return;
+		recordingPlayback.layerBoards = layerBoards;
 
 		const samplerPads = Array.from(new Set(recording.events
 			.filter((event) => event.type === 'note')
 			.map((event) => event.pad)))
-			.filter((pad) => pad >= 0 && board[pad]);
+			.filter((pad) => pad >= 0 && resolvedBoard[pad]);
 
-		await Promise.allSettled(samplerPads.map((pad) => loadSamplerBuffer(board[pad])));
+		await Promise.allSettled([resolvedBoard, ...Object.values(layerBoards)].flat().filter(Boolean).map((entry) => loadSamplerBuffer(entry)));
 
 		if (!recordingPlayback || recordingPlayback.token !== token)
 		{
@@ -3524,6 +3506,7 @@ async function initialiseSoundboard()
 			recordingSession = {
 				overdub: true,
 				layer: overdubLayer,
+				board: normaliseBoard(board, 36),
 				targetRecordingId: recording.id,
 				startedAt: recordingPlayback.startedAt,
 				events:
@@ -3607,6 +3590,136 @@ async function initialiseSoundboard()
 	});
 	recordingUndoButton?.addEventListener('click', undoSoundboardOverdub);
 
+	/** @brief Load only on request; keep the saved board untouched until Save as new is chosen. */
+	const loadRecordingBoard = async (recording) =>
+	{
+		if (!recording || recordingSession || recordingPlayback) return;
+		const resolved = await resolveRecordingBoard(recording);
+		if (recordingSession || recordingPlayback) return;
+		stopLiveVoices();
+		board = resolved;
+		setTemporarySharedBoard(true);
+		if (sharedPanel) sharedPanel.hidden = true;
+		render();
+		let temporary = root.querySelector('[data-recording-board-actions]');
+		if (!temporary)
+		{
+			temporary = document.createElement('div');
+			temporary.dataset.recordingBoardActions = '';
+			temporary.className = 'alert alert-info d-flex gap-2 align-items-center';
+			root.prepend(temporary);
+		}
+		temporary.replaceChildren();
+		const title = document.createElement('span');
+		title.textContent = formatSoundboardLabel(root.dataset.audioarchiveLabelRecordingTemporaryBoard || 'Temporary recording board: %s', recording.name);
+		const save = document.createElement('button');
+		save.type = 'button';
+		save.className = 'btn btn-sm btn-primary';
+		save.textContent = root.dataset.audioarchiveLabelRecordingSaveBoard || 'Save as new sound board';
+		save.hidden = Collections.backend !== 'server';
+		save.addEventListener('click', async () =>
+		{
+			if (recordingSession || recordingPlayback) return;
+			save.disabled = true;
+			try
+			{
+				await Collections.newBoard(recording.name, board);
+				setTemporarySharedBoard(false);
+				temporary.remove();
+			root.dispatchEvent(new CustomEvent('audioarchive:temporary-board', {detail: {label: ''}}));
+				root.dispatchEvent(new Event('change'));
+			}
+			catch (error)
+			{
+				if (recordingStatus) recordingStatus.textContent = error.message;
+			}
+			finally
+			{
+				save.disabled = false;
+			}
+		});
+		const back = document.createElement('button');
+		back.type = 'button';
+		back.className = 'btn btn-sm btn-outline-secondary';
+		back.textContent = root.dataset.audioarchiveLabelRecordingReturnBoard || 'Return to my sound board';
+		back.addEventListener('click', () =>
+		{
+			if (recordingSession || recordingPlayback) return;
+			stopLiveVoices();
+			board = normaliseBoard(readBoard(), padCount);
+			setTemporarySharedBoard(false);
+			temporary.remove();
+			root.dispatchEvent(new CustomEvent('audioarchive:temporary-board', {detail: {label: ''}}));
+			render();
+		});
+		temporary.append(title, save, back);
+		root.dispatchEvent(new CustomEvent('audioarchive:temporary-board', {detail: {label: title.textContent}}));
+	};
+
+	const retrySave = document.createElement('button');
+	retrySave.type = 'button';
+	retrySave.hidden = true;
+	root.addEventListener('audioarchive:recording-save', (event) => { retrySave.hidden = event.detail.success; });
+	retrySave.className = 'btn btn-outline-secondary my-2';
+	retrySave.textContent = root.dataset.audioarchiveLabelRecordingRetry || 'Save recordings';
+	recordingsRoot?.append(retrySave);
+	retrySave.addEventListener('click', async () =>
+	{
+		if (recordingSession || recordingPlayback) return;
+		retrySave.disabled = true;
+		await writeSoundboardRecordings(recordings);
+		retrySave.disabled = false;
+	});
+
+	if (Collections.backend === 'server')
+	{
+		const browserRecordings = readStorage(SOUNDBOARD_RECORDINGS_STORAGE_KEY, []);
+		if (Array.isArray(browserRecordings) && browserRecordings.length)
+		{
+			const importButton = document.createElement('button');
+			importButton.type = 'button';
+			importButton.className = 'btn btn-outline-primary my-2';
+			importButton.textContent = root.dataset.audioarchiveLabelRecordingImportBrowser || 'Import browser recordings into my account';
+			recordingsRoot?.prepend(importButton);
+			importButton.addEventListener('click', async () =>
+			{
+				if (recordingSession || recordingPlayback) return;
+				importButton.disabled = true;
+				const raw = readStorage(SOUNDBOARD_RECORDINGS_STORAGE_KEY, []);
+				const candidates = raw.map((item) => normaliseSoundboardRecording(item, 36));
+				const merged = [...recordings];
+				const acknowledged = new Set();
+				candidates.forEach((item, index) =>
+				{
+					if (!item) return;
+					const existing = merged.find((saved) => saved.id === item.id);
+					if (existing && JSON.stringify(existing) !== JSON.stringify(item)) return;
+					if (!existing && merged.length >= 100) return;
+					if (!existing) merged.push(item);
+					acknowledged.add(index);
+				});
+				if (await writeSoundboardRecordings(merged))
+				{
+					recordings = merged;
+					// Do not erase browser edits made while the request was in flight.
+					if (JSON.stringify(readStorage(SOUNDBOARD_RECORDINGS_STORAGE_KEY, [])) === JSON.stringify(raw))
+					{
+						const remaining = raw.filter((item, index) => !acknowledged.has(index));
+						if (writeStorage(SOUNDBOARD_RECORDINGS_STORAGE_KEY, remaining) && !remaining.length) importButton.remove();
+					}
+					selectedRecordingId ||= recordings[0]?.id || '';
+					renderSoundboardRecordings();
+				}
+				importButton.disabled = false;
+			});
+		}
+	}
+
+	root.querySelector('[data-audioarchive-recording-load-board]')?.addEventListener('click', () =>
+	{
+		void loadRecordingBoard(getSelectedRecording());
+	});
+
 	recordingRenameButton?.addEventListener('click', async () =>
 	{
 		const recording = getSelectedRecording();
@@ -3635,7 +3748,7 @@ async function initialiseSoundboard()
 
 		recording.name = name;
 
-		if (!writeSoundboardRecordings(recordings) && recordingStatus)
+		if (!await writeSoundboardRecordings(recordings) && recordingStatus)
 		{
 			recordingStatus.textContent = root.dataset.audioarchiveLabelRecordingStorageError || '';
 		}
@@ -3657,13 +3770,14 @@ async function initialiseSoundboard()
 		renderRecordingRoll(getSelectedRecording());
 	});
 
-	recordingList?.addEventListener('click', (event) =>
+	recordingsRoot?.addEventListener('click', async (event) =>
 	{
 		const deleteButton = event.target.closest('[data-audioarchive-recording-delete]');
 
 		if (deleteButton)
 		{
-			const id = String(deleteButton.dataset.audioarchiveRecordingDelete || '');
+			if (recordingSession || recordingPlayback) return;
+			const id = selectedRecordingId;
 			const recording = recordings.find((item) => item.id === id);
 
 			if (
@@ -3693,7 +3807,7 @@ async function initialiseSoundboard()
 
 			selectedRecordingId = recordings[0]?.id || '';
 
-			if (!writeSoundboardRecordings(recordings) && recordingStatus)
+			if (!await writeSoundboardRecordings(recordings) && recordingStatus)
 			{
 				recordingStatus.textContent = root.dataset.audioarchiveLabelRecordingStorageError || '';
 			}
@@ -3730,7 +3844,7 @@ async function initialiseSoundboard()
 		try
 		{
 			const parsed = JSON.parse(await file.text());
-			const recording = normaliseSoundboardRecording(parsed.recording ?? parsed, padCount);
+			const recording = normaliseSoundboardRecording(parsed.recording ?? parsed, 36);
 
 			if (!recording)
 			{
@@ -3740,7 +3854,7 @@ async function initialiseSoundboard()
 			recording.id = createSoundboardRecordingId();
 			recordings = [recording, ...recordings].slice(0, 100);
 
-			if (!writeSoundboardRecordings(recordings))
+			if (!await writeSoundboardRecordings(recordings))
 			{
 				throw new Error('Unable to store recording');
 			}
@@ -4237,12 +4351,13 @@ async function initialiseSoundboard()
 
 	Collections.mount(root, 'soundboard', () => temporarySharedBoard ? '' : Collections.boardId, () =>
 	{
-		stopAllVoices();
+		stopLiveVoices();
+		root.querySelector('[data-recording-board-actions]')?.remove();
 		board = normaliseBoard(readBoard(), padCount);
 		setTemporarySharedBoard(false);
 		leaveSharedUrl();
 		render();
-	}, () => recordingSession === null && recordingPlayback === null);
+	}, () => recordingSession === null && !recordingPlayback?.overdub);
 	renderSoundboardRecordings();
 }
 
