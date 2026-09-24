@@ -13,12 +13,13 @@ namespace Joomla\CMS\User
 	}
 	class User
 	{
+		public bool $guest = false;
 		/** @brief Create an identity with explicit test permissions. */
 		public function __construct(public int $id = 0, public array $permissions = [], public array $levels = [1], public array $groups = [2])
 		{
 		}
 		/** @brief Resolve test ACL without assuming ownership grants actions. */
-		public function authorise(string $action, string $asset): bool
+		public function authorise(string $action, string $asset = 'root'): bool
 		{
 			return $this->permissions[$asset . ':' . $action] ?? $this->permissions[$action] ?? false;
 		}
@@ -64,6 +65,11 @@ namespace Joomla\CMS
 {
 	class Factory
 	{
+		/** @brief Stable test-only HMAC configuration. */
+		public static function getConfig(): \Joomla\Registry\Registry
+		{
+			return new \Joomla\Registry\Registry(['secret' => 'test-secret']);
+		}
 		public static array $users = [];
 		public static array $messages = [];
 		/** @brief Provide a minimal user factory. */

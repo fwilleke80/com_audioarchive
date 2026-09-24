@@ -2,7 +2,7 @@
 <extension type="package" method="upgrade">
     <name>Punga Audio Archive Package</name>
     <packagename>audioarchive</packagename>
-    <version>0.13.2.7</version>
+    <version>0.13.3</version>
     <creationDate>2026-09-23</creationDate>
     <author>Frank Willeke</author>
     <authorEmail>joomla-plugins@frankwilleke.de</authorEmail>
@@ -23,5 +23,6 @@
         <file type="module" id="mod_audioarchive_tags" client="site">mod_audioarchive_tags.zip</file>
         <file type="plugin" id="audioarchive" group="quickicon">plg_quickicon_audioarchive.zip</file>
         <file type="plugin" id="audioarchive" group="content">plg_content_audioarchive.zip</file>
+        <file type="plugin" id="audioarchive" group="user">plg_user_audioarchive.zip</file>
     </files>
 </extension>

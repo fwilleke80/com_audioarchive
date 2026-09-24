@@ -634,8 +634,8 @@ final class ArchiveImportService
 			}
 			$record = (object) [
 				'user_id' => $userId,
-				'collection_storage_preference' => in_array($profile['collection_storage_preference'] ?? '', ['browser', 'server'], true) ? $profile['collection_storage_preference'] : '',
-				'default_visibility' => in_array($profile['default_visibility'] ?? '', ['normal', 'private'], true) ? $profile['default_visibility'] : '',
+				'collection_storage_preference' => '',
+				'default_visibility' => in_array($profile['default_visibility'] ?? '', ['normal', 'public', 'registered', 'private'], true) ? $profile['default_visibility'] : '',
 				'default_category_id' => (int) ($categories[(string) ($profile['category_key'] ?? '')] ?? 0),
 				'default_access_id' => (int) ($access[strtolower((string) ($profile['access_title'] ?? ''))] ?? 0),
 				'browser_import_prompt' => !empty($profile['browser_import_prompt']) ? 1 : 0,

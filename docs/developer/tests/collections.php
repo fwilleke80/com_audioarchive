@@ -134,8 +134,8 @@ check($first['id'] === $retry['id'] && count($retry['state']['playlists']) === 2
 $db->setQuery('UPDATE test_audioarchive_collections SET title=' . $db->quote('Edited after import') . ' WHERE uuid=' . $db->quote($first['id']))->execute();
 rejectContribution(fn() => $service->importCollection('playlist', $import, $service->state()['revision']), 'retry cannot confirm cleanup after destination was edited');
 $options->data['collections_storage'] = 'browser';
-rejectContribution(fn() => $service->playlists([],9), 'browser-only policy blocks server mutation');
+check($service->state()['backend'] === 'server', 'legacy browser policy cannot disable account storage');
 $options->data['collections_guest_browser'] = 0;
-check($guestService->state()['backend'] === 'disabled', 'guest persistence policy');
+check($guestService->state()['backend'] === 'browser', 'guests always use browser storage');
 check($db->lockBalance === 0, 'all mutation and snapshot locks released');
 echo ($checks - $startChecks) . " collection assertions passed.\n";

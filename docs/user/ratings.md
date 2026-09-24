@@ -1,3 +1,5 @@
+> **0.13.3:** Account vote state and browser-to-account migration are described in [User profiles](user-profile.md#ratings). The rating permission option remains unchanged.
+
 # Ratings
 
 Punga Audio Archive provides Like and Dislike ratings.

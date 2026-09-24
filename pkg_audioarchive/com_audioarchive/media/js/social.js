@@ -4272,7 +4272,7 @@ function getRatingClientId()
  *
  * @returns {void}
  */
-function initialiseRatings()
+async function initialiseRatings()
 {
 	const container = document.querySelector('[data-audioarchive-rating-endpoint]');
 
@@ -4285,7 +4285,43 @@ function initialiseRatings()
 	const tokenName = container.dataset.audioarchiveRatingToken || '';
 	const successLabel = container.dataset.audioarchiveRatingSuccess || 'Rating saved.';
 	const errorLabel = container.dataset.audioarchiveRatingError || 'The rating could not be saved.';
-	const votes = readStorage(RATING_VOTES_KEY, {});
+	const votes = {};
+	let account = false;
+	const widgets = Array.from(document.querySelectorAll('[data-audioarchive-rating]'));
+	widgets.forEach((widget) => widget.querySelectorAll('[data-audioarchive-rating-vote]').forEach((button) =>
+	{
+		button.disabled = true;
+	}));
+	try
+	{
+		const form = new FormData();
+		form.set('operation', 'sync');
+		form.set('ids', [...new Set(widgets.map((widget) => widget.dataset.clipId))].join(','));
+		form.set('client_id', getRatingClientId());
+		form.set(tokenName, '1');
+		const response = await fetch(endpoint, {method: 'POST', body: form, credentials: 'same-origin'});
+		const data = await response.json();
+		if (!response.ok || !data.success) throw new Error('Rating sync failed');
+		account = data.account;
+		Object.entries(data.ratings).forEach(([id, rating]) => { votes[id] = rating.vote; });
+		if (data.imported) writeStorage(RATING_VOTES_KEY, {});
+		widgets.forEach((widget) =>
+		{
+			const rating = data.ratings[widget.dataset.clipId];
+			if (!rating) return;
+			widget.querySelector('[data-audioarchive-rating-up]').textContent = String(rating.up);
+			widget.querySelector('[data-audioarchive-rating-down]').textContent = String(rating.down);
+			widget.querySelectorAll('[data-audioarchive-rating-vote]').forEach((button) =>
+			{
+				button.disabled = widget.dataset.audioarchiveRatingCanVote !== '1';
+			});
+		});
+	}
+	catch (error)
+	{
+		widgets.forEach((widget) => { widget.querySelector('[data-audioarchive-rating-status]').textContent = errorLabel; });
+		return;
+	}
 
 	document.querySelectorAll('[data-audioarchive-rating]').forEach((rating) =>
 	{
@@ -4339,7 +4375,7 @@ function initialiseRatings()
 			}
 
 			votes[String(clipId)] = vote;
-			writeStorage(RATING_VOTES_KEY, votes);
+			if (!account) writeStorage(RATING_VOTES_KEY, votes);
 			ratingWidgets.forEach((widget) =>
 			{
 				widget.querySelector('[data-audioarchive-rating-up]').textContent = String(data.up);

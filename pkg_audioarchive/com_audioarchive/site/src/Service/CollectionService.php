@@ -18,24 +18,10 @@ final class CollectionService
 	{
 	}
 
-	/** @brief Resolve component policy and a permitted user preference. */
+	/** @brief Guests keep browser collections; every signed-in user has account collections. */
 	public function backend(): string
 	{
-		if ((int) $this->user->id <= 0)
-		{
-			return $this->params->get('collections_guest_browser', 1) ? 'browser' : 'disabled';
-		}
-		$mode = (string) $this->params->get('collections_storage', 'browser');
-		if ($mode === 'choice')
-		{
-			$profile = $this->profile();
-			$mode = (string) ($profile->collection_storage_preference ?? '');
-			if (!in_array($mode, ['browser', 'server'], true))
-			{
-				$mode = (string) $this->params->get('collections_default', 'server');
-			}
-		}
-		return $mode === 'server' ? 'server' : 'browser';
+		return (int) $this->user->id > 0 ? 'server' : 'browser';
 	}
 
 	/** @brief Get the caller's own profile only. */
@@ -387,7 +373,7 @@ final class CollectionService
 		{
 			throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_COLLECTION_NOT_FOUND'), 404);
 		}
-		$row = $this->db->setQuery('SELECT * FROM ' . $this->db->quoteName('#__audioarchive_collections') . ' WHERE share_token=' . $this->db->quote($token))->loadObject();
+		$row = $this->db->setQuery('SELECT * FROM ' . $this->db->quoteName('#__audioarchive_collections') . ' WHERE share_token=' . $this->db->quote($token) . ' AND EXISTS (SELECT 1 FROM ' . $this->db->quoteName('#__users') . ' u WHERE u.id=user_id)')->loadObject();
 		if (!$row)
 		{
 			throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_COLLECTION_NOT_FOUND'), 404);

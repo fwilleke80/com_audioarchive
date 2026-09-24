@@ -43,6 +43,21 @@ class RatingController extends BaseController
 		$vote = $application->getInput()->post->getInt('vote', 0);
 		$mediaService = new PublicMediaService($database, $params, $application->getIdentity());
 
+		if ($application->getInput()->post->getCmd('operation', '') === 'sync')
+		{
+			try
+			{
+				$ids = array_slice(array_unique(array_map('intval', explode(',', $application->getInput()->post->getString('ids', '')))), 0, 200);
+				$ids = array_values(array_filter($ids, static fn(int $id): bool => $id > 0 && $mediaService->getPublicClip($id, false) !== null));
+				$service = new RatingService($database, $params, $application->getIdentity());
+				$this->sendJson(200, ['success' => true] + $service->synchronise($clientId, $ids));
+			}
+			catch (\Throwable)
+			{
+				$this->sendJson(500, ['success' => false]);
+			}
+		}
+
 		if ($mediaService->getPublicClip($clipId, false) === null)
 		{
 			$this->sendJson(404, ['success' => false]);

@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config addruleprefix="Punga\Component\Audioarchive\Administrator\Rule">
     <fieldset name="personal_collections" label="COM_AUDIOARCHIVE_COLLECTIONS">
-<field name="collections_storage" type="list" label="COM_AUDIOARCHIVE_COLLECTION_STORAGE" default="browser"><option value="browser">COM_AUDIOARCHIVE_COLLECTION_BROWSER</option><option value="server">COM_AUDIOARCHIVE_COLLECTION_SERVER</option><option value="choice">COM_AUDIOARCHIVE_COLLECTION_CHOICE</option></field>
-<field name="collections_default" type="list" label="COM_AUDIOARCHIVE_COLLECTION_DEFAULT_STORAGE" default="server" showon="collections_storage:choice"><option value="server">COM_AUDIOARCHIVE_COLLECTION_SERVER</option><option value="browser">COM_AUDIOARCHIVE_COLLECTION_BROWSER</option></field>
-<field name="collections_guest_browser" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLLECTION_GUEST" default="1"><option value="0">JNO</option><option value="1">JYES</option></field>
 <field name="collections_sharing" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_COLLECTION_SHARING" default="1"><option value="0">JNO</option><option value="1">JYES</option></field>
 </fieldset>
 <fieldset name="frontend_contribution" label="COM_AUDIOARCHIVE_FRONTEND_CONTRIBUTION">

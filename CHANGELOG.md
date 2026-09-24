@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.13.3
+
+- Guests always use browser collections; signed-in users always use account collections. Existing browser import remains available, with successful imports removing acknowledged browser copies.
+- New packaged User – Audio Archive plugin adds personal upload defaults, default sound board, usage summaries and administrator-only per-user quota overrides to existing Joomla user profiles. Defaults obey current category, access and upload-menu restrictions.
+- Account deletion preserves archival data, revokes collection share links and makes orphaned collections inaccessible.
+- Rating controls read authoritative server votes across browsers. Existing browser ratings transfer to the signed-in account when rating permissions allow, retaining account votes on conflict. Nobody / Registered / Everyone permissions remain intact.
+- Integrity & Maintenance is last in the administrator sidebar, after Quota rules.
+- Playback, normalization, audio-session and frequency-profile drawing code remains unchanged from 0.13.2.7.
+
+
 ## 0.13.2.7
 
 - Request the iOS media-playback audio session before starting normalised buffer playback, addressing the missing session setup that can silence Web Audio when the phone is in Silent mode. Retain the 0.13.2.6 buffer engine and continuous speed control.

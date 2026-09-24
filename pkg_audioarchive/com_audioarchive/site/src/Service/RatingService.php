@@ -11,7 +11,7 @@ use Joomla\Registry\Registry;
 \defined('_JEXEC') or die;
 
 /**
- * @brief Store anonymous thumbs-up and thumbs-down ratings.
+ * @brief Store browser and account-owned thumbs-up and thumbs-down ratings.
  */
 class RatingService
 {
@@ -132,6 +132,55 @@ class RatingService
 			$this->database->transactionRollback();
 			throw $exception;
 		}
+	}
+
+	/** @brief Read authoritative votes, transferring existing guest rows once without duplicating votes. */
+	public function synchronise(string $clientId, array $clipIds): array
+	{
+		$secret = (string) Factory::getConfig()->get('secret');
+		$browserHash = preg_match('/^[a-f0-9]{64}$/D', $clientId)
+			? hash_hmac('sha256', 'browser:' . $clientId, $secret) : '';
+		$hash = $this->user->guest ? $browserHash : hash_hmac('sha256', 'user:' . (int) $this->user->id, $secret);
+		$table = $this->database->quoteName('#__audioarchive_ratings');
+		if (!$this->user->guest && $browserHash !== '' && $this->canVote())
+		{
+			// Serialize claims of the same browser identity across concurrent account requests.
+			$lock = $this->database->quote('aa:ratings:' . substr($browserHash, 0, 48));
+			if ((int) $this->database->setQuery('SELECT GET_LOCK(' . $lock . ', 10)')->loadResult() !== 1)
+			{
+				throw new \RuntimeException('Rating import is busy.');
+			}
+			try
+			{
+				$this->database->transactionStart();
+				// Existing account votes win, including simultaneous imports on different devices.
+				$this->database->setQuery('INSERT IGNORE INTO ' . $table
+					. ' (clip_id, voter_hash, vote, created, modified) SELECT clip_id, '
+					. $this->database->quote($hash) . ', vote, created, modified FROM ' . $table
+					. ' WHERE voter_hash=' . $this->database->quote($browserHash))->execute();
+				$this->database->setQuery('DELETE FROM ' . $table . ' WHERE voter_hash=' . $this->database->quote($browserHash))->execute();
+				$this->database->transactionCommit();
+			}
+			catch (\Throwable $error)
+			{
+				$this->database->transactionRollback();
+				throw $error;
+			}
+			finally
+			{
+				$this->database->setQuery('SELECT RELEASE_LOCK(' . $lock . ')')->loadResult();
+			}
+		}
+		$result = [];
+		foreach ($clipIds as $id)
+		{
+			$id = (int) $id;
+			$vote = (int) $this->database->setQuery('SELECT vote FROM ' . $table . ' WHERE clip_id=' . $id
+				. ' AND voter_hash=' . $this->database->quote($hash))->loadResult();
+			$result[$id] = $this->getCounts($id) + ['vote' => $vote];
+		}
+		return ['ratings' => (object) $result, 'account' => !$this->user->guest,
+			'imported' => !$this->user->guest && $browserHash !== '' && $this->canVote()];
 	}
 
 	/**

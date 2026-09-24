@@ -1,3 +1,5 @@
+> **0.13.3 implementation note:** Collection storage is now automatic: browser for guests, account for signed-in users. This supersedes the manual storage choices below. Import remains explicitly offered whenever browser copies exist; no import-prompt opt-out preference is exposed. See [user profiles](../user/user-profile.md).
+
 > Implementation status: 0.13.2 adds server collections, explicit migration and short sharing links. Collection export/restore was brought forward; dedicated user-profile integration remains scheduled for 0.13.3. See [release testing](../user/0.13.2-testing.md).
 
 > Implementation status: 0.13.0 foundation and 0.13.1 frontend contribution built on 2026-09-19. Local policy and packaging checks pass; Joomla/MySQL staging gates remain. See [implementation notes](multi-user.md) and [frontend test guide](../user/frontend-upload.md).
