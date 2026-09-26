@@ -1,6 +1,7 @@
+import {openSoundboardChooser} from './board-chooser.js?v=0.13.4.6';
 import {acquirePlaybackSession, releasePlaybackSession} from './audio-session.js?v=0.13.2.7';
 import {playbackFor, prepareNormalization, releaseNormalization, validGain} from './normalization.js?v=0.13.2.7';
-import {Collections} from './collections.js?v=0.13.4';
+import {Collections} from './collections.js?v=0.13.4.6';
 const BOARD_STORAGE_KEY = 'com_audioarchive.soundboard.v1';
 const SAMPLER_POLYPHONY_STORAGE_KEY = 'com_audioarchive.soundboard.sampler_polyphony.v1';
 const SOUNDBOARD_RECORDINGS_STORAGE_KEY = 'com_audioarchive.soundboard.recordings.v1';
@@ -720,7 +721,7 @@ function initialiseSoundboardAddButtons()
 			button.setAttribute('aria-pressed', added ? 'true' : 'false');
 		});
 	};
-	const storedIds = new Set(readBoard().filter(Boolean).map((entry) => entry.id));
+	const storedIds = new Set(Collections.backend === 'server' ? [] : readBoard().filter(Boolean).map((entry) => entry.id));
 	buttons.forEach((button) =>
 	{
 		const id = Number.parseInt(button.dataset.clipId || '0', 10);
@@ -731,6 +732,11 @@ function initialiseSoundboardAddButtons()
 			const title = String(button.dataset.clipTitle || '').trim();
 			const root = button.closest('[data-audioarchive-soundboard-pad-count]') || document.querySelector('[data-audioarchive-soundboard-pad-count]');
 			const padCount = Math.max(4, Number.parseInt(root?.dataset.audioarchiveSoundboardPadCount || '12', 10));
+			if (Collections.backend === 'server')
+			{
+				openSoundboardChooser(button, {id, uuid, title}, padCount);
+				return;
+			}
 			const board = readBoard();
 			const existing = board.findIndex((entry) =>
 			{
@@ -1177,7 +1183,7 @@ async function initialiseSoundboard()
 	const detailRoutes = new Map();
 	const normalizationGains = new Map();
 	const unavailableDetailIds = new Set();
-	const pendingDetailIds = new Set();
+	const pendingDetailRequests = new Map();
 	const countedClipIds = new Set();
 	const activeVoices = new Set();
 	const voicesByPad = new Map();
@@ -1821,77 +1827,77 @@ async function initialiseSoundboard()
 		});
 	};
 
+	/** @brief Share bounded, retryable metadata requests across render and playback. */
+	const ensureClipMetadata = async (requestedIds) =>
+	{
+		const ids = [...new Set(requestedIds)].filter((id) => Number.isInteger(id) && id > 0);
+		const missing = ids.filter((id) => !normalizationGains.has(id) && !pendingDetailRequests.has(id));
+		if (missing.length)
+		{
+			const request = (async () =>
+			{
+				for (let attempt = 0; attempt < 3; attempt++)
+				{
+					const controller = new AbortController();
+					const timeout = window.setTimeout(() => controller.abort(), 10000);
+					try
+					{
+						if (!routesUrl) throw new Error('Clip metadata endpoint unavailable');
+						const response = await fetch(new URL(routesUrl, window.location.href), {
+							method: 'POST', credentials: 'same-origin', cache: 'no-store', signal: controller.signal,
+							headers: {'Accept': 'application/json', 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
+							body: new URLSearchParams({ids: missing.join(',')}).toString(),
+						});
+						if (!response.ok) throw new Error('Clip metadata request failed');
+						const payload = await response.json();
+						if (payload?.success !== true || !payload.items || !payload.routes) throw new Error('Invalid clip metadata response');
+						missing.forEach((id) =>
+						{
+							const item = payload.items[String(id)];
+							if (item && Number(item.id) === id && Number.isFinite(Number(item.normalization_gain)))
+							{
+								normalizationGains.set(id, validGain(item.normalization_gain));
+								unavailableDetailIds.delete(id);
+							}
+							const route = payload.routes[String(id)];
+							if (typeof route === 'string' && route.trim()) detailRoutes.set(id, route.trim());
+						});
+						return;
+					}
+					catch (error)
+					{
+						if (attempt === 2) throw error;
+						await new Promise((resolve) => window.setTimeout(resolve, 300 * (attempt + 1)));
+					}
+					finally
+					{
+						window.clearTimeout(timeout);
+					}
+				}
+			})();
+			missing.forEach((id) => pendingDetailRequests.set(id, request));
+			const cleanup = () =>
+			{
+				missing.forEach((id) => pendingDetailRequests.delete(id));
+				applyDetailRoutes();
+			};
+			request.then(cleanup, cleanup);
+		}
+		await Promise.all(ids.map((id) => pendingDetailRequests.get(id)));
+		if (ids.some((id) => !normalizationGains.has(id))) throw new Error('Clip metadata unavailable');
+	};
+
 	const resolveDetailRoutes = async () =>
 	{
-		if (routesUrl === '')
-		{
-			applyDetailRoutes();
-			return;
-		}
-
-		const ids = Array.from(new Set(board
-			.filter((entry) => entry && Number.isInteger(entry.id) && entry.id > 0)
-			.map((entry) => entry.id)))
-			.filter((id) => !detailRoutes.has(id) && !unavailableDetailIds.has(id) && !pendingDetailIds.has(id));
-
-		if (ids.length === 0)
-		{
-			applyDetailRoutes();
-			return;
-		}
-
-		ids.forEach((id) => pendingDetailIds.add(id));
-
 		try
 		{
-			const requestUrl = new URL(routesUrl, window.location.href);
-			const requestBody = new URLSearchParams();
-			requestBody.set('ids', ids.join(','));
-			const response = await fetch(
-				requestUrl.toString(),
-				{
-					method: 'POST',
-					credentials: 'same-origin',
-					headers:
-					{
-						'Accept': 'application/json',
-						'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-					},
-					body: requestBody.toString(),
-				}
-			);
-			const payload = response.ok ? await response.json() : null;
-			for (const item of Object.values(payload?.items || {}))
-			{
-				normalizationGains.set(Number(item.id), validGain(item.normalization_gain ?? 1));
-			}
-			const routes = payload && payload.success === true && payload.routes && typeof payload.routes === 'object'
-				? payload.routes
-				: Object.create(null);
-
-			ids.forEach((id) =>
-			{
-				const route = typeof routes[String(id)] === 'string' ? routes[String(id)].trim() : '';
-
-				if (route !== '')
-				{
-					detailRoutes.set(id, route);
-				}
-				else
-				{
-					unavailableDetailIds.add(id);
-				}
-			});
+			await ensureClipMetadata(board.filter(Boolean).map((entry) => entry.id));
 		}
 		catch (error)
 		{
-			// Keep detail icons hidden when route resolution is temporarily unavailable.
+			// A later render or play retries; transient failures never become permanent absence.
 		}
-		finally
-		{
-			ids.forEach((id) => pendingDetailIds.delete(id));
-			applyDetailRoutes();
-		}
+		applyDetailRoutes();
 	};
 
 	const recordInteraction = (eventType, clipId = 0, playDetails = {}) =>
@@ -2359,6 +2365,7 @@ async function initialiseSoundboard()
 		const promise = (async () =>
 		{
 			const context = await getAudioContext();
+			await ensureClipMetadata([entry.id]);
 			const source = streamTemplate.replace('987654321', String(entry.id));
 			const response = await fetch(source, {credentials: 'same-origin'});
 
@@ -2614,7 +2621,7 @@ async function initialiseSoundboard()
 
 		const readyBuffer = decodedSamplerBuffers.get(entry.id) || null;
 
-		if (readyBuffer)
+		if (readyBuffer && normalizationGains.has(entry.id))
 		{
 			try
 			{
@@ -2658,7 +2665,7 @@ async function initialiseSoundboard()
 
 		const readyBuffer = decodedSamplerBuffers.get(entry.id) || null;
 
-		if (readyBuffer)
+		if (readyBuffer && normalizationGains.has(entry.id))
 		{
 			try
 			{
@@ -2880,7 +2887,11 @@ async function initialiseSoundboard()
 		voice.addEventListener('ended', () => cleanupVoice(voice, index), {once: true});
 		voice.addEventListener('error', () => cleanupVoice(voice, index), {once: true});
 
-		prepareNormalization(voice, normalizationGains.get(entry.id) || 1).then(() =>
+		ensureClipMetadata([entry.id]).then(() =>
+		{
+			if (!activeVoices.has(voice)) return;
+			return prepareNormalization(voice, normalizationGains.get(entry.id));
+		}).then(() =>
 		{
 			if (activeVoices.has(voice))
 			{
@@ -2889,6 +2900,7 @@ async function initialiseSoundboard()
 		}).catch(() =>
 		{
 			cleanupVoice(voice, index);
+			if (status) status.textContent = root.dataset.audioarchiveLabelSamplerError || 'Unable to load clip. Please try again.';
 		});
 	};
 

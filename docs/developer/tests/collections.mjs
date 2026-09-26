@@ -4,13 +4,13 @@ import {readFile} from 'node:fs/promises';
 const source = await readFile(new URL('../../../pkg_audioarchive/com_audioarchive/media/js/collections.js', import.meta.url), 'utf8');
 const storage = () => ({getItem() {return null;}, setItem() {throw new Error('Unexpected browser write');}});
 globalThis.localStorage = storage();
-globalThis.sessionStorage = {getItem() {return null;}, setItem() {}};
+globalThis.sessionStorage = {getItem() {return JSON.stringify('previous');}, setItem() {}};
 globalThis.window = {location: {href: 'https://example.test/archive', origin: 'https://example.test'}, addEventListener() {}};
 globalThis.document = {querySelector() {return null;}, body: {prepend() {}}, addEventListener() {}, createElement() {return {setAttribute() {}, classList: {toggle() {}}};}};
 let revision = 0;
 let fail = false;
 const posted = [];
-const state = {backend: 'server', userId: 7, revision: 0, boards: [], playlists: [], token: 'csrf'};
+const state = {backend: 'server', userId: 7, revision: 0, boards: [{id:'default',items:[]},{id:'previous',items:[]}], defaultBoard:'default', playlists: [], token: 'csrf'};
 globalThis.fetch = async (url, options) =>
 {
     if (!options.body) return {ok: true, json: async () => ({success: true, data: state})};
@@ -22,10 +22,12 @@ globalThis.fetch = async (url, options) =>
     revision++;
     if (payload.recordings) return {ok:true,json:async()=>({success:true,data:{state:{...state,revision,recordings:payload.recordings}}})};
     const board = {...payload.board, items: payload.board.items.map((item) => item ? {...item, id: 42, title: 'Canonical'} : null)};
-    return {ok: true, json: async () => ({success: true, data: {id: board.id, state: {...state, revision, boards: [board]}}})};
+    state.boards = [...state.boards.filter(item => item.id !== board.id), board];
+    return {ok: true, json: async () => ({success: true, data: {id: board.id, state: {...state, revision}}})};
 };
 const {Collections} = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
 await Collections.ready();
+assert.equal(Collections.boardId, 'default', 'archive additions use default instead of remembered board');
 const board = [{uuid: 'clip', id: 1}];
 assert.equal(await Collections.write('com_audioarchive.soundboard.v1', board), true);
 assert.equal(board[0].id, 42, 'server clip identity replaces stale imported ID');
@@ -50,3 +52,15 @@ assert.equal(await Collections.write('com_audioarchive.soundboard.recordings.v1'
 assert.equal(performances.length,2,'failed recording save retains exportable unsaved work');
 assert.equal(Collections.read('com_audioarchive.soundboard.recordings.v1',[]).length,1,'failed save does not modify acknowledged server snapshot');
 console.log('Recording account acknowledgement and failure recovery checks passed.');
+
+fail = false;
+const activeBefore = Collections.boardId;
+await Collections.addToBoard('previous', {uuid:'new-clip',id:5}, 4);
+assert.equal(posted.at(-1).board.id,'previous','explicit destination receives clip');
+assert.equal(Collections.boardId,activeBefore,'destination choice preserves current board');
+assert.equal(Collections.boardChoices.find(item=>item.id==='previous').items.length,1);
+const countBefore = posted.length;
+await Collections.addToBoard('previous', {uuid:'new-clip',id:5}, 4);
+assert.equal(posted.length,countBefore,'duplicate clip does not write');
+await assert.rejects(Collections.addToBoard('missing', {uuid:'other',id:6},4));
+console.log('Explicit sound board destination and duplicate checks passed.');

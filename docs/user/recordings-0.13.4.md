@@ -31,3 +31,7 @@ Full archive backups include recordings and their overdub boards. Restore resolv
 7. Check full archive export/restore on a test installation and clip permission changes.
 
 Automated PHP/SQLite and JavaScript fixtures verify ownership, conflicts, bounds, portability, save failure recovery and independent playback routing. Live Joomla/MySQL and mobile audio tests remain necessary.
+
+### 0.13.4.2 sound-board loading fix
+
+Clip-detail links and normalization gains share a retryable metadata lookup. Playback waits for this lookup rather than assuming a gain of 1. Failed lookups remain retryable. Test switching between boards immediately after opening the page, then triggering pads and chromatic notes; test once with a temporarily interrupted connection. Automated fixtures cover request sharing, retries and cross-board recovery; device audio testing remains necessary.

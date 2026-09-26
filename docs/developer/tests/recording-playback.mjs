@@ -7,7 +7,7 @@ const voices = [];
 const live = [{id:11,uuid:'live'}];
 const context = {board:live, recordingPlayback:{board:[{id:22}],layerBoards:{1:[{id:33}]},polyphonyByLayer:new Map()}, streamTemplate:'/clip/987654321',
  soundboardPolyphonic:true, activeVoices:new Set(), voicesByPad:new Map(), pads:[{classList:{add(){},remove(){}}}],
- normalizationGains:new Map(), prepareNormalization:()=>Promise.resolve(), playbackFor:(audio)=>audio,
+ ensureClipMetadata:()=>Promise.resolve(), normalizationGains:new Map(), prepareNormalization:()=>Promise.resolve(), playbackFor:(audio)=>audio,
  updatePadPlayingState(){}, recordPerformanceEvent(){}, countPlay(){}, stopRecordingVoices(){}, stopLiveVoices(){}, stopAllVoices(){}, cleanupVoice(){},
  Audio:class
  {

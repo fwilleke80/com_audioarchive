@@ -2,7 +2,7 @@
 
 Punga Audio Archive is a native Joomla! 6 extension package for managing and publishing collections of audio clips. It combines protected media storage, bulk importing, metadata management, waveform, spectrogram, and frequency-profile analysis, responsive frontend players, ratings, related clips, Sound Boards, playlists, and optional Punga Analytics integration.
 
-> **Current version:** 0.13.4.1  
+> **Current version:** 0.13.4.6  
 > **Package:** `pkg_audioarchive`  
 > **Licence:** GNU General Public License version 2 or later
 
@@ -37,7 +37,7 @@ FFmpeg is optional and required only for waveform, spectrogram, and frequency-pr
 
 ## Installation
 
-1. Download the versioned installer ZIP, for example `pkg_audioarchive_v0-13-4-1.zip`.
+1. Download the versioned installer ZIP, for example `pkg_audioarchive_v0-13-4-3.zip`.
 2. In Joomla Administrator, open **System → Install → Extensions**.
 3. Upload the package ZIP.
 4. Open **Components → Punga Audio Archive** and review the dashboard and component options.
@@ -98,4 +98,4 @@ Punga Audio Archive is free software licensed under the GNU General Public Licen
 
 ## Frontend contribution (0.13.1)
 
-Ownership/visibility controls, private-media policy, and original-storage/clip-count quotas are available. See [multi-user administration](docs/user/multi-user.md) and [implementation and validation](docs/developer/multi-user.md). Upload Clip and My Clips now provide frontend contribution, moderation, quota summaries and owner editing. Follow the [frontend setup and test guide](docs/user/frontend-upload.md). Server collections and user-profile forms remain the 0.13.2–0.13.4.1 milestones.
+Ownership/visibility controls, private-media policy, and original-storage/clip-count quotas are available. See [multi-user administration](docs/user/multi-user.md) and [implementation and validation](docs/developer/multi-user.md). Upload Clip and My Clips now provide frontend contribution, moderation, quota summaries and owner editing. Follow the [frontend setup and test guide](docs/user/frontend-upload.md). Server collections and user-profile forms remain the 0.13.2–0.13.4.6 milestones.

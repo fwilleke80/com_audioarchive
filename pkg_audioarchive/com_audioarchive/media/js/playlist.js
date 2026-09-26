@@ -1,5 +1,6 @@
+import {openSoundboardChooser, renderSoundboardChoices} from './board-chooser.js?v=0.13.4.6';
 import {playbackFor, playNormalized, updateNormalization} from './normalization.js?v=0.13.2.7';
-import {Collections} from './collections.js?v=0.13.4';
+import {Collections} from './collections.js?v=0.13.4.6';
 const PLAYLIST_STORAGE_KEY = 'com_audioarchive.playlists.v1';
 const PLAYLIST_STORAGE_VERSION = 1;
 const PLAYLIST_RESOLUTION_BATCH_SIZE = 500;
@@ -547,7 +548,7 @@ function closePlaylistPopovers(retained = null)
 }
 
 /**
- * Add a clip to the browser-local Sound Board.
+ * Choose an account Sound Board or add directly to the guest board.
  *
  * @param {{id:number,title:string}} clip Clip identity.
  * @param {HTMLElement} origin Origin element.
@@ -558,6 +559,11 @@ async function addClipToSoundboard(clip, origin)
 	const configurationRoot = origin.closest('[data-audioarchive-soundboard-pad-count]')
 		|| document.querySelector('[data-audioarchive-soundboard-pad-count]');
 	const padCount = Math.max(4, Math.min(36, Number.parseInt(configurationRoot?.dataset.audioarchiveSoundboardPadCount || '12', 10)));
+	if (Collections.backend === 'server')
+	{
+		openSoundboardChooser(origin.querySelector('[aria-expanded]') || origin, clip, padCount);
+		return false;
+	}
 	const fullLabel = configurationRoot?.dataset.audioarchiveSoundboardFullLabel || 'The Sound Board is full.';
 	const rawBoard = playlistReadStorage(SOUNDBOARD_STORAGE_KEY, []);
 	const board = Array.isArray(rawBoard) ? rawBoard.slice(0, padCount) : [];
@@ -1176,19 +1182,42 @@ function initialiseAddToMenus()
 				soundboardButton.className = 'com-audioarchive-add-to-option';
 				soundboardButton.setAttribute('role', 'menuitem');
 				soundboardButton.innerHTML = `<span aria-hidden="true">▦</span><span>${menu.dataset.labelSoundboard || 'Sound Board'}</span>`;
-				soundboardButton.addEventListener('click', async () =>
+				if (Collections.backend === 'server')
 				{
-					addClipToSoundboard(
-						{
-							id: Math.max(0, Number.parseInt(menu.dataset.clipId || '0', 10)),
-							uuid: String(menu.dataset.clipUuid || '').trim().toLowerCase(),
-							title: String(menu.dataset.clipTitle || '').trim(),
-						},
-						menu
-					);
-					closePlaylistPopovers();
-				});
-				popover.appendChild(soundboardButton);
+					soundboardButton.setAttribute('aria-expanded', 'false');
+					soundboardButton.insertAdjacentHTML('beforeend', '<span class="com-audioarchive-add-to-arrow" aria-hidden="true">›</span>');
+					const submenu = document.createElement('div');
+					submenu.className = 'com-audioarchive-add-to-submenu';
+					submenu.setAttribute('role', 'menu');
+					submenu.hidden = true;
+					soundboardButton.addEventListener('click', () =>
+					{
+						const root = menu.closest('[data-audioarchive-soundboard-pad-count]') || document.querySelector('[data-audioarchive-soundboard-pad-count]');
+						const capacity = Math.max(4, Math.min(36, Number.parseInt(root?.dataset.audioarchiveSoundboardPadCount || '12', 10)));
+						renderSoundboardChoices(submenu,
+							{id: Number.parseInt(menu.dataset.clipId || '0', 10), uuid: String(menu.dataset.clipUuid || '').trim().toLowerCase(), title: menu.dataset.clipTitle || ''},
+							capacity, () =>
+							{
+								closePlaylistPopovers();
+								toggle.focus();
+							}, 'com-audioarchive-add-to-option');
+						const open = submenu.hidden;
+						submenu.hidden = !open;
+						soundboardButton.setAttribute('aria-expanded', open ? 'true' : 'false');
+						positionPlaylistPopover(toggle, popover);
+					});
+					popover.append(soundboardButton, submenu);
+				}
+				else
+				{
+					soundboardButton.addEventListener('click', async () =>
+					{
+						await addClipToSoundboard(
+							{id: Number.parseInt(menu.dataset.clipId || '0', 10), uuid: String(menu.dataset.clipUuid || '').trim().toLowerCase(), title: menu.dataset.clipTitle || ''}, menu);
+						closePlaylistPopovers();
+					});
+					popover.appendChild(soundboardButton);
+				}
 			}
 
 			if (!playlistOnly && soundboardEnabled && playlistsEnabled)

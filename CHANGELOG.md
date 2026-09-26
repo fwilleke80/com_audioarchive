@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.13.4.6
+
+- Match Add to sound board with the existing playlist submenu: retain the parent menu while choosing, reuse nested menu styling and positioning, and dismiss after a successful addition. Preserve default/full/already-added labels and guest direct-add behaviour.
+
+## 0.13.4.5
+
+- Fix the archive opening click immediately dismissing the sound-board chooser. Register outside dismissal in capture phase and remove the matching listener on close. Add an event-phase regression check.
+
+## 0.13.4.4
+
+- Fix the archive combined Add to menu and playlist clip actions bypassing the account sound-board chooser. Share the chooser with standalone clip buttons.
+
+## 0.13.4.3
+
+- Add an account sound-board destination chooser to archive/detail Add to sound board actions. Mark the default, disable full/already-added destinations, preserve board selection and retain the guest direct-add action.
+
+## 0.13.4.2
+
+- Archive and clip-detail Add to sound board actions target the account default board, while the Sound Board page retains its last selected board.
+
+- Share pending sound-board metadata requests between rendering and playback. Retry transient failures up to three times with a ten-second timeout per attempt; later interactions can retry again.
+- Wait for normalization metadata before pad playback or sampler decoding. Do not substitute gain 1 while metadata is pending or failed.
+- Recover clip-detail icons after transient request failures without reloading the page.
+
 ## 0.13.4.1
 
 - Keep Play, Record overdub, Undo overdub and Actions only on the active recording toolbar. List rows select recordings without duplicating controls.

@@ -157,7 +157,10 @@ async function initialise()
 		const data = await request('state');
 		token = data.token;
 		labels = data.labels || {};
-		activeBoard = read(`com_audioarchive.activeBoard.${data.userId}`, '', true);
+		// Archive/detail additions target the default; only the board page restores its last selection.
+		activeBoard = document.querySelector('[data-audioarchive-soundboard]')
+			? read(`com_audioarchive.activeBoard.${data.userId}`, '', true)
+			: (data.defaultBoard || data.boards?.[0]?.id || '');
 		selectedPlaylist = read(`com_audioarchive.activePlaylist.${data.userId}`, '', true);
 		accept(data);
 		const shareToken = new URL(window.location.href).searchParams.get('aa_share');
@@ -212,6 +215,30 @@ export const Collections = {
 	{
 		return shared;
 	},
+	/** @brief Expose owned board choices without changing the active board. */
+	get boardChoices()
+	{
+		return clone(state.boards.map((board) => ({...board, isDefault: board.id === state.defaultBoard})));
+	},
+	get boardChoiceLabels()
+	{
+		return {full: labels.full || 'Full', added: labels.already_added || 'Already added', empty: labels.default_name || 'My sound board'};
+	},
+	/** @brief Add to an explicit board, preserving its other pads and the current selection. */
+	async addToBoard(id, clip, capacity)
+	{
+		const board = state.boards.find((item) => item.id === id);
+		if (id && !board) throw new Error(labels.unavailable || 'Board unavailable');
+		const items = clone(board?.items || []);
+		if (items.some((item) => item && (clip.uuid ? item.uuid === clip.uuid : item.id === clip.id))) return;
+		const limit = Math.max(capacity, items.length);
+		let slot = items.findIndex((item) => !item);
+		if (slot < 0 && items.length < limit) slot = items.length;
+		if (slot < 0) throw new Error(labels.full || 'Full');
+		items[slot] = clip;
+		await mutate('board', {board: {id: id || crypto.randomUUID(), name: board?.name || labels.default_name || 'My sound board', items}});
+	},
+
 	get boardId()
 	{
 		return activeBoard;
