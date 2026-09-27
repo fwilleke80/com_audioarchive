@@ -7,7 +7,7 @@ let calls=0;
 let fail=true;
 const gains=new Map();
 const routes=new Map();
-const context={normalizationGains:gains,detailRoutes:routes,pendingDetailRequests:new Map(),unavailableDetailIds:new Set(),
+const context={preloadMetadata:new Map(),normalizationGains:gains,detailRoutes:routes,pendingDetailRequests:new Map(),unavailableDetailIds:new Set(),
  AbortController,URL,URLSearchParams,validGain:(v)=>v,applyDetailRoutes(){},routesUrl:'/routes',
  window:{location:{href:'https://example.test/'},setTimeout:(fn,ms)=>ms===10000 ? 0 : setTimeout(fn,0),clearTimeout},
  fetch:async(url,options)=>

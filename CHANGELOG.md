@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.13.5
+
+- Add default-on Preload sound board audio component option; disabling preserves existing on-demand playback.
+- Prepare short clips in a 64 MiB decoded cache with conservative admission estimates, one background decode at a time and bounded downloads. Stream long or unknown-size clips; prepare at most two native metadata elements.
+- Use ready buffers for pad playback with existing normalization, polyphony, recording layers and stop handling. Preserve native fallback while Web Audio is locked.
+- Cancel obsolete board downloads, discard stale decodes, and retain buffers used by active voices until they end.
+
+
 ## 0.13.4.6
 
 - Match Add to sound board with the existing playlist submenu: retain the parent menu while choosing, reuse nested menu styling and positioning, and dismiss after a successful addition. Preserve default/full/already-added labels and guest direct-add behaviour.

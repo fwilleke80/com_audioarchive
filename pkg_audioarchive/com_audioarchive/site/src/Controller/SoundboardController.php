@@ -85,7 +85,11 @@ class SoundboardController extends BaseController
 					Route::TLS_IGNORE,
 					true
 				);
+				$technical = json_decode((string) ($clip->technical_metadata ?? '{}'), true) ?: [];
 				$items[(string) $id] = [
+					'duration_ms' => (int) ($clip->duration_ms ?? 0),
+					'channels' => (int) ($technical['channels'] ?? 0),
+					'sample_rate' => (int) ($technical['sample_rate'] ?? 0),
 					'normalization_gain' => \Punga\Component\Audioarchive\Administrator\Service\PlaybackNormalizationService::forClip((int) $clip->id),
 					'uuid' => strtolower((string) ($clip->uuid ?? '')),
 					'id' => $id,

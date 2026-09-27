@@ -33,6 +33,7 @@ $soundboardStyle = StyleHelper::buildSoundboardVariables($this->params);
 	class="com-audioarchive com-audioarchive-soundboard"
 	<?php if ($soundboardStyle !== '') : ?>style="<?php echo $this->escape($soundboardStyle); ?>"<?php endif; ?>
 	data-audioarchive-soundboard
+	data-audioarchive-preload="<?php echo (int) $this->params->get('soundboard_preload', 1) === 1 ? '1' : '0'; ?>"
 	data-audioarchive-return-origin
 	data-audioarchive-return-title="<?php echo $this->escape($this->returnTitle); ?>"
 	data-audioarchive-pad-count="<?php echo $this->padCount; ?>"

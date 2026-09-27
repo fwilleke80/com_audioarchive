@@ -1,7 +1,8 @@
-import {openSoundboardChooser} from './board-chooser.js?v=0.13.4.6';
+import {BoardPreloader} from './board-preload.js?v=0.13.5';
+import {openSoundboardChooser} from './board-chooser.js?v=0.13.5';
 import {acquirePlaybackSession, releasePlaybackSession} from './audio-session.js?v=0.13.2.7';
 import {playbackFor, prepareNormalization, releaseNormalization, validGain} from './normalization.js?v=0.13.2.7';
-import {Collections} from './collections.js?v=0.13.4.6';
+import {Collections} from './collections.js?v=0.13.5';
 const BOARD_STORAGE_KEY = 'com_audioarchive.soundboard.v1';
 const SAMPLER_POLYPHONY_STORAGE_KEY = 'com_audioarchive.soundboard.sampler_polyphony.v1';
 const SOUNDBOARD_RECORDINGS_STORAGE_KEY = 'com_audioarchive.soundboard.recordings.v1';
@@ -1182,6 +1183,8 @@ async function initialiseSoundboard()
 	let temporarySharedBoard = false;
 	const detailRoutes = new Map();
 	const normalizationGains = new Map();
+	const preloadMetadata = new Map();
+	let preloadSignature = '';
 	const unavailableDetailIds = new Set();
 	const pendingDetailRequests = new Map();
 	const countedClipIds = new Set();
@@ -1857,6 +1860,7 @@ async function initialiseSoundboard()
 							if (item && Number(item.id) === id && Number.isFinite(Number(item.normalization_gain)))
 							{
 								normalizationGains.set(id, validGain(item.normalization_gain));
+								preloadMetadata.set(id, item);
 								unavailableDetailIds.delete(id);
 							}
 							const route = payload.routes[String(id)];
@@ -1892,6 +1896,16 @@ async function initialiseSoundboard()
 		try
 		{
 			await ensureClipMetadata(board.filter(Boolean).map((entry) => entry.id));
+			if (boardPreloader)
+			{
+				const items = [...new Map(board.filter(Boolean).map(entry => [entry.id, entry])).values()];
+				const signature = items.map(entry => entry.id).join(',');
+				if (signature !== preloadSignature)
+				{
+					preloadSignature = signature;
+					void boardPreloader.prepare(items, preloadMetadata);
+				}
+			}
 		}
 		catch (error)
 		{
@@ -1963,6 +1977,8 @@ async function initialiseSoundboard()
 			const entry = board[index] || null;
 			const title = pad.querySelector('[data-audioarchive-soundboard-title]');
 			pad.classList.toggle('is-empty', !entry);
+			pad.classList.remove('is-preloading');
+			pad.setAttribute('aria-busy', 'false');
 			title.textContent = entry ? entry.title : root.dataset.audioarchiveLabelEmpty;
 			updatePadPlayingState(index);
 		});
@@ -2046,6 +2062,8 @@ async function initialiseSoundboard()
 	const cleanupSamplerVoice = (voice) =>
 	{
 		activeSamplerVoices.delete(voice);
+		voice.releasePreload?.();
+		voice.releasePreload = null;
 		const padVoices = samplerVoicesByPad.get(voice.index);
 
 		if (padVoices)
@@ -2319,6 +2337,28 @@ async function initialiseSoundboard()
 		return audioContext;
 	};
 
+	const boardPreloader = root.dataset.audioarchivePreload === '1' ? new BoardPreloader({
+		context: createAudioContext,
+		url: (id) => streamTemplate.replace('987654321', String(id)),
+		loading: (id, loading) =>
+		{
+			pads.forEach((pad, index) =>
+			{
+				if (board[index]?.id === id)
+				{
+					pad.classList.toggle('is-preloading', loading);
+					pad.setAttribute('aria-busy', loading ? 'true' : 'false');
+				}
+			});
+		},
+	}) : null;
+	window.addEventListener('pagehide', () =>
+	{
+		boardPreloader?.prepare([], preloadMetadata);
+		preloadSignature = '';
+	});
+	window.addEventListener('pageshow', () => { void resolveDetailRoutes(); });
+
 	const unlockSamplerAudio = () =>
 	{
 		try
@@ -2357,6 +2397,8 @@ async function initialiseSoundboard()
 
 	const loadSamplerBuffer = (entry) =>
 	{
+		const preloaded = boardPreloader?.get(entry.id);
+		if (preloaded) return Promise.resolve(preloaded);
 		if (samplerBuffers.has(entry.id))
 		{
 			return samplerBuffers.get(entry.id);
@@ -2567,7 +2609,7 @@ async function initialiseSoundboard()
 		normalizationNode.connect(gainNode);
 		gainNode.connect(context.destination);
 
-		const voice = {sourceNode, gainNode, normalizationNode, index, playSource, recordingLayer};
+		const voice = {sourceNode, gainNode, normalizationNode, index, playSource, recordingLayer, releasePreload: boardPreloader?.pin(entry.id)};
 		activeSamplerVoices.add(voice);
 
 		if (!samplerVoicesByPad.has(index))
@@ -2619,7 +2661,7 @@ async function initialiseSoundboard()
 			recordPerformanceNoteOn(midiNote, velocity, index, playSource);
 		}
 
-		const readyBuffer = decodedSamplerBuffers.get(entry.id) || null;
+		const readyBuffer = boardPreloader?.get(entry.id) || decodedSamplerBuffers.get(entry.id) || null;
 
 		if (readyBuffer && normalizationGains.has(entry.id))
 		{
@@ -2663,7 +2705,7 @@ async function initialiseSoundboard()
 		setSamplerAudioSessionActive(true);
 		unlockSamplerAudio();
 
-		const readyBuffer = decodedSamplerBuffers.get(entry.id) || null;
+		const readyBuffer = boardPreloader?.get(entry.id) || decodedSamplerBuffers.get(entry.id) || null;
 
 		if (readyBuffer && normalizationGains.has(entry.id))
 		{
@@ -2855,8 +2897,21 @@ async function initialiseSoundboard()
 			recordPerformanceEvent({type: 'pad', pad: index});
 		}
 
+		const readyBuffer = boardPreloader?.get(entry.id);
+		if (readyBuffer && normalizationGains.has(entry.id))
+		{
+			setSamplerAudioSessionActive(true);
+			unlockSamplerAudio();
+			const context = createAudioContext();
+			if (context.state === 'running')
+			{
+				startSamplerVoice(context, readyBuffer, entry, index, SAMPLER_ROOT_MIDI_NOTE, 127, playSource, false, recordingLayer);
+				return;
+			}
+			// Preserve native playback when iOS has not yet unlocked Web Audio.
+		}
 		const source = streamTemplate.replace('987654321', String(entry.id));
-		const voice = new Audio(source);
+		const voice = boardPreloader?.takeStream(entry.id) || new Audio(source);
 		voice.preload = 'auto';
 		voice.playsInline = true;
 		voice.dataset.audioarchivePadIndex = String(index);

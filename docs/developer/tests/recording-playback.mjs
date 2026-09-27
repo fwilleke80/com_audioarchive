@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 const source = fs.readFileSync(new URL('../../../pkg_audioarchive/com_audioarchive/media/js/social.js', import.meta.url),'utf8');
 const voices = [];
 const live = [{id:11,uuid:'live'}];
-const context = {board:live, recordingPlayback:{board:[{id:22}],layerBoards:{1:[{id:33}]},polyphonyByLayer:new Map()}, streamTemplate:'/clip/987654321',
+const context = {boardPreloader:null,board:live, recordingPlayback:{board:[{id:22}],layerBoards:{1:[{id:33}]},polyphonyByLayer:new Map()}, streamTemplate:'/clip/987654321',
  soundboardPolyphonic:true, activeVoices:new Set(), voicesByPad:new Map(), pads:[{classList:{add(){},remove(){}}}],
  ensureClipMetadata:()=>Promise.resolve(), normalizationGains:new Map(), prepareNormalization:()=>Promise.resolve(), playbackFor:(audio)=>audio,
  updatePadPlayingState(){}, recordPerformanceEvent(){}, countPlay(){}, stopRecordingVoices(){}, stopLiveVoices(){}, stopAllVoices(){}, cleanupVoice(){},
@@ -43,3 +43,20 @@ const normalized=vm.runInContext('normaliseSoundboardRecording(input,36)',contex
 assert.equal(normalized.layerBoards[1][0].id,33);
 assert.equal(normalized.events[0].layer,1);
 console.log('Recording playback routes base, overdub and live clips independently; layered JSON survives normalization.');
+
+/** @brief Ready preloaded pads use the shared voice path at unshifted pitch. */
+const buffered=[];
+context.boardPreloader={get:()=>({}),takeStream:()=>null};
+context.normalizationGains.set(11,2);
+context.setSamplerAudioSessionActive=()=>{};
+context.unlockSamplerAudio=()=>{};
+context.createAudioContext=()=>({state:'running'});
+context.SAMPLER_ROOT_MIDI_NOTE=60;
+context.startSamplerVoice=(...args)=>buffered.push(args);
+vm.runInContext("playRecordingPad(0,'pad',false);",context);
+assert.equal(buffered.length,1);
+assert.equal(buffered[0][2].id,11);
+assert.equal(buffered[0][4],60);
+assert.equal(buffered[0][5],127);
+assert.equal(buffered[0][7],false,'normal pad does not require chromatic selection');
+console.log('Ready buffer pad routing retains root pitch and full velocity.');
