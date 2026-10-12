@@ -1,12 +1,19 @@
 # Changelog
 
+## 0.13.6.4
+
+- Add intermediate frequency labels and aligned vertical grid lines to Frequency Profile. Position ticks using sampled frequency values for both logarithmic and linear profiles; adapt label density to available width and preserve endpoints where space permits. Use explicit Hz/kHz units. Existing analysis files remain compatible.
+
+
 ## 0.13.6.3
 
 - Update the player stylesheet asset version, previously stuck at 0.11.23, so browsers fetch the featured transport layout with Play/Pause and Rewind side by side. No layout changes.
 
+
 ## 0.13.6.2
 
 - Restore the 0.13.5 featured player grid and responsive placement. Group Play/Pause and Rewind in the first grid cell, leaving only the position slider narrower to accommodate Rewind.
+
 
 ## 0.13.6.1
 

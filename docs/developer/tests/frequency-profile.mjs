@@ -73,7 +73,9 @@ assert.equal(fills, 1, 'the profile area is actually plotted');
 assert.equal(strokes, 2, 'grid and frequency curve are drawn');
 assert.equal(canvas.width, 640);
 assert.ok(points.every(([x, y]) => Number.isFinite(x) && Number.isFinite(y)));
-assert.deepEqual(labels, ['20 Hz', '20k Hz']);
+assert.equal(labels[0], '20 Hz');
+assert.equal(labels.at(-1), '20 kHz');
+assert.ok(labels.length > 2, 'intermediate frequencies are labelled');
 sandbox.draw({}, state);
 assert.equal(clears, 1, 'unchanged dimensions reuse the plot');
 panel.hidden = true;
@@ -85,3 +87,27 @@ sandbox.draw({}, state);
 assert.equal(clears, 2, 'showing/resizing the panel redraws the curve');
 assert.equal(canvas.width, 960);
 console.log('Frequency-profile plot, labels, high-DPI sizing and hidden-panel redraw checks passed.');
+
+/** @brief Verify spacing and positions for linear and logarithmic sampled axes. */
+vm.runInContext('this.ticks = getProfileTicks;', sandbox);
+for (const logarithmic of [false, true])
+{
+	const frequencies = Array.from({length: 512}, (_, i) => logarithmic
+		? 20 * (1000 ** (i / 511)) : 20 + 19980 * i / 511);
+	for (const width of [140, 320, 800])
+	{
+		const ticks = sandbox.ticks(frequencies, 8, width - 16, {measureText: text => ({width: text.length * 6})});
+		assert.equal(ticks[0].frequency, 20);
+		assert.equal(ticks.at(-1).frequency, 20000);
+		for (let i = 0; i < ticks.length; i++)
+		{
+			const tick = ticks[i];
+			assert.ok(tick.labelX >= 8 && tick.labelX + tick.width <= width - 8);
+			if (i) assert.ok(tick.labelX >= ticks[i - 1].labelX + ticks[i - 1].width + 10);
+			const expected = logarithmic ? Math.log(tick.frequency / 20) / Math.log(1000) : (tick.frequency - 20) / 19980;
+			assert.ok(Math.abs(tick.x - (8 + expected * (width - 16))) < 0.1);
+		}
+		if (width === 800) assert.ok(ticks.length >= 5);
+	}
+}
+console.log('Linear/logarithmic tick positions, units, bounds and collision checks passed.');

@@ -1,4 +1,4 @@
-import {Collections} from './collections.js?v=0.13.6.3';
+import {Collections} from './collections.js?v=0.13.6.4';
 
 /** @brief Present explicit account destinations using native keyboard-accessible buttons. */
 export function openSoundboardChooser(button, clip, capacity)

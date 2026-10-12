@@ -682,6 +682,67 @@ const initialiseAudioArchivePlayers = () =>
 		return String(Math.round(frequency));
 	};
 
+	/** @brief Place readable frequency ticks against the actual sampled frequency axis. */
+	const getProfileTicks = (frequencies, left, plotWidth, context) =>
+	{
+		const minimum = frequencies[0];
+		const maximum = frequencies[frequencies.length - 1];
+		const labelFor = (frequency) => frequency >= 1000
+			? `${Number.parseFloat((frequency / 1000).toFixed(2))} kHz`
+			: `${Number.parseFloat(frequency.toFixed(2))} Hz`;
+		const makeTick = (frequency, x) =>
+		{
+			const label = labelFor(frequency);
+			const width = context.measureText(label).width;
+			const labelX = Math.max(left, Math.min(left + plotWidth - width, x - width / 2));
+
+			return {frequency, x, label, labelX, width};
+		};
+		const first = makeTick(minimum, left);
+		const last = makeTick(maximum, left + plotWidth);
+		const ticks = [first];
+
+		if (last.labelX < first.labelX + first.width + 10)
+		{
+			return ticks;
+		}
+
+		for (let exponent = -2; exponent <= 6; exponent += 1)
+		{
+			for (const multiplier of [1, 2, 5])
+			{
+				const frequency = multiplier * (10 ** exponent);
+
+				if (frequency <= minimum || frequency >= maximum)
+				{
+					continue;
+				}
+
+				let index = 1;
+				while (index < frequencies.length - 1 && frequencies[index] < frequency)
+				{
+					index += 1;
+				}
+
+				const span = frequencies[index] - frequencies[index - 1];
+				const fraction = span > 0 ? (frequency - frequencies[index - 1]) / span : 0;
+				const x = left + ((index - 1 + fraction) / (frequencies.length - 1)) * plotWidth;
+				const tick = makeTick(frequency, x);
+				const previous = ticks[ticks.length - 1];
+
+				if (tick.labelX >= previous.labelX + previous.width + 10
+					&& tick.labelX + tick.width + 10 <= last.labelX)
+				{
+					ticks.push(tick);
+				}
+			}
+		}
+
+		ticks.push(last);
+
+		return ticks;
+	};
+
 	const drawPlayerFrequencyProfile = (player, state) =>
 	{
 		const profile = state.canvas.closest('[data-audioarchive-player-frequency-profile]');
@@ -747,11 +808,12 @@ const initialiseAudioArchivePlayers = () =>
 			context.lineTo(left + plotWidth, y);
 		}
 
-		for (let division = 0; division <= 4; division += 1)
+		context.font = '600 10px system-ui, sans-serif';
+		const ticks = getProfileTicks(state.frequencies, left, plotWidth, context);
+		for (const tick of ticks)
 		{
-			const x = left + (plotWidth * division / 4);
-			context.moveTo(x, top);
-			context.lineTo(x, top + plotHeight);
+			context.moveTo(tick.x, top);
+			context.lineTo(tick.x, top + plotHeight);
 		}
 
 		context.stroke();
@@ -793,9 +855,10 @@ const initialiseAudioArchivePlayers = () =>
 		context.font = '600 10px system-ui, sans-serif';
 		context.textBaseline = 'bottom';
 		context.globalAlpha = 0.88;
-		context.fillText(`${formatProfileFrequency(state.frequencies[0])} Hz`, left, height - 2);
-		const lastLabel = `${formatProfileFrequency(state.frequencies[state.frequencies.length - 1])} Hz`;
-		context.fillText(lastLabel, left + plotWidth - context.measureText(lastLabel).width, height - 2);
+		for (const tick of ticks)
+		{
+			context.fillText(tick.label, tick.labelX, height - 2);
+		}
 		context.globalAlpha = 1;
 	};
 

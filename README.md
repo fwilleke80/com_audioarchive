@@ -2,7 +2,7 @@
 
 Punga Audio Archive is a native Joomla! 6 extension package for managing and publishing collections of audio clips. It combines protected media storage, bulk importing, metadata management, waveform, spectrogram, and frequency-profile analysis, responsive frontend players, ratings, related clips, Sound Boards, playlists, and optional Punga Analytics integration.
 
-> **Current version:** 0.13.6.3  
+> **Current version:** 0.13.6.4  
 > **Package:** `pkg_audioarchive`  
 > **Licence:** GNU General Public License version 2 or later
 

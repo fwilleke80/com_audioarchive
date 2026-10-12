@@ -1,8 +1,8 @@
-import {BoardPreloader} from './board-preload.js?v=0.13.6.3';
-import {openSoundboardChooser} from './board-chooser.js?v=0.13.6.3';
+import {BoardPreloader} from './board-preload.js?v=0.13.6.4';
+import {openSoundboardChooser} from './board-chooser.js?v=0.13.6.4';
 import {acquirePlaybackSession, releasePlaybackSession} from './audio-session.js?v=0.13.2.7';
 import {playbackFor, prepareNormalization, releaseNormalization, validGain} from './normalization.js?v=0.13.2.7';
-import {Collections} from './collections.js?v=0.13.6.3';
+import {Collections} from './collections.js?v=0.13.6.4';
 const BOARD_STORAGE_KEY = 'com_audioarchive.soundboard.v1';
 const SAMPLER_POLYPHONY_STORAGE_KEY = 'com_audioarchive.soundboard.sampler_polyphony.v1';
 const SOUNDBOARD_RECORDINGS_STORAGE_KEY = 'com_audioarchive.soundboard.recordings.v1';
