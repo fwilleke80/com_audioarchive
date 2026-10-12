@@ -41,7 +41,7 @@ $filters = [
 ?>
 <?php foreach ($filters as $name => [$label, $options]) : ?>
 <div class="col"><label for="my-<?php echo $name; ?>"><?php echo Text::_($label); ?></label><select class="form-select" id="my-<?php echo $name; ?>" name="<?php echo $name; ?>">
-<?php if ($name !== 'order') : ?><option value=""><?php echo Text::_('JALL'); ?></option><?php endif; ?>
+<?php if ($name !== 'order') : ?><option value=""><?php echo Text::_($name === 'state' ? 'COM_AUDIOARCHIVE_NOT_TRASHED' : 'JALL'); ?></option><?php endif; ?>
 <?php foreach ($options as $value => $text) : ?><option value="<?php echo $this->escape((string) $value); ?>" <?php echo $input->getString($name, $name === 'order' ? 'newest' : '') === (string) $value ? 'selected' : ''; ?>><?php echo $this->escape($name === 'category' ? $text : Text::_($text)); ?></option><?php endforeach; ?>
 </select></div>
 <?php endforeach; ?>
@@ -69,6 +69,13 @@ $summary = \Punga\Component\Audioarchive\Site\Service\ProcessingStatusService::s
 </details></td>
 <td><div class="d-flex flex-wrap gap-2">
 <?php if ($item->canEdit) : ?><a class="btn btn-sm btn-outline-primary" href="<?php echo Route::_('index.php?option=com_audioarchive&task=edit.edit&id=' . (int) $item->id . '&return=' . rawurlencode(base64_encode(Uri::getInstance()->toString()))); ?>"><?php echo Text::_('JACTION_EDIT'); ?></a><?php endif; ?>
+<?php if ($item->canRestore) : ?>
+<form method="post" action="<?php echo Route::_('index.php?option=com_audioarchive&task=myclips.restore'); ?>">
+<input type="hidden" name="id" value="<?php echo (int) $item->id; ?>">
+<button type="submit" class="btn btn-sm btn-outline-success"><?php echo Text::_('COM_AUDIOARCHIVE_RESTORE'); ?></button>
+<?php echo HTMLHelper::_('form.token'); ?>
+</form>
+<?php endif; ?>
 <?php if ($item->canTrash || $item->canDelete) : ?>
 <form method="post" action="<?php echo Route::_('index.php?option=com_audioarchive&task=myclips.' . ($item->canDelete ? 'delete' : 'trash')); ?>">
 <input type="hidden" name="id" value="<?php echo (int) $item->id; ?>">

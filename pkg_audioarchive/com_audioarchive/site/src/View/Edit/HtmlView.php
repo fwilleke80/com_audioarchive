@@ -19,6 +19,9 @@ use Punga\Component\Audioarchive\Site\Service\FrontendEditingService;
  */
 class HtmlView extends BaseHtmlView
 {
+	/** @var string Rendered featured player for an accessible clip. */
+	public string $playerHtml = '';
+
 	/** @var Form */
 	public Form $form;
 
@@ -87,6 +90,59 @@ class HtmlView extends BaseHtmlView
 			->useStyle('com_audioarchive.site')
 			->useScript('keepalive')
 			->useScript('form.validate');
+
+		$params = clone \Joomla\CMS\Component\ComponentHelper::getParams('com_audioarchive');
+		$override = $application->getMenu()->getActive()?->getParams()->get('player_pause_behavior', '');
+		if (in_array($override, ['pause', 'stop'], true))
+		{
+			$params->set('player_pause_behavior', $override);
+		}
+		$media = new \Punga\Component\Audioarchive\Site\Service\PublicMediaService(
+			Factory::getContainer()->get(\Joomla\Database\DatabaseInterface::class), $params, $identity
+		);
+		$playable = $media->getPublicClip((int) $item->id);
+		if ($playable !== null)
+		{
+			$player = [
+				'audioId' => 'audioarchive-edit-' . (int) $item->id,
+				'clipId' => (int) $item->id,
+				'title' => (string) $item->title,
+				'streamUrl' => Route::_(RouteHelper::getPlaybackRoute((int) $item->id, $this->itemId)),
+				'mime' => (string) ($playable->mime_type ?? ''),
+				'params' => $params,
+				'presentation' => 'featured',
+				'labels' => [
+					'play' => Text::sprintf('COM_AUDIOARCHIVE_PLAY_LABEL', $item->title),
+					'pause' => Text::sprintf('COM_AUDIOARCHIVE_PAUSE_LABEL', $item->title),
+					'seek' => Text::_('COM_AUDIOARCHIVE_PLAYER_SEEK'),
+					'mute' => Text::_('COM_AUDIOARCHIVE_PLAYER_MUTE'),
+					'unmute' => Text::_('COM_AUDIOARCHIVE_PLAYER_UNMUTE'),
+				'volume' => Text::_('COM_AUDIOARCHIVE_PLAYER_VOLUME'),
+				'fallback' => Text::_('COM_AUDIOARCHIVE_PLAYER_FALLBACK'),
+				'waveformLoading' => Text::_('COM_AUDIOARCHIVE_WAVEFORM_LOADING'),
+				'spectrogramLoading' => Text::_('COM_AUDIOARCHIVE_SPECTROGRAM_LOADING'),
+				'frequencyProfileLoading' => Text::_('COM_AUDIOARCHIVE_FREQUENCY_PROFILE_LOADING'),
+				'analysisView' => Text::_('COM_AUDIOARCHIVE_ANALYSIS_VIEW'),
+				'waveform' => Text::_('COM_AUDIOARCHIVE_ANALYSIS_WAVEFORM'),
+				'spectrum' => Text::_('COM_AUDIOARCHIVE_ANALYSIS_SPECTRUM'),
+				'frequencyProfile' => Text::_('COM_AUDIOARCHIVE_ANALYSIS_FREQUENCY_PROFILE'),
+				'frequencyProfileSummary' => Text::_('COM_AUDIOARCHIVE_FREQUENCY_PROFILE_SUMMARY'),
+				'varispeed' => Text::_('COM_AUDIOARCHIVE_PLAYER_VARISPEED'),
+				'varispeedReset' => Text::_('COM_AUDIOARCHIVE_PLAYER_VARISPEED_RESET'),
+				'varispeedNormal' => Text::_('COM_AUDIOARCHIVE_PLAYER_VARISPEED_NORMAL'),
+				'varispeedOctave' => Text::_('COM_AUDIOARCHIVE_PLAYER_VARISPEED_OCTAVE_ABBR'),
+				],
+			];
+			foreach (['waveform' => 'waveformUrl', 'spectrogram' => 'spectrogramUrl', 'frequency_profile' => 'frequencyProfileUrl'] as $type => $key)
+			{
+				if ($media->getPublicAnalysis((int) $item->id, $type) !== null)
+				{
+					$player[$key] = Route::_(RouteHelper::getAnalysisRoute((int) $item->id, $type, $this->itemId));
+				}
+			}
+			$this->playerHtml = \Joomla\CMS\Layout\LayoutHelper::render('player.unified', $player, null, ['component' => 'com_audioarchive', 'client' => 0]);
+			$this->getDocument()->getWebAssetManager()->useStyle('com_audioarchive.player-style')->useScript('com_audioarchive.player');
+		}
 
 		parent::display($tpl);
 	}

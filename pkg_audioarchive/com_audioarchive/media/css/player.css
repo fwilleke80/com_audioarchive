@@ -715,3 +715,24 @@
 		justify-self: end;
 	}
 }
+
+/* Keep the 0.13.5 grid: transport, flexible position slider, mute controls. */
+.audioarchive-custom-player--featured .audioarchive-custom-player-transport
+{
+	display: flex;
+	align-items: center;
+	gap: .5rem;
+}
+
+.audioarchive-custom-player--featured .audioarchive-custom-player-controls
+{
+	grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+@media (max-width: 42rem)
+{
+	.audioarchive-custom-player--featured .audioarchive-custom-player-controls
+	{
+		grid-template-columns: auto minmax(0, 1fr);
+	}
+}

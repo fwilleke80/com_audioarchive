@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <extension type="plugin" group="content" method="upgrade">
     <name>PLG_CONTENT_AUDIOARCHIVE</name>
-    <version>0.13.5</version>
+    <version>0.13.6.3</version>
     <creationDate>2026-08-22</creationDate>
     <author>Frank Willeke</author>
     <copyright>Copyright (C) 2026 Frank Willeke.</copyright>
@@ -87,7 +87,12 @@
                     <option value="message">PLG_CONTENT_AUDIOARCHIVE_MISSING_MESSAGE</option>
                     <option value="remove">PLG_CONTENT_AUDIOARCHIVE_MISSING_REMOVE</option>
                 </field>
-            </fieldset>
+            <field name="player_pause_behavior" type="list" label="PLG_CONTENT_AUDIOARCHIVE_PAUSE_BEHAVIOR_LABEL" description="PLG_CONTENT_AUDIOARCHIVE_PAUSE_BEHAVIOR_DESC" default="">
+ <option value="">JGLOBAL_USE_GLOBAL</option>
+ <option value="pause">PLG_CONTENT_AUDIOARCHIVE_PAUSE_BEHAVIOR_PAUSE</option>
+ <option value="stop">PLG_CONTENT_AUDIOARCHIVE_PAUSE_BEHAVIOR_STOP</option>
+</field>
+</fieldset>
         </fields>
     </config>
 </extension>

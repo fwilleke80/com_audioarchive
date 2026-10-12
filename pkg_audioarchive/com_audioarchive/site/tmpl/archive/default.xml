@@ -42,6 +42,11 @@
 		<field name="archive_column_owner" type="list" label="COM_AUDIOARCHIVE_ARCHIVE_OWNER_COLUMN" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="0">JNO</option><option value="1">JYES</option></field>
 <field name="archive_show_owner_filter" type="list" label="COM_AUDIOARCHIVE_ARCHIVE_OWNER_FILTER" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="0">JNO</option><option value="1">JYES</option></field>
 <field name="detail_show_owner" type="list" label="COM_AUDIOARCHIVE_DETAIL_OWNER" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="0">JNO</option><option value="1">JYES</option></field>
+<field name="player_pause_behavior" type="list" label="COM_AUDIOARCHIVE_PAUSE_BEHAVIOR_LABEL" description="COM_AUDIOARCHIVE_PAUSE_BEHAVIOR_DESC" default="">
+ <option value="">JGLOBAL_USE_GLOBAL</option>
+ <option value="pause">COM_AUDIOARCHIVE_PAUSE_BEHAVIOR_PAUSE</option>
+ <option value="stop">COM_AUDIOARCHIVE_PAUSE_BEHAVIOR_STOP</option>
+</field>
 </fieldset>
 		<fieldset name="filters" label="COM_AUDIOARCHIVE_CONFIG_ARCHIVE_FILTERS_LABEL">
 			<field name="archive_show_search" type="list" label="COM_AUDIOARCHIVE_CONFIG_SHOW_SEARCH_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>

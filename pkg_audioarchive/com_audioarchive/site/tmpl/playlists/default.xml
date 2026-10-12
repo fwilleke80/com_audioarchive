@@ -15,7 +15,12 @@
 			/>
 			<field name="show_page_heading" type="list" label="JGLOBAL_SHOW_PAGE_HEADING_LABEL" default="1"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
 			<field name="page_heading" type="text" label="JGLOBAL_PAGE_HEADING_LABEL" />
-		</fieldset>
+		<field name="player_pause_behavior" type="list" label="COM_AUDIOARCHIVE_PAUSE_BEHAVIOR_LABEL" description="COM_AUDIOARCHIVE_PAUSE_BEHAVIOR_DESC" default="">
+ <option value="">JGLOBAL_USE_GLOBAL</option>
+ <option value="pause">COM_AUDIOARCHIVE_PAUSE_BEHAVIOR_PAUSE</option>
+ <option value="stop">COM_AUDIOARCHIVE_PAUSE_BEHAVIOR_STOP</option>
+</field>
+</fieldset>
 
 		<fieldset name="list_style" label="COM_AUDIOARCHIVE_CONFIG_PLAYLIST_TABLE_STYLE_LABEL">
 			<field name="playlist_list_style_note" type="note" class="alert alert-info" label="" description="COM_AUDIOARCHIVE_CONFIG_OPTIONAL_COLOR_NOTE_DESC" />

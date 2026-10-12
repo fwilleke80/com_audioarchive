@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.13.6.3
+
+- Update the player stylesheet asset version, previously stuck at 0.11.23, so browsers fetch the featured transport layout with Play/Pause and Rewind side by side. No layout changes.
+
+## 0.13.6.2
+
+- Restore the 0.13.5 featured player grid and responsive placement. Group Play/Pause and Rewind in the first grid cell, leaving only the position slider narrower to accommodate Rewind.
+
+## 0.13.6.1
+
+- Fix featured transport layout: keep the position slider flexible and move it to a full-width row on narrow screens.
+- Featured players always use Play/Pause plus Rewind; other presentations retain the configured Pause/Stop behaviour.
+- Load component frontend translations in the shared player layout for Stop and Rewind tooltips in module and embedded contexts.
+
+## 0.13.6
+
+- Add Pause and resume / Stop and rewind player behaviour, with component defaults, menu/module/plugin overrides and per-embed pause=stop or pause=pause. Explicit Stop resets position and displays a stop icon; internal pauses retain position.
+- Add Rewind to start to featured players, preserving playing/paused state.
+- Hide trashed clips from the default My clips list; expose them through the existing Status → Trashed filter and add an owner/ACL/CSRF-checked Restore action returning clips to unpublished.
+- Show the shared featured player with available analysis on frontend Edit Clip for clips the current user may play.
+
+
 ## 0.13.5
 
 - Add default-on Preload sound board audio component option; disabling preserves existing on-demand playback.

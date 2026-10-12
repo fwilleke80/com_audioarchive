@@ -43,6 +43,7 @@ class HtmlView extends BaseHtmlView
 			? (string) $menu->title : Text::_('COM_AUDIOARCHIVE_MY_CLIPS');
 		if (($menu->query['view'] ?? '') === 'myclips')
 		{
+			$this->params->set('player_pause_behavior', $menu->getParams()->get('player_pause_behavior', '') ?: $this->params->get('player_pause_behavior', 'pause'));
 			$this->params->set('myclips_show_quota', $menu->getParams()->get('myclips_show_quota', 1));
 		}
 		$model = $this->getModel();
@@ -55,6 +56,7 @@ class HtmlView extends BaseHtmlView
 			$item->canView = (int) $item->is_available === 1 && $access->canView($item);
 			$item->stream_url = $item->canView ? \Joomla\CMS\Router\Route::_(\Punga\Component\Audioarchive\Site\Helper\RouteHelper::getPlaybackRoute((int) $item->id)) : '';
 			$item->canEdit = FrontendEditingService::isEnabled($app) && $access->canEdit($item);
+			$item->canRestore = (int) $item->state === -2 && $access->canEditState($item);
 			$item->canTrash = (int) $item->state !== -2 && $access->canEditState($item);
 			$item->canDelete = (int) $item->state === -2 && $access->canDelete($item);
 		}

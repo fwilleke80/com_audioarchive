@@ -1184,11 +1184,23 @@ const initialiseAudioArchivePlayers = () =>
 		initialisePlayerVarispeed(player, audio, clipDetailUrlState.pitch ?? 0);
 		applyInitialStartTime(audio, clipDetailUrlState.start);
 
+		// @brief Rewind without changing the current playing/paused state.
+		player.querySelector('[data-audioarchive-rewind]')?.addEventListener('click', () =>
+		{
+			audio.currentTime = 0;
+			updateCustomPlayerProgress(player, audio);
+		});
+
 		toggle.addEventListener('click', async () =>
 		{
 			if (!audio.paused)
 			{
 				audio.pause();
+				if (player.dataset.pauseBehavior === 'stop')
+				{
+					audio.currentTime = 0;
+					updateCustomPlayerProgress(player, audio);
+				}
 				return;
 			}
 

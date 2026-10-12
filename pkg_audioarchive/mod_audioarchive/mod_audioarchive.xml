@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <extension type="module" client="site" method="upgrade">
     <name>MOD_AUDIOARCHIVE</name>
-    <version>0.13.5</version>
+    <version>0.13.6.3</version>
     <creationDate>2026-08-22</creationDate>
     <author>Frank Willeke</author>
     <copyright>Copyright (C) 2026 Frank Willeke.</copyright>
@@ -49,7 +49,12 @@
                     <option value="all">MOD_AUDIOARCHIVE_TAG_MODE_ALL</option>
                     <option value="any">MOD_AUDIOARCHIVE_TAG_MODE_ANY</option>
                 </field>
-            </fieldset>
+            <field name="player_pause_behavior" type="list" label="MOD_AUDIOARCHIVE_PAUSE_BEHAVIOR_LABEL" description="MOD_AUDIOARCHIVE_PAUSE_BEHAVIOR_DESC" default="">
+ <option value="">JGLOBAL_USE_GLOBAL</option>
+ <option value="pause">MOD_AUDIOARCHIVE_PAUSE_BEHAVIOR_PAUSE</option>
+ <option value="stop">MOD_AUDIOARCHIVE_PAUSE_BEHAVIOR_STOP</option>
+</field>
+</fieldset>
             <fieldset name="display" label="MOD_AUDIOARCHIVE_FIELDSET_DISPLAY">
                 <field name="presentation" type="list" default="default" label="MOD_AUDIOARCHIVE_FIELD_PRESENTATION_LABEL" description="MOD_AUDIOARCHIVE_FIELD_PRESENTATION_DESC">
                     <option value="default">MOD_AUDIOARCHIVE_PRESENTATION_DEFAULT</option>

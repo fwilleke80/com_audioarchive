@@ -1,6 +1,6 @@
-import {openSoundboardChooser, renderSoundboardChoices} from './board-chooser.js?v=0.13.5';
+import {openSoundboardChooser, renderSoundboardChoices} from './board-chooser.js?v=0.13.6.3';
 import {playbackFor, playNormalized, updateNormalization} from './normalization.js?v=0.13.2.7';
-import {Collections} from './collections.js?v=0.13.5';
+import {Collections} from './collections.js?v=0.13.6.3';
 const PLAYLIST_STORAGE_KEY = 'com_audioarchive.playlists.v1';
 const PLAYLIST_STORAGE_VERSION = 1;
 const PLAYLIST_RESOLUTION_BATCH_SIZE = 500;
@@ -2334,6 +2334,10 @@ async function initialisePlaylistPage()
 				if (!audio.paused)
 				{
 					audio.pause();
+					if (player?.dataset.pauseBehavior === 'stop')
+					{
+						audio.currentTime = 0;
+					}
 				}
 				else
 				{

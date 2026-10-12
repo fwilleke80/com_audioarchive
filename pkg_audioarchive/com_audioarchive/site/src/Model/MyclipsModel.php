@@ -55,6 +55,10 @@ class MyclipsModel extends ListModel
 		{
 			$query->where('a.state=' . (int) $state);
 		}
+		else
+		{
+			$query->where('a.state <> -2');
+		}
 		$visibility = $this->getState('filter.visibility');
 		if ($visibility === 'registered')
 		{

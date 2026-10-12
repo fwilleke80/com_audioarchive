@@ -44,7 +44,11 @@ $showCounts = (int) $params->get('show_counts', 0) === 1;
 $descriptionLength = max(20, (int) $params->get('description_length', 160));
 $displayDate = (string) $params->get('display_date', 'uploaded');
 $widePlayer = $playerPresentation !== 'minimal';
-$componentParams = ComponentHelper::getParams('com_audioarchive');
+$componentParams = clone ComponentHelper::getParams('com_audioarchive');
+if (in_array((string) $params->get('player_pause_behavior', ''), ['pause', 'stop'], true))
+{
+	$componentParams->set('player_pause_behavior', $params->get('player_pause_behavior'));
+}
 ?>
 <div
 	class="com-audioarchive <?php echo $moduleClass; ?>"

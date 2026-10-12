@@ -4,6 +4,9 @@ use Joomla\Registry\Registry;
 
 \defined('_JEXEC') or die;
 
+// @brief Load shared player labels also when rendered by modules or content plugins.
+\Joomla\CMS\Factory::getApplication()->getLanguage()->load('com_audioarchive', JPATH_SITE);
+
 $data = is_array($displayData ?? null) ? $displayData : [];
 $params = ($data['params'] ?? null) instanceof Registry ? $data['params'] : new Registry();
 $escape = static fn(string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
@@ -66,7 +69,14 @@ $clipId = max(0, (int) ($data['clipId'] ?? 0));
 $normalizationGain = \Punga\Component\Audioarchive\Administrator\Service\PlaybackNormalizationService::forClip((int) ($data['normalizationClipId'] ?? $clipId));
 $labels = is_array($data['labels'] ?? null) ? $data['labels'] : [];
 $playLabel = (string) ($labels['play'] ?? 'Play');
-$pauseLabel = (string) ($labels['pause'] ?? 'Pause');
+$pauseBehavior = (string) $params->get('player_pause_behavior', '');
+if (!in_array($pauseBehavior, ['pause', 'stop'], true))
+{
+	$pauseBehavior = (string) \Joomla\CMS\Component\ComponentHelper::getParams('com_audioarchive')->get('player_pause_behavior', 'pause');
+}
+// @brief Featured players pair Pause with a separate state-preserving Rewind control.
+$stopOnPause = $presentation !== 'featured' && $pauseBehavior === 'stop';
+$pauseLabel = $stopOnPause ? \Joomla\CMS\Language\Text::_('COM_AUDIOARCHIVE_PLAYER_STOP') : (string) ($labels['pause'] ?? 'Pause');
 $seekLabel = (string) ($labels['seek'] ?? 'Seek');
 $muteLabel = (string) ($labels['mute'] ?? 'Mute');
 $unmuteLabel = (string) ($labels['unmute'] ?? 'Unmute');
@@ -125,6 +135,7 @@ $style = implode(';', [
 	class="<?php echo $escape($className); ?>"
 	style="<?php echo $escape($style); ?>"
 	data-audioarchive-custom-player
+	data-pause-behavior="<?php echo $stopOnPause ? 'stop' : 'pause'; ?>"
 	data-normalization-gain="<?php echo $normalizationGain; ?>"
 	data-player-presentation="<?php echo $escape($presentation); ?>"
 	data-preferred-analysis-view="<?php echo $escape($initialAnalysisView); ?>"
@@ -165,6 +176,9 @@ $style = implode(';', [
 					<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M6 5h2v14H6zm3.5 7 8.5 7V5z"/></svg>
 				</button>
 			<?php endif; ?>
+			<?php if ($presentation === 'featured') : ?>
+			<div class="audioarchive-custom-player-transport">
+			<?php endif; ?>
 			<button
 				type="button"
 				class="audioarchive-custom-player-toggle"
@@ -180,9 +194,18 @@ $style = implode(';', [
 					<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M8 5.5v13l10-6.5z"/></svg>
 				</span>
 				<span data-audioarchive-icon-pause aria-hidden="true" hidden>
-					<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M6.5 5h4v14h-4zm7 0h4v14h-4z"/></svg>
+					<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="<?php echo $stopOnPause ? 'M6 6h12v12H6z' : 'M6.5 5h4v14h-4zm7 0h4v14h-4z'; ?>"/></svg>
 				</span>
 			</button>
+
+			<?php if ($presentation === 'featured') : ?>
+			<button type="button" class="audioarchive-custom-player-skip" data-audioarchive-rewind
+			 aria-label="<?php echo $escape(\Joomla\CMS\Language\Text::_('COM_AUDIOARCHIVE_PLAYER_REWIND')); ?>"
+			 title="<?php echo $escape(\Joomla\CMS\Language\Text::_('COM_AUDIOARCHIVE_PLAYER_REWIND')); ?>">
+			 <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M5 5h2v14H5zM19 5v14L8.5 12z"/></svg>
+			</button>
+			</div>
+			<?php endif; ?>
 
 			<?php if ($isPlaylist) : ?>
 				<button

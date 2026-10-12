@@ -40,7 +40,7 @@ $playlistStyle = StyleHelper::buildPlaylistListVariables($this->params);
 	data-audioarchive-label-position="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_POSITION')); ?>"
 	data-audioarchive-label-title="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_COLUMN_TITLE')); ?>"
 	data-audioarchive-label-play="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_PLAY_CLIP')); ?>"
-	data-audioarchive-label-pause="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYER_PAUSE')); ?>"
+	data-audioarchive-label-pause="<?php echo $this->escape(Text::_($this->params->get('player_pause_behavior', 'pause') === 'stop' ? 'COM_AUDIOARCHIVE_PLAYER_STOP' : 'COM_AUDIOARCHIVE_PLAYER_PAUSE')); ?>"
 	data-audioarchive-label-remove="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_REMOVE_CLIP')); ?>"
 	data-audioarchive-label-move-up="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_MOVE_UP')); ?>"
 	data-audioarchive-label-move-down="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_MOVE_DOWN')); ?>"
@@ -117,7 +117,7 @@ $playlistStyle = StyleHelper::buildPlaylistListVariables($this->params);
 				'presentation' => 'playlist',
 				'labels' => [
 					'play' => Text::_('COM_AUDIOARCHIVE_PLAYER_PLAY'),
-					'pause' => Text::_('COM_AUDIOARCHIVE_PLAYER_PAUSE'),
+					'pause' => Text::_($this->params->get('player_pause_behavior', 'pause') === 'stop' ? 'COM_AUDIOARCHIVE_PLAYER_STOP' : 'COM_AUDIOARCHIVE_PLAYER_PAUSE'),
 					'seek' => Text::_('COM_AUDIOARCHIVE_PLAYER_SEEK'),
 					'mute' => Text::_('COM_AUDIOARCHIVE_PLAYER_MUTE'),
 					'unmute' => Text::_('COM_AUDIOARCHIVE_PLAYER_UNMUTE'),
@@ -149,7 +149,7 @@ $playlistStyle = StyleHelper::buildPlaylistListVariables($this->params);
 				'presentation' => 'minimal',
 				'labels' => [
 					'play' => Text::_('COM_AUDIOARCHIVE_PLAYLIST_PLAY_CLIP'),
-					'pause' => Text::_('COM_AUDIOARCHIVE_PLAYER_PAUSE'),
+					'pause' => Text::_($this->params->get('player_pause_behavior', 'pause') === 'stop' ? 'COM_AUDIOARCHIVE_PLAYER_STOP' : 'COM_AUDIOARCHIVE_PLAYER_PAUSE'),
 					'fallback' => Text::_('COM_AUDIOARCHIVE_PLAYER_FALLBACK'),
 				],
 			],

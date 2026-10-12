@@ -203,6 +203,8 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 			? ['category']
 			: ($orderedMode ? ['layout', 'count', 'dataview'] : ['clip', 'layout', 'dataview']);
 
+		$allowed[] = 'pause';
+
 		foreach (array_keys($attributes) as $key)
 		{
 			if (!in_array($key, $allowed, true))
@@ -297,6 +299,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 			'mode' => $mode,
 			'clip' => $clip,
 			'layout' => $layout,
+			'pauseBehavior' => in_array(($attributes['pause'] ?? $this->params->get('player_pause_behavior', '')), ['pause', 'stop'], true) ? ($attributes['pause'] ?? $this->params->get('player_pause_behavior', '')) : '',
 			'dataView' => $dataView,
 			'categories' => [],
 			'count' => $orderedMode ? $count : 1,
@@ -575,6 +578,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 			'specific_clip' => 0,
 			'presentation' => 'default',
 			'player_presentation' => $options['layout'],
+			'player_pause_behavior' => $options['pauseBehavior'] ?? '',
 			'preferred_data_view' => $options['dataView'],
 			'show_title' => (int) $this->params->get('show_title', 1),
 			'link_title' => (int) $this->params->get('link_title', 1),

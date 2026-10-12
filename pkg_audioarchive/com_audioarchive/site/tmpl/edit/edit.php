@@ -18,6 +18,8 @@ if ($this->itemId > 0)
 		<h1><?php echo $this->escape(Text::sprintf('COM_AUDIOARCHIVE_FRONTEND_EDIT_TITLE', (string) $this->item->title)); ?></h1>
 	</header>
 
+	<?php if ($this->playerHtml !== '') : ?><div class="mb-4"><?php echo $this->playerHtml; ?></div><?php endif; ?>
+
 	<form action="<?php echo Route::_($action); ?>" method="post" class="form-validate">
 		<div class="com-audioarchive-edit-actions btn-toolbar gap-2 mb-4" role="toolbar">
 			<button type="submit" name="task" value="edit.apply" class="btn btn-primary">
