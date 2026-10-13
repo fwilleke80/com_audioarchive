@@ -1,8 +1,8 @@
-import {BoardPreloader} from './board-preload.js?v=0.13.6.4';
-import {openSoundboardChooser} from './board-chooser.js?v=0.13.6.4';
+import {BoardPreloader} from './board-preload.js?v=0.13.7';
+import {openSoundboardChooser} from './board-chooser.js?v=0.13.7';
 import {acquirePlaybackSession, releasePlaybackSession} from './audio-session.js?v=0.13.2.7';
 import {playbackFor, prepareNormalization, releaseNormalization, validGain} from './normalization.js?v=0.13.2.7';
-import {Collections} from './collections.js?v=0.13.6.4';
+import {Collections} from './collections.js?v=0.13.7';
 const BOARD_STORAGE_KEY = 'com_audioarchive.soundboard.v1';
 const SAMPLER_POLYPHONY_STORAGE_KEY = 'com_audioarchive.soundboard.sampler_polyphony.v1';
 const SOUNDBOARD_RECORDINGS_STORAGE_KEY = 'com_audioarchive.soundboard.recordings.v1';
@@ -605,29 +605,48 @@ function initialiseShareButtons()
 			setShareMenuOpen(menu, open, open);
 		});
 
-		copyButton?.addEventListener('click', async () =>
+		const dialog = menu.querySelector('[data-share-dialog]');
+		const startOption = dialog?.querySelector('[data-share-start]');
+		const urlField = dialog?.querySelector('[data-share-url-field]');
+		let capturedUrl = '';
+		let capturedTime = 0;
+		/** @brief Apply the explicit timestamp choice to a captured share URL. */
+		const refreshCopyUrl = () =>
 		{
-			const copied = await copyText(getShareUrl());
-
-			if (copied)
-			{
-				if (status)
-				{
-					status.textContent = copiedLabel;
-				}
-
-				if (copyTextElement)
-				{
-					copyTextElement.textContent = copiedLabel;
-					window.setTimeout(() =>
-					{
-						copyTextElement.textContent = originalCopyLabel;
-					}, 1600);
-				}
-			}
-
+			const url = new URL(capturedUrl, window.location.href);
+			url.searchParams.delete('start');
+			url.searchParams.delete('t');
+			if (startOption.checked && capturedTime > 0) url.searchParams.set('start', formatStateNumber(capturedTime));
+			urlField.value = url.toString();
+		};
+		copyButton?.addEventListener('click', () =>
+		{
+			if (!dialog) return;
+			capturedUrl = getShareUrl();
+			const clipId = Number.parseInt(menu.dataset.shareClipId || '0', 10);
+			const element = clipId > 0 ? document.querySelector(`audio[data-clip-id="${clipId}"]`) : null;
+			const audio = element ? playbackFor(element) : null;
+			capturedTime = Number.isFinite(audio?.currentTime) ? Math.max(0, audio.currentTime) : 0;
+			startOption.checked = false;
+			startOption.disabled = capturedTime < 0.001;
+			const seconds = Math.floor(capturedTime);
+			dialog.querySelector('[data-share-time]').textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+			dialog.querySelector('[data-share-feedback]').textContent = '';
+			refreshCopyUrl();
 			setShareMenuOpen(menu, false);
+			dialog.showModal();
+			urlField.focus();
+			urlField.select();
 		});
+		startOption?.addEventListener('change', refreshCopyUrl);
+		dialog?.querySelector('[data-share-confirm]').addEventListener('click', async () =>
+		{
+			const copied = await copyText(urlField.value);
+			dialog.querySelector('[data-share-feedback]').textContent = copied ? copiedLabel : menu.dataset.copyFailedLabel;
+		});
+		dialog?.querySelector('[data-share-close]').addEventListener('click', () => dialog.close());
+		dialog?.addEventListener('close', () => toggle?.focus());
+		dialog?.addEventListener('keydown', event => event.stopPropagation());
 
 		nativeButton?.addEventListener('click', async () =>
 		{

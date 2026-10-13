@@ -1,0 +1,1 @@
+-- 0.13.7: Player and sharing usability; no schema changes.

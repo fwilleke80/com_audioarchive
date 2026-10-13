@@ -7,6 +7,8 @@ const start = source.indexOf('const formatProfileFrequency =');
 const end = source.indexOf('const initialisePlayerFrequencyProfile =', start);
 class Element {}
 const panel = new Element();
+panel.dataset = {};
+panel.querySelector = () => null;
 panel.hidden = false;
 let width = 320;
 let clears = 0;
@@ -74,7 +76,7 @@ assert.equal(strokes, 2, 'grid and frequency curve are drawn');
 assert.equal(canvas.width, 640);
 assert.ok(points.every(([x, y]) => Number.isFinite(x) && Number.isFinite(y)));
 assert.equal(labels[0], '20 Hz');
-assert.equal(labels.at(-1), '20 kHz');
+assert.ok(labels.includes('20 kHz'));
 assert.ok(labels.length > 2, 'intermediate frequencies are labelled');
 sandbox.draw({}, state);
 assert.equal(clears, 1, 'unchanged dimensions reuse the plot');
@@ -111,3 +113,14 @@ for (const logarithmic of [false, true])
 	}
 }
 console.log('Linear/logarithmic tick positions, units, bounds and collision checks passed.');
+
+state.selectedIndex = 1;
+state.width = 0;
+const readout = {textContent: ''};
+panel.querySelector = () => readout;
+sandbox.draw({}, state);
+assert.equal(readout.textContent, '200 Hz · -20.0 dB');
+assert.ok(labels.includes('dB relative'));
+assert.ok(labels.includes('-80'));
+assert.ok(labels.some(label => label.startsWith('Peak:')));
+console.log('Relative dB labels, peak label and selected-sample readout passed.');

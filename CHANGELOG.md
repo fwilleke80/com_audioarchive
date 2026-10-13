@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.13.7
+
+- Add relative-dB axis labels, a peak marker, and pointer/touch/keyboard inspection to Frequency Profile.
+- Copy link opens a dialog with an unchecked optional captured starting position and copy confirmation, in archive rows/cards and clip details.
+- Show unpublished, scheduled and expired preview notices without changing access permissions.
+
+
 ## 0.13.6.4
 
 - Add intermediate frequency labels and aligned vertical grid lines to Frequency Profile. Position ticks using sampled frequency values for both logarithmic and linear profiles; adapt label density to available width and preserve endpoints where space permits. Use explicit Hz/kHz units. Existing analysis files remain compatible.

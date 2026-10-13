@@ -3141,3 +3141,20 @@
  content: ' …';
  opacity: .6;
 }
+
+.com-audioarchive-copy-dialog
+{
+	width: min(28rem, calc(100vw - 2rem));
+	border: 1px solid #aaa;
+	border-radius: .5rem;
+	padding: 1rem;
+}
+.com-audioarchive-copy-dialog label
+{
+	display: block;
+	margin-bottom: 1rem;
+}
+.com-audioarchive-copy-dialog::backdrop
+{
+	background: rgb(0 0 0 / 25%);
+}

@@ -790,9 +790,9 @@ const initialiseAudioArchivePlayers = () =>
 		context.clearRect(0, 0, width, height);
 		context.fillStyle = background;
 		context.fillRect(0, 0, width, height);
-		const left = 8;
+		const left = 42;
 		const right = 8;
-		const top = 8;
+		const top = 24;
 		const bottom = 19;
 		const plotWidth = Math.max(1, width - left - right);
 		const plotHeight = Math.max(1, height - top - bottom);
@@ -860,6 +860,33 @@ const initialiseAudioArchivePlayers = () =>
 			context.fillText(tick.label, tick.labelX, height - 2);
 		}
 		context.globalAlpha = 1;
+		context.fillText(profile.dataset.levelLabel || 'dB relative', left, 15);
+		for (let division = 0; division <= 4; division += 1)
+		{
+			const label = String(Math.round(-state.dynamicRange * division / 4));
+			context.fillText(label, left - context.measureText(label).width - 6, top + plotHeight * division / 4 + 5);
+		}
+		const peakIndex = state.levels.indexOf(Math.max(...state.levels));
+		const selectedIndex = state.selectedIndex ?? peakIndex;
+		const [peakX, peakY] = points[peakIndex];
+		context.fillStyle = line;
+		context.fillRect(peakX - 3, peakY - 3, 6, 6);
+		const peakLabel = `${profile.dataset.peakLabel || 'Peak'}: ${formatProfileFrequency(state.frequencies[peakIndex])} Hz`;
+		context.fillText(peakLabel, Math.max(left, Math.min(left + plotWidth - context.measureText(peakLabel).width, peakX + 6)), top + 15);
+		if (state.selectedIndex !== undefined)
+		{
+			const [x, y] = points[selectedIndex];
+			context.beginPath();
+			context.moveTo(x, top);
+			context.lineTo(x, top + plotHeight);
+			context.stroke();
+			context.fillRect(x - 3, y - 3, 6, 6);
+		}
+		const readout = profile.querySelector('[data-profile-readout]');
+		if (readout)
+		{
+			readout.textContent = `${Math.round(state.frequencies[selectedIndex])} Hz · ${Number(state.levels[selectedIndex]).toFixed(1)} dB`;
+		}
 	};
 
 	const initialisePlayerFrequencyProfile = (player) =>
@@ -929,6 +956,34 @@ const initialiseAudioArchivePlayers = () =>
 					ratio: 0,
 				};
 				frequencyProfileStates.set(profile, state);
+				/** @brief Inspect profile samples without interfering with page scrolling. */
+				const inspect = (event) =>
+				{
+					const bounds = canvas.getBoundingClientRect();
+					const fraction = Math.max(0, Math.min(1, (event.clientX - bounds.left - 42) / Math.max(1, bounds.width - 50)));
+					state.selectedIndex = Math.round(fraction * (levels.length - 1));
+					state.width = 0;
+					drawPlayerFrequencyProfile(player, state);
+				};
+				canvas.addEventListener('pointermove', inspect);
+				canvas.addEventListener('pointerdown', inspect);
+				canvas.addEventListener('pointerleave', () =>
+				{
+					delete state.selectedIndex;
+					state.width = 0;
+					drawPlayerFrequencyProfile(player, state);
+				});
+				canvas.addEventListener('keydown', (event) =>
+				{
+					if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+					event.preventDefault();
+					const current = state.selectedIndex ?? 0;
+					state.selectedIndex = event.key === 'Home' ? 0 : event.key === 'End' ? levels.length - 1
+						: Math.max(0, Math.min(levels.length - 1, current + (event.key === 'ArrowRight' ? 1 : -1)));
+					state.width = 0;
+					drawPlayerFrequencyProfile(player, state);
+				});
+
 
 				if (status instanceof HTMLElement)
 				{

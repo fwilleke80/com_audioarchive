@@ -363,11 +363,14 @@ $style = implode(';', [
 						class="audioarchive-custom-player-analysis-panel audioarchive-custom-player-frequency-profile"
 						data-audioarchive-analysis-panel="frequency_profile"
 						data-audioarchive-player-frequency-profile
+						data-level-label="<?php echo $escape(\Joomla\CMS\Language\Text::_('COM_AUDIOARCHIVE_PROFILE_LEVEL')); ?>"
+						data-peak-label="<?php echo $escape(\Joomla\CMS\Language\Text::_('COM_AUDIOARCHIVE_PROFILE_PEAK')); ?>"
 						data-frequency-profile-url="<?php echo $escape($frequencyProfileUrl); ?>"
 						data-summary-template="<?php echo $escape($frequencyProfileSummary); ?>"
 						<?php echo $initialAnalysisView !== 'frequency_profile' ? 'hidden' : ''; ?>
 					>
-						<canvas aria-hidden="true"></canvas>
+						<canvas tabindex="0" role="img" aria-label="<?php echo $escape(\Joomla\CMS\Language\Text::_('COM_AUDIOARCHIVE_PROFILE_INSPECT')); ?>"></canvas>
+						<p data-profile-readout aria-live="polite" aria-atomic="true"></p>
 						<p class="audioarchive-custom-player-analysis-status" data-audioarchive-frequency-profile-status>
 							<?php echo $escape($frequencyProfileLoadingLabel); ?>
 						</p>

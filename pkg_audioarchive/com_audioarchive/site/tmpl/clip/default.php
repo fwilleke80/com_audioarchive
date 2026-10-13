@@ -10,6 +10,22 @@ use Punga\Component\Audioarchive\Site\Helper\StyleHelper;
 
 $hasDescription = trim((string) $this->item->description) !== '';
 $clipStyle = StyleHelper::buildArchiveListVariables($this->params);
+// @brief Explain publication restrictions on an authorised editor preview.
+$previewLabel = '';
+$now = gmdate('Y-m-d H:i:s');
+if ((int) $this->item->state !== 1)
+{
+	$previewLabel = 'COM_AUDIOARCHIVE_PREVIEW_UNPUBLISHED';
+}
+elseif (!empty($this->item->publish_up) && $this->item->publish_up > $now)
+{
+	$previewLabel = 'COM_AUDIOARCHIVE_PREVIEW_SCHEDULED';
+}
+elseif (!empty($this->item->publish_down) && $this->item->publish_down !== '0000-00-00 00:00:00' && $this->item->publish_down < $now)
+{
+	$previewLabel = 'COM_AUDIOARCHIVE_PREVIEW_EXPIRED';
+}
+
 ?>
 <article
 	class="com-audioarchive com-audioarchive-clip"
@@ -56,6 +72,9 @@ $clipStyle = StyleHelper::buildArchiveListVariables($this->params);
 		<h1><?php echo $this->escape($this->item->title); ?></h1>
 	</header>
 
+	<?php if ($previewLabel !== '') : ?>
+		<p class="alert alert-info" role="status"><?php echo Text::_($previewLabel); ?></p>
+	<?php endif; ?>
 	<?php echo $this->loadTemplate('player'); ?>
 
 	<?php if ((int) $this->params->get('detail_show_rating', 1) === 1 && (int) $this->params->get('enable_ratings', 1) === 1) : ?>
