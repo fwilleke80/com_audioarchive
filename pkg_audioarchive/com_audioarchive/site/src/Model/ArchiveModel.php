@@ -450,6 +450,7 @@ class ArchiveModel extends ListModel
 	{
 		$items = parent::getItems();
 		$ids = array_map(static fn(object $item): int => (int) $item->id, $items);
+		\Punga\Component\Audioarchive\Administrator\Service\PlaybackNormalizationService::prime($ids);
 		$tagData = $ids ? (new TagsHelper())->getMultipleItemTags('com_audioarchive.clip', $ids, true) : [];
 		$tagData = TagDescriptionHelper::enrichGroups($this->getDatabase(), $tagData);
 

@@ -11,6 +11,8 @@ echo LayoutHelper::render(
 	[
 		'audioId' => $audioId,
 		'clipId' => (int) $item->id,
+		'deferInitialization' => true,
+		'durationMs' => (int) ($item->duration_ms ?? 0),
 		'title' => (string) $item->title,
 		'streamUrl' => (string) $item->stream_url,
 		'waveformUrl' => '',

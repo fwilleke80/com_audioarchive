@@ -1081,7 +1081,7 @@ const initialiseAudioArchivePlayers = () =>
 
 		if (duration instanceof HTMLElement)
 		{
-			duration.textContent = hasDuration ? formatTime(audio.duration) : '0:00';
+			duration.textContent = hasDuration ? formatTime(audio.duration) : formatTime(Number(player.dataset.durationSeconds) || 0);
 		}
 	};
 
@@ -1272,8 +1272,12 @@ const initialiseAudioArchivePlayers = () =>
 		});
 	});
 
-	document.querySelectorAll('[data-audioarchive-custom-player]').forEach((player) =>
+	const initializedPlayers = new WeakSet();
+	/** @brief Initialize each player once, including after responsive layout changes. */
+	const initializeCustomPlayer = (player) =>
 	{
+		if (initializedPlayers.has(player)) return;
+		initializedPlayers.add(player);
 		const audio = getCustomPlayerAudio(player);
 		const ui = player.querySelector('[data-audioarchive-custom-ui]');
 		const toggle = player.querySelector('[data-audioarchive-custom-toggle]');
@@ -1480,6 +1484,32 @@ const initialiseAudioArchivePlayers = () =>
 			activeAudio = null;
 			activeCustomPlayer = null;
 		});
+	};
+
+	/** @brief Defer hidden and off-screen table players; native controls remain the fallback. */
+	const playerObserver = 'IntersectionObserver' in window ? new IntersectionObserver((entries) =>
+	{
+		entries.forEach((entry) =>
+		{
+			if (entry.isIntersecting)
+			{
+				initializeCustomPlayer(entry.target);
+				playerObserver.unobserve(entry.target);
+			}
+		});
+	}, {rootMargin: '100px'}) : null;
+	document.querySelectorAll('[data-audioarchive-custom-player]').forEach((player) =>
+	{
+		if (player.dataset.deferInitialization === '1' && playerObserver)
+		{
+			playerObserver.observe(player);
+			player.addEventListener('pointerdown', () => initializeCustomPlayer(player), {once: true, capture: true});
+			player.addEventListener('focusin', () => initializeCustomPlayer(player), {once: true});
+		}
+		else
+		{
+			initializeCustomPlayer(player);
+		}
 	});
 
 	document.querySelectorAll('[data-audioarchive-native-player]').forEach((audio) =>

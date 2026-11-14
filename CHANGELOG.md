@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.13.7.1
+
+- Batch archive normalization lookups and cache each clip gain for the request, reusing it for desktop/mobile rendering. Retain normalization safety checks and isolate invalid artifacts.
+- Defer table player initialization until visible or interacted with; observe responsive changes and keep immediate initialization as the compatibility fallback.
+- Preserve no-preload table audio and use stored duration before media metadata is available.
+
+
 ## 0.13.7
 
 - Add relative-dB axis labels, a peak marker, and pointer/touch/keyboard inspection to Frequency Profile.

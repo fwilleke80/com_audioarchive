@@ -135,6 +135,8 @@ $style = implode(';', [
 	class="<?php echo $escape($className); ?>"
 	style="<?php echo $escape($style); ?>"
 	data-audioarchive-custom-player
+	data-defer-initialization="<?php echo !empty($data['deferInitialization']) ? '1' : '0'; ?>"
+	data-duration-seconds="<?php echo max(0, (int) ($data['durationMs'] ?? 0)) / 1000; ?>"
 	data-pause-behavior="<?php echo $stopOnPause ? 'stop' : 'pause'; ?>"
 	data-normalization-gain="<?php echo $normalizationGain; ?>"
 	data-player-presentation="<?php echo $escape($presentation); ?>"
