@@ -37,3 +37,7 @@ item_title: current clip title
 Ordinary unified-player play recording is de-duplicated per clip during the current page view. Sound Board triggers are counted individually when Sound Board recording is enabled, including repeated and overlapping voices. Chromatic sampler events use `play_source` values such as `midi`, `computer_keyboard`, and `onscreen_keyboard`, with validated MIDI note and velocity fields when available.
 
 HEAD requests and playback streams do not create download events. Disabling the corresponding aggregate counter suppresses its standard play/download event.
+
+## External embeds (0.15.0)
+
+`audio.embed` records successful Copy embed code actions. `audio.play_embedded` records actual iframe playback, updating the clip play total without dispatching `audio.play`. Both use the existing clip identity/title payload and `onPungaAnalyticsRecord` bridge. They recheck current embedding eligibility. Preview frames do not count. Play-count configuration also controls embedded playback events. Event signatures bind clip, purpose and expiry, without requiring third-party cookies. Source-site cookies permit the existing short playback throttle; otherwise deduplication is per frame load. See [external embeds](../user/external-embeds.md).

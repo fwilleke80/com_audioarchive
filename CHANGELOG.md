@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.15.0
+
+- Add standalone external iframe embeds with Minimal, Compact, Default and Featured presentations, live preview and copyable HTML through Share → Embed.
+- Add a global opt-in switch and per-clip owner control in administrator/frontend editors and uploads; enforce public publication and access on player, media, analyses and event requests.
+- Dispatch `audio.embed` after successful code copying and `audio.play_embedded` for actual embedded playback; retain the overall play counter without emitting a second `audio.play` event. Exclude dialog previews.
+- Support event recording without third-party cookies using short-lived signed tokens; preserve existing download permissions and player settings.
+- Save the agreed roadmap, reorganise the README and document embedding, hosting headers and analytics in the user guide.
+
 ## 0.14.4
 
 - Correct the Preload sound board audio switch: No on the left, Yes on the right (green). Existing saved values and the enabled default are preserved.

@@ -897,6 +897,7 @@ final class ArchiveImportService
 			$data['access'] = $this->resolveAccess((string) ($row['access_level_title'] ?? ''), $accessMap);
 			$data['created_by'] = $this->resolveUser((string) ($row['created_by_username'] ?? ''), $userMap, 0);
 			$data['visibility_mode'] = (string) ($row['visibility_mode'] ?? 'normal');
+			$data['allow_embed'] = (int) ($row['allow_embed'] ?? 1) === 1 ? 1 : 0;
 			$data['normalization_mode'] = in_array(($row['normalization_mode'] ?? ''), ['enabled', 'disabled'], true) ? $row['normalization_mode'] : 'inherit';
 			if (!empty($row['created_by_username']) && $data['created_by'] === 0)
 			{

@@ -395,6 +395,10 @@ return new class () implements InstallerScriptInterface
 			$this->ensureSpectrogramStatusColumn($database);
 			$this->ensureFrequencyProfileStatusColumn($database);
 			$columns = $database->getTableColumns('#__audioarchive_clips', false);
+			if (!isset($columns['allow_embed']))
+			{
+				$database->setQuery('ALTER TABLE ' . $database->quoteName('#__audioarchive_clips') . ' ADD COLUMN allow_embed tinyint unsigned NOT NULL DEFAULT 1')->execute();
+			}
 			if (!isset($columns['normalization_mode']))
 			{
 				$database->setQuery('ALTER TABLE ' . $database->quoteName('#__audioarchive_clips') . " ADD COLUMN normalization_mode varchar(16) NOT NULL DEFAULT 'inherit'")->execute();

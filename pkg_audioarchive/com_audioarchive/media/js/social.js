@@ -530,6 +530,67 @@ function initialiseShareMenuKeyboard(menu)
  */
 function initialiseShareButtons()
 {
+    /** @brief Preview and copy a single-clip embed; emit creation only after successful copy. */
+    const initialiseEmbedDialog = (menu, toggle) =>
+    {
+        const dialog = menu.querySelector('[data-embed-dialog]');
+        if (!dialog)
+        {
+            return;
+        }
+        const presentation = dialog.querySelector('[data-embed-presentation]');
+        const field = dialog.querySelector('[data-embed-code]');
+        const preview = dialog.querySelector('[data-embed-preview]');
+        const feedback = dialog.querySelector('[data-embed-feedback]');
+        const heights = {minimal: 180, compact: 200, default: 220, featured: 480};
+        /** @brief Generate escaped iframe markup without including the preview-only flag. */
+        const refresh = () =>
+        {
+            const url = new URL(dialog.dataset.embedUrl, window.location.href);
+            const mode = Object.hasOwn(heights, presentation.value) ? presentation.value : 'default';
+            url.searchParams.set('presentation', mode);
+            const frame = document.createElement('iframe');
+            frame.src = url.toString();
+            frame.title = menu.dataset.shareTitle || 'Audio player';
+            frame.width = '100%';
+            frame.height = String(heights[mode]);
+            frame.loading = 'lazy';
+            frame.style.border = '0';
+            field.value = frame.outerHTML;
+            url.searchParams.set('preview', '1');
+            preview.src = url.toString();
+            preview.height = String(heights[mode]);
+            feedback.textContent = '';
+        };
+        menu.querySelector('[data-embed-open]')?.addEventListener('click', () =>
+        {
+            refresh();
+            setShareMenuOpen(menu, false);
+            dialog.showModal();
+            presentation.focus();
+        });
+        presentation.addEventListener('change', refresh);
+        dialog.querySelector('[data-embed-close]').addEventListener('click', () => dialog.close());
+        dialog.addEventListener('close', () =>
+        {
+            preview.removeAttribute('src');
+            toggle?.focus();
+        });
+        dialog.addEventListener('keydown', event => event.stopPropagation());
+        dialog.querySelector('[data-embed-copy]').addEventListener('click', async () =>
+        {
+            const copied = await copyText(field.value);
+            feedback.textContent = copied ? dialog.dataset.copiedLabel : menu.dataset.copyFailedLabel;
+            if (copied)
+            {
+                fetch(dialog.dataset.eventUrl, {
+                    method: 'POST', credentials: 'same-origin',
+                    body: new URLSearchParams({embed_token: dialog.dataset.eventToken}),
+                }).catch(() => {});
+            }
+        });
+    };
+
 	document.querySelectorAll('[data-audioarchive-share-menu]').forEach((menu) =>
 	{
 		const toggle = menu.querySelector('[data-audioarchive-share-toggle]');
@@ -605,6 +666,7 @@ function initialiseShareButtons()
 			setShareMenuOpen(menu, open, open);
 		});
 
+        initialiseEmbedDialog(menu, toggle);
 		const dialog = menu.querySelector('[data-share-dialog]');
 		const startOption = dialog?.querySelector('[data-share-start]');
 		const urlField = dialog?.querySelector('[data-share-url-field]');

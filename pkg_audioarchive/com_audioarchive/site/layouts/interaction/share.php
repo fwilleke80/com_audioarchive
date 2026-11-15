@@ -1,12 +1,16 @@
 <?php
 
 use Joomla\CMS\Language\Text;
+use Punga\Component\Audioarchive\Site\Service\EmbedService;
 
 \defined('_JEXEC') or die;
 
 $url = (string) ($displayData['url'] ?? '');
 $title = (string) ($displayData['title'] ?? '');
 $includePlayerState = !empty($displayData['includePlayerState']);
+$embedId = (int) ($displayData['clipId'] ?? 0);
+$canEmbed = EmbedService::isAllowed($embedId);
+$escapeEmbed = static fn(string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 ?>
 <div
 	class="com-audioarchive-share-menu"
@@ -33,6 +37,9 @@ $includePlayerState = !empty($displayData['includePlayerState']);
 			<span class="icon-link" aria-hidden="true"></span>
 			<span data-audioarchive-share-copy-text><?php echo Text::_('COM_AUDIOARCHIVE_SHARE_COPY_LINK'); ?></span>
 		</button>
+        <?php if ($canEmbed) : ?>
+        <button type="button" class="com-audioarchive-share-option" data-embed-open role="menuitem"><?php echo Text::_('COM_AUDIOARCHIVE_EMBED'); ?></button>
+        <?php endif; ?>
 		<button
 			type="button"
 			class="com-audioarchive-share-option"
@@ -51,5 +58,28 @@ $includePlayerState = !empty($displayData['includePlayerState']);
 		<button type="button" class="btn btn-secondary" data-share-close><?php echo Text::_('JCLOSE'); ?></button></div>
 		<p data-share-feedback role="status"></p>
 	</dialog>
+    <?php if ($canEmbed) : ?>
+    <dialog class="com-audioarchive-copy-dialog com-audioarchive-embed-dialog" data-embed-dialog
+        aria-label="<?php echo $escapeEmbed(Text::_('COM_AUDIOARCHIVE_EMBED')); ?>"
+        data-embed-url="<?php echo $escapeEmbed(EmbedService::url('player', $embedId)); ?>"
+        data-event-url="<?php echo $escapeEmbed(EmbedService::url('created', $embedId)); ?>"
+        data-event-token="<?php echo $escapeEmbed(EmbedService::token($embedId, 'copy')); ?>"
+        data-copied-label="<?php echo $escapeEmbed(Text::_('COM_AUDIOARCHIVE_EMBED_COPIED')); ?>">
+        <h2><?php echo Text::_('COM_AUDIOARCHIVE_EMBED'); ?></h2>
+        <label><?php echo Text::_('COM_AUDIOARCHIVE_EMBED_PRESENTATION'); ?>
+            <select class="form-select" data-embed-presentation>
+            <?php foreach (['minimal', 'compact', 'default', 'featured'] as $presentation) : ?>
+                <option value="<?php echo $presentation; ?>" <?php echo $presentation === 'default' ? 'selected' : ''; ?>><?php echo Text::_('COM_AUDIOARCHIVE_EMBED_' . strtoupper($presentation)); ?></option>
+            <?php endforeach; ?>
+            </select>
+        </label>
+        <iframe data-embed-preview title="<?php echo $escapeEmbed(Text::_('COM_AUDIOARCHIVE_EMBED_PREVIEW')); ?>" loading="lazy"></iframe>
+        <label><?php echo Text::_('COM_AUDIOARCHIVE_EMBED_CODE'); ?><textarea class="form-control" rows="5" readonly data-embed-code></textarea></label>
+        <p><?php echo Text::_('COM_AUDIOARCHIVE_EMBED_HELP'); ?></p>
+        <div><button type="button" class="btn btn-primary" data-embed-copy><?php echo Text::_('COM_AUDIOARCHIVE_EMBED_COPY'); ?></button>
+        <button type="button" class="btn btn-secondary" data-embed-close><?php echo Text::_('JCLOSE'); ?></button></div>
+        <p data-embed-feedback role="status"></p>
+    </dialog>
+    <?php endif; ?>
 	<span class="visually-hidden" aria-live="polite" data-audioarchive-share-status></span>
 </div>

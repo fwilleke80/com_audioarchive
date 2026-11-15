@@ -37,3 +37,5 @@ See [Troubleshooting](troubleshooting.md) for installation, FFmpeg, playback, qu
 - [Ownership, visibility and quotas](multi-user.md)
 
 See the [0.13.2 setup and test guide](0.13.2-testing.md).
+
+- [External embeds](external-embeds.md): public iframe players, presentation choices and analytics.

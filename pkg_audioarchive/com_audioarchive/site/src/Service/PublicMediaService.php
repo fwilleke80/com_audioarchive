@@ -83,6 +83,7 @@ class PublicMediaService
 				$database->quoteName('a.created_by'),
 				$database->quoteName('a.state'),
 				$database->quoteName('a.visibility_mode'),
+				$database->quoteName('a.allow_embed'),
 				$database->quoteName('u.name', 'author_name'),
 				$database->quoteName('a.play_count'),
 				$database->quoteName('a.download_count'),

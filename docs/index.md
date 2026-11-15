@@ -25,3 +25,5 @@ See the [0.13.2.7 iPhone and frequency-profile test guide](user/0.13.2.7-testing
 See the [0.13.3 profile, account-storage and ratings guide](user/user-profile.md).
 
 See the [0.13.4 recordings guide](user/recordings-0.13.4.md).
+
+- [Active roadmap](roadmap.md)

@@ -71,3 +71,12 @@ Run `php docs/developer/tests/pagination-links.php` for generated Archive/My Cli
 ## Version 0.14.3
 
 Run `node docs/developer/tests/archive-lazy-players.mjs` to verify that off-screen players show custom controls without running full setup, and that intersection, focus and captured click activation remain available. On the site, scroll rapidly through 150 rows, switch between mobile and desktop widths, and activate a newly visible player by mouse and keyboard. With JavaScript disabled, verify native playback remains available.
+
+## Version 0.15.0
+
+- `php docs/developer/tests/external-embeds.php`: production eligibility SQL against SQLite, public/category/ancestor restrictions, signed event expiry/purpose/clip binding, permission revocation, protected-media forwarding and separate analytics events.
+- `node docs/developer/tests/external-embed-events.mjs`: actual browser handlers with deterministic DOM adapters; all presentation URLs, preview exclusion, per-frame deduplication and copy success/failure.
+- `php docs/developer/tests/external-embed-render.php`: renders all four production player layouts and Share dialog as JSON for fixture inspection.
+- Optional `node docs/developer/tests/external-embeds.mjs`: Playwright cross-origin browser checks. `PHP_BINARY` and `CHROMIUM_PATH` select local executables.
+
+Release validation: all PHP regression scripts and syntax checks pass; XML/JSON, rendered template escaping/translations and documentation links checked. The unrelated bulk-upload DOM harness could not run because its optional linkedom dependency is absent. Browser verification could not run in the build environment because Chromium could not create its process socket. Live Joomla installation/update, server headers, cross-origin rendering and Safari remain to be verified.

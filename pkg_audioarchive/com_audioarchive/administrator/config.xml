@@ -95,6 +95,11 @@
         </fieldset>
     </fieldset>
 
+    <fieldset name="embedding" label="COM_AUDIOARCHIVE_EMBED_SETTINGS">
+        <field name="enable_external_embeds" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_ENABLE_EMBEDS" description="COM_AUDIOARCHIVE_ENABLE_EMBEDS_DESC" default="0" filter="integer">
+            <option value="0">JNO</option><option value="1">JYES</option>
+        </field>
+    </fieldset>
     <fieldset name="soundboards" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARDS_LABEL">
         <fieldset name="soundboard_general" label="COM_AUDIOARCHIVE_CONFIG_SOUNDBOARD_GENERAL_LABEL">
             <field name="enable_soundboard" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_CONFIG_ENABLE_SOUNDBOARD_LABEL" description="COM_AUDIOARCHIVE_CONFIG_ENABLE_SOUNDBOARD_DESC" default="1">

@@ -64,6 +64,11 @@ class ClipTable extends Table implements TaggableTableInterface, CurrentUserInte
     {
         $array = (array) $src;
 
+        if (array_key_exists('allow_embed', $array))
+        {
+            $array['allow_embed'] = (int) $array['allow_embed'] === 1 ? 1 : 0;
+        }
+
         if (isset($array['params']) && is_array($array['params']))
         {
             $array['params'] = (string) new Registry($array['params']);

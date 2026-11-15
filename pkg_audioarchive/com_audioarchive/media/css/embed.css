@@ -1,0 +1,53 @@
+/** @brief Template-independent frame typography and responsive sizing. */
+*
+{
+	box-sizing: border-box;
+}
+body
+{
+	margin: 0;
+	padding: 12px;
+	background: #fff;
+	color: #212529;
+	font: 14px/1.5 system-ui, sans-serif;
+}
+header
+{
+	margin-bottom: 10px;
+	font-size: 16px;
+	font-weight: 600;
+	overflow-wrap: anywhere;
+}
+a
+{
+	color: #0759ba;
+}
+a:focus-visible, button:focus-visible
+{
+	outline: 2px solid #0759ba;
+	outline-offset: 3px;
+}
+footer
+{
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+	margin-top: 10px;
+	font-size: 12px;
+}
+.visually-hidden
+{
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0,0,0,0);
+	white-space: nowrap;
+	border: 0;
+}
+[hidden]
+{
+	display: none !important;
+}

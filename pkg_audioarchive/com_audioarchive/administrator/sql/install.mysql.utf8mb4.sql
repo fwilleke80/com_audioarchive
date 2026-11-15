@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS `#__audioarchive_clips` (
     `download_count` bigint unsigned NOT NULL DEFAULT 0,
     `metadata_status` varchar(24) NOT NULL DEFAULT 'missing',
     `preview_status` varchar(24) NOT NULL DEFAULT 'not_required',
+    `allow_embed` tinyint unsigned NOT NULL DEFAULT 1,
     `normalization_mode` varchar(16) NOT NULL DEFAULT 'inherit',
     `waveform_status` varchar(24) NOT NULL DEFAULT 'missing',
     `spectrogram_status` varchar(24) NOT NULL DEFAULT 'missing',

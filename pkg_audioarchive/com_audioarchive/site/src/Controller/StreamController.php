@@ -216,7 +216,7 @@ class StreamController extends BaseController
 	 *
 	 * @return void
 	 */
-	private function recordPungaAnalyticsEvent(string $eventType, object $clip): void
+	protected function recordPungaAnalyticsEvent(string $eventType, object $clip): void
 	{
 		$eventName = 'onPungaAnalyticsRecord';
 
@@ -505,7 +505,7 @@ class StreamController extends BaseController
 	 *
 	 * @return bool True when this request should increment the counter.
 	 */
-	private function shouldCount(string $type, int $id, int $minimumInterval): bool
+	protected function shouldCount(string $type, int $id, int $minimumInterval): bool
 	{
 		if ($id <= 0 || !in_array($type, ['play', 'download'], true))
 		{
@@ -535,7 +535,7 @@ class StreamController extends BaseController
 	 *
 	 * @return never
 	 */
-	private function sendJson(int $status, array $payload): never
+	protected function sendJson(int $status, array $payload): never
 	{
 		$this->clearOutputBuffers();
 		http_response_code($status);
@@ -554,7 +554,7 @@ class StreamController extends BaseController
 	 *
 	 * @return never
 	 */
-	private function sendError(int $status, string $message): never
+	protected function sendError(int $status, string $message): never
 	{
 		$this->clearOutputBuffers();
 		http_response_code($status);
