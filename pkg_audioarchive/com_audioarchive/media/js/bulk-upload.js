@@ -23,7 +23,6 @@
     const tableWrapper = document.getElementById('audioarchive-bulk-upload-table-wrapper');
     const endpoint = form.dataset.uploadEndpoint || '';
     const analysisEndpoint = form.dataset.analysisEndpoint || '';
-    const analysisStatus = document.getElementById('audioarchive-bulk-upload-analysis-status');
     const tokenName = form.dataset.tokenName || '';
     const jobs = [];
     let running = false;
@@ -128,13 +127,14 @@
         const uploading = jobs.filter((job) => job.state === 'uploading').length;
         const complete = jobs.filter((job) => job.state === 'complete').length;
         const failed = jobs.filter((job) => job.state === 'failed').length;
-        const cancelled = jobs.filter((job) => job.state === 'cancelled').length;
+        
         const total = jobs.length;
 
         emptyMessage.classList.toggle('d-none', total > 0);
         tableWrapper.classList.toggle('d-none', total === 0);
         startButton.disabled = running || pending === 0;
-        clearButton.disabled = running || (complete + failed + cancelled) === 0;
+        clearButton.hidden = !jobs.some((job) => job.state === 'complete' && job.analysisFinished);
+        clearButton.disabled = running || clearButton.hidden;
         selectButton.disabled = running;
         fileInput.disabled = running;
         dropzone.classList.toggle('is-disabled', running);
@@ -173,6 +173,7 @@
         }
 
         const progress = row.querySelector('.progress-bar');
+        row.querySelector('.progress').setAttribute('aria-valuenow', String(Math.max(0, Math.min(100, Math.round(percent)))));
         const value = Math.max(0, Math.min(100, Math.round(percent)));
         progress.style.width = `${value}%`;
         progress.setAttribute('aria-valuenow', String(value));
@@ -357,6 +358,7 @@
                         <div class="progress-bar" style="width: 0%"></div>
                     </div>
                 </td>
+                <td class="com-audioarchive-upload-analysis" aria-live="polite">—</td>
                 <td class="com-audioarchive-upload-result"></td>
                 <td class="com-audioarchive-upload-actions text-end"></td>
             `;
@@ -465,6 +467,8 @@
             {
                 job.state = 'complete';
                 job.result = response.data || {};
+                job.analysisFinished = false;
+                getRow(job).querySelector('.com-audioarchive-upload-analysis').textContent = translate('COM_AUDIOARCHIVE_BULK_UPLOAD_ANALYSIS_WAITING', 'Analysis queued');
                 setProgress(job, 100);
             }
             else
@@ -514,41 +518,33 @@
             return;
         }
 
-        let processed = 0;
-        let failed = 0;
-
-        if (analysisStatus instanceof HTMLElement)
+        for (const job of uploadedJobs)
         {
-            analysisStatus.hidden = false;
-        }
-
-        try
-        {
-            for (const job of uploadedJobs)
+            const clipId = Number.parseInt(String(job.result?.clip_id || 0), 10) || 0;
+            const row = getRow(job);
+            const status = row?.querySelector('.com-audioarchive-upload-analysis');
+            if (clipId <= 0 || !status)
             {
-                const clipId = Number.parseInt(String(job.result?.clip_id || 0), 10) || 0;
-
-                if (clipId <= 0)
-                {
-                    continue;
-                }
-
-                if (analysisStatus instanceof HTMLElement)
-                {
-                    analysisStatus.textContent = translate(
-                        'COM_AUDIOARCHIVE_BULK_UPLOAD_ANALYSIS_PROCESSING',
-                        'Processing generated audio analyses for %s…'
-                    ).replace('%s', String(job.result?.title || job.file.name));
-                }
-
+                continue;
+            }
+            let processed = 0;
+            let failed = 0;
+            const messages = [];
+            job.analysisFinished = false;
+            status.classList.remove('text-danger');
+            status.textContent = translate('COM_AUDIOARCHIVE_BULK_UPLOAD_ANALYSIS_PROCESSING', 'Processing generated audio analyses for %s…').replace('%s', String(job.result?.title || job.file.name));
+            try
+            {
                 while (true)
                 {
                     const body = new URLSearchParams();
                     body.set(tokenName, '1');
                     body.set('clip_id', String(clipId));
-                    const response = await fetch(analysisEndpoint, {
+                    const response = await fetch(analysisEndpoint,
+                    {
                         method: 'POST',
-                        headers: {
+                        headers:
+                        {
                             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                             'X-Requested-With': 'XMLHttpRequest',
                         },
@@ -556,66 +552,54 @@
                         body: body.toString(),
                     });
                     const payload = await response.json();
-
                     if (!response.ok || payload.success === false)
                     {
-                        throw new Error(
-                            payload.message
-                            || response.statusText
-                            || String(response.status)
-                        );
+                        throw new Error(payload.message || response.statusText || String(response.status));
                     }
-
                     const result = payload.data || {};
-
+                    const remaining = Number.parseInt(String(result.remaining || 0), 10) || 0;
                     if (result.processed !== true)
                     {
+                        if (remaining > 0)
+                        {
+                            throw new Error(translate('COM_AUDIOARCHIVE_BULK_UPLOAD_ANALYSIS_BUSY', 'Analysis jobs are still queued or being processed elsewhere.'));
+                        }
                         break;
                     }
-
                     processed += 1;
-
                     if (result.success !== true)
                     {
                         failed += 1;
                     }
-
-                    if ((Number.parseInt(String(result.remaining || 0), 10) || 0) <= 0)
+                    if (result.message)
+                    {
+                        messages.push(stripHtml(result.message));
+                    }
+                    status.textContent = translate('COM_AUDIOARCHIVE_BULK_UPLOAD_ANALYSIS_COMPLETE', 'Automatic analysis finished: %1$d processed, %2$d failed.').replace('%1$d', String(processed)).replace('%2$d', String(failed));
+                    if (remaining <= 0)
                     {
                         break;
                     }
                 }
-            }
-
-            if (analysisStatus instanceof HTMLElement)
-            {
-                if (processed > 0)
+                job.analysisFinished = failed === 0;
+                status.textContent = processed > 0
+                    ? translate('COM_AUDIOARCHIVE_BULK_UPLOAD_ANALYSIS_COMPLETE', 'Automatic analysis finished: %1$d processed, %2$d failed.').replace('%1$d', String(processed)).replace('%2$d', String(failed))
+                    : translate('COM_AUDIOARCHIVE_BULK_UPLOAD_ANALYSIS_NONE', 'No pending analyses');
+                status.classList.toggle('text-danger', failed > 0);
+                row.classList.toggle('table-success', job.analysisFinished);
+                if (messages.length > 0)
                 {
-                    analysisStatus.textContent = translate(
-                        'COM_AUDIOARCHIVE_BULK_UPLOAD_ANALYSIS_COMPLETE',
-                        'Automatic analysis finished: %1$d processed, %2$d failed.'
-                    )
-                        .replace('%1$d', String(processed))
-                        .replace('%2$d', String(failed));
-                }
-                else
-                {
-                    analysisStatus.hidden = true;
-                    analysisStatus.textContent = '';
+                    const details = document.createElement('div');
+                    details.className = 'small mt-1';
+                    details.textContent = messages.join(' · ');
+                    status.appendChild(details);
                 }
             }
-        }
-        catch (error)
-        {
-            if (analysisStatus instanceof HTMLElement)
+            catch (error)
             {
                 const message = error instanceof Error ? error.message : String(error);
-                const failureTemplate = translate(
-                    'COM_AUDIOARCHIVE_BULK_UPLOAD_ANALYSIS_FAILED',
-                    'Automatic analysis processing stopped: %s. Remaining jobs stay queued.'
-                );
-                analysisStatus.textContent = failureTemplate.replace('%s', message);
-                analysisStatus.classList.add('text-danger');
+                status.textContent = translate('COM_AUDIOARCHIVE_BULK_UPLOAD_ANALYSIS_FAILED', 'Automatic analysis processing stopped: %s. Remaining jobs stay queued.').replace('%s', message);
+                status.classList.add('text-danger');
             }
         }
     };
@@ -641,13 +625,6 @@
         running = true;
         updateControls();
         const uploadedJobs = [];
-
-        if (analysisStatus instanceof HTMLElement)
-        {
-            analysisStatus.hidden = true;
-            analysisStatus.textContent = '';
-            analysisStatus.classList.remove('text-danger');
-        }
 
         while (true)
         {
@@ -678,14 +655,14 @@
     startButton.addEventListener('click', startQueue);
     clearButton.addEventListener('click', () =>
     {
-        jobs.filter((job) => job.state !== 'pending' && job.state !== 'uploading').forEach((job) =>
+        jobs.filter((job) => job.state === 'complete' && job.analysisFinished).forEach((job) =>
         {
             getRow(job)?.remove();
         });
 
         for (let index = jobs.length - 1; index >= 0; index -= 1)
         {
-            if (jobs[index].state !== 'pending' && jobs[index].state !== 'uploading')
+            if (jobs[index].state === 'complete' && jobs[index].analysisFinished)
             {
                 jobs.splice(index, 1);
             }
@@ -724,9 +701,9 @@
         }
     });
 
-    dropzone.addEventListener('click', () =>
+    dropzone.addEventListener('click', (event) =>
     {
-        if (!running)
+        if (!running && (event.target === dropzone || emptyMessage.contains(event.target)))
         {
             fileInput.click();
         }
@@ -734,7 +711,7 @@
 
     dropzone.addEventListener('keydown', (event) =>
     {
-        if (!running && (event.key === 'Enter' || event.key === ' '))
+        if (!running && event.target === dropzone && (event.key === 'Enter' || event.key === ' '))
         {
             event.preventDefault();
             fileInput.click();

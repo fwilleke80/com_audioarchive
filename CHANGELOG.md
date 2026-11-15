@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.14.2
+
+- Use page-number URLs (`page=3`) for Archive and My Clips. Existing `start` and `limitstart` links remain supported; page numbers take precedence. Sorting, filtering and page-size changes reset pagination.
+- Keep embedded list page parameters scoped to their list (`aa_list_1_page=3`) so multiple lists remain independent.
+- Unify Clip of the day across module and menu: selection depends on the Joomla website-local date and clip ID, with no module/menu-specific seed. Identical eligible collections yield the same daily clip.
+- Document pagination URLs and the shared daily selection; add page/legacy request and deterministic selection regression checks.
+
+## 0.14.1
+
+- Add `perpage` to embedded clip tables. Both `maxresults` (total cap) and `perpage` (page size) default to 20.
+- Reuse archive pagination with independently scoped page links, capped totals, partial final pages and page-one reset on sorting. Fetch only the requested page.
+- Put the full optional-filter reference directly in the user guide and add a README example.
+
+
+## 0.14.0
+
+- Add optional `{audioarchive list}` filters, independently sortable embedded archive tables, and unique player IDs across repeated embeds. Reuse the archive model, table, mobile cards and minimal player.
+- Add a Clip detail menu item with specific clip/alias, newest, random and Clip of the day selection. Module and menu now share one selection service; the daily date explicitly uses the Joomla website timezone.
+- Combine the bulk-upload drop area and queue, move controls above it, and show automatic analysis progress/results beside each file. Preserve upload failures and analysis errors when clearing finished rows.
+- Add English/German labels, documentation and focused regressions.
+
+
 ## 0.13.7.1
 
 - Batch archive normalization lookups and cache each clip gain for the request, reusing it for desktop/mobile rendering. Retain normalization safety checks and isolate invalid artifacts.

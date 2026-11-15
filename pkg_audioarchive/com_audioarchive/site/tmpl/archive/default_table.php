@@ -38,7 +38,7 @@ $sortLink = function(string $field) use ($currentSort, $currentDirection): strin
 	$direction = $currentSort === $field
 		? ($currentDirection === 'ASC' ? 'desc' : 'asc')
 		: ($field === 'rating' ? 'desc' : 'asc');
-	return $this->buildUrl(['sort' => $field, 'direction' => $direction, 'limitstart' => null], ['limitstart']);
+	return $this->buildUrl(['sort' => $field, 'direction' => $direction, 'page' => null], ['page', 'start', 'limitstart']);
 };
 $ariaSort = static function(string $field) use ($currentSort, $currentDirection): string
 {

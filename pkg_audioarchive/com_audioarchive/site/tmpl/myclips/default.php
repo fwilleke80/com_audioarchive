@@ -83,5 +83,5 @@ $summary = \Punga\Component\Audioarchive\Site\Service\ProcessingStatusService::s
 <button class="btn btn-sm btn-outline-danger" type="submit"><?php echo Text::_($item->canDelete ? 'JACTION_DELETE' : 'JTRASH'); ?></button><?php echo HTMLHelper::_('form.token'); ?></form>
 <?php endif; ?></div></td></tr>
 <?php endforeach; ?></tbody></table></div>
-<?php echo $this->pagination->getPagesLinks(); ?>
+<?php echo $this->loadTemplate('pagination'); ?>
 <?php endif; ?></div>

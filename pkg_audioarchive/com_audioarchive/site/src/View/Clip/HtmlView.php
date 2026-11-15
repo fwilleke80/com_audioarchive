@@ -271,7 +271,10 @@ class HtmlView extends BaseHtmlView
 			);
 		}
 
-		$this->redirectLegacyOrStaleRoute($canonicalInternal, $routeItemId, $currentItemId);
+		if (!$model->isSelectionMenu())
+		{
+			$this->redirectLegacyOrStaleRoute($canonicalInternal, $routeItemId, $currentItemId);
+		}
 		$this->preparePathway($routeItemId);
 		$this->prepareDocument($canonical, $routeItemId);
 

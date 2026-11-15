@@ -17,6 +17,8 @@ use Punga\Component\Audioarchive\Site\Service\FrontendEditingService;
 class HtmlView extends BaseHtmlView
 {
 	public array $items = [];
+	/** @var string Shared pagination uses public page URLs for this view. */
+	public string $embedKey = '';
 	public array $categories = [];
 	public array $quota = [];
 	public array $usage = [];
@@ -38,6 +40,8 @@ class HtmlView extends BaseHtmlView
 		}
 		$db = Factory::getContainer()->get(DatabaseInterface::class);
 		$this->params = clone ComponentHelper::getParams('com_audioarchive');
+		$this->params->set('archive_show_page_size', 0);
+		$this->params->set('archive_show_pagination', 1);
 		$menu = $app->getMenu()->getActive();
 		$this->returnTitle = (($menu->query['view'] ?? '') === 'myclips' && trim((string) $menu->title) !== '')
 			? (string) $menu->title : Text::_('COM_AUDIOARCHIVE_MY_CLIPS');
@@ -94,5 +98,34 @@ class HtmlView extends BaseHtmlView
 		$app->setHeader('Cache-Control', 'private, no-store', true);
 		$this->setDocumentTitle(Text::_('COM_AUDIOARCHIVE_MY_CLIPS'));
 		parent::display($tpl);
+	}
+
+	/** @brief Return sanitized workspace filters for page links. @return array<string,mixed> */
+	public function getQueryValues(): array
+	{
+		$input = Factory::getApplication()->getInput();
+		return [
+			'option' => 'com_audioarchive', 'view' => 'myclips', 'Itemid' => $input->getInt('Itemid'),
+			'search' => $input->getString('search', ''), 'category' => $input->getInt('category'),
+			'state' => $input->getString('state', ''), 'visibility' => $input->getCmd('visibility', ''),
+			'processing' => $input->getCmd('processing', ''), 'order' => $input->getCmd('order', 'newest'),
+		];
+	}
+
+	/** @brief Build a page-number link preserving workspace filters. @param int $page Requested page. @return string */
+	public function getPaginationPageUrl(int $page): string
+	{
+		$query = $this->getQueryValues();
+		$query['page'] = max(1, min(max(1, (int) $this->pagination->pagesTotal), $page));
+		return \Joomla\CMS\Router\Route::_('index.php?' . http_build_query($query));
+	}
+
+	/** @brief Return compact page links shared with the archive. @return array<int|null> */
+	public function getCompactPaginationPages(): array
+	{
+		return \Punga\Component\Audioarchive\Site\Helper\PaginationHelper::compact(
+			(int) $this->pagination->pagesTotal, (int) $this->pagination->pagesCurrent,
+			(int) $this->params->get('archive_pagination_edge_pages', 5)
+		);
 	}
 }

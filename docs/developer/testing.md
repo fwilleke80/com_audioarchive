@@ -48,3 +48,22 @@ Exercise unauthorised direct routes, inaccessible clips/categories, CSRF failure
 Maintain representative AAC/M4A, ALAC/M4A, MP3, Ogg Vorbis, Opus, WAV, FLAC, Unicode filenames, duplicates, invalid media, very short clips, and long clips.
 
 See the [0.13.2 setup and test guide](../user/0.13.2-testing.md).
+
+## Version 0.14 focused checks
+
+- `php docs/developer/tests/archive-state.php`: optional embed filters, duration parsing, date validation, result bounds and session isolation.
+- `php docs/developer/tests/content-list.php`: list grammar and legacy placeholders.
+- `php docs/developer/tests/embedded-table.php`: production desktop/mobile templates, escaping, unique player IDs and independent sort links.
+- `php docs/developer/tests/module-tags.php`: eligibility SQL plus local-midnight boundaries (Berlin winter/summer, Los Angeles, Kathmandu), shared module/menu date logic. Requires PDO SQLite and SimpleXML.
+- `node docs/developer/tests/bulk-upload.mjs`: production queue interactions with a DOM and mocked server responses. Install `linkedom`, or point `AUDIOARCHIVE_TEST_NODE_MODULES` to a directory containing it.
+- Optional `node docs/developer/tests/bulk-upload-browser.mjs`: Chromium equivalent. Requires Playwright plus its installed Chromium; `CHROMIUM_PATH` can select a system browser.
+
+Live Joomla verification: create each of the four clip-selection menu modes, with SEF enabled and disabled, with/without an Archive menu item; verify canonical/share links identify the selected clip. Test two embedded lists with overlapping clips, sorting, playback, ratings and narrow-screen cards. Test real bulk uploads and FFmpeg processing, including a failed analysis and a second upload batch.
+
+## Version 0.14.1
+
+Run `php docs/developer/tests/embedded-pagination.php` for default caps, independent page sizes, partial last pages, smaller matching totals, empty results, out-of-range pages, scoped links and sorting resets. Verify two embedded lists in a live Joomla article, including sorting from a later page and navigation with SEF enabled.
+
+## Version 0.14.2
+
+Run `php docs/developer/tests/pagination-links.php` for generated Archive/My Clips links and sorting resets. Run `php docs/developer/tests/page-urls.php` for page conversion, legacy links, precedence, overflow protection and filter reset. Run `module-tags.php` for daily selection independent of instance/input order, alongside the timezone boundary tests. On Joomla, check Archive and My Clips page links with SEF enabled/disabled, legacy bookmarks, sort/filter/page-size resets and identical module/menu daily filters.

@@ -117,27 +117,31 @@ namespace
 			return $name;
 		}
 		/** @brief Supply controlled artifact freshness and policy. */
-		public function loadObject(): object
+		public function loadObjectList(): array
 		{
-			return $this->row;
+			return [$this->row];
 		}
 	};
 	Joomla\CMS\Factory::$database = $db;
 	$directory = sys_get_temp_dir() . '/audioarchive-normalization-' . bin2hex(random_bytes(6));
 	mkdir($directory);
 	Punga\Component\Audioarchive\Administrator\Service\ManagedStorageService::$directory = $directory;
-	$db->row = (object) ['normalization_mode'=>'inherit','waveform_status'=>'available','storage_key'=>'wave.json'];
+	$db->row = (object) ['id'=>1,'normalization_mode'=>'inherit','waveform_status'=>'available','storage_key'=>'wave.json'];
 	try
 	{
 		file_put_contents($directory.'/wave.json','{"peaks":[[0,1]],"global_peak_dbfs":-8}');
 		check(abs(N::forClip(1)-pow(10,7/20))<0.000001,'current artifact applies gain');
+		(new ReflectionProperty(N::class, 'gains'))->setValue(null, []);
 		$db->row->waveform_status = 'stale';
 		check(N::forClip(1) === 1.0,'replacement invalidates old peak');
+		(new ReflectionProperty(N::class, 'gains'))->setValue(null, []);
 		$db->row->waveform_status = 'available';
 		file_put_contents($directory.'/wave.json','{"peaks":[[0,1]]}');
 		check(N::forClip(1) === 1.0,'legacy artifact remains playable');
+		(new ReflectionProperty(N::class, 'gains'))->setValue(null, []);
 		file_put_contents($directory.'/wave.json','broken');
 		check(N::forClip(1) === 1.0,'malformed artifact falls back');
+		(new ReflectionProperty(N::class, 'gains'))->setValue(null, []);
 		file_put_contents($directory.'/wave.json','{"global_peak_dbfs":0}');
 		check(abs(N::forClip(1)-pow(10,-1/20))<0.000001,'regeneration replaces peak');
 	}

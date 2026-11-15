@@ -20,7 +20,7 @@ class MyclipsModel extends ListModel
 		}
 		$input = $app->getInput();
 		$this->setState('list.limit', 20);
-		$this->setState('list.start', max(0, $input->getInt('limitstart')));
+		$this->setState('list.start', \Punga\Component\Audioarchive\Site\Helper\PaginationHelper::offset($input->getArray(), 20));
 		$this->setState('filter.search', $input->getString('search', ''));
 		$this->setState('filter.category', $input->getInt('category'));
 		$this->setState('filter.state', $input->getString('state', ''));

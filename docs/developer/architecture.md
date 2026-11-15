@@ -37,3 +37,7 @@ The component follows Joomla MVC conventions with separate administrator and sit
 - No runtime CDN dependencies
 - External analysis performed through bounded, retryable jobs
 - Browser-local personal collections and Sound Board performance recordings, with server resolution used only to enforce current clip visibility and stable identity
+
+## Shared selection and embedded lists (0.14)
+
+`ClipSelectionService` owns module/menu eligibility and selection; the module helper remains a compatibility facade. Its daily date is explicitly converted to Joomla Global Configuration `offset`. Daily selection ranks clips by SHA-256 of `date:clipId`, independent of module/menu ID. `PaginationHelper` converts public page numbers to offsets, accepts legacy offsets, and supplies compact page ranges shared by Archive and My Clips. `ArchiveModel::configureEmbed()` configures an `ignore_request` model without session reads/writes. `Archive/HtmlView::renderEmbedded()` reuses the archive templates without page metadata. Sort and page parameters are namespaced by embed instance. `getEmbeddedPage()` caps the matching total, clamps page bounds, and fetches only the requested slice (including a partial final page); shared pagination uses that capped total and the requested page size. Duration maximums in embeds are exact/inclusive; the ordinary archive retains its existing whole-second display semantics.

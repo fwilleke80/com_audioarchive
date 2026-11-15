@@ -50,3 +50,7 @@ Clip Detail URLs can initialise playback state without changing the clip or comp
 For example, `?start=4.25&pitch=-0.5` opens the clip at 4.25 seconds with the Featured varispeed control half an octave down.
 
 When using the Clip Detail **Share** function, the generated link captures the player's current playback position as `start` and, when the Featured speed/pitch control is present and not at its normal position, its current `pitch` value. Default zero values are omitted.
+
+## Version 0.14 additions
+
+See [the 0.14 guide](whats-new-0.14.md) for current list placeholders, selection menu items and the integrated bulk-upload queue.

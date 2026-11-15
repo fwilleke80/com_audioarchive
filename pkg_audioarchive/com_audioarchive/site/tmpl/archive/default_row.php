@@ -10,13 +10,13 @@ $item = $this->item;
 $columns = $this->archiveColumns;
 $totalSeconds = (int) floor((int) $item->duration_ms / 1000);
 $duration = $totalSeconds >= 3600 ? gmdate('H:i:s', $totalSeconds) : gmdate('i:s', $totalSeconds);
-$audioId = 'audioarchive-player-' . (int) $item->id;
+$audioId = ($this->embedKey !== '' ? $this->embedKey . '-' : '') . 'audioarchive-player-' . (int) $item->id;
 $mime = trim((string) $item->mime_type) ?: 'application/octet-stream';
 ?>
 <tr class="com-audioarchive-result-row <?php echo $columns['play'] ? 'has-player' : 'no-player'; ?>">
 	<?php if ($columns['play']) : ?>
 		<td class="com-audioarchive-play-cell" data-label="<?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_PLAY'); ?>">
-			<?php echo LayoutHelper::render('player.list', ['item' => $item, 'params' => $this->params], null, ['component' => 'com_audioarchive', 'client' => 0]); ?>
+			<?php echo LayoutHelper::render('player.list', ['item' => $item, 'params' => $this->params, 'audioId' => $audioId], null, ['component' => 'com_audioarchive', 'client' => 0]); ?>
 		</td>
 	<?php endif; ?>
 	<?php if ($columns['title']) : ?>

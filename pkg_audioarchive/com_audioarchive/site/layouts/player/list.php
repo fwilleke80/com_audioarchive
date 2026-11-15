@@ -4,7 +4,7 @@ use Joomla\CMS\Layout\LayoutHelper;
 \defined('_JEXEC') or die;
 /** @brief Shared minimal player for Archive and owner-workspace table rows. */
 $item = $displayData['item'];
-$audioId = 'audioarchive-player-' . (int) $item->id;
+$audioId = (string) ($displayData['audioId'] ?? ('audioarchive-player-' . (int) $item->id));
 $mime = trim((string) ($item->mime_type ?? '')) ?: 'application/octet-stream';
 echo LayoutHelper::render(
 	'player.unified',

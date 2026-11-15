@@ -95,6 +95,11 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 			return $placeholder;
 		}
 
+		if ($options['mode'] === 'list')
+		{
+			return $this->renderList($placeholder, $options['filters']);
+		}
+
 		if (in_array($options['mode'], ['count', 'playtime'], true))
 		{
 			return $this->renderAggregate($options);
@@ -169,7 +174,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 			static function(array $match) use (&$attributes): string
 			{
 				$key = strtolower((string) $match[1]);
-				$value = $match[2] !== '' ? $match[2] : ($match[3] !== '' ? $match[3] : ($match[4] ?? ''));
+				$value = ($match[2] ?? '') !== '' ? $match[2] : (($match[3] ?? '') !== '' ? $match[3] : ($match[4] ?? ''));
 				$attributes[$key] = trim((string) $value);
 
 				return ' ';
@@ -179,7 +184,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 
 		$mode = '';
 		$modeMatches = [];
-		preg_match_all('/\b(random|longest|shortest|count|playtime)\b/i', $remaining, $modeMatches);
+		preg_match_all('/\b(random|longest|shortest|count|playtime|list)\b/i', $remaining, $modeMatches);
 
 		if (count($modeMatches[1] ?? []) > 1)
 		{
@@ -195,6 +200,16 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 		if (trim($remaining) !== '')
 		{
 			return null;
+		}
+
+		if ($mode === 'list')
+		{
+			$allowed = ['search', 'category', 'owner', 'length_min', 'length_max', 'duration_min', 'duration_max', 'tags', 'tag_mode', 'recorded_from', 'recorded_to', 'uploaded_from', 'uploaded_to', 'maxresults', 'perpage', 'sort', 'direction'];
+			if (array_diff(array_keys($attributes), $allowed) !== [])
+			{
+				return null;
+			}
+			return ['mode' => 'list', 'filters' => $attributes];
 		}
 
 		$aggregateMode = in_array($mode, ['count', 'playtime'], true);
@@ -304,6 +319,41 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 			'categories' => [],
 			'count' => $orderedMode ? $count : 1,
 		];
+	}
+
+	/**
+	 * @brief Render the shared archive table with isolated filters and sort links.
+	 * @param string $placeholder Original placeholder for invalid-filter fallback.
+	 * @param array<string, string> $filters Optional list filters.
+	 * @return string Embedded table HTML.
+	 */
+	private function renderList(string $placeholder, array $filters): string
+	{
+		$app = $this->getApplication();
+		$factory = $app->bootComponent('com_audioarchive')->getMVCFactory();
+		$key = 'aa_list_' . (++self::$embedCounter);
+		foreach (['sort', 'direction'] as $field)
+		{
+			$value = $app->getInput()->getCmd($key . '_' . $field, '');
+			if ($value !== '')
+			{
+				$filters[$field] = $value;
+			}
+		}
+		$model = $factory->createModel('Archive', 'Site', ['ignore_request' => true]);
+		$model->setUseExceptions(true);
+		try
+		{
+			$model->configureEmbed($filters);
+		}
+		catch (\InvalidArgumentException $exception)
+		{
+			return htmlspecialchars($placeholder, ENT_QUOTES, 'UTF-8');
+		}
+		$app->getLanguage()->load('com_audioarchive', JPATH_SITE . '/components/com_audioarchive');
+		$view = $factory->createView('Archive', 'Site', 'html');
+		$view->setDocument($app->getDocument());
+		return $view->renderEmbedded($model, $key, $app->getInput()->getInt($key . '_page', 1));
 	}
 
 	/**

@@ -1,0 +1,1 @@
+-- Version 0.14.0: embedded lists, clip selection menus, and integrated bulk-upload queue. No schema changes.

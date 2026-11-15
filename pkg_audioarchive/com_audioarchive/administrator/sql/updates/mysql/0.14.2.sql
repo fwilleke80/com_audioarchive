@@ -1,0 +1,1 @@
+-- 0.14.2: Page-number URLs and shared daily selection; no schema changes.

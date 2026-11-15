@@ -10,7 +10,7 @@ $item = $this->item;
 $columns = $this->archiveColumns;
 $totalSeconds = (int) floor((int) $item->duration_ms / 1000);
 $duration = $totalSeconds >= 3600 ? gmdate('H:i:s', $totalSeconds) : gmdate('i:s', $totalSeconds);
-$audioId = 'audioarchive-mobile-player-' . (int) $item->id;
+$audioId = ($this->embedKey !== '' ? $this->embedKey . '-' : '') . 'audioarchive-mobile-player-' . (int) $item->id;
 $mime = trim((string) $item->mime_type) ?: 'application/octet-stream';
 $hasMetadata = $columns['owner'] || $columns['category'] || $columns['duration'] || $columns['recorded'] || $columns['uploaded'];
 ?>

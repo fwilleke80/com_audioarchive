@@ -4,16 +4,17 @@ use Joomla\CMS\Language\Text;
 
 \defined('_JEXEC') or die;
 
-$showPagination = (int) $this->params->get('archive_show_pagination', 1) === 1;
-$showPageSize = (int) $this->params->get('archive_show_page_size', 1) === 1;
+$embedded = $this->embedKey !== '';
+$showPagination = $embedded || (int) $this->params->get('archive_show_pagination', 1) === 1;
+$showPageSize = !$embedded && (int) $this->params->get('archive_show_page_size', 1) === 1;
 
-if (!$showPagination && !$showPageSize)
+if ((!$showPagination && !$showPageSize) || ($embedded && (int) $this->pagination->pagesTotal <= 1))
 {
 	return;
 }
 
-$queryValues = $this->getQueryValues();
-unset($queryValues['limit']);
+$queryValues = $embedded ? [] : $this->getQueryValues();
+unset($queryValues['limit'], $queryValues['page'], $queryValues['start'], $queryValues['limitstart']);
 $currentPage = max(1, (int) $this->pagination->pagesCurrent);
 $totalPages = max(1, (int) $this->pagination->pagesTotal);
 ?>

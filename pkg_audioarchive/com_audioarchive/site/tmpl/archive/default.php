@@ -13,6 +13,7 @@ $archiveStyle = implode(';', array_filter([
 ]));
 ?>
 <div
+	<?php if ($this->embedKey !== '') : ?>id="<?php echo $this->escape($this->embedKey); ?>"<?php endif; ?>
 	class="com-audioarchive com-audioarchive-archive<?php echo $archiveFilterClasses !== '' ? ' ' . $this->escape($archiveFilterClasses) : ''; ?>"
 	<?php if ($archiveStyle !== '') : ?>style="<?php echo $this->escape($archiveStyle); ?>"<?php endif; ?>
 	data-audioarchive-return-origin
@@ -34,6 +35,7 @@ $archiveStyle = implode(';', array_filter([
 		data-audioarchive-rating-error="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_RATING_ERROR')); ?>"
 	<?php endif; ?>
 >
+	<?php if ($this->embedKey === '') : ?>
 	<header class="com-audioarchive-page-header">
 		<?php if ((int) $this->params->get('show_page_heading', 1) === 1) : ?>
 			<h1><?php echo $this->escape($this->pageHeading); ?></h1>
@@ -47,6 +49,7 @@ $archiveStyle = implode(';', array_filter([
 		</div>
 	<?php endif; ?>
 
+	<?php endif; ?>
 	<div class="visually-hidden" aria-live="polite" aria-atomic="true" data-audioarchive-status></div>
 
 	<?php if ($this->filterErrors) : ?>
@@ -57,6 +60,7 @@ $archiveStyle = implode(';', array_filter([
 		</div>
 	<?php endif; ?>
 
+	<?php if ($this->embedKey === '') : ?>
 	<?php echo $this->loadTemplate('filters'); ?>
 	<?php echo $this->loadTemplate('active_filters'); ?>
 
@@ -112,6 +116,7 @@ $archiveStyle = implode(';', array_filter([
 		<?php endif; ?>
 	</div>
 
+	<?php endif; ?>
 	<?php echo $this->loadTemplate('table'); ?>
 	<?php echo $this->loadTemplate('pagination'); ?>
 </div>

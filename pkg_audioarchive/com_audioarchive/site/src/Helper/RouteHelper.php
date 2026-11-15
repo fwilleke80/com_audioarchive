@@ -113,7 +113,7 @@ abstract class RouteHelper
 			$link .= '&Itemid=' . $itemId;
 		}
 
-		unset($query['limit'], $query['limitstart']);
+		unset($query['limit'], $query['page'], $query['start'], $query['limitstart']);
 		$query['audioarchive_state'] = 1;
 
 		$encodedQuery = http_build_query($query, '', '&', PHP_QUERY_RFC3986);

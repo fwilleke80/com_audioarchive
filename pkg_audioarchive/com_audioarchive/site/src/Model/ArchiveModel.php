@@ -71,6 +71,131 @@ class ArchiveModel extends ListModel
 		parent::__construct($config);
 	}
 
+
+	/**
+	 * @brief Configure an isolated embedded list without request or session filters.
+	 * @param array<string, string> $options Optional author-supplied filters.
+	 * @return void
+	 * @throws \InvalidArgumentException When a filter is malformed.
+	 */
+	public function configureEmbed(array $options): void
+	{
+		$this->resolvedParams = clone ComponentHelper::getParams('com_audioarchive');
+		$this->resolvedParams->set('archive_category_restriction', 0);
+		$this->resolvedParams->set('archive_tag_restriction', []);
+		$this->resolvedParams->set('archive_show_owner_filter', 1);
+		$this->setState('filter.search', trim($options['search'] ?? ''));
+		$this->setState('filter.owner', max(0, (int) ($options['owner'] ?? 0)));
+		$this->setState('list.start', 0);
+		$this->setState('embed.maxresults', max(1, min(1000, (int) ($options['maxresults'] ?? 20))));
+		$this->setState('list.limit', max(1, min(1000, (int) ($options['perpage'] ?? 20))));
+		$sort = $options['sort'] ?? 'uploaded';
+		$this->setState('list.ordering', in_array($sort, ['title', 'duration', 'recorded', 'uploaded', 'rating'], true) ? $sort : 'uploaded');
+		$this->setState('list.direction', strtolower($options['direction'] ?? 'desc') === 'asc' ? 'ASC' : 'DESC');
+		$mode = strtolower($options['tag_mode'] ?? 'and');
+		$this->setState('filter.tag_mode', $mode === 'or' ? 'or' : 'and');
+		$this->selectedTags = [];
+		foreach (preg_split('/[\s,]+/u', trim($options['tags'] ?? ''), -1, PREG_SPLIT_NO_EMPTY) ?: [] as $tag)
+		{
+			$ids = $this->resolveVisitorTagIdentifiers($tag);
+			// An unknown AND term must never silently broaden a restriction.
+			$this->selectedTags = array_merge($this->selectedTags, $ids !== [] ? $ids : [0]);
+		}
+		$this->selectedTags = array_values(array_unique($this->selectedTags));
+		$this->setState('filter.tags', $this->selectedTags);
+		$category = trim($options['category'] ?? '');
+		if ($category !== '')
+		{
+			$db = $this->getDatabase();
+			$query = $db->getQuery(true)->select($db->quoteName('id'))
+				->from($db->quoteName('#__categories'))
+				->where($db->quoteName('extension') . ' = ' . $db->quote('com_audioarchive'));
+			$query->where(ctype_digit($category)
+				? $db->quoteName('id') . ' = ' . (int) $category
+				: '(' . $db->quoteName('alias') . ' = ' . $db->quote($category)
+					. ' OR ' . $db->quoteName('title') . ' = ' . $db->quote($category) . ')');
+			$categoryId = (int) $db->setQuery($query, 0, 1)->loadResult();
+			if ($categoryId <= 0)
+			{
+				$this->selectedTags = [0];
+			}
+			$this->setState('filter.category', $categoryId);
+		}
+		foreach (['min', 'max'] as $bound)
+		{
+			$value = trim($options['length_' . $bound] ?? $options['duration_' . $bound] ?? '');
+			$milliseconds = null;
+			if ($value !== '')
+			{
+				if (preg_match('/^(\d+(?:\.\d+)?)\s*(ms|s|m|h)?$/i', $value, $match))
+				{
+					$factor = match (strtolower($match[2] ?? 's'))
+					{
+						'ms' => 1, 'm' => 60000, 'h' => 3600000, default => 1000,
+					};
+					$number = (float) $match[1] * $factor;
+					if ($number > PHP_INT_MAX - 1000)
+					{
+						throw new \InvalidArgumentException('Duration out of range');
+					}
+					$milliseconds = (int) round($number);
+				}
+				else
+				{
+					if (strlen($value) > 12)
+					{
+						throw new \InvalidArgumentException('Duration out of range');
+					}
+					$milliseconds = $this->parseDuration($value, 'COM_AUDIOARCHIVE_FILTER_DURATION_' . strtoupper($bound) . '_INVALID');
+				}
+			}
+			$this->setState('filter.duration_' . $bound . '_ms', $milliseconds);
+		}
+		$this->setState('filter.duration_max_exact', true);
+		foreach (['recorded', 'uploaded'] as $kind)
+		{
+			foreach (['from', 'to'] as $bound)
+			{
+				$key = $kind . '_' . $bound;
+				$this->setState('filter.' . $key . '_sql', $this->parseDate(trim($options[$key] ?? ''), $bound === 'to', 'COM_AUDIOARCHIVE_FILTER_' . strtoupper($key) . '_INVALID'));
+			}
+		}
+		if ($this->filterErrors !== [])
+		{
+			throw new \InvalidArgumentException('Invalid list filter');
+		}
+	}
+
+	/**
+	 * @brief Fetch one page within the author's total result cap.
+	 * @param int $page Requested one-based page; out-of-range pages are clamped.
+	 * @return array{items:array,total:int,start:int,perpage:int} Page data and capped pagination bounds.
+	 */
+	public function getEmbeddedPage(int $page = 1): array
+	{
+		$total = min(max(0, (int) $this->getTotal()), (int) $this->getState('embed.maxresults', 20));
+		$perpage = max(1, (int) $this->getState('list.limit', 20));
+		$pages = max(1, (int) ceil($total / $perpage));
+		$page = max(1, min($pages, $page));
+		$start = ($page - 1) * $perpage;
+		$this->setState('list.start', $start);
+		$items = [];
+		if ($total > 0)
+		{
+			// Fetch only the current page, including a partially filled final capped page.
+			$this->setState('list.limit', min($perpage, $total - $start));
+			try
+			{
+				$items = $this->getItems();
+			}
+			finally
+			{
+				$this->setState('list.limit', $perpage);
+			}
+		}
+		return ['items' => $items, 'total' => $total, 'start' => $start, 'perpage' => $perpage];
+	}
+
 	/**
 	 * @brief Return published clips visible to the current visitor.
 	 *
@@ -212,7 +337,9 @@ class ArchiveModel extends ListModel
 
 				// Durations are displayed as whole seconds using floor(). Therefore an
 				// upper value of 2 must include 2.000 through 2.999 seconds.
-				$query->where($db->quoteName('a.duration_ms') . ' < :durationMaximumExclusive')
+				$durationMaximumExclusive = $this->getState('filter.duration_max_exact', false) ? $durationMaximum : $durationMaximumExclusive;
+				$operator = $this->getState('filter.duration_max_exact', false) ? ' <= ' : ' < ';
+				$query->where($db->quoteName('a.duration_ms') . $operator . ':durationMaximumExclusive')
 					->bind(':durationMaximumExclusive', $durationMaximumExclusive, ParameterType::INTEGER);
 			}
 
@@ -1018,7 +1145,7 @@ class ArchiveModel extends ListModel
 		$stateKeys = [
 			'q', 'owner', 'category', 'tags', 'tag_mode', 'duration_min', 'duration_max',
 			'recorded_from', 'recorded_to', 'uploaded_from', 'uploaded_to',
-			'sort', 'direction', 'limit', 'limitstart', 'audioarchive_state',
+			'sort', 'direction', 'limit', 'page', 'start', 'limitstart', 'audioarchive_state',
 		];
 		$hasExplicitState = $input->getCmd('task') === 'archive.applyFilters';
 
@@ -1107,7 +1234,9 @@ class ArchiveModel extends ListModel
 		$requestedLimit = max(1, min($maximumLimit, (int) ($source['limit'] ?? $defaultLimit)));
 		$limit = in_array($requestedLimit, $allowedLimits, true) ? $requestedLimit : $defaultLimit;
 		$this->setState('list.limit', $limit);
-		$this->setState('list.start', max(0, (int) ($source['limitstart'] ?? 0)));
+		$this->setState('list.start', \Punga\Component\Audioarchive\Site\Helper\PaginationHelper::offset(
+			$input->getCmd('task') === 'archive.applyFilters' ? [] : $source, $limit
+		));
 
 		if (!$reset)
 		{

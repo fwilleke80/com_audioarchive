@@ -23,3 +23,7 @@ Every successfully stored clip receives jobs for all globally enabled analysis t
 ## Server limits
 
 Browser uploads remain subject to PHP and web-server settings such as `upload_max_filesize`, `post_max_size`, `max_file_uploads`, and request timeouts. For very large collections or files already present on the server, use [Directory import](directory-import.md).
+
+## Version 0.14 additions
+
+See [the 0.14 guide](whats-new-0.14.md) for current list placeholders, selection menu items and the integrated bulk-upload queue.

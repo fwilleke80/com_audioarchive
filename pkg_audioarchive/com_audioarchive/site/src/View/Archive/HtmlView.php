@@ -88,6 +88,54 @@ class HtmlView extends BaseHtmlView
 	private ArchiveModel $archiveModel;
 
 
+	/** @var string Isolated sort parameter prefix; empty for the full archive. */
+	public string $embedKey = '';
+
+	/**
+	 * @brief Render a reusable archive table without changing page metadata.
+	 * @param ArchiveModel $model Isolated list model.
+	 * @param string $key Unique list identifier.
+	 * @param int $page Requested one-based page.
+	 * @return string Table and player markup.
+	 */
+	public function renderEmbedded(ArchiveModel $model, string $key, int $page = 1): string
+	{
+		$this->embedKey = $key;
+		$this->archiveModel = $model;
+		$result = $model->getEmbeddedPage($page);
+		$this->items = $result['items'];
+		$this->pagination = new \Joomla\CMS\Pagination\Pagination($result['total'], $result['start'], $result['perpage']);
+		$this->state = $model->getState();
+		$this->params = $model->getResolvedParams();
+		$this->tagOptions = $model->getTagOptions();
+		$this->returnTitle = (string) Factory::getApplication()->getDocument()->getTitle();
+		foreach ($this->items as $clip)
+		{
+			$clip->detail_url = Route::_(RouteHelper::getClipRoute((int) $clip->id));
+			$clip->stream_url = Route::_(RouteHelper::getPlaybackRoute((int) $clip->id));
+			$clip->share_url = Route::_(RouteHelper::getClipRoute((int) $clip->id), false, Route::TLS_IGNORE, true);
+		}
+		if ((int) $this->params->get('enable_play_counts', 1) === 1)
+		{
+			$this->playCountUrl = Route::_(RouteHelper::getPlayCountRoute());
+			$this->playCountToken = Session::getFormToken();
+		}
+		if ((int) $this->params->get('enable_ratings', 1) === 1)
+		{
+			$service = new RatingService(Factory::getContainer()->get(DatabaseInterface::class), $this->params, Factory::getApplication()->getIdentity());
+			$this->canRate = $service->canVote();
+			$this->ratingUrl = Route::_(RouteHelper::getRatingRoute());
+			$this->ratingToken = Session::getFormToken();
+		}
+		$assets = $this->getDocument()->getWebAssetManager();
+		$assets->getRegistry()->addExtensionRegistryFile('com_audioarchive');
+		$assets->useStyle('com_audioarchive.site')->useStyle('com_audioarchive.player-style')
+			->useScript('com_audioarchive.player')->useScript('com_audioarchive.social');
+		$this->addTemplatePath(JPATH_SITE . '/components/com_audioarchive/tmpl/archive');
+		$this->addTemplatePath(JPATH_THEMES . '/' . Factory::getApplication()->getTemplate() . '/html/com_audioarchive/archive');
+		return $this->loadTemplate();
+	}
+
 	/**
 	 * @brief Display the public archive.
 	 *
@@ -242,7 +290,7 @@ class HtmlView extends BaseHtmlView
 	{
 		foreach ($this->getQueryValues() as $name => $value)
 		{
-			if (in_array($name, ['start', 'limitstart'], true))
+			if (in_array($name, ['page', 'start', 'limitstart'], true))
 			{
 				continue;
 			}
@@ -261,6 +309,23 @@ class HtmlView extends BaseHtmlView
 	 */
 	public function buildUrl(array $changes = [], array $remove = []): string
 	{
+		if ($this->embedKey !== '')
+		{
+			$uri = clone \Joomla\CMS\Uri\Uri::getInstance();
+			foreach (['sort', 'direction', 'page'] as $field)
+			{
+				if (isset($changes[$field]))
+				{
+					$uri->setVar($this->embedKey . '_' . $field, $changes[$field]);
+				}
+			}
+			if (isset($changes['sort']) || isset($changes['direction']))
+			{
+				$uri->setVar($this->embedKey . '_page', 1);
+			}
+			$uri->setFragment($this->embedKey);
+			return htmlspecialchars($uri->toString(['path', 'query', 'fragment']), ENT_QUOTES, 'UTF-8');
+		}
 		$query = $this->getQueryValues();
 		foreach ($remove as $key)
 		{
@@ -278,6 +343,7 @@ class HtmlView extends BaseHtmlView
 			}
 		}
 
+		unset($query['page'], $query['start'], $query['limitstart']);
 		$query = $this->removeDefaultListValues($query);
 		$itemId = Factory::getApplication()->getInput()->getInt('Itemid', 0);
 
@@ -346,7 +412,7 @@ class HtmlView extends BaseHtmlView
 			}
 		}
 
-		$itemId = Factory::getApplication()->getInput()->getInt('Itemid', 0);
+		$itemId = $this->embedKey !== '' ? 0 : Factory::getApplication()->getInput()->getInt('Itemid', 0);
 		$query = $alias !== '' ? ['tags' => $alias] : [];
 
 		return Route::_(RouteHelper::getArchiveRoute($itemId, $query));
@@ -364,41 +430,10 @@ class HtmlView extends BaseHtmlView
 	 */
 	public function getCompactPaginationPages(): array
 	{
-		$total = max(1, (int) $this->pagination->pagesTotal);
-		$current = max(1, min($total, (int) $this->pagination->pagesCurrent));
-		$edgeSize = max(
-			1,
-			min(20, (int) $this->params->get('archive_pagination_edge_pages', 5))
+		return \Punga\Component\Audioarchive\Site\Helper\PaginationHelper::compact(
+			(int) $this->pagination->pagesTotal, (int) $this->pagination->pagesCurrent,
+			(int) $this->params->get('archive_pagination_edge_pages', 5)
 		);
-
-		if ($total <= ($edgeSize * 2) + 1)
-		{
-			return range(1, $total);
-		}
-
-		$pages = array_merge(
-			range(1, min($edgeSize, $total)),
-			range(max(1, $current - 1), min($total, $current + 1)),
-			range(max(1, $total - $edgeSize + 1), $total)
-		);
-		$pages = array_values(array_unique(array_map('intval', $pages)));
-		sort($pages, SORT_NUMERIC);
-
-		$result = [];
-		$previous = null;
-
-		foreach ($pages as $page)
-		{
-			if ($previous !== null && $page > $previous + 1)
-			{
-				$result[] = null;
-			}
-
-			$result[] = $page;
-			$previous = $page;
-		}
-
-		return $result;
 	}
 
 	/**
@@ -412,18 +447,13 @@ class HtmlView extends BaseHtmlView
 	{
 		$total = max(1, (int) $this->pagination->pagesTotal);
 		$page = max(1, min($total, $page));
+		if ($this->embedKey !== '')
+		{
+			return $this->buildUrl(['page' => $page]);
+		}
 		$query = $this->getQueryValues();
-		$limit = max(1, (int) $this->state->get('list.limit', 20));
-		$offset = ($page - 1) * $limit;
-
-		if ($offset > 0)
-		{
-			$query['limitstart'] = $offset;
-		}
-		else
-		{
-			unset($query['limitstart']);
-		}
+		unset($query['start'], $query['limitstart']);
+		$query['page'] = $page;
 
 		$query = $this->removeDefaultListValues($query);
 		$itemId = Factory::getApplication()->getInput()->getInt('Itemid', 0);
@@ -462,9 +492,13 @@ class HtmlView extends BaseHtmlView
 	 */
 	public function hasActiveFilters(): bool
 	{
+		if ($this->embedKey !== '')
+		{
+			return false;
+		}
 		foreach ($this->getQueryValues() as $key => $value)
 		{
-			if (!in_array($key, ['sort', 'direction', 'limit', 'limitstart'], true) && $value !== '' && $value !== [] && $value !== 0)
+			if (!in_array($key, ['sort', 'direction', 'limit', 'page', 'start', 'limitstart'], true) && $value !== '' && $value !== [] && $value !== 0)
 			{
 				return true;
 			}
@@ -480,7 +514,13 @@ class HtmlView extends BaseHtmlView
 	 */
 	public function getQueryValues(): array
 	{
-		return $this->archiveModel->getCanonicalQueryValues();
+		$query = $this->archiveModel->getCanonicalQueryValues();
+		$page = intdiv(max(0, (int) $this->state->get('list.start', 0)), max(1, (int) $this->state->get('list.limit', 20))) + 1;
+		if ($page > 1)
+		{
+			$query['page'] = $page;
+		}
+		return $query;
 	}
 
 	/**
@@ -518,9 +558,10 @@ class HtmlView extends BaseHtmlView
 			unset($query['limit']);
 		}
 
-		if ((int) ($query['limitstart'] ?? 0) <= 0)
+		unset($query['start'], $query['limitstart']);
+		if ((int) ($query['page'] ?? 1) <= 1)
 		{
-			unset($query['limitstart']);
+			unset($query['page']);
 		}
 
 		return $query;

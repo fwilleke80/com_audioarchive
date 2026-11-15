@@ -21,6 +21,9 @@ foreach ([
     'COM_AUDIOARCHIVE_BULK_UPLOAD_ACTION_REMOVE',
     'COM_AUDIOARCHIVE_BULK_UPLOAD_ACTION_EDIT',
     'COM_AUDIOARCHIVE_BULK_UPLOAD_ANALYSIS_PROCESSING',
+    'COM_AUDIOARCHIVE_BULK_UPLOAD_ANALYSIS_WAITING',
+    'COM_AUDIOARCHIVE_BULK_UPLOAD_ANALYSIS_NONE',
+    'COM_AUDIOARCHIVE_BULK_UPLOAD_ANALYSIS_BUSY',
     'COM_AUDIOARCHIVE_BULK_UPLOAD_ANALYSIS_COMPLETE',
     'COM_AUDIOARCHIVE_BULK_UPLOAD_ANALYSIS_FAILED',
     'COM_AUDIOARCHIVE_BULK_UPLOAD_NO_RESPONSE',
@@ -77,19 +80,7 @@ $tokenName = Session::getFormToken();
                 multiple
                 accept="audio/*,.m4a,.mp4,.aac,.mp3,.ogg,.oga,.opus,.wav,.flac,.webm"
             >
-            <div
-                id="audioarchive-bulk-upload-dropzone"
-                class="com-audioarchive-upload-dropzone"
-                role="button"
-                tabindex="0"
-                aria-controls="audioarchive-bulk-upload-files"
-            >
-                <span class="icon-upload" aria-hidden="true"></span>
-                <strong><?php echo Text::_('COM_AUDIOARCHIVE_BULK_UPLOAD_DROP_TITLE'); ?></strong>
-                <span><?php echo Text::_('COM_AUDIOARCHIVE_BULK_UPLOAD_DROP_DESC'); ?></span>
-            </div>
-
-            <div class="com-audioarchive-action-bar d-flex flex-wrap align-items-center gap-2 mt-3">
+            <div class="com-audioarchive-action-bar d-flex flex-wrap align-items-center gap-2 mb-3">
                 <button type="button" class="btn btn-primary" id="audioarchive-bulk-upload-select">
                     <span class="icon-folder-open" aria-hidden="true"></span>
                     <?php echo Text::_('COM_AUDIOARCHIVE_BULK_UPLOAD_SELECT_FILES'); ?>
@@ -98,22 +89,16 @@ $tokenName = Session::getFormToken();
                     <span class="icon-play" aria-hidden="true"></span>
                     <?php echo Text::_('COM_AUDIOARCHIVE_BULK_UPLOAD_START'); ?>
                 </button>
-                <button type="button" class="btn btn-secondary" id="audioarchive-bulk-upload-clear" disabled>
+                <button type="button" class="btn btn-outline-secondary" id="audioarchive-bulk-upload-clear" disabled hidden>
                     <?php echo Text::_('COM_AUDIOARCHIVE_BULK_UPLOAD_CLEAR_FINISHED'); ?>
                 </button>
                 <span id="audioarchive-bulk-upload-summary" class="ms-lg-auto text-body-secondary" aria-live="polite"></span>
             </div>
-            <div id="audioarchive-bulk-upload-analysis-status" class="mt-3 text-body-secondary" aria-live="polite" hidden></div>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-header">
-            <h2 class="h4 mb-0"><?php echo Text::_('COM_AUDIOARCHIVE_BULK_UPLOAD_QUEUE_TITLE'); ?></h2>
-        </div>
-        <div class="card-body p-0">
+            <div id="audioarchive-bulk-upload-dropzone" class="com-audioarchive-upload-dropzone" tabindex="0" role="region" aria-label="<?php echo Text::_('COM_AUDIOARCHIVE_BULK_UPLOAD_QUEUE_TITLE'); ?>">
             <div id="audioarchive-bulk-upload-empty" class="p-4 text-center text-body-secondary">
-                <?php echo Text::_('COM_AUDIOARCHIVE_BULK_UPLOAD_QUEUE_EMPTY'); ?>
+                <span class="icon-upload" aria-hidden="true"></span>
+                <strong><?php echo Text::_('COM_AUDIOARCHIVE_BULK_UPLOAD_DROP_TITLE'); ?></strong>
+                <span><?php echo Text::_('COM_AUDIOARCHIVE_BULK_UPLOAD_DROP_DESC'); ?></span>
             </div>
             <div id="audioarchive-bulk-upload-table-wrapper" class="table-responsive d-none">
                 <table class="table align-middle mb-0">
@@ -121,12 +106,14 @@ $tokenName = Session::getFormToken();
                         <tr>
                             <th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_BULK_UPLOAD_FILE'); ?></th>
                             <th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_BULK_UPLOAD_PROGRESS'); ?></th>
+                            <th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_BULK_UPLOAD_ANALYSIS_COLUMN'); ?></th>
                             <th scope="col"><?php echo Text::_('COM_AUDIOARCHIVE_BULK_UPLOAD_RESULT'); ?></th>
                             <th scope="col" class="text-end"><?php echo Text::_('COM_AUDIOARCHIVE_COLUMN_ACTIONS'); ?></th>
                         </tr>
                     </thead>
                     <tbody id="audioarchive-bulk-upload-queue"></tbody>
                 </table>
+            </div>
             </div>
         </div>
     </div>

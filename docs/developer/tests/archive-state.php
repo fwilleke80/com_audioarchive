@@ -9,9 +9,25 @@ namespace Joomla\Registry
 		{
 		}
 		/** @brief Read one option. */
+		public function set(string $key, mixed $value): void
+		{
+			$this->values[$key] = $value;
+		}
+		/** @brief Read one setting. */
 		public function get(string $key, mixed $default = null): mixed
 		{
 			return $this->values[$key] ?? $default;
+		}
+	}
+}
+namespace Joomla\CMS\Component
+{
+	class ComponentHelper
+	{
+		/** @brief Return global settings with menu-like restrictions to verify isolation. */
+		public static function getParams(string $name): \Joomla\Registry\Registry
+		{
+			return new \Joomla\Registry\Registry(['archive_category_restriction' => 9, 'archive_tag_restriction' => [7]]);
 		}
 	}
 }
@@ -26,6 +42,7 @@ namespace Joomla\CMS\MVC\Model
 		/** @brief Accept the production model's configuration. */
 		public function __construct(array $config = [])
 		{
+			$this->initialized = !empty($config['ignore_request']);
 		}
 		/** @brief Model Joomla's lazy initialization; fail early on recursive entry. */
 		public function getState(?string $key = null, mixed $default = null): mixed
@@ -66,6 +83,7 @@ namespace Joomla\CMS
 namespace
 {
 	define('_JEXEC', 1);
+	require __DIR__ . '/../../../pkg_audioarchive/com_audioarchive/site/src/Helper/PaginationHelper.php';
 	require __DIR__ . '/../../../pkg_audioarchive/com_audioarchive/site/src/Model/ArchiveModel.php';
 	/** @brief Provide deterministic request values to the real model. */
 	class Input
@@ -156,5 +174,45 @@ namespace
 		check($model->initializations === 1, 'initialize once across repeated reads');
 		check(isset($request['audioarchive_reset']) ? $app->session[$sessionKey] === null : $app->session[$sessionKey]['owner'] === $expected, 'owner session persistence/reset');
 	}
+
+	$before = $app->session;
+	$model = new \Punga\Component\Audioarchive\Site\Model\ArchiveModel(['ignore_request' => true]);
+	$model->configureEmbed([]);
+	check($model->getState('list.limit') === 20, 'bare list has bounded default');
+	check($model->getState('filter.duration_min_ms') === null, 'optional duration omitted');
+	check($model->getResolvedParams()->get('archive_category_restriction') === 0, 'menu restrictions isolated');
+	check($model->initializations === 0, 'no request population');
+	foreach (['1s' => 1000, '1.25s' => 1250, '500ms' => 500, '2m' => 120000, '1h' => 3600000, '01:02' => 62000, '1:02:03' => 3723000] as $duration => $expected)
+	{
+		$model = new \Punga\Component\Audioarchive\Site\Model\ArchiveModel(['ignore_request' => true]);
+		$model->configureEmbed(['length_min' => $duration, 'maxresults' => '10', 'sort' => 'duration', 'direction' => 'asc']);
+		check($model->getState('filter.duration_min_ms') === $expected, 'duration ' . $duration);
+		check($model->getState('embed.maxresults') === 10, 'explicit total cap');
+		check($model->getState('list.limit') === 20, 'independent default page size');
+		check($model->getState('list.ordering') === 'duration', 'explicit sort');
+		check($model->getState('list.direction') === 'ASC', 'explicit direction');
+	}
+	$model = new \Punga\Component\Audioarchive\Site\Model\ArchiveModel(['ignore_request' => true]);
+	$model->configureEmbed(['uploaded_from' => '2026-11-01', 'uploaded_to' => '2026-11-15', 'length_max' => '10s', 'sort' => 'SQL injection', 'maxresults' => '999999']);
+	check($model->getState('filter.uploaded_from_sql') === '2026-11-01 00:00:00', 'inclusive date start');
+	check($model->getState('filter.uploaded_to_sql') === '2026-11-15 23:59:59', 'inclusive date end');
+	check($model->getState('filter.duration_max_ms') === 10000 && $model->getState('filter.duration_max_exact') === true, 'exact maximum');
+	check($model->getState('list.ordering') === 'uploaded', 'sort allowlist');
+	check($model->getState('embed.maxresults') === 1000, 'total cap bound');
+	foreach ([['length_min' => 'nonsense'], ['uploaded_from' => '2026-02-30']] as $invalid)
+	{
+		$model = new \Punga\Component\Audioarchive\Site\Model\ArchiveModel(['ignore_request' => true]);
+		$rejected = false;
+		try
+		{
+			$model->configureEmbed($invalid);
+		}
+		catch (\InvalidArgumentException)
+		{
+			$rejected = true;
+		}
+		check($rejected, 'malformed filters rejected');
+	}
+	check($app->session === $before, 'embed leaves archive session unchanged');
 	echo $checks . " archive state assertions passed.\n";
 }

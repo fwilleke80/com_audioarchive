@@ -28,9 +28,57 @@ class ClipModel extends BaseDatabaseModel
 	public function getItem(?int $id = null): ?object
 	{
 		$id ??= Factory::getApplication()->getInput()->getInt('id', 0);
+		if ($id <= 0 && $this->isSelectionMenu())
+		{
+			$id = $this->getMenuClipId();
+		}
 		$service = new PublicMediaService($this->getDatabase(), $this->getResolvedParams(), $this->getCurrentUser());
 
 		return $service->getPublicClip($id, true);
+	}
+
+	/** @var int|null Selected clip cached for this request. */
+	private ?int $menuClipId = null;
+
+	/**
+	 * @brief Identify the clip-selection menu landing page without an explicit clip ID.
+	 * @return bool Whether this request opens the selection menu itself.
+	 */
+	public function isSelectionMenu(): bool
+	{
+		$app = Factory::getApplication();
+		$menu = $app->getMenu()->getActive();
+		return $app->getInput()->getInt('id', 0) <= 0
+			&& $menu !== null && ($menu->query['option'] ?? '') === 'com_audioarchive'
+			&& ($menu->query['view'] ?? '') === 'clipselection';
+	}
+
+	/**
+	 * @brief Select one accessible clip using the same rules as the module.
+	 * @return int Selected clip ID, or zero when no eligible clip exists.
+	 */
+	private function getMenuClipId(): int
+	{
+		if ($this->menuClipId !== null)
+		{
+			return $this->menuClipId;
+		}
+		$menu = Factory::getApplication()->getMenu()->getActive();
+		$params = clone $menu->getParams();
+		$mode = (string) $params->get('clip_selection_mode', 'specific');
+		$params->set('selection_mode', in_array($mode, ['specific', 'latest', 'random', 'daily'], true) ? $mode : 'specific');
+		$params->set('count', 1);
+		$alias = trim((string) $params->get('clip_alias', ''));
+		if ($mode === 'specific' && $alias !== '')
+		{
+			$db = $this->getDatabase();
+			$query = $db->getQuery(true)->select($db->quoteName('id'))->from($db->quoteName('#__audioarchive_clips'))
+				->where($db->quoteName('alias') . ' = ' . $db->quote($alias));
+			$params->set('specific_clip', (int) $db->setQuery($query, 0, 1)->loadResult());
+		}
+		$items = \Punga\Component\Audioarchive\Site\Service\ClipSelectionService::getItems($params, (object) ['id' => (int) $menu->id]);
+		$this->menuClipId = (int) ($items[0]->id ?? 0);
+		return $this->menuClipId;
 	}
 
 	/**

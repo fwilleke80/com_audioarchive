@@ -39,6 +39,7 @@ namespace Joomla\CMS
 {
 	class Factory
 	{
+		public static string $timezone = 'UTC';
 		public static function getApplication(): object
 		{
 			return new class
@@ -60,7 +61,7 @@ namespace Joomla\CMS
 				}
 				public function get($key, $default)
 				{
-					return $default;
+					return $key === 'offset' ? \Joomla\CMS\Factory::$timezone : $default;
 				}
 			}
 			;
@@ -86,6 +87,7 @@ namespace
 {
 	define('_JEXEC', 1);
 	require __DIR__ . '/../../../pkg_audioarchive/com_audioarchive/administrator/src/Service/ClipAccessService.php';
+	require __DIR__ . '/../../../pkg_audioarchive/com_audioarchive/site/src/Service/ClipSelectionService.php';
 	require __DIR__ . '/../../../pkg_audioarchive/mod_audioarchive/src/Helper/AudioarchiveHelper.php';
 	/** @brief Emulate Joomla query reference binding, including independently numbered nested placeholders. */
 	class TagQuery
@@ -171,7 +173,7 @@ namespace
 		}
 	}
 	$db->pdo->exec("UPDATE t_audioarchive_clips SET visibility_mode='private' WHERE id=5; UPDATE t_audioarchive_clips SET state=0 WHERE id=6; UPDATE t_audioarchive_clips SET access=2 WHERE id=7;");
-	$method = new ReflectionMethod(\Punga\Module\Audioarchive\Site\Helper\AudioarchiveHelper::class, 'getEligibleQuery');
+	$method = new ReflectionMethod(\Punga\Component\Audioarchive\Site\Service\ClipSelectionService::class, 'getEligibleQuery');
 	$checks = 0;
 	foreach ([['all',[1,2],[3,4]],['any',[1,2],[1,2,3,4]],['all',range(1,7),[4]],['any',range(1,7),[1,2,3,4]],['all',[1,99],[]],['any',[99],[]],['all',[1,1,2],[3,4]]] as [$mode,$tags,$expected])
 	{
@@ -185,10 +187,44 @@ namespace
 		$ids = array_map(static fn($row): int => (int) $row->id, $rows);
 		sort($ids);
 		if ($ids !== $expected) throw new RuntimeException('Incorrect ' . $mode . ' result: ' . json_encode($ids));
-		$daily = new ReflectionMethod(\Punga\Module\Audioarchive\Site\Helper\AudioarchiveHelper::class, 'selectDaily');
-		$one = $daily->invoke(null, $rows, 1, 42);
-		$two = $daily->invoke(null, $rows, 1, 42);
+		$daily = new ReflectionMethod(\Punga\Component\Audioarchive\Site\Service\ClipSelectionService::class, 'selectDaily');
+		$one = $daily->invoke(null, $rows, 1);
+		$two = $daily->invoke(null, array_reverse($rows), 1);
 		if ($one !== $two || ($one && !in_array((int) $one[0]->id, $expected, true))) throw new RuntimeException('Daily selection escaped criteria');
+		$checks++;
+	}
+	if ($daily->getNumberOfParameters() !== 2)
+	{
+		throw new RuntimeException('Daily ranking must not accept a module/menu ID');
+	}
+	$fixture = array_map(static fn(int $id): object => (object) ['id' => $id], range(1, 100));
+	$expectedOrder = $fixture;
+	$siteDate = \Punga\Component\Audioarchive\Site\Service\ClipSelectionService::getSiteDate();
+	usort($expectedOrder, static function(object $a, object $b) use ($siteDate): int
+	{
+		return strcmp(hash('sha256', $siteDate . ':' . $a->id), hash('sha256', $siteDate . ':' . $b->id));
+	});
+	if ($daily->invoke(null, $fixture, 1) !== array_slice($expectedOrder, 0, 1))
+	{
+		throw new RuntimeException('Daily selection is not site-wide date/clip ranking');
+	}
+
+	foreach ([
+		['Europe/Berlin', '2026-11-14T22:59:59Z', '2026-11-14'],
+		['Europe/Berlin', '2026-11-14T23:00:00Z', '2026-11-15'],
+		['Europe/Berlin', '2026-07-01T22:00:00Z', '2026-07-02'],
+		['America/Los_Angeles', '2026-11-15T07:59:59Z', '2026-11-14'],
+		['America/Los_Angeles', '2026-11-15T08:00:00Z', '2026-11-15'],
+		['Asia/Kathmandu', '2026-11-14T18:15:00Z', '2026-11-15'],
+	] as [$zone, $instant, $expected])
+	{
+		\Joomla\CMS\Factory::$timezone = $zone;
+		$actual = \Punga\Component\Audioarchive\Site\Service\ClipSelectionService::getSiteDate(new DateTimeImmutable($instant));
+		$moduleDate = \Punga\Module\Audioarchive\Site\Helper\AudioarchiveHelper::getSiteDate(new DateTimeImmutable($instant));
+		if ($actual !== $expected || $moduleDate !== $expected)
+		{
+			throw new RuntimeException('Site timezone mismatch: ' . $zone . ' ' . $instant);
+		}
 		$checks++;
 	}
 	$manifest = simplexml_load_file(__DIR__ . '/../../../pkg_audioarchive/mod_audioarchive/mod_audioarchive.xml');
