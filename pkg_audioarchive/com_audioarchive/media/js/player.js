@@ -1486,7 +1486,21 @@ const initialiseAudioArchivePlayers = () =>
 		});
 	};
 
-	/** @brief Defer hidden and off-screen table players; native controls remain the fallback. */
+	/** @brief Show the lightweight custom controls before deferred setup, avoiding native-control flashes on scroll. */
+	const prepareDeferredPlayer = (player) =>
+	{
+		const audio = getCustomPlayerAudio(player);
+		const ui = player.querySelector('[data-audioarchive-custom-ui]');
+		const toggle = player.querySelector('[data-audioarchive-custom-toggle]');
+		if (!(audio instanceof HTMLAudioElement) || !(ui instanceof HTMLElement) || !(toggle instanceof HTMLButtonElement)) return;
+		audio.controls = false;
+		audio.hidden = true;
+		ui.hidden = false;
+		player.classList.add('is-enhanced');
+		toggle.disabled = !audio.getAttribute('src') && audio.querySelector('source[src]') === null;
+	};
+
+	/** @brief Defer expensive player setup; native controls remain available when JavaScript is unavailable. */
 	const playerObserver = 'IntersectionObserver' in window ? new IntersectionObserver((entries) =>
 	{
 		entries.forEach((entry) =>
@@ -1502,9 +1516,12 @@ const initialiseAudioArchivePlayers = () =>
 	{
 		if (player.dataset.deferInitialization === '1' && playerObserver)
 		{
+			prepareDeferredPlayer(player);
 			playerObserver.observe(player);
 			player.addEventListener('pointerdown', () => initializeCustomPlayer(player), {once: true, capture: true});
 			player.addEventListener('focusin', () => initializeCustomPlayer(player), {once: true});
+			// @brief Capture synthetic/assistive clicks before they reach the newly bound toggle.
+			player.addEventListener('click', () => initializeCustomPlayer(player), {once: true, capture: true});
 		}
 		else
 		{

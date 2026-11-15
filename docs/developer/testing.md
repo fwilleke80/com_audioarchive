@@ -67,3 +67,7 @@ Run `php docs/developer/tests/embedded-pagination.php` for default caps, indepen
 ## Version 0.14.2
 
 Run `php docs/developer/tests/pagination-links.php` for generated Archive/My Clips links and sorting resets. Run `php docs/developer/tests/page-urls.php` for page conversion, legacy links, precedence, overflow protection and filter reset. Run `module-tags.php` for daily selection independent of instance/input order, alongside the timezone boundary tests. On Joomla, check Archive and My Clips page links with SEF enabled/disabled, legacy bookmarks, sort/filter/page-size resets and identical module/menu daily filters.
+
+## Version 0.14.3
+
+Run `node docs/developer/tests/archive-lazy-players.mjs` to verify that off-screen players show custom controls without running full setup, and that intersection, focus and captured click activation remain available. On the site, scroll rapidly through 150 rows, switch between mobile and desktop widths, and activate a newly visible player by mouse and keyboard. With JavaScript disabled, verify native playback remains available.

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.14.4
+
+- Correct the Preload sound board audio switch: No on the left, Yes on the right (green). Existing saved values and the enabled default are preserved.
+
+## 0.14.3
+
+- Show lightweight custom controls on deferred archive/list players immediately after JavaScript starts, preventing native controls from flashing into view during scrolling. Expensive initialization remains deferred; native controls still work without JavaScript.
+- Initialize deferred controls on captured clicks as well as pointer/focus events, including assistive or programmatic activation.
+- Refresh the player asset version and extend deferred-player regression coverage.
+
 ## 0.14.2
 
 - Use page-number URLs (`page=3`) for Archive and My Clips. Existing `start` and `limitstart` links remain supported; page numbers take precedence. Sorting, filtering and page-size changes reset pagination.
