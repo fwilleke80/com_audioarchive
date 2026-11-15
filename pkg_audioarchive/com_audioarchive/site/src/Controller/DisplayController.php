@@ -32,6 +32,14 @@ class DisplayController extends BaseController
 		$input = $application->getInput();
 		$view = $input->getCmd('view', $this->default_view);
 
+		if ($view === 'embed')
+		{
+			$controller = $application->bootComponent('com_audioarchive')->getMVCFactory()
+				->createController('Embed', 'Site', [], $application, $input);
+			$controller->player();
+			return $this;
+		}
+
 		if ($view === 'archive' && $input->getInt('audioarchive_reset', 0) === 1)
 		{
 			$itemId = $input->getInt('Itemid', 0);

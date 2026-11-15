@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+    <layout title="COM_AUDIOARCHIVE_MENU_EMBED_TITLE" option="COM_AUDIOARCHIVE_MENU_EMBED_TITLE">
+        <message>COM_AUDIOARCHIVE_MENU_EMBED_DESC</message>
+    </layout>
+</metadata>

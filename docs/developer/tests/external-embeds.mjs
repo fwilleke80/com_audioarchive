@@ -30,7 +30,7 @@ try
 			const path = url.pathname.replace('/media/com_audioarchive/', 'media/');
 			await route.fulfill({body: await readFile(new URL(path, base)), contentType: path.endsWith('.js') ? 'text/javascript' : 'text/css'});
 		}
-		else if (url.searchParams.get('task') === 'embed.player')
+		else if (url.pathname === '/embed')
 		{
 			await route.fulfill({body: docs[url.searchParams.get('presentation') || 'default'], contentType: 'text/html'});
 		}
@@ -48,13 +48,13 @@ try
 			await route.fulfill({json: {peaks: [0.2, 0.5, 1, 0.3], duration: 1, channels: 1}});
 		}
 	});
-	await context.route('https://other.test/**', route => route.fulfill({contentType: 'text/html', body: `<iframe title="External player" width="600" height="500" src="https://audio.test/index.php?task=embed.player&presentation=default"></iframe>`}));
+	await context.route('https://other.test/**', route => route.fulfill({contentType: 'text/html', body: `<iframe title="External player" width="600" height="500" src="https://audio.test/embed?presentation=default"></iframe>`}));
 	const page = await context.newPage();
 	page.on('pageerror', error => errors.push(error.message));
 	await page.goto('https://other.test/');
 	for (const mode of ['minimal', 'compact', 'default', 'featured'])
 	{
-		await page.locator('iframe').evaluate((frame, mode) => frame.src = `https://audio.test/index.php?task=embed.player&presentation=${mode}`, mode);
+		await page.locator('iframe').evaluate((frame, mode) => frame.src = `https://audio.test/embed?presentation=${mode}`, mode);
 		const frame = page.frameLocator('iframe');
 		await frame.locator(`[data-player-presentation="${mode}"] [data-audioarchive-custom-ui]`).waitFor({state: 'visible'});
 		await frame.locator('[data-audioarchive-custom-toggle]').click();

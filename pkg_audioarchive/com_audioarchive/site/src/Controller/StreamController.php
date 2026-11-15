@@ -10,6 +10,9 @@ use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Session\Session;
 use Joomla\Database\DatabaseInterface;
 use Punga\Component\Audioarchive\Site\Service\DownloadAccessService;
+use Punga\Component\Audioarchive\Site\Service\DownloadTicketService;
+use Joomla\CMS\Uri\Uri;
+use Joomla\CMS\User\User;
 use Punga\Component\Audioarchive\Site\Service\PublicMediaService;
 
 \defined('_JEXEC') or die;
@@ -19,6 +22,80 @@ use Punga\Component\Audioarchive\Site\Service\PublicMediaService;
  */
 class StreamController extends BaseController
 {
+	/** @var string|null Validated ticket for this response. */
+	private ?string $downloadTicketToken = null;
+
+	/** @brief Distinguish site downloads from public external-embed downloads. */
+	protected function downloadContext(): string
+	{
+		return 'site';
+	}
+
+	/** @brief Embeds always use anonymous permissions, including when the visitor is signed in. */
+	protected function downloadUser(): User
+	{
+		return $this->downloadContext() === 'embed' ? new User() : Factory::getApplication()->getIdentity();
+	}
+
+	/** @brief Issue a download URL only after an explicit signed POST and current access checks. */
+	public function downloadTicket(): void
+	{
+		$app = Factory::getApplication();
+		if (strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST')
+		{
+			$this->sendJson(405, ['success' => false]);
+		}
+		if (!DownloadTicketService::enabled())
+		{
+			$this->sendJson(409, ['success' => false]);
+		}
+		$id = $app->getInput()->getInt('id');
+		$user = $this->downloadUser();
+		$context = $this->downloadContext();
+		$proof = $app->getInput()->post->getString('download_proof');
+		if (!DownloadTicketService::validProof($proof, $id, (int) $user->id, $context))
+		{
+			$this->sendJson(403, ['success' => false]);
+		}
+		$params = ComponentHelper::getParams('com_audioarchive');
+		if (!DownloadAccessService::canDownload($params, $user))
+		{
+			$this->sendJson(404, ['success' => false]);
+		}
+		$db = Factory::getContainer()->get(DatabaseInterface::class);
+		$media = new PublicMediaService($db, $params, $user);
+		$clip = $media->getPublicClip($id, false);
+		if ($clip === null)
+		{
+			$this->sendJson(404, ['success' => false]);
+		}
+		try
+		{
+			$path = $media->resolveOriginalPath($clip);
+		}
+		catch (\Throwable)
+		{
+			$this->sendJson(404, ['success' => false]);
+		}
+		if (!is_readable($path) || filesize($path) <= 0)
+		{
+			$this->sendJson(404, ['success' => false]);
+		}
+		try
+		{
+			$token = (new DownloadTicketService($db))->issue($id, (int) $user->id, $context);
+		}
+		catch (\Throwable)
+		{
+			$this->sendJson(503, ['success' => false]);
+		}
+		$url = Uri::root() . 'index.php?' . http_build_query([
+			'option' => 'com_audioarchive', 'task' => ($context === 'embed' ? 'embed' : 'stream') . '.download',
+			'format' => 'raw', 'id' => $id, 'ticket' => $token,
+		], '', '&', PHP_QUERY_RFC3986);
+		$this->sendJson(200, ['success' => true, 'url' => $url]);
+	}
+
 	/**
 	 * @brief Stream the public original inline with range support.
 	 *
@@ -155,15 +232,26 @@ class StreamController extends BaseController
 		$id = $application->getInput()->getInt('id', 0);
 		$params = ComponentHelper::getParams('com_audioarchive');
 
-		if ($download && !DownloadAccessService::canDownload($params, $application->getIdentity()))
+		if ($download && !DownloadAccessService::canDownload($params, $this->downloadUser()))
 		{
 			$this->sendError(404, Text::_('COM_AUDIOARCHIVE_STREAM_NOT_FOUND'));
+		}
+
+		if ($download && DownloadTicketService::enabled())
+		{
+			$token = $application->getInput()->getString('ticket');
+			$tickets = new DownloadTicketService(Factory::getContainer()->get(DatabaseInterface::class));
+			if (!$tickets->valid($token, $id, (int) $this->downloadUser()->id, $this->downloadContext()))
+			{
+				$this->sendError(403, Text::_('COM_AUDIOARCHIVE_DOWNLOAD_TICKET_REQUIRED'));
+			}
+			$this->downloadTicketToken = $token;
 		}
 
 		$service = new PublicMediaService(
 			Factory::getContainer()->get(DatabaseInterface::class),
 			$params,
-			$application->getIdentity()
+			$download ? $this->downloadUser() : $application->getIdentity()
 		);
 		$clip = $service->getPublicClip($id, false);
 
@@ -179,25 +267,6 @@ class StreamController extends BaseController
 		catch (\Throwable)
 		{
 			$this->sendError(404, Text::_('COM_AUDIOARCHIVE_STREAM_NOT_FOUND'));
-		}
-
-		if (
-			$download
-			&& $method === 'GET'
-			&& (int) $params->get('enable_download_counts', 1) === 1
-			&& $this->shouldCount('download', $id, 10)
-		)
-		{
-			try
-			{
-				$service->incrementDownloadCount($id);
-			}
-			catch (\Throwable)
-			{
-				// A counter failure must never prevent an authorised download.
-			}
-
-			$this->recordPungaAnalyticsEvent('audio.download', $clip);
 		}
 
 		$this->sendFile($path, $clip, $download, $method === 'HEAD');
@@ -380,6 +449,33 @@ class StreamController extends BaseController
 			{
 				fclose($handle);
 				$this->sendError(416, Text::_('COM_AUDIOARCHIVE_STREAM_RANGE_NOT_SATISFIABLE'));
+			}
+		}
+
+		if ($download && !$headOnly && (int) ComponentHelper::getParams('com_audioarchive')->get('enable_download_counts', 1) === 1)
+		{
+			$counted = false;
+			try
+			{
+				$db = Factory::getContainer()->get(DatabaseInterface::class);
+				if ($this->downloadTicketToken !== null)
+				{
+					$counted = (new DownloadTicketService($db))->countOnce($this->downloadTicketToken,
+						(int) $clip->id, (int) $this->downloadUser()->id, $this->downloadContext());
+				}
+				elseif ($this->shouldCount('download', (int) $clip->id, 10))
+				{
+					(new PublicMediaService($db, ComponentHelper::getParams('com_audioarchive'), $this->downloadUser()))->incrementDownloadCount((int) $clip->id);
+					$counted = true;
+				}
+			}
+			catch (\Throwable)
+			{
+				// Accounting failures must not interrupt an authorised download.
+			}
+			if ($counted)
+			{
+				$this->recordPungaAnalyticsEvent('audio.download', $clip);
 			}
 		}
 

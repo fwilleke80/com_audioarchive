@@ -54,6 +54,19 @@ namespace Joomla\CMS\Language
 		}
 	}
 }
+namespace Joomla\CMS\Router
+{
+	class Route
+	{
+		public const TLS_IGNORE = 0;
+		/** @brief Capture route-builder inputs without substituting a Joomla routing implementation. */
+		public static function _(string $url, bool $xhtml, int $tls, bool $absolute): string
+		{
+			$GLOBALS['routeInput'] = $url;
+			return 'https://audio.example/sub/' . $url;
+		}
+	}
+}
 namespace Joomla\CMS\Uri
 {
 	class Uri
@@ -251,6 +264,30 @@ namespace
 		{
 			return 'fixture-secret-not-a-deployment-secret';
 		}
+		/** @brief Supply the current language for route selection. */
+		public function getLanguage(): object
+		{
+			return new class
+			{
+				/** @brief Return the visitor language. */
+				public function getTag(): string
+				{
+					return 'en-GB';
+				}
+			};
+		}
+		/** @brief Supply candidate menu entries. */
+		public function getMenu(): object
+		{
+			return new class
+			{
+				/** @brief Return the public-menu fixture. */
+				public function getItems(string $key, string $value): array
+				{
+					return $GLOBALS['menus'] ?? [];
+				}
+			};
+		}
 		/** @brief Return the current request fixture. */
 		public function getInput(): object
 		{
@@ -303,6 +340,43 @@ namespace
 	check(!EmbedService::validToken($token . 'x', 42, 'play'), 'Malformed token');
 	check(EmbedService::presentation('playlist') === 'default', 'No playlist controls for single clips');
 	check(str_starts_with(EmbedService::url('player', 42), 'https://audio.example/sub/index.php?'), 'Subdirectory URL');
+	// Verify routing intent separately from Joomla's own SEF build/parse rules.
+	EmbedService::url('player', 42);
+	parse_str(parse_url($routeInput, PHP_URL_QUERY), $query);
+	check($query['view'] === 'embed' && $query['Itemid'] === '0' && !isset($query['task'], $query['format']), 'Menu-less player uses an isolated view route');
+	$menus = [
+		(object) ['id' => 5, 'access' => 1, 'language' => '*', 'query' => ['view' => 'embed']],
+		(object) ['id' => 7, 'access' => 1, 'language' => 'en-GB', 'query' => ['view' => 'embed']],
+		(object) ['id' => 2, 'access' => 2, 'language' => 'en-GB', 'query' => ['view' => 'embed']],
+		(object) ['id' => 3, 'access' => 1, 'language' => 'de-DE', 'query' => ['view' => 'embed']],
+	];
+	EmbedService::url('player', 42, ['presentation' => 'compact', 'links' => 0, 'view' => 'edit', 'id' => 99, 'Itemid' => 2]);
+	parse_str(parse_url($routeInput, PHP_URL_QUERY), $query);
+	check($query['Itemid'] === '7' && $query['id'] === '42' && $query['view'] === 'embed' && $query['links'] === '0', 'Public language-specific menu and immutable clip/view');
+	array_splice($menus, 1, 1);
+	EmbedService::url('player', 42);
+	parse_str(parse_url($routeInput, PHP_URL_QUERY), $query);
+	check($query['Itemid'] === '5', 'All-languages public menu fallback');
+	$options['player_background_color'] = '#112233';
+	$options['player_text_color'] = '#eeeeee';
+	$options['player_control_color'] = '#aabbcc';
+	$appearance = EmbedService::appearance();
+	check($appearance['background'] === '#112233' && $appearance['text'] === '#eeeeee' && $appearance['link'] === '#aabbcc', 'Player palette inheritance');
+	$options['archive_list_link_color'] = '#123456';
+	$options['embed_title_color'] = '#654321';
+	$appearance = EmbedService::appearance();
+	check($appearance['link'] === '#123456' && $appearance['title'] === '#654321', 'Archive link and title overrides');
+	$options['embed_link_color'] = '#ffffff; background:url(evil)';
+	check(EmbedService::appearance()['link'] === '#123456', 'Reject CSS injection');
+	$options['embed_link_color'] = '#abcdef';
+	check(EmbedService::appearance()['link'] === '#abcdef', 'Explicit embed link override');
+	$appearance = EmbedService::appearance(['title' => 0, 'links' => 0]);
+	check(!$appearance['show_title'] && !$appearance['show_original'] && !$appearance['show_download'], 'Per-frame hiding');
+	$options['embed_show_title'] = 0;
+	$options['embed_show_original'] = 0;
+	$options['embed_show_download'] = 0;
+	$appearance = EmbedService::appearance(['title' => 1, 'links' => 1]);
+	check(!$appearance['show_title'] && !$appearance['show_original'] && !$appearance['show_download'], 'URL cannot override global hiding');
 	$events = [];
 	$plays = 0;
 	$throttle = true;
@@ -347,5 +421,5 @@ namespace
 	request($controller, 'analysis', 404);
 	$_SERVER['REQUEST_METHOD'] = 'POST';
 	request($controller, 'created', 404);
-	echo "Embed public/category/ancestor policy, signatures, revocation and analytics separation passed.\n";
+	echo "Embed public/category/ancestor policy, signatures, revocation, appearance, routing intent and analytics separation passed.\n";
 }

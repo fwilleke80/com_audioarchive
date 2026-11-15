@@ -10,8 +10,8 @@ if (!$this->canDownload || (int) $this->params->get('detail_show_download', 1) !
 }
 ?>
 <div class="com-audioarchive-download">
-	<a class="btn btn-primary com-audioarchive-download-button" href="<?php echo $this->downloadUrl; ?>">
-		<span aria-hidden="true">↓</span>
-		<span><?php echo Text::_('COM_AUDIOARCHIVE_DOWNLOAD_ORIGINAL'); ?></span>
-	</a>
+    <?php echo \Joomla\CMS\Layout\LayoutHelper::render('interaction.download', [
+        'clipId' => (int) $this->item->id, 'url' => $this->downloadUrl,
+        'class' => 'btn btn-primary com-audioarchive-download-button',
+    ], null, ['component' => 'com_audioarchive', 'client' => 0]); ?>
 </div>

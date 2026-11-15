@@ -80,3 +80,12 @@ Run `node docs/developer/tests/archive-lazy-players.mjs` to verify that off-scre
 - Optional `node docs/developer/tests/external-embeds.mjs`: Playwright cross-origin browser checks. `PHP_BINARY` and `CHROMIUM_PATH` select local executables.
 
 Release validation: all PHP regression scripts and syntax checks pass; XML/JSON, rendered template escaping/translations and documentation links checked. The unrelated bulk-upload DOM harness could not run because its optional linkedom dependency is absent. Browser verification could not run in the build environment because Chromium could not create its process socket. Live Joomla installation/update, server headers, cross-origin rendering and Safari remain to be verified.
+
+## Version 0.15.1
+
+- Extended `external-embeds.php`: inheritance/overrides for frame colours, CSS-value rejection, hide-only URL choices, immutable view/clip IDs and public language-aware menu selection.
+- Extended `external-embed-events.mjs`: generated/preview URLs respond to title/footer checkboxes; existing copy/play event rules remain unchanged.
+- Rendered production templates checked for configured colours, translated options, code icon and complete omission of hidden title/footer.
+- `JOOMLA_ROUTER_RULES=/path/to/joomla/libraries/src/Component/Router/Rules php docs/developer/tests/embed-routing.php`: native Joomla StandardRules/NomenuRules build and parse. Verified using Joomla 6.0.0 routing-rule sources.
+- PHP syntax, XML/JSON, relevant access/pagination/player/share regression checks and package integrity passed.
+- Chromium remains unable to start in the build environment (process socket restriction). Live Joomla installation, menu creation, SEF configuration and browser appearance need verification on the site.

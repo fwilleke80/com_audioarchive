@@ -18,6 +18,19 @@ use Punga\Component\Audioarchive\Site\Service\EmbedService;
 /** @brief Serve isolated public players and recheck embedding on every media/event request. */
 class EmbedController extends StreamController
 {
+	/** @brief Scope tickets to anonymous external-embed downloads. */
+	protected function downloadContext(): string
+	{
+		return 'embed';
+	}
+
+	/** @brief Recheck embedding before allowing a download-ticket request. */
+	public function downloadTicket(): void
+	{
+		$this->requireClip(Factory::getApplication()->getInput()->getInt('id'));
+		parent::downloadTicket();
+	}
+
 	/** @brief Render a complete, template-free embed document. */
 	public function player(): void
 	{
@@ -25,6 +38,7 @@ class EmbedController extends StreamController
 		$id = $app->getInput()->getInt('id');
 		$clip = $this->requireClip($id);
 		$params = ComponentHelper::getParams('com_audioarchive');
+		$appearance = EmbedService::appearance(['title' => $app->getInput()->getInt('title', 1), 'links' => $app->getInput()->getInt('links', 1)]);
 		$presentation = EmbedService::presentation($app->getInput()->getCmd('presentation', 'default'));
 		$data = [
 			'audioId' => 'audioarchive-embed-' . $id, 'clipId' => $id, 'title' => (string) $clip->title,
@@ -54,7 +68,7 @@ class EmbedController extends StreamController
 		}
 		$html = LayoutHelper::render('player.unified', $data, null, ['component' => 'com_audioarchive', 'client' => 0]);
 		$detailUrl = Route::_(RouteHelper::getClipRoute($id), false, Route::TLS_IGNORE, true);
-		$downloadUrl = DownloadAccessService::canDownload($params, new User()) ? EmbedService::url('download', $id) : '';
+		$downloadUrl = $appearance['show_download'] && DownloadAccessService::canDownload($params, new User()) ? EmbedService::url('download', $id) : '';
 		$escape = static fn(string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 		$assetRoot = Uri::root() . 'media/com_audioarchive/';
 		$eventUrl = EmbedService::url('countPlay', $id);

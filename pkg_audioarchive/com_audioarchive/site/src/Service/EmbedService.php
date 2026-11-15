@@ -5,6 +5,7 @@ namespace Punga\Component\Audioarchive\Site\Service;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Uri\Uri;
+use Joomla\CMS\Router\Route;
 use Joomla\CMS\User\User;
 use Joomla\Database\DatabaseInterface;
 use Punga\Component\Audioarchive\Administrator\Service\ClipAccessService;
@@ -23,10 +24,67 @@ final class EmbedService
 		return in_array($value, ['minimal', 'compact', 'default', 'featured'], true) ? $value : 'default';
 	}
 
-	/** @brief Build a stable, absolute task URL independent of active menu items and SEF. */
+	/**
+	 * @brief Resolve frame colours and visibility from component settings and hide-only URL choices.
+	 * @param array<string, int> $choices Per-embed title/links preferences.
+	 * @return array<string, mixed> Safe frame styling and effective visibility.
+	 */
+	public static function appearance(array $choices = []): array
+	{
+		$params = ComponentHelper::getParams('com_audioarchive');
+		$color = static function (mixed $value, string $fallback): string
+		{
+			$value = trim((string) $value);
+			return preg_match('/^#[0-9a-f]{6}$/iD', $value) === 1 ? $value : $fallback;
+		};
+		$background = $color($params->get('player_background_color'), '#f8f9fa');
+		$text = $color($params->get('player_text_color'), '#212529');
+		$link = $color($params->get('archive_list_link_color'), $color($params->get('player_control_color'), '#0d6efd'));
+		$link = $color($params->get('embed_link_color'), $link);
+		return [
+			'background' => $color($params->get('embed_background_color'), $background),
+			'text' => $color($params->get('embed_text_color'), $text),
+			'link' => $link,
+			'title' => $color($params->get('embed_title_color'), $link),
+			'show_title' => (int) $params->get('embed_show_title', 1) === 1 && (int) ($choices['title'] ?? 1) === 1,
+			'show_original' => (int) $params->get('embed_show_original', 1) === 1 && (int) ($choices['links'] ?? 1) === 1,
+			'show_download' => (int) $params->get('embed_show_download', 1) === 1 && (int) ($choices['links'] ?? 1) === 1,
+		];
+	}
+
+	/** @brief Build an absolute SEF player URL, or an internal media/event task URL. */
 	public static function url(string $task, int $id, array $extra = []): string
 	{
-		return Uri::root() . 'index.php?' . http_build_query(array_merge([
+		if ($task === 'player')
+		{
+			$app = Factory::getApplication();
+			$query = ['option' => 'com_audioarchive', 'view' => 'embed', 'id' => $id];
+			$language = $app->getLanguage()->getTag();
+			$candidates = [];
+			foreach ($app->getMenu()->getItems('component', 'com_audioarchive') ?: [] as $item)
+			{
+				if (($item->query['view'] ?? '') === 'embed' && (int) $item->access === 1
+					&& in_array((string) $item->language, ['*', $language], true))
+				{
+					$candidates[] = $item;
+				}
+			}
+			usort($candidates, static fn(object $a, object $b): int =>
+				[(string) $a->language !== $language, (int) $a->id] <=> [(string) $b->language !== $language, (int) $b->id]);
+			if ($candidates !== [])
+			{
+				$query['Itemid'] = (int) $candidates[0]->id;
+			}
+			else
+			{
+				// Do not borrow an unrelated active menu item for an unkeyed embed view.
+				$query['Itemid'] = 0;
+			}
+			// Appearance parameters cannot override the view, clip ID or selected menu item.
+			$query += array_intersect_key($extra, array_flip(['presentation', 'title', 'links']));
+			return Route::_('index.php?' . http_build_query($query, '', '&', PHP_QUERY_RFC3986), false, Route::TLS_IGNORE, true);
+		}
+		return Uri::root() . 'index.php?'  . http_build_query(array_merge([
 			'option' => 'com_audioarchive', 'task' => 'embed.' . $task, 'format' => 'raw', 'id' => $id,
 		], $extra), '', '&', PHP_QUERY_RFC3986);
 	}

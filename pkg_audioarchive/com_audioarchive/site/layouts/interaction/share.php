@@ -10,6 +10,7 @@ $title = (string) ($displayData['title'] ?? '');
 $includePlayerState = !empty($displayData['includePlayerState']);
 $embedId = (int) ($displayData['clipId'] ?? 0);
 $canEmbed = EmbedService::isAllowed($embedId);
+$embedAppearance = $canEmbed ? EmbedService::appearance() : [];
 $escapeEmbed = static fn(string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 ?>
 <div
@@ -38,7 +39,7 @@ $escapeEmbed = static fn(string $value): string => htmlspecialchars($value, ENT_
 			<span data-audioarchive-share-copy-text><?php echo Text::_('COM_AUDIOARCHIVE_SHARE_COPY_LINK'); ?></span>
 		</button>
         <?php if ($canEmbed) : ?>
-        <button type="button" class="com-audioarchive-share-option" data-embed-open role="menuitem"><?php echo Text::_('COM_AUDIOARCHIVE_EMBED'); ?></button>
+        <button type="button" class="com-audioarchive-share-option" data-embed-open role="menuitem"><span class="icon-code" aria-hidden="true"></span><span><?php echo Text::_('COM_AUDIOARCHIVE_EMBED'); ?></span></button>
         <?php endif; ?>
 		<button
 			type="button"
@@ -73,6 +74,12 @@ $escapeEmbed = static fn(string $value): string => htmlspecialchars($value, ENT_
             <?php endforeach; ?>
             </select>
         </label>
+        <?php if ($embedAppearance['show_title']) : ?>
+        <label><input type="checkbox" data-embed-title checked> <?php echo Text::_('COM_AUDIOARCHIVE_EMBED_SHOW_TITLE'); ?></label>
+        <?php endif; ?>
+        <?php if ($embedAppearance['show_original'] || $embedAppearance['show_download']) : ?>
+        <label><input type="checkbox" data-embed-links checked> <?php echo Text::_('COM_AUDIOARCHIVE_EMBED_SHOW_LINKS'); ?></label>
+        <?php endif; ?>
         <iframe data-embed-preview title="<?php echo $escapeEmbed(Text::_('COM_AUDIOARCHIVE_EMBED_PREVIEW')); ?>" loading="lazy"></iframe>
         <label><?php echo Text::_('COM_AUDIOARCHIVE_EMBED_CODE'); ?><textarea class="form-control" rows="5" readonly data-embed-code></textarea></label>
         <p><?php echo Text::_('COM_AUDIOARCHIVE_EMBED_HELP'); ?></p>

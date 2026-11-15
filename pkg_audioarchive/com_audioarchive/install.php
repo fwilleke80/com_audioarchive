@@ -24,6 +24,7 @@ return new class () implements InstallerScriptInterface
 
 	/** @var string[] */
 	private const REQUIRED_TABLES = [
+        'audioarchive_download_tickets',
 		'audioarchive_clips',
         'audioarchive_group_quotas',
         'audioarchive_user_profiles',
@@ -1066,7 +1067,7 @@ return new class () implements InstallerScriptInterface
 	 */
 	private function dropComponentTables(DatabaseInterface $database): void
 	{
-		foreach (['audioarchive_ratings', 'audioarchive_jobs', 'audioarchive_analyses', 'audioarchive_waveforms', 'audioarchive_files', 'audioarchive_clips'] as $tableName)
+		foreach (['audioarchive_download_tickets', 'audioarchive_ratings', 'audioarchive_jobs', 'audioarchive_analyses', 'audioarchive_waveforms', 'audioarchive_files', 'audioarchive_clips'] as $tableName)
 		{
 			$database->setQuery(
 				'DROP TABLE IF EXISTS ' . $database->quoteName('#__' . $tableName)

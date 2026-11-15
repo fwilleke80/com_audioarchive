@@ -40,6 +40,7 @@ class Router extends RouterView
 	{
 		$this->database = $database;
 
+		$this->registerView(new RouterViewConfiguration('embed'));
 		$this->registerView(new RouterViewConfiguration('clipselection'));
 		$this->registerView(new RouterViewConfiguration('upload'));
 		$this->registerView(new RouterViewConfiguration('myclips'));

@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.15.2
+
+- Add an optional ticketed download mode alongside ordinary links (the default), covering clip detail, clip modules and external embeds.
+- Require signed POST actions to issue random ten-minute tickets, rechecking permissions at issue and delivery; reject bare download URLs in ticket mode. Embed tickets use anonymous access and work without third-party cookies.
+- Count each ticket atomically once across retries/range requests, with one `audio.download` event. HEAD, invalid ranges and unavailable files do not increment download totals.
+- Use normal browser file transfers without loading entire files into JavaScript memory; provide translated pending/error/no-JavaScript messages.
+
+## 0.15.1
+
+- Add a code icon to the Embed action.
+- Inherit frame colours from Audio Archive player/archive colours, with optional embed background, text, title and link overrides.
+- Add global title, original-page link and download-link visibility switches. Allow individual embed codes to hide the title or footer links; URL choices cannot override disabled global settings or download permissions.
+- Generate native Joomla SEF player URLs and add an Embed player menu type for a short route such as `/embed?id=42`. Preserve explicit public menu selection and language matching.
+- Document appearance controls and short-route setup. Extend permission, styling, route-generation and dialog tests.
+
 ## 0.15.0
 
 - Add standalone external iframe embeds with Minimal, Compact, Default and Featured presentations, live preview and copyable HTML through Share → Embed.

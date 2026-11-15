@@ -162,7 +162,7 @@ if (in_array((string) $params->get('player_pause_behavior', ''), ['pause', 'stop
 				<?php if ($showDetailLink || $itemShowDownload) : ?>
 					<div class="mod-audioarchive-actions">
 						<?php if ($showDetailLink) : ?><a data-audioarchive-detail-link href="<?php echo $item->detail_url; ?>"><?php echo Text::_('MOD_AUDIOARCHIVE_OPEN_CLIP'); ?></a><?php endif; ?>
-						<?php if ($itemShowDownload) : ?><a href="<?php echo $item->download_url; ?>"><?php echo Text::_('MOD_AUDIOARCHIVE_DOWNLOAD'); ?></a><?php endif; ?>
+						<?php if ($itemShowDownload) : ?><?php echo LayoutHelper::render('interaction.download', ['clipId' => (int) $item->id, 'url' => (string) $item->download_url, 'label' => Text::_('MOD_AUDIOARCHIVE_DOWNLOAD')], null, ['component' => 'com_audioarchive', 'client' => 0]); ?><?php endif; ?>
 					</div>
 				<?php endif; ?>
 			</article>

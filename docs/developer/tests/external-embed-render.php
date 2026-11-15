@@ -7,7 +7,7 @@ namespace Joomla\Registry
 		/** @brief Return renderer defaults. */
 		public function get(string $key, mixed $default = null): mixed
 		{
-			return $default;
+			return $GLOBALS['options'][$key] ?? $default;
 		}
 	}
 }
@@ -59,17 +59,22 @@ namespace Punga\Component\Audioarchive\Site\Service
 {
 	class EmbedService
 	{
-		/** @brief The browser fixture contains one eligible public clip. */
+		/** @brief Render with effective appearance supplied by the production service test. */
+		public static function appearance(): array
+		{
+			return $GLOBALS['appearance'];
+		}
+		/** @brief Fixture clip is already eligible. */
 		public static function isAllowed(int $id): bool
 		{
 			return true;
 		}
-		/** @brief Build mocked endpoint URLs using the real parameter format. */
+		/** @brief Return deterministic public routes. */
 		public static function url(string $task, int $id): string
 		{
-			return 'https://audio.test/index.php?option=com_audioarchive&task=embed.' . $task . '&format=raw&id=' . $id;
+			return $task === 'player' ? 'https://audio.test/embed?id=' . $id : 'https://audio.test/index.php?task=embed.' . $task . '&id=' . $id;
 		}
-		/** @brief Server signature correctness is covered by external-embeds.php. */
+		/** @brief Provide fixture event signatures. */
 		public static function token(int $id, string $purpose): string
 		{
 			return 'test-' . $purpose;
@@ -105,6 +110,7 @@ namespace
 	$downloadUrl = '';
 	$eventUrl = \Punga\Component\Audioarchive\Site\Service\EmbedService::url('countPlay', 42);
 	$eventToken = 'test-play';
+	$appearance = ['background' => '#112233', 'text' => '#eeeeee', 'link' => '#abcdef', 'title' => '#fedcba', 'show_title' => true, 'show_original' => true, 'show_download' => true];
 	$documents = [];
 	foreach (['minimal', 'compact', 'default', 'featured'] as $mode)
 	{
@@ -122,5 +128,11 @@ namespace
 	ob_start();
 	require $root . 'site/layouts/interaction/share.php';
 	$documents['share'] = ob_get_clean();
+	$appearance['show_title'] = false;
+	$appearance['show_original'] = false;
+	$appearance['show_download'] = false;
+	ob_start();
+	require $root . 'site/tmpl/embed/document.php';
+	$documents['hidden'] = ob_get_clean();
 	echo json_encode($documents);
 }

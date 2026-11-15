@@ -43,7 +43,7 @@ class Dispatcher extends ComponentDispatcher
             return;
         }
         $params          = ComponentHelper::getParams('com_audioarchive');
-        if (str_starts_with($input->getCmd('task'), 'embed.') && (int) $params->get('frontend_access_level', 1) !== 1)
+        if ((str_starts_with($input->getCmd('task'), 'embed.') || $input->getCmd('view') === 'embed') && (int) $params->get('frontend_access_level', 1) !== 1)
         {
             throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_EMBED_UNAVAILABLE'), 404);
         }

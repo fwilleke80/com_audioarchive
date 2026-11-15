@@ -58,3 +58,13 @@ Configure FFmpeg and optional FFprobe paths, process timeout, and maximum attemp
 ## Uninstallation
 
 Review whether managed media should be retained if the extension is uninstalled. Back up the database and media before uninstalling.
+
+### Download mode (0.15.2)
+
+Under **Playback and Downloads → Download mode**, choose **Plain download links** (the default) or **JavaScript buttons with download tickets**. The selection applies globally to clip detail pages, clip modules and external embeds. Existing download permissions and display switches still apply.
+
+JavaScript buttons request a signed, short-lived download URL only when clicked. The download endpoint rejects requests without a valid ticket in this mode, including previously copied plain URLs. Tickets last ten minutes and are bound to the clip, user and site/embed context. Permissions are checked again when the file is requested. External embeds use anonymous permissions without requiring third-party cookies.
+
+Retries and byte-range requests may reuse a ticket during its lifetime. With download counting enabled, each ticket increments the counter and dispatches `audio.download` only once when a valid file transfer starts. HEAD requests and invalid ranges do not count. A started transfer is not proof that the visitor saved the complete file. Expired tickets are cleaned up when new tickets are issued.
+
+This discourages simple link-following crawlers; it is not comprehensive bot protection. Automated clients can still perform the request sequence, and publicly playable audio remains accessible through playback. JavaScript is required in ticket mode; visitors without it see an explanatory message. Choose plain links for normal copyable download URLs and no-JavaScript downloads. Pages left open for over twelve hours may need a reload before requesting a ticket.

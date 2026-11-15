@@ -21,17 +21,43 @@ Open **Share → Embed**, choose a presentation, inspect the live preview and cl
 | Default | Standard player including mute |
 | Featured | Expanded player with available waveform, spectrogram and frequency profile; optional pitch/speed controls follow component settings |
 
-The title links to the original clip page. A download link appears only when anonymous downloads are allowed. Playback starts on click; there is no autoplay. The player uses the existing component player colours and behaviour. Playlist presentation is not offered for a single-clip embed.
+The title, when shown, links to the original clip page. A download link appears only when its display is enabled and anonymous downloads are allowed. Playback starts on click; there is no autoplay. The player uses the existing component player colours and behaviour. Playlist presentation is not offered for a single-clip embed.
 
 Generated markup uses 100% width, lazy loading, an accessible title and a presentation-specific height. Adjust the height for unusually long titles, large configured analysis heights or narrow containers. A frame remains scrollable if its content is taller than the chosen height.
 
-The standalone URL has this structure (use the URL generated on your own site):
+## Colours and visible content (0.15.1)
+
+Under **Component Options → External embeds**:
+
+- **Show clip title** controls the heading above the player.
+- **Show original-page link** controls the link back to the clip below the player.
+- **Show download link** controls the download link below the player. This never grants download permission.
+- **Embed background/text/title/link colour** optionally override the frame's appearance.
+
+Leave colours empty to inherit Audio Archive settings: background and text use the player colours; links use the archive-list link colour if configured, otherwise the player control colour. The title follows the embed link colour unless overridden separately. Normal, visited and keyboard-focus link styling use the same palette. Player controls and analyses retain their existing player colour configuration.
+
+The standalone iframe does not load the Joomla template's stylesheet or inherit the WordPress page's stylesheet. If your template uses different colours from Audio Archive, enter those colours in the embed options to match it.
+
+The Share → Embed dialog also has **Show clip title** and **Show links below player** checkboxes when those elements are globally allowed. Unchecking them adds `title=0` or `links=0` to that embed URL and updates the preview. Checking them uses global settings. A URL cannot turn a globally hidden element back on. If both footer links are hidden, no empty footer is rendered. Global changes take effect when frames reload.
+
+## Short Joomla routes (0.15.1)
+
+The player now uses the registered Joomla `embed` view through Joomla's router. To obtain a short root URL:
+
+1. Create a menu item of type **Punga Audio Archive → Embed player**.
+2. Use alias **embed**, set its access to **Public**, publish it, and set **Display in Menu** to **No** (or place it in a menu without a menu module).
+3. Enable Joomla's SEF URLs. Enable URL rewriting too if you want to omit `index.php/` from the path.
+4. Reopen **Share → Embed** and copy the newly generated code.
+
+With that menu item, the URL is typically `https://example.com/embed?id=42&presentation=featured`. Sites in a subdirectory retain that prefix; language prefixes and URL suffixes follow Joomla configuration. A nested menu item retains its parent path. Without a matching public Embed player menu item, Joomla uses its standard component route. With SEF disabled, Joomla generates a query URL.
+
+The generator prefers a public embed menu item for the current language, then an all-languages entry, using the lowest menu ID to break ties. It does not create or modify your menus automatically. The bare menu URL without a clip ID has no clip to display and returns unavailable.
 
 ```html
-<iframe src="https://example.com/index.php?option=com_audioarchive&amp;task=embed.player&amp;format=raw&amp;id=42&amp;presentation=featured" title="My clip" width="100%" height="480" loading="lazy" style="border: 0;"></iframe>
+<iframe src="https://example.com/embed?id=42&amp;presentation=featured&amp;links=0" title="My clip" width="100%" height="480" loading="lazy" style="border: 0;"></iframe>
 ```
 
-The numeric clip ID keeps the link independent of alias changes and archive menu routing.
+The numeric clip ID remains stable if a clip alias changes. Media and analytics requests are internal controller endpoints; only the public player URL appears in the generated embed code.
 
 ## Permissions and existing embeds
 
@@ -49,7 +75,7 @@ Punga Analytics remains optional. Configure these custom event identifiers there
 
 ## Hosting headers
 
-Only the standalone player response permits framing; ordinary Joomla pages retain their existing protection. If a web server, reverse proxy, CDN or security plugin adds `X-Frame-Options: SAMEORIGIN`/`DENY` or a restrictive CSP `frame-ancestors` directive after PHP runs, the host must permit external framing specifically for the `embed.player` endpoint. Do not disable frame protection site-wide. HTTPS sites should embed an HTTPS player to avoid mixed-content blocking.
+Only the standalone player response permits framing; ordinary Joomla pages retain their existing protection. If a web server, reverse proxy, CDN or security plugin adds `X-Frame-Options: SAMEORIGIN`/`DENY` or a restrictive CSP `frame-ancestors` directive after PHP runs, the host must permit external framing specifically for the embed player route. Do not disable frame protection site-wide. HTTPS sites should embed an HTTPS player to avoid mixed-content blocking.
 
 ## Live verification
 

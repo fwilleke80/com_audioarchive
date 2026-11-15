@@ -542,6 +542,8 @@ function initialiseShareButtons()
         const field = dialog.querySelector('[data-embed-code]');
         const preview = dialog.querySelector('[data-embed-preview]');
         const feedback = dialog.querySelector('[data-embed-feedback]');
+        const showTitle = dialog.querySelector('[data-embed-title]');
+        const showLinks = dialog.querySelector('[data-embed-links]');
         const heights = {minimal: 180, compact: 200, default: 220, featured: 480};
         /** @brief Generate escaped iframe markup without including the preview-only flag. */
         const refresh = () =>
@@ -549,6 +551,16 @@ function initialiseShareButtons()
             const url = new URL(dialog.dataset.embedUrl, window.location.href);
             const mode = Object.hasOwn(heights, presentation.value) ? presentation.value : 'default';
             url.searchParams.set('presentation', mode);
+            url.searchParams.delete('title');
+            url.searchParams.delete('links');
+            if (showTitle && !showTitle.checked)
+            {
+                url.searchParams.set('title', '0');
+            }
+            if (showLinks && !showLinks.checked)
+            {
+                url.searchParams.set('links', '0');
+            }
             const frame = document.createElement('iframe');
             frame.src = url.toString();
             frame.title = menu.dataset.shareTitle || 'Audio player';
@@ -570,6 +582,8 @@ function initialiseShareButtons()
             presentation.focus();
         });
         presentation.addEventListener('change', refresh);
+        showTitle?.addEventListener('change', refresh);
+        showLinks?.addEventListener('change', refresh);
         dialog.querySelector('[data-embed-close]').addEventListener('click', () => dialog.close());
         dialog.addEventListener('close', () =>
         {
