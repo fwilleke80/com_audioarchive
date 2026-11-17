@@ -1,0 +1,1 @@
+-- 0.15.6: pending playlist edits and transactional cover saves; no schema changes.

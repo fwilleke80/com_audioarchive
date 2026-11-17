@@ -35,3 +35,5 @@ DROP TABLE IF EXISTS `#__audioarchive_user_profiles`;
 DROP TABLE IF EXISTS `#__audioarchive_recordings`;
 
 DROP TABLE IF EXISTS `#__audioarchive_download_tickets`;
+
+DROP TABLE IF EXISTS `#__audioarchive_covers`;

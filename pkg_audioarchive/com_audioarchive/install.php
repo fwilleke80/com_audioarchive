@@ -24,6 +24,7 @@ return new class () implements InstallerScriptInterface
 
 	/** @var string[] */
 	private const REQUIRED_TABLES = [
+        'audioarchive_covers',
         'audioarchive_download_tickets',
 		'audioarchive_clips',
         'audioarchive_group_quotas',
@@ -396,6 +397,22 @@ return new class () implements InstallerScriptInterface
 			$this->ensureSpectrogramStatusColumn($database);
 			$this->ensureFrequencyProfileStatusColumn($database);
 			$columns = $database->getTableColumns('#__audioarchive_clips', false);
+            // Add descriptive metadata idempotently for both upgrades and schema repair.
+            foreach ([
+                'licence' => "varchar(255) NOT NULL DEFAULT ''",
+                'creator' => "varchar(255) NOT NULL DEFAULT ''",
+                'contributors' => "text DEFAULT NULL",
+                'recording_location' => "varchar(255) NOT NULL DEFAULT ''",
+                'genre_style' => "varchar(255) NOT NULL DEFAULT ''",
+                'creation_year' => "smallint unsigned DEFAULT NULL",
+                'lyrics' => "text DEFAULT NULL",
+            ] as $name => $definition)
+            {
+                if (!isset($columns[$name]))
+                {
+                    $database->setQuery('ALTER TABLE ' . $database->quoteName('#__audioarchive_clips') . ' ADD COLUMN ' . $database->quoteName($name) . ' ' . $definition)->execute();
+                }
+            }
 			if (!isset($columns['allow_embed']))
 			{
 				$database->setQuery('ALTER TABLE ' . $database->quoteName('#__audioarchive_clips') . ' ADD COLUMN allow_embed tinyint unsigned NOT NULL DEFAULT 1')->execute();
@@ -1067,7 +1084,7 @@ return new class () implements InstallerScriptInterface
 	 */
 	private function dropComponentTables(DatabaseInterface $database): void
 	{
-		foreach (['audioarchive_download_tickets', 'audioarchive_ratings', 'audioarchive_jobs', 'audioarchive_analyses', 'audioarchive_waveforms', 'audioarchive_files', 'audioarchive_clips'] as $tableName)
+		foreach (['audioarchive_covers', 'audioarchive_download_tickets', 'audioarchive_ratings', 'audioarchive_jobs', 'audioarchive_analyses', 'audioarchive_waveforms', 'audioarchive_files', 'audioarchive_clips'] as $tableName)
 		{
 			$database->setQuery(
 				'DROP TABLE IF EXISTS ' . $database->quoteName('#__' . $tableName)

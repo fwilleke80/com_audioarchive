@@ -21,6 +21,7 @@ use Joomla\CMS\Router\Route;
 <button class="btn btn-primary" type="submit"><?php echo Text::_('COM_AUDIOARCHIVE_FRONTEND_UPLOAD'); ?></button>
 <a class="btn btn-secondary" href="<?php echo Route::_($this->workspace); ?>"><?php echo Text::_('JCANCEL'); ?></a>
 <?php echo HTMLHelper::_('form.token'); ?>
+<?php echo \Joomla\CMS\Layout\LayoutHelper::render('interaction.cover_form', ['id' => 0], JPATH_ROOT . '/components/com_audioarchive/layouts'); ?>
 </form>
 <?php endif; ?>
 </div>

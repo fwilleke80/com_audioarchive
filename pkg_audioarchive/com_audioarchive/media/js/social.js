@@ -1,8 +1,8 @@
 import {BoardPreloader} from './board-preload.js?v=0.13.7.1';
-import {openSoundboardChooser} from './board-chooser.js?v=0.13.7.1';
+import {openSoundboardChooser} from './board-chooser.js?v=0.15.6';
 import {acquirePlaybackSession, releasePlaybackSession} from './audio-session.js?v=0.13.2.7';
 import {playbackFor, prepareNormalization, releaseNormalization, validGain} from './normalization.js?v=0.13.2.7';
-import {Collections} from './collections.js?v=0.13.7.1';
+import {Collections} from './collections.js?v=0.15.6';
 const BOARD_STORAGE_KEY = 'com_audioarchive.soundboard.v1';
 const SAMPLER_POLYPHONY_STORAGE_KEY = 'com_audioarchive.soundboard.sampler_polyphony.v1';
 const SOUNDBOARD_RECORDINGS_STORAGE_KEY = 'com_audioarchive.soundboard.recordings.v1';
@@ -542,6 +542,7 @@ function initialiseShareButtons()
         const field = dialog.querySelector('[data-embed-code]');
         const preview = dialog.querySelector('[data-embed-preview]');
         const feedback = dialog.querySelector('[data-embed-feedback]');
+        const linkTitle = dialog.querySelector('[data-embed-link-title]');
         const showTitle = dialog.querySelector('[data-embed-title]');
         const showLinks = dialog.querySelector('[data-embed-links]');
         const heights = {minimal: 180, compact: 200, default: 220, featured: 480};
@@ -551,6 +552,15 @@ function initialiseShareButtons()
             const url = new URL(dialog.dataset.embedUrl, window.location.href);
             const mode = Object.hasOwn(heights, presentation.value) ? presentation.value : 'default';
             url.searchParams.set('presentation', mode);
+            url.searchParams.delete('link_title');
+            if (linkTitle)
+            {
+                linkTitle.disabled = !!showTitle && !showTitle.checked;
+                if (!linkTitle.checked)
+                {
+                    url.searchParams.set('link_title', '0');
+                }
+            }
             url.searchParams.delete('title');
             url.searchParams.delete('links');
             if (showTitle && !showTitle.checked)
@@ -582,6 +592,7 @@ function initialiseShareButtons()
             presentation.focus();
         });
         presentation.addEventListener('change', refresh);
+        linkTitle?.addEventListener('change', refresh);
         showTitle?.addEventListener('change', refresh);
         showLinks?.addEventListener('change', refresh);
         dialog.querySelector('[data-embed-close]').addEventListener('click', () => dialog.close());

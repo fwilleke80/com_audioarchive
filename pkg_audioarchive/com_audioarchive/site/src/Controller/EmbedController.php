@@ -38,7 +38,7 @@ class EmbedController extends StreamController
 		$id = $app->getInput()->getInt('id');
 		$clip = $this->requireClip($id);
 		$params = ComponentHelper::getParams('com_audioarchive');
-		$appearance = EmbedService::appearance(['title' => $app->getInput()->getInt('title', 1), 'links' => $app->getInput()->getInt('links', 1)]);
+		$appearance = EmbedService::appearance(['link_title' => $app->getInput()->getInt('link_title', 1), 'title' => $app->getInput()->getInt('title', 1), 'links' => $app->getInput()->getInt('links', 1)]);
 		$presentation = EmbedService::presentation($app->getInput()->getCmd('presentation', 'default'));
 		$data = [
 			'audioId' => 'audioarchive-embed-' . $id, 'clipId' => $id, 'title' => (string) $clip->title,

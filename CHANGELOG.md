@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.15.7
+
+- Add optional Licence, Creator, Contributors, Recording location, Genre/style, Year of creation and Lyrics to backend and frontend clip creation/editing, with bounded plain-text validation.
+- Show populated credits on clip detail pages, preserve multiline credits/lyrics, and include metadata in archive export/restore. Creator credits remain separate from account ownership and creation year remains separate from recording date.
+- Pair Recording date and Upload date in one wrapping filter row, followed by a full-width Duration filter. Disabled date filters leave no reserved gaps.
+
+## 0.15.6
+
+- Playlist names, clip order/removals, creation/deletion, JSON imports and cover changes now stay pending on the playlist manager until Save. Cancel discards the pending edits and reloads saved playlists.
+- Save account playlist data and covers in one revision-checked transaction. Failed saves retain the editable draft and selected cover files.
+- Keep pending cover selections across playlist switches; add local previews and Undo. Warn on navigation with unsaved edits and require Save before sharing a changed playlist.
+- Browser playlists use the same Save/Cancel workflow for names and contents; artwork remains account-only.
+
+## 0.15.5
+
+- Clip cover uploads and removals now wait for Save/Apply, with a local preview and Undo. New clips can include covers; Cancel leaves stored covers unchanged.
+- Cover changes and clip database writes share a transaction. Playlist cover controls continue to save immediately.
+- External embeds offer an independent **Link title** option in component settings and the embed dialog; disable it to display plain title text.
+
+## 0.15.4
+
+- Rearrange archive filters into independent wrapping fields and tag columns; hidden fields leave no reserved slots.
+- Add private cover-image upload, replace and remove controls to saved clip editors and account playlists. Validate actual image content and enforce size, dimensions, ownership and storage quotas. Public cover rendering is deferred.
+
 ## 0.15.3
 
 - Keep the Featured external embed mute button beside the position slider at narrow iframe widths, overriding the shared player’s stacked mobile layout.

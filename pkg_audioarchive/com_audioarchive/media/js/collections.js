@@ -75,7 +75,7 @@ function notice(message, error = false)
 }
 
 /** @brief Perform a typed request; HTTP failures and expired login are always errors. */
-async function request(action, payload = null, shareToken = '')
+async function request(action, payload = null, shareToken = '', files = [])
 {
 	const url = endpoint(action);
 	if (shareToken)
@@ -87,6 +87,16 @@ async function request(action, payload = null, shareToken = '')
 	{
 		options.method = 'POST';
 		options.body = new URLSearchParams({payload: JSON.stringify(payload), [token]: '1'});
+        if (files.length)
+        {
+            options.body = new FormData();
+            options.body.set('payload', JSON.stringify(payload));
+            options.body.set(token, '1');
+            files.forEach((file, index) =>
+            {
+                if (file) options.body.set(`cover_${index}`, file);
+            });
+        }
 	}
 	const response = await fetch(url, options);
 	let json;
@@ -121,7 +131,7 @@ function accept(data)
 }
 
 /** @brief Queue mutations with the latest acknowledged revision; another tab causes a conflict, never an overwrite. */
-function mutate(action, payload)
+function mutate(action, payload, files = [])
 {
 	pending++;
 	const run = async () =>
@@ -129,7 +139,7 @@ function mutate(action, payload)
 		notice(labels.saving || 'Saving…');
 		try
 		{
-			const result = await request(action, {...payload, revision: state.revision});
+			const result = await request(action, {...payload, revision: state.revision}, '', files);
 			accept(result.state);
 			notice('');
 			return result;
@@ -284,8 +294,26 @@ export const Collections = {
 		}
 		return read(key, fallback);
 	},
+    /** @brief Reload acknowledged account data before discarding an editor draft. */
+    async refresh()
+    {
+        if (state.backend !== 'server') return true;
+        try
+        {
+            await tail;
+            const data = await request('state');
+            token = data.token;
+            accept(data);
+            return true;
+        }
+        catch (error)
+        {
+            notice(error.message, true);
+            return false;
+        }
+    },
 	/** @brief Persist explicitly and roll the caller's working copy back on rejection. */
-	async write(key, value)
+	async write(key, value, options = {})
 	{
 		const previous = this.read(key, key === BOARD_KEY ? [] : {});
 		try
@@ -309,9 +337,9 @@ export const Collections = {
 				selectedPlaylist = value.selectedId;
 				// Selecting a playlist or refreshing its titles does not change server membership.
 				const signature = (lists) => JSON.stringify(lists.map((item) => [item.id, item.name, item.items.map((clip) => clip.uuid)]));
-				if (signature(value.playlists) !== signature(state.playlists))
+				if (options.covers?.length || signature(value.playlists) !== signature(state.playlists))
 				{
-					await mutate('playlists', {playlists: clone(value.playlists)});
+					await mutate('playlists', {playlists: clone(value.playlists), covers: (options.covers || []).map(({id, file}) => ({id, action: file ? 'upload' : 'remove'}))}, (options.covers || []).map(change => change.file));
 				}
 				session(`com_audioarchive.activePlaylist.${state.userId}`, selectedPlaylist);
 			}
@@ -337,11 +365,11 @@ export const Collections = {
 		catch (error)
 		{
 			if (key === RECORDINGS_KEY) unsavedRecordings = true;
-			if (Array.isArray(value) && key !== RECORDINGS_KEY)
+			if (!options.preserveDraft && Array.isArray(value) && key !== RECORDINGS_KEY)
 			{
 				value.splice(0, value.length, ...previous);
 			}
-			else if (key !== RECORDINGS_KEY)
+			else if (!options.preserveDraft && key !== RECORDINGS_KEY)
 			{
 				Object.keys(value).forEach((key) => delete value[key]);
 				Object.assign(value, previous);

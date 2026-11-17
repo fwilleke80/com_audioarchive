@@ -98,6 +98,10 @@ $renderAudioPreview = function (string $headingId): void
             </div>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
 
+        <?php echo HTMLHelper::_('uitab.addTab', 'clipTab', 'metadata', Text::_('COM_AUDIOARCHIVE_METADATA')); ?>
+            <?php echo $this->form->renderFieldset('metadata'); ?>
+        <?php echo HTMLHelper::_('uitab.endTab'); ?>
+
         <?php echo HTMLHelper::_('uitab.addTab', 'clipTab', 'file', Text::_('COM_AUDIOARCHIVE_FIELDSET_FILE_INFORMATION')); ?>
             <?php if ($this->originalFile === null) : ?>
                 <div class="alert alert-info"><?php echo Text::_('COM_AUDIOARCHIVE_UPLOAD_ORIGINAL_NOTICE'); ?></div>
@@ -222,4 +226,7 @@ $renderAudioPreview = function (string $headingId): void
 <?php if (\Joomla\CMS\Factory::getApplication()->getIdentity()->authorise('audioarchive.quota.override', 'com_audioarchive')) : ?>
 <div class="form-check my-3"><input class="form-check-input" type="checkbox" name="quota_override_confirm" id="quota-override-confirm" value="1"><label class="form-check-label" for="quota-override-confirm"><?php echo \Joomla\CMS\Language\Text::_('COM_AUDIOARCHIVE_QUOTA_OVERRIDE_CONFIRM'); ?></label></div>
 <?php endif; ?>
+<?php echo \Joomla\CMS\Layout\LayoutHelper::render('interaction.cover_form', ['kind' => 'clip', 'id' => (string) ($this->item->id ?? '')], JPATH_ROOT . '/components/com_audioarchive/layouts'); ?>
 </form>
+
+

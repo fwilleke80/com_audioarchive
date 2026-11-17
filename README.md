@@ -2,7 +2,7 @@
 
 A native Joomla! 6 extension for managing, publishing and playing audio collections—from a personal sound archive to a site with multiple contributors.
 
-> **Current version:** 0.15.3  
+> **Current version:** 0.15.7  
 > **Package:** `pkg_audioarchive`  
 > **Licence:** GNU General Public License version 2 or later
 
@@ -55,6 +55,10 @@ Run `python3 build_package.py` from the project root to build the installer. See
 
 The package includes the component, clip/tag modules, content and Smart Search plugins, the administrator Quick Icon plugin and the user-profile plugin. Install them through the complete package.
 
+Cover uploads: [management and limits](docs/user/cover-images.md).
+
 ## Licence
 
 Copyright © 2026 Frank Willeke. Distributed under the GNU General Public License version 2 or later; see [LICENSE](LICENSE).
+
+Clip credits and metadata: [editing, display and backups](docs/user/clip-metadata.md).

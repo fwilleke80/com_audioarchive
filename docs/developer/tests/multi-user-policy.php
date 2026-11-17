@@ -92,6 +92,10 @@ namespace Joomla\CMS
 		/** @brief Collect explicit override warnings. */
 		public static function getApplication(): object
 		{
+            if (isset($GLOBALS['testApplication']))
+            {
+                return $GLOBALS['testApplication'];
+            }
 			return new class
 			{
 				public function enqueueMessage(string $message, string $type): void
@@ -210,7 +214,7 @@ namespace
 		}
 		public function setQuery(string|Query $query): self
 		{
-			$this->sql = (string) $query;
+			$this->sql = str_replace('#__', 'test_', (string) $query);
 			return $this;
 		}
 		public function loadResult(): mixed
@@ -256,7 +260,9 @@ namespace
 		INSERT INTO test_categories VALUES (1,'com_audioarchive',1,1,1,6),(2,'com_audioarchive',1,1,2,3),(3,'com_audioarchive',1,2,4,5);
 		CREATE TABLE test_audioarchive_clips (id INTEGER, created_by INTEGER, visibility_mode TEXT, state INTEGER, access INTEGER, catid INTEGER, publish_up TEXT, publish_down TEXT);
 		INSERT INTO test_audioarchive_clips VALUES (1,7,'normal',1,1,2,NULL,NULL),(2,7,'private',1,1,2,NULL,NULL),(3,7,'private',0,1,2,NULL,NULL),(4,7,'normal',1,1,3,NULL,NULL),(5,0,'private',1,1,2,NULL,NULL),(6,7,'normal',-2,1,2,NULL,NULL),(7,7,'normal',1,1,2,'2999-01-01',NULL);
-		CREATE TABLE test_audioarchive_files (clip_id INTEGER, file_role TEXT, file_size INTEGER);
+		CREATE TABLE test_audioarchive_covers (entity_type TEXT, entity_id INTEGER, file_size INTEGER);
+        CREATE TABLE test_audioarchive_collections (id INTEGER, user_id INTEGER);
+        CREATE TABLE test_audioarchive_files (clip_id INTEGER, file_role TEXT, file_size INTEGER);
 		INSERT INTO test_audioarchive_files VALUES (1,'original',30),(2,'original',40),(6,'original',10),(1,'preview',9999);
 		CREATE TABLE test_audioarchive_group_quotas (group_id INTEGER, storage_quota_bytes INTEGER, clip_quota INTEGER);
 		CREATE TABLE test_audioarchive_user_profiles (user_id INTEGER, storage_quota_override_bytes INTEGER, clip_quota_override INTEGER);");

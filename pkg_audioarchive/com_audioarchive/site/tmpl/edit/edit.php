@@ -20,7 +20,7 @@ if ($this->itemId > 0)
 
 	<?php if ($this->playerHtml !== '') : ?><div class="mb-4"><?php echo $this->playerHtml; ?></div><?php endif; ?>
 
-	<form action="<?php echo Route::_($action); ?>" method="post" class="form-validate">
+	<form action="<?php echo Route::_($action); ?>" method="post" enctype="multipart/form-data" class="form-validate">
 		<div class="com-audioarchive-edit-actions btn-toolbar gap-2 mb-4" role="toolbar">
 			<button type="submit" name="task" value="edit.apply" class="btn btn-primary">
 				<span class="icon-apply" aria-hidden="true"></span>
@@ -61,5 +61,8 @@ if ($this->itemId > 0)
 		<input type="hidden" name="return" value="<?php echo $this->escape($this->returnValue); ?>">
 		<?php echo $this->form->getInput('id'); ?>
 		<?php echo HTMLHelper::_('form.token'); ?>
-	</form>
+	<?php echo \Joomla\CMS\Layout\LayoutHelper::render('interaction.cover_form', ['kind' => 'clip', 'id' => (string) ($this->item->id ?? '')], JPATH_ROOT . '/components/com_audioarchive/layouts'); ?>
+</form>
 </div>
+
+

@@ -10,14 +10,14 @@
 <meta name="robots" content="noindex">
 <title><?php echo $escape((string) $clip->title); ?></title>
 <link rel="stylesheet" href="<?php echo $escape($assetRoot . 'css/player.css?v=0.15.2'); ?>">
-<link rel="stylesheet" href="<?php echo $escape($assetRoot . 'css/embed.css?v=0.15.3'); ?>">
+<link rel="stylesheet" href="<?php echo $escape($assetRoot . 'css/embed.css?v=0.15.5'); ?>">
 <script type="module" src="<?php echo $escape($assetRoot . 'js/player.js?v=0.15.2'); ?>"></script>
 <script type="module" src="<?php echo $escape($assetRoot . 'js/embed.js?v=0.15.2'); ?>"></script>
 </head>
 <body style="--embed-background:<?php echo $escape($appearance['background']); ?>;--embed-text:<?php echo $escape($appearance['text']); ?>;--embed-link:<?php echo $escape($appearance['link']); ?>;--embed-title:<?php echo $escape($appearance['title']); ?>">
 <main class="com-audioarchive audioarchive-embed" data-embed-event-url="<?php echo $escape($eventUrl); ?>" data-embed-token="<?php echo $escape($eventToken); ?>">
 <?php if ($appearance['show_title']) : ?>
-<header><a href="<?php echo $escape($detailUrl); ?>" target="_blank" rel="noopener noreferrer"><?php echo $escape((string) $clip->title); ?></a></header>
+<header><?php if ($appearance['link_title'] ?? true) : ?><a href="<?php echo $escape($detailUrl); ?>" target="_blank" rel="noopener noreferrer"><?php echo $escape((string) $clip->title); ?></a><?php else : ?><?php echo $escape((string) $clip->title); ?><?php endif; ?></header>
 <?php endif; ?>
 <?php echo $html; ?>
 <?php if ($appearance['show_original'] || $downloadUrl !== '') : ?>

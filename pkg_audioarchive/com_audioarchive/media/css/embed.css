@@ -95,3 +95,9 @@ a:visited
 	grid-row: 1;
 	justify-self: end;
 }
+
+/* Keep unlinked titles in the configured title colour. */
+.audioarchive-embed header
+{
+    color: var(--embed-title, var(--embed-link, #0d6efd));
+}

@@ -14,6 +14,10 @@ $playlistStyle = StyleHelper::buildPlaylistListVariables($this->params);
 	class="com-audioarchive com-audioarchive-playlists"
 	<?php if ($playlistStyle !== '') : ?>style="<?php echo $this->escape($playlistStyle); ?>"<?php endif; ?>
 	data-audioarchive-playlists
+    data-edit-conflict="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_EDIT_CONFLICT')); ?>"
+    data-edit-pending="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_EDIT_PENDING')); ?>"
+    data-edit-saved="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_EDIT_SAVED')); ?>"
+    data-edit-cancelled="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_EDIT_CANCELLED')); ?>"
 	data-audioarchive-return-origin
 	data-audioarchive-return-title="<?php echo $this->escape($this->returnTitle); ?>"
 	data-audioarchive-items-url="<?php echo $this->escape($this->itemsUrl); ?>"
@@ -69,7 +73,7 @@ $playlistStyle = StyleHelper::buildPlaylistListVariables($this->params);
 		</div>
 	<?php endif; ?>
 
-	<p class="visually-hidden" aria-live="polite" data-audioarchive-playlist-status data-audioarchive-status></p>
+	<p aria-live="polite" data-audioarchive-playlist-status data-audioarchive-status></p>
 
 	<section class="com-audioarchive-playlist-shared" data-audioarchive-playlist-shared hidden>
 		<div>
@@ -82,6 +86,11 @@ $playlistStyle = StyleHelper::buildPlaylistListVariables($this->params);
 		</button>
 	</section>
 
+    <p><?php echo Text::_('COM_AUDIOARCHIVE_PLAYLIST_EDIT_HELP'); ?></p>
+    <div class="mb-3" role="group">
+        <button type="button" class="btn btn-primary" data-playlist-save disabled><?php echo Text::_('JSAVE'); ?></button>
+        <button type="button" class="btn btn-outline-secondary" data-playlist-cancel disabled><?php echo Text::_('JCANCEL'); ?></button>
+    </div>
 	<div class="com-audioarchive-playlist-manager">
 		<div class="com-audioarchive-playlist-selector">
 			<label for="audioarchive-playlist-select"><?php echo Text::_('COM_AUDIOARCHIVE_PLAYLIST_SELECT'); ?></label>
@@ -103,6 +112,7 @@ $playlistStyle = StyleHelper::buildPlaylistListVariables($this->params);
 		</div>
 	</div>
 
+<?php echo LayoutHelper::render('interaction.cover', ['kind' => 'playlist'], JPATH_ROOT . '/components/com_audioarchive/layouts'); ?>
 	<section class="com-audioarchive-playlist-player" aria-label="<?php echo Text::_('COM_AUDIOARCHIVE_PLAYLIST_PLAYER'); ?>">
 		<?php
 		echo LayoutHelper::render(

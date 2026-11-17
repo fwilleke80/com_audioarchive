@@ -46,6 +46,7 @@ final class EmbedService
 			'text' => $color($params->get('embed_text_color'), $text),
 			'link' => $link,
 			'title' => $color($params->get('embed_title_color'), $link),
+			'link_title' => (int) $params->get('embed_link_title', 1) === 1 && (int) ($choices['link_title'] ?? 1) === 1,
 			'show_title' => (int) $params->get('embed_show_title', 1) === 1 && (int) ($choices['title'] ?? 1) === 1,
 			'show_original' => (int) $params->get('embed_show_original', 1) === 1 && (int) ($choices['links'] ?? 1) === 1,
 			'show_download' => (int) $params->get('embed_show_download', 1) === 1 && (int) ($choices['links'] ?? 1) === 1,

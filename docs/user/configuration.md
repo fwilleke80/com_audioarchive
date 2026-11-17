@@ -68,3 +68,7 @@ JavaScript buttons request a signed, short-lived download URL only when clicked.
 Retries and byte-range requests may reuse a ticket during its lifetime. With download counting enabled, each ticket increments the counter and dispatches `audio.download` only once when a valid file transfer starts. HEAD requests and invalid ranges do not count. A started transfer is not proof that the visitor saved the complete file. Expired tickets are cleaned up when new tickets are issued.
 
 This discourages simple link-following crawlers; it is not comprehensive bot protection. Automated clients can still perform the request sequence, and publicly playable audio remains accessible through playback. JavaScript is required in ticket mode; visitors without it see an explanatory message. Choose plain links for normal copyable download URLs and no-JavaScript downloads. Pages left open for over twelve hours may need a reload before requesting a ticket.
+
+### Compact archive filter layout (0.15.4)
+
+Search and the other enabled controls now wrap in the wider left column. Tags occupy an independent right column; narrower containers stack the columns. Hidden fields leave no reserved slots, and hiding Tags lets the remaining controls use the full width. The existing global and archive menu-item visibility settings continue to apply.

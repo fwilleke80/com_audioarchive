@@ -449,6 +449,7 @@ final class ArchiveImportService
 				'group-quotas',
 				'user-profiles',
 				'collections',
+                'covers',
 				'recordings',
 				'categories',
 				'tags',
@@ -576,6 +577,8 @@ final class ArchiveImportService
 				}
 
 				CollectionArchiveService::restore($this->database, (array) $data['collections'], $userMap, $clipResult['uuid_to_id'], $conflictPolicy, $restoreConfiguration, $result);
+                CoverArchiveService::restore($this->database, (array) $data['covers'], $clipResult['uuid_to_id'], $clipResult['mutable_uuids'], $result['cover_collection_ids'] ?? []);
+                unset($result['cover_collection_ids']);
 				RecordingArchiveService::restore($this->database, (array) $data['recordings'], $userMap, $clipResult['uuid_to_id'], $conflictPolicy, $result);
 
 				$this->database->setQuery('UPDATE ' . $this->database->quoteName('#__ucm_content') . ' SET core_state=0 WHERE core_type_alias=' . $this->database->quote('com_audioarchive.clip') . ' AND core_content_item_id IN (SELECT id FROM ' . $this->database->quoteName('#__audioarchive_clips') . ' WHERE visibility_mode=' . $this->database->quote('private') . ')')->execute();
@@ -893,6 +896,7 @@ final class ArchiveImportService
 			$data = $this->normalisePortableRow($row);
 			$data['id'] = $isNew ? 0 : $existingId;
 			$data['uuid'] = $uuid;
+            $data = array_replace($data, ClipMetadataService::normalise($row));
 			$data['catid'] = (int) ($categoryMap[(string) ($row['category_key'] ?? '')] ?? $fallbackCategory);
 			$data['access'] = $this->resolveAccess((string) ($row['access_level_title'] ?? ''), $accessMap);
 			$data['created_by'] = $this->resolveUser((string) ($row['created_by_username'] ?? ''), $userMap, 0);

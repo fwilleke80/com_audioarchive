@@ -31,4 +31,13 @@
 		<field name="publish_up" type="calendar" label="JGLOBAL_FIELD_PUBLISH_UP_LABEL" translateformat="true" showtime="true" filter="user_utc" />
 		<field name="publish_down" type="calendar" label="JGLOBAL_FIELD_PUBLISH_DOWN_LABEL" translateformat="true" showtime="true" filter="user_utc" />
 	</fieldset>
+    <fieldset name="metadata" label="COM_AUDIOARCHIVE_METADATA">
+        <field name="licence" type="text" label="COM_AUDIOARCHIVE_METADATA_LICENCE" description="COM_AUDIOARCHIVE_METADATA_LICENCE_DESC" maxlength="255" filter="string" />
+        <field name="creator" type="text" label="COM_AUDIOARCHIVE_METADATA_CREATOR" description="COM_AUDIOARCHIVE_METADATA_CREATOR_DESC" maxlength="255" filter="string" />
+        <field name="contributors" type="textarea" label="COM_AUDIOARCHIVE_METADATA_CONTRIBUTORS" description="COM_AUDIOARCHIVE_METADATA_CONTRIBUTORS_DESC" maxlength="8000" filter="string" rows="4" />
+        <field name="recording_location" type="text" label="COM_AUDIOARCHIVE_METADATA_RECORDING_LOCATION" description="COM_AUDIOARCHIVE_METADATA_RECORDING_LOCATION_DESC" maxlength="255" filter="string" />
+        <field name="genre_style" type="text" label="COM_AUDIOARCHIVE_METADATA_GENRE_STYLE" description="COM_AUDIOARCHIVE_METADATA_GENRE_STYLE_DESC" maxlength="255" filter="string" />
+        <field name="creation_year" type="number" label="COM_AUDIOARCHIVE_METADATA_CREATION_YEAR" description="COM_AUDIOARCHIVE_METADATA_CREATION_YEAR_DESC" min="1" max="9999" step="1" filter="string" />
+        <field name="lyrics" type="textarea" label="COM_AUDIOARCHIVE_METADATA_LYRICS" description="COM_AUDIOARCHIVE_METADATA_LYRICS_DESC" maxlength="60000" filter="string" rows="8" />
+    </fieldset>
 </form>

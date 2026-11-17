@@ -128,7 +128,7 @@ final class ContributionService
 		{
 			throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
 		}
-		$data = array_intersect_key($input, array_flip(['title', 'alias', 'description', 'recorded_at', 'tags', 'com_fields', 'normalization_mode', 'allow_embed']));
+		$data = array_intersect_key($input, array_flip(['title', 'alias', 'description', 'recorded_at', 'tags', 'com_fields', 'normalization_mode', 'allow_embed', 'licence', 'creator', 'contributors', 'recording_location', 'genre_style', 'creation_year', 'lyrics']));
 		$data['id'] = $old ? (int) $old->id : 0;
 		$data['created_by'] = $old ? (int) $old->created_by : (int) $this->user->id;
 		$categories = array_map(static fn(object $row): int => (int) $row->id, $this->categories($params, (int) ($old->catid ?? 0)));

@@ -76,6 +76,8 @@ final class UserQuotaService
 		$bytes = (int) $db->setQuery($db->getQuery(true)->select('COALESCE(SUM(f.file_size), 0)')
 			->from($db->quoteName('#__audioarchive_files', 'f'))->innerJoin($db->quoteName('#__audioarchive_clips', 'c') . ' ON c.id = f.clip_id')
 			->where('c.created_by = ' . $userId)->where('f.file_role = ' . $db->quote('original')))->loadResult();
+        $bytes += (int) $db->setQuery('SELECT COALESCE(SUM(a.file_size), 0) FROM #__audioarchive_covers a INNER JOIN #__audioarchive_clips c ON c.id=a.entity_id WHERE a.entity_type=' . $db->quote('clip') . ' AND c.created_by=' . $userId)->loadResult();
+        $bytes += (int) $db->setQuery('SELECT COALESCE(SUM(a.file_size), 0) FROM #__audioarchive_covers a INNER JOIN #__audioarchive_collections c ON c.id=a.entity_id WHERE a.entity_type=' . $db->quote('playlist') . ' AND c.user_id=' . $userId)->loadResult();
 		return ['storage' => $bytes, 'clips' => $clips];
 	}
 

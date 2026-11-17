@@ -9,6 +9,13 @@ CREATE TABLE IF NOT EXISTS `#__audioarchive_clips` (
     `title` varchar(255) NOT NULL DEFAULT '',
     `alias` varchar(400) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT '',
     `description` mediumtext NOT NULL,
+    `licence` varchar(255) NOT NULL DEFAULT '',
+    `creator` varchar(255) NOT NULL DEFAULT '',
+    `contributors` text DEFAULT NULL,
+    `recording_location` varchar(255) NOT NULL DEFAULT '',
+    `genre_style` varchar(255) NOT NULL DEFAULT '',
+    `creation_year` smallint unsigned DEFAULT NULL,
+    `lyrics` text DEFAULT NULL,
     `original_filename` varchar(255) NOT NULL DEFAULT '',
     `state` tinyint NOT NULL DEFAULT 0,
     `access` int unsigned NOT NULL DEFAULT 1,
@@ -215,4 +222,16 @@ CREATE TABLE IF NOT EXISTS `#__audioarchive_download_tickets` (
     `counted` tinyint unsigned NOT NULL DEFAULT 0,
     PRIMARY KEY (`token_hash`),
     KEY `idx_download_ticket_expiry` (`expires_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `#__audioarchive_covers` (
+  `entity_type` varchar(8) NOT NULL,
+  `entity_id` int unsigned NOT NULL,
+  `mime_type` varchar(32) NOT NULL,
+  `width` int unsigned NOT NULL,
+  `height` int unsigned NOT NULL,
+  `file_size` int unsigned NOT NULL,
+  `image_data` mediumtext NOT NULL,
+  `modified` datetime NOT NULL,
+  PRIMARY KEY (`entity_type`, `entity_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci;

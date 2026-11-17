@@ -17,6 +17,10 @@ use Joomla\Registry\Registry;
 use Joomla\Database\ParameterType;
 use Joomla\Utilities\ArrayHelper;
 use Punga\Component\Audioarchive\Administrator\Service\AudioUploadService;
+use Punga\Component\Audioarchive\Administrator\Service\CoverService;
+use Punga\Component\Audioarchive\Administrator\Service\ClipAccessService;
+use Punga\Component\Audioarchive\Administrator\Service\UserQuotaService;
+use Punga\Component\Audioarchive\Administrator\Service\ManagedStorageService;
 
 \defined('_JEXEC') or die;
 
@@ -202,6 +206,92 @@ class ClipModel extends AdminModel
         return $item;
     }
 
+    /** @var bool Keep replaced audio until the cover transaction commits. */
+    private bool $savingCover = false;
+
+    /** @brief Save pending cover changes with the clip; failure preserves the stored cover. */
+    public function save($data)
+    {
+        $input = Factory::getApplication()->getInput();
+        $file = $input->files->get('clip_cover', [], 'array');
+        $upload = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
+        if (!$upload && !$input->post->getInt('clip_cover_remove', 0))
+        {
+            return $this->saveClipData($data);
+        }
+        $db = $this->getDatabase();
+        $params = ComponentHelper::getParams('com_audioarchive');
+        $actor = $this->getCurrentUser();
+        $oldId = (int) ($data['id'] ?? 0);
+        try
+        {
+            $old = $oldId > 0 ? $this->getItem($oldId) : null;
+            if ($oldId > 0 && (!$old || !(new ClipAccessService($db, $actor))->canEdit($old)))
+            {
+                throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'));
+            }
+            $image = $upload ? CoverService::prepareUpload($file) : null;
+            $owner = (int) ($data['created_by'] ?? $old->created_by ?? $actor->id);
+            return (new UserQuotaService($db, $params, $actor))->withOwnerLocks([$owner, (int) ($old->created_by ?? $owner)], function () use ($db, $params, $actor, $oldId, $data, $image): bool
+            {
+                $audio = new AudioUploadService($db, $params, $actor);
+                $before = $oldId > 0 ? $audio->getOriginalFile($oldId) : null;
+                $after = null;
+                $this->savingCover = true;
+                $db->transactionStart(true);
+                try
+                {
+                    $saved = $this->saveClipData($data);
+                    $id = (int) $this->getState($this->getName() . '.id');
+                    $after = $id > 0 ? $audio->getOriginalFile($id) : null;
+                    if (!$saved)
+                    {
+                        throw new \RuntimeException((string) $this->getError());
+                    }
+                    (new CoverService($db, $params, $actor))->saveWithClip($id, $image);
+                    $db->transactionCommit(true);
+                }
+                catch (\Throwable $error)
+                {
+                    $db->transactionRollback(true);
+                    if ($after && ($after->storage_key ?? '') !== ($before->storage_key ?? ''))
+                    {
+                        try
+                        {
+                            (new ManagedStorageService($params))->deleteManagedFile('original', (string) $after->storage_key);
+                        }
+                        catch (\Throwable $cleanupError)
+                        {
+                            // Preserve the save error; maintenance can remove unreferenced files.
+                        }
+                    }
+                    throw $error;
+                }
+                finally
+                {
+                    $this->savingCover = false;
+                }
+                if ($before && $after && $before->storage_key !== $after->storage_key)
+                {
+                    try
+                    {
+                        (new ManagedStorageService($params))->deleteManagedFile('original', (string) $before->storage_key);
+                    }
+                    catch (\Throwable $cleanupError)
+                    {
+                        // The committed replacement is valid; maintenance can remove the old file.
+                    }
+                }
+                return true;
+            });
+        }
+        catch (\Throwable $error)
+        {
+            $this->setError($error->getMessage());
+            return false;
+        }
+    }
+
     /**
      * @brief Save clip metadata and an optional original audio upload.
      *
@@ -209,7 +299,7 @@ class ClipModel extends AdminModel
      *
      * @return bool
      */
-    public function save($data)
+    protected function saveClipData($data)
     {
         $app = Factory::getApplication();
         $params = ComponentHelper::getParams('com_audioarchive');
@@ -263,6 +353,10 @@ class ClipModel extends AdminModel
 
         if ($preparedUpload !== null)
         {
+            if ($this->savingCover)
+            {
+                $preparedUpload['retain_previous_original'] = true;
+            }
             $this->lastPreparedUpload = $preparedUpload;
 
             if (trim((string) ($data['title'] ?? '')) === '')
@@ -979,6 +1073,7 @@ class ClipModel extends AdminModel
         if ($ids !== [])
         {
             $db = $this->getDatabase();
+            $db->setQuery('DELETE FROM #__audioarchive_covers WHERE entity_type=' . $db->quote('clip') . ' AND entity_id IN (' . implode(',', $ids) . ')')->execute();
             $db->setQuery('DELETE FROM ' . $db->quoteName('#__audioarchive_collection_items') . ' WHERE clip_id IN (' . implode(',', $ids) . ')')->execute();
         }
 

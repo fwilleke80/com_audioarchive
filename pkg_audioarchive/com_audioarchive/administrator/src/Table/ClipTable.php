@@ -89,6 +89,18 @@ class ClipTable extends Table implements TaggableTableInterface, CurrentUserInte
      */
     public function check()
     {
+        try
+        {
+            foreach (\Punga\Component\Audioarchive\Administrator\Service\ClipMetadataService::normalise(get_object_vars($this)) as $field => $value)
+            {
+                $this->$field = $value;
+            }
+        }
+        catch (\InvalidArgumentException $error)
+        {
+            $this->setError($error->getMessage());
+            return false;
+        }
         if (!in_array($this->normalization_mode ?? 'inherit', ['inherit', 'enabled', 'disabled'], true))
         {
             $this->setError(\Joomla\CMS\Language\Text::_('COM_AUDIOARCHIVE_NORMALIZATION_INVALID'));

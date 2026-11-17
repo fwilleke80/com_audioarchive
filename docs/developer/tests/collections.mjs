@@ -10,17 +10,24 @@ globalThis.document = {querySelector() {return null;}, body: {prepend() {}}, add
 let revision = 0;
 let fail = false;
 const posted = [];
+const bodies = [];
 const state = {backend: 'server', userId: 7, revision: 0, boards: [{id:'default',items:[]},{id:'previous',items:[]}], defaultBoard:'default', playlists: [], token: 'csrf'};
 globalThis.fetch = async (url, options) =>
 {
     if (!options.body) return {ok: true, json: async () => ({success: true, data: state})};
     const payload = JSON.parse(options.body.get('payload'));
     posted.push(payload);
+    bodies.push(options.body);
     assert.equal(options.body.get('csrf'), '1');
     if (fail) return {ok: false, json: async () => ({success: false, message: 'Stale tab'})};
     assert.equal(payload.revision, revision);
     revision++;
     if (payload.recordings) return {ok:true,json:async()=>({success:true,data:{state:{...state,revision,recordings:payload.recordings}}})};
+    if (payload.playlists)
+    {
+        state.playlists = payload.playlists;
+        return {ok: true, json: async () => ({success: true, data: {state: {...state, revision}}})};
+    }
     const board = {...payload.board, items: payload.board.items.map((item) => item ? {...item, id: 42, title: 'Canonical'} : null)};
     state.boards = [...state.boards.filter(item => item.id !== board.id), board];
     return {ok: true, json: async () => ({success: true, data: {id: board.id, state: {...state, revision}}})};
@@ -64,3 +71,20 @@ await Collections.addToBoard('previous', {uuid:'new-clip',id:5}, 4);
 assert.equal(posted.length,countBefore,'duplicate clip does not write');
 await assert.rejects(Collections.addToBoard('missing', {uuid:'other',id:6},4));
 console.log('Explicit sound board destination and duplicate checks passed.');
+
+const drafts = {version: 1, selectedId: 'playlist', playlists: [{id: 'playlist', name: 'Draft', items: []}]};
+const image = new File(['png'], 'cover.png', {type: 'image/png'});
+fail = true;
+assert.equal(await Collections.write('com_audioarchive.playlists.v1', drafts, {preserveDraft: true, covers: [{id: 'playlist', file: image}]}), false);
+assert.equal(drafts.playlists[0].name, 'Draft', 'rejected save preserves editable name and contents');
+assert.equal(Collections.read('com_audioarchive.playlists.v1', {}).playlists.length, 0);
+fail = false;
+assert.equal(await Collections.write('com_audioarchive.playlists.v1', drafts, {preserveDraft: true, covers: [{id: 'playlist', file: image}]}), true);
+assert.equal(bodies.at(-1) instanceof FormData, true);
+assert.equal(bodies.at(-1).get('cover_0').name, 'cover.png');
+assert.deepEqual(posted.at(-1).covers, [{id: 'playlist', action: 'upload'}]);
+const count = posted.length;
+assert.equal(await Collections.write('com_audioarchive.playlists.v1', drafts, {preserveDraft: true, covers: [{id: 'playlist', file: null}]}), true);
+assert.equal(posted.length, count + 1, 'cover-only removal is not suppressed by unchanged membership');
+assert.deepEqual(posted.at(-1).covers, [{id: 'playlist', action: 'remove'}]);
+console.log('Playlist multipart save, cover-only removal and failed-draft preservation passed.');

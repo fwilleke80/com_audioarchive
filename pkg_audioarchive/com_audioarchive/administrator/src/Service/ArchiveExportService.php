@@ -141,6 +141,7 @@ final class ArchiveExportService
 			unset($profile);
 			$this->addJson($zip, 'data/user-profiles.json', $profiles, $checksums);
 			$this->addJson($zip, 'data/recordings.json', RecordingArchiveService::export($this->database), $checksums);
+			$this->addJson($zip, 'data/covers.json', CoverArchiveService::export($this->database), $checksums);
 			$this->addJson($zip, 'data/collections.json', CollectionArchiveService::export($this->database), $checksums);
 			$ratingRows = $this->loadRatings($clipUuidById);
 			$this->addJson($zip, 'data/ratings.json', $ratingRows, $checksums);

@@ -52,6 +52,7 @@ final class CollectionArchiveService
 			{
 				$db->insertObject('#__audioarchive_collections', $row, 'id');
 			}
+            $result['cover_collection_ids'][] = (int) $row->id;
 			$db->setQuery('DELETE FROM ' . $db->quoteName('#__audioarchive_collection_items') . ' WHERE collection_id=' . (int) $row->id)->execute();
 			$seen = [];
 			foreach (array_slice((array) ($data['items'] ?? []), 0, $kind === 'soundboard' ? 36 : 2000) as $entry)

@@ -135,30 +135,38 @@
 	padding: 1.15rem;
 }
 
+/** @brief Independent wrapping field and tag columns, with no empty filter slots. */
 .com-audioarchive-filter-grid
 {
-	display: grid;
-	grid-template-columns: repeat(12, minmax(0, 1fr));
-	gap: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 1.25rem;
 }
-
+.com-audioarchive-filter-primary
+{
+    display: flex;
+    flex: 2 1 30rem;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 1rem;
+    min-width: 0;
+}
 .com-audioarchive-filter
 {
-	grid-column: span 4;
-	min-width: 0;
-	margin: 0;
-	padding: 0;
-	border: 0;
+    flex: 1 1 17rem;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
 }
-
 .com-audioarchive-filter-search
 {
-	grid-column: span 8;
+    flex-basis: 100%;
 }
-
 .com-audioarchive-filter-tags
 {
-	grid-column: span 4;
+    flex: 1 1 18rem;
 }
 
 .com-audioarchive-filter-range
@@ -3200,4 +3208,18 @@
     display: block;
     margin-top: .3rem;
     font-size: .9em;
+}
+
+/** @brief Pair date ranges and reserve a complete row for the duration slider. */
+.com-audioarchive-filter-dates
+{
+    display: flex;
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    gap: 1rem;
+    min-width: 0;
+}
+.com-audioarchive-filter-duration
+{
+    flex: 1 1 100%;
 }

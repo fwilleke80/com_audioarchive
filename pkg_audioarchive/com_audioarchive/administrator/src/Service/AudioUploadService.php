@@ -308,7 +308,7 @@ class AudioUploadService
         $spectrogramStatus = 'missing';
         $frequencyProfileStatus = 'missing';
 
-        $this->database->transactionStart();
+        $this->database->transactionStart(true);
 
         try
         {
@@ -336,11 +336,11 @@ class AudioUploadService
                 ->bind(':technicalMetadata', $technicalMetadata, ParameterType::STRING)
                 ->bind(':clipId', $clipId, ParameterType::INTEGER);
             $this->database->setQuery($query)->execute();
-            $this->database->transactionCommit();
+            $this->database->transactionCommit(true);
         }
         catch (\Throwable $exception)
         {
-            $this->database->transactionRollback();
+            $this->database->transactionRollback(true);
             $this->storage->deleteManagedFile('original', (string) $stored['storage_key']);
             throw $exception;
         }
@@ -437,7 +437,7 @@ class AudioUploadService
         $originalFilename = (string) $prepared['original_filename'];
         $metadataStatus = 'available';
 
-        $this->database->transactionStart();
+        $this->database->transactionStart(true);
 
         try
         {
@@ -495,11 +495,11 @@ class AudioUploadService
             $this->synchroniseAnalysisStatus($clipId, 'waveform', $waveformStatus);
             $this->synchroniseAnalysisStatus($clipId, 'spectrogram', $spectrogramStatus);
             $this->synchroniseAnalysisStatus($clipId, 'frequency_profile', $frequencyProfileStatus);
-            $this->database->transactionCommit();
+            $this->database->transactionCommit(true);
         }
         catch (\Throwable $exception)
         {
-            $this->database->transactionRollback();
+            $this->database->transactionRollback(true);
 
             try
             {

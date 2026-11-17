@@ -15,3 +15,9 @@ Saved archive searches and user favourites are not on the active roadmap. Existi
 Multi-user support, ownership, frontend uploads, private clips, quotas and account-stored collections are already implemented. They are not future milestones.
 
 Only external embeds are in scope for 0.15.0. The remaining milestones require their own design and implementation releases.
+
+## Cover images and metadata architecture
+
+Cover upload/storage is introduced in 0.15.4 for clips and account playlists. Since 0.15.5, clip covers are submitted with Save/Apply, including on new clips. Public rendering (clip pages, player artwork, playlist artwork and embeds) is a separate design step. Covers are attached to their entity rather than encoded into descriptive metadata or tags. Each entity has at most one cover, and replacing a clip cover does not change a playlist cover.
+
+The richer metadata milestone is implemented in 0.15.7: licence, creator and contributors, recording location, genre/style, creation year and lyrics. Optional public profiles are next in the agreed roadmap. Image-specific attribution, alt text and focal-point settings can be added alongside the cover association when rendering is designed, without changing clip ownership or creative credits. Never infer permission to reuse an image from the audio licence.

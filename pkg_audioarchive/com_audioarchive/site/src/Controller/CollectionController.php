@@ -8,6 +8,7 @@ use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Session\Session;
 use Joomla\Database\DatabaseInterface;
 use Punga\Component\Audioarchive\Site\Service\CollectionService;
+use Punga\Component\Audioarchive\Administrator\Service\CoverService;
 
 \defined('_JEXEC') or die;
 
@@ -100,12 +101,31 @@ class CollectionController extends BaseController
 			{
 				throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_COLLECTION_INVALID'), 400);
 			}
+            $covers = [];
+            if ($action === 'playlists')
+            {
+                $changes = $data['covers'] ?? [];
+                if (!is_array($changes) || !array_is_list($changes) || count($changes) > 100)
+                {
+                    throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_COLLECTION_INVALID'), 400);
+                }
+                foreach ($changes as $index => $change)
+                {
+                    $uuid = is_array($change) ? ($change['id'] ?? '') : '';
+                    if (!is_string($uuid) || $uuid === '' || array_key_exists($uuid, $covers)
+                        || !in_array($change['action'] ?? '', ['upload', 'remove'], true))
+                    {
+                        throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_COLLECTION_INVALID'), 400);
+                    }
+                    $covers[$uuid] = $change['action'] === 'remove' ? null : CoverService::prepareUpload($app->getInput()->files->get('cover_' . $index, [], 'array'));
+                }
+            }
 			$revision = (int) ($data['revision'] ?? -1);
 			$id = is_string($data['id'] ?? null) ? $data['id'] : '';
 			$result = match ($action)
 			{
 				'state' => $service->state() + ['token' => Session::getFormToken(), 'sharing' => (bool) $params->get('collections_sharing', 1), 'labels' => $this->labels()],
-				'playlists' => $service->playlists(is_array($data['playlists'] ?? null) ? $data['playlists'] : [], $revision),
+				'playlists' => $service->playlists(is_array($data['playlists'] ?? null) ? $data['playlists'] : [], $revision, $covers),
 				'importPlaylist', 'importBoard' => $service->importCollection($action === 'importPlaylist' ? 'playlist' : 'soundboard', is_array($data['collection'] ?? null) ? $data['collection'] : [], $revision),
 				'recordings' => $service->recordings(is_array($data['recordings'] ?? null) ? $data['recordings'] : [], $revision),
 				'board' => $service->board(is_array($data['board'] ?? null) ? $data['board'] : [], $revision),

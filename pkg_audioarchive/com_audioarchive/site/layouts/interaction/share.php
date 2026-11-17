@@ -76,6 +76,9 @@ $escapeEmbed = static fn(string $value): string => htmlspecialchars($value, ENT_
         </label>
         <?php if ($embedAppearance['show_title']) : ?>
         <label><input type="checkbox" data-embed-title checked> <?php echo Text::_('COM_AUDIOARCHIVE_EMBED_SHOW_TITLE'); ?></label>
+        <?php if ($embedAppearance['link_title']) : ?>
+        <label><input type="checkbox" data-embed-link-title checked> <?php echo Text::_('COM_AUDIOARCHIVE_EMBED_LINK_TITLE'); ?></label>
+        <?php endif; ?>
         <?php endif; ?>
         <?php if ($embedAppearance['show_original'] || $embedAppearance['show_download']) : ?>
         <label><input type="checkbox" data-embed-links checked> <?php echo Text::_('COM_AUDIOARCHIVE_EMBED_SHOW_LINKS'); ?></label>

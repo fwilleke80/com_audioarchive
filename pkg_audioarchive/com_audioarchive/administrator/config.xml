@@ -100,6 +100,7 @@
             <option value="0">JNO</option><option value="1">JYES</option>
         </field>
         <field name="embed_show_title" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_EMBED_SHOW_TITLE" default="1" filter="integer" showon="enable_external_embeds:1"><option value="0">JNO</option><option value="1">JYES</option></field>
+        <field name="embed_link_title" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_EMBED_LINK_TITLE" default="1" filter="integer" showon="enable_external_embeds:1[AND]embed_show_title:1"><option value="0">JNO</option><option value="1">JYES</option></field>
         <field name="embed_show_original" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_EMBED_SHOW_ORIGINAL" default="1" filter="integer" showon="enable_external_embeds:1"><option value="0">JNO</option><option value="1">JYES</option></field>
         <field name="embed_show_download" type="radio" layout="joomla.form.field.radio.switcher" label="COM_AUDIOARCHIVE_EMBED_SHOW_DOWNLOAD" default="1" filter="integer" showon="enable_external_embeds:1"><option value="0">JNO</option><option value="1">JYES</option></field>
         <field name="embed_background_color" type="color" format="hex" default="" label="COM_AUDIOARCHIVE_EMBED_BACKGROUND_COLOR" description="COM_AUDIOARCHIVE_EMBED_COLOR_DESC" showon="enable_external_embeds:1" />

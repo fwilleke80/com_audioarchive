@@ -62,4 +62,13 @@
         <field name="play_count" type="number" label="COM_AUDIOARCHIVE_FIELD_PLAY_COUNT" readonly="true" />
         <field name="download_count" type="number" label="COM_AUDIOARCHIVE_FIELD_DOWNLOAD_COUNT" readonly="true" />
     </fieldset>
+    <fieldset name="metadata" label="COM_AUDIOARCHIVE_METADATA">
+        <field name="licence" type="text" label="COM_AUDIOARCHIVE_METADATA_LICENCE" description="COM_AUDIOARCHIVE_METADATA_LICENCE_DESC" maxlength="255" filter="string" />
+        <field name="creator" type="text" label="COM_AUDIOARCHIVE_METADATA_CREATOR" description="COM_AUDIOARCHIVE_METADATA_CREATOR_DESC" maxlength="255" filter="string" />
+        <field name="contributors" type="textarea" label="COM_AUDIOARCHIVE_METADATA_CONTRIBUTORS" description="COM_AUDIOARCHIVE_METADATA_CONTRIBUTORS_DESC" maxlength="8000" filter="string" rows="4" />
+        <field name="recording_location" type="text" label="COM_AUDIOARCHIVE_METADATA_RECORDING_LOCATION" description="COM_AUDIOARCHIVE_METADATA_RECORDING_LOCATION_DESC" maxlength="255" filter="string" />
+        <field name="genre_style" type="text" label="COM_AUDIOARCHIVE_METADATA_GENRE_STYLE" description="COM_AUDIOARCHIVE_METADATA_GENRE_STYLE_DESC" maxlength="255" filter="string" />
+        <field name="creation_year" type="number" label="COM_AUDIOARCHIVE_METADATA_CREATION_YEAR" description="COM_AUDIOARCHIVE_METADATA_CREATION_YEAR_DESC" min="1" max="9999" step="1" filter="string" />
+        <field name="lyrics" type="textarea" label="COM_AUDIOARCHIVE_METADATA_LYRICS" description="COM_AUDIOARCHIVE_METADATA_LYRICS_DESC" maxlength="60000" filter="string" rows="8" />
+    </fieldset>
 </form>

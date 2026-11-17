@@ -6,6 +6,7 @@ use Joomla\CMS\User\User;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Registry\Registry;
 use Punga\Component\Audioarchive\Administrator\Service\ClipAccessService;
+use Punga\Component\Audioarchive\Administrator\Service\CoverService;
 use Punga\Component\Audioarchive\Administrator\Service\UserQuotaService;
 
 \defined('_JEXEC') or die;
@@ -254,13 +255,13 @@ final class CollectionService
 	}
 
 	/** @brief Atomically persist the typed playlist store, preserving order and excluding other owners. */
-	public function playlists(array $playlists, int $revision): array
+	public function playlists(array $playlists, int $revision, array $covers = []): array
 	{
 		if (!array_is_list($playlists) || count($playlists) > 100)
 		{
 			throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_COLLECTION_LIMIT'), 400);
 		}
-		return $this->mutate($revision, function () use ($playlists): array
+		return $this->mutate($revision, function () use ($playlists, $covers): array
 		{
 			$ids = [];
 			foreach ($playlists as $playlist)
@@ -279,6 +280,14 @@ final class CollectionService
 					$this->remove($row);
 				}
 			}
+            foreach ($covers as $uuid => $image)
+            {
+                if (!in_array($uuid, $ids, true))
+                {
+                    throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_COLLECTION_INVALID'), 400);
+                }
+                (new CoverService($this->db, $this->params, $this->user))->saveWithPlaylist($uuid, $image);
+            }
 			return [];
 		});
 	}
@@ -297,6 +306,7 @@ final class CollectionService
 	private function remove(object $row): void
 	{
 		$this->db->setQuery('DELETE FROM ' . $this->db->quoteName('#__audioarchive_collection_items') . ' WHERE collection_id=' . (int) $row->id)->execute();
+		$this->db->setQuery('DELETE FROM #__audioarchive_covers WHERE entity_type=' . $this->db->quote('playlist') . ' AND entity_id=' . (int) $row->id)->execute();
 		$this->db->setQuery('DELETE FROM ' . $this->db->quoteName('#__audioarchive_collections') . ' WHERE id=' . (int) $row->id . ' AND user_id=' . (int) $this->user->id)->execute();
 	}
 

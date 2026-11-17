@@ -110,7 +110,7 @@ namespace
 	$downloadUrl = '';
 	$eventUrl = \Punga\Component\Audioarchive\Site\Service\EmbedService::url('countPlay', 42);
 	$eventToken = 'test-play';
-	$appearance = ['background' => '#112233', 'text' => '#eeeeee', 'link' => '#abcdef', 'title' => '#fedcba', 'show_title' => true, 'show_original' => true, 'show_download' => true];
+	$appearance = ['background' => '#112233', 'text' => '#eeeeee', 'link' => '#abcdef', 'title' => '#fedcba', 'show_title' => true, 'link_title' => true, 'show_original' => true, 'show_download' => true];
 	$documents = [];
 	foreach (['minimal', 'compact', 'default', 'featured'] as $mode)
 	{
@@ -128,6 +128,10 @@ namespace
 	ob_start();
 	require $root . 'site/layouts/interaction/share.php';
 	$documents['share'] = ob_get_clean();
+	$appearance['link_title'] = false;
+	ob_start();
+	require $root . 'site/tmpl/embed/document.php';
+	$documents['plain_title'] = ob_get_clean();
 	$appearance['show_title'] = false;
 	$appearance['show_original'] = false;
 	$appearance['show_download'] = false;

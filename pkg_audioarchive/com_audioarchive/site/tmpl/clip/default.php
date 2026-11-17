@@ -104,6 +104,7 @@ elseif (!empty($this->item->publish_down) && $this->item->publish_down !== '0000
 		</aside>
 	</div>
 
+	<?php echo $this->loadTemplate('credits'); ?>
 	<?php echo $this->loadTemplate('related'); ?>
 
 	<?php echo $this->loadTemplate('navigation'); ?>

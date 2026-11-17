@@ -1,6 +1,7 @@
-import {openSoundboardChooser, renderSoundboardChoices} from './board-chooser.js?v=0.13.7.1';
+import {mountPlaylistCovers} from './playlist-covers.js?v=0.15.6';
+import {openSoundboardChooser, renderSoundboardChoices} from './board-chooser.js?v=0.15.6';
 import {playbackFor, playNormalized, updateNormalization} from './normalization.js?v=0.13.2.7';
-import {Collections} from './collections.js?v=0.13.7.1';
+import {Collections} from './collections.js?v=0.15.6';
 const PLAYLIST_STORAGE_KEY = 'com_audioarchive.playlists.v1';
 const PLAYLIST_STORAGE_VERSION = 1;
 const PLAYLIST_RESOLUTION_BATCH_SIZE = 500;
@@ -1500,7 +1501,10 @@ async function initialisePlaylistPage()
 	}
 
 	const fallbackName = root.dataset.audioarchiveLabelDefaultName || 'My playlist';
-	let store = readPlaylistStore(fallbackName, Collections.backend === 'browser');
+	let store = readPlaylistStore(fallbackName, false);
+	let acknowledged = structuredClone(store);
+	let saving = false;
+	const pendingEvents = [];
 	let temporaryPlaylist = null;
 	let resolvedItems = new Map();
 	let currentIndex = -1;
@@ -1555,6 +1559,35 @@ async function initialisePlaylistPage()
 	}
 
 	const getCurrentPlaylist = () => temporaryPlaylist || findPlaylist(store, store.selectedId);
+	const coverControl = root.querySelector('[data-audioarchive-cover]');
+    const saveButton = root.querySelector('[data-playlist-save]');
+    const cancelButton = root.querySelector('[data-playlist-cancel]');
+    /** @brief Ignore refreshed display metadata and the currently selected playlist when detecting edits. */
+    const signature = value => JSON.stringify(value.playlists.map(list => [list.id, list.name, list.items.map(item => item.uuid)]));
+    const covers = mountPlaylistCovers(coverControl,
+        () => Collections.backend === 'server' && !temporaryPlaylist ? store.selectedId : '',
+        id => acknowledged.playlists.some(list => list.id === id),
+        () => updateDraft());
+    const dirty = () => signature(store) !== signature(acknowledged) || [...covers.pending.keys()].some(id => store.playlists.some(list => list.id === id));
+    /** @brief Expose the pending state without persisting it. */
+    const updateDraft = () =>
+    {
+        saveButton.disabled = saving || !dirty();
+        cancelButton.disabled = saving || !dirty();
+        if (dirty()) setStatus(root.dataset.editPending);
+    };
+    /** @brief Defer edit analytics until Save succeeds; playback remains immediate. */
+    const recordEdit = (...args) =>
+    {
+        if (['audioarchive.playlist.created', 'audioarchive.playlist.deleted', 'audioarchive.playlist.clip_removed', 'audioarchive.playlist.saved_shared'].includes(args[2]))
+        {
+            pendingEvents.push(args);
+        }
+        else
+        {
+            recordPlaylistInteraction(...args);
+        }
+    };
 
 	const leaveSharedUrl = () =>
 	{
@@ -1566,7 +1599,8 @@ async function initialisePlaylistPage()
 
 	const saveStore = async () =>
 	{
-		return temporaryPlaylist ? true : writePlaylistStore(store);
+		updateDraft();
+        return true;
 	};
 
 	const setStatus = (message) =>
@@ -1605,6 +1639,8 @@ async function initialisePlaylistPage()
 			}
 		}
 
+		void covers.refresh();
+        updateDraft();
 		root.querySelectorAll('[data-audioarchive-playlist-rename], [data-audioarchive-playlist-delete]').forEach((button) =>
 		{
 			button.disabled = temporaryPlaylist !== null;
@@ -1765,7 +1801,7 @@ async function initialisePlaylistPage()
 			return;
 		}
 		const resolved = resolvedItems.get(removed.uuid);
-		recordPlaylistInteraction(
+		recordEdit(
 			root.dataset.audioarchiveInteractionUrl || '',
 			root.dataset.audioarchiveInteractionToken || '',
 			'audioarchive.playlist.clip_removed',
@@ -2175,7 +2211,7 @@ async function initialisePlaylistPage()
 			return;
 		}
 
-		recordPlaylistInteraction(
+		recordEdit(
 			root.dataset.audioarchiveInteractionUrl || '',
 			root.dataset.audioarchiveInteractionToken || '',
 			'audioarchive.soundboard.loaded_from_playlist',
@@ -2188,6 +2224,82 @@ async function initialisePlaylistPage()
 		));
 	});
 
+    saveButton.addEventListener('click', async () =>
+    {
+        if (saving || !dirty()) return;
+        if (signature(readPlaylistStore(fallbackName, false)) !== signature(acknowledged))
+        {
+            setStatus(root.dataset.editConflict);
+            return;
+        }
+        saving = true;
+        updateDraft();
+        const controls = [...root.querySelectorAll('button, input, select')].map(element => [element, element.disabled]);
+        controls.forEach(([element]) => { element.disabled = true; });
+        try
+        {
+            const changes = [...covers.pending].filter(([id]) => store.playlists.some(list => list.id === id)).map(([id, file]) => ({id, file}));
+            if (await Collections.write(PLAYLIST_STORAGE_KEY, store, {preserveDraft: true, covers: changes}))
+            {
+                acknowledged = structuredClone(store);
+                covers.clear();
+                for (const args of pendingEvents.splice(0)) recordPlaylistInteraction(...args);
+                setStatus(root.dataset.editSaved);
+            }
+        }
+        finally
+        {
+            saving = false;
+            controls.forEach(([element, disabled]) => { element.disabled = disabled; });
+            updateManager();
+            renderRows();
+        }
+    });
+    cancelButton.addEventListener('click', async () =>
+    {
+        if (saving) return;
+        saving = true;
+        updateDraft();
+        const refreshed = await Collections.refresh();
+        saving = false;
+        if (!refreshed)
+        {
+            updateDraft();
+            return;
+        }
+        ++metadataRequest;
+        const selectedId = store.selectedId;
+        store = readPlaylistStore(fallbackName, false);
+        acknowledged = structuredClone(store);
+        if (findPlaylist(store, selectedId)) store.selectedId = selectedId;
+        pendingEvents.length = 0;
+        covers.clear();
+        currentIndex = -1;
+        currentUuid = '';
+        setPlayerMetadata(null, -1, 0);
+        setStatus(root.dataset.editCancelled);
+        void refreshMetadata(false);
+    });
+    for (const name of ['click', 'change'])
+    {
+        root.addEventListener(name, event =>
+        {
+            if (saving)
+            {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+            }
+        }, true);
+    }
+    window.addEventListener('beforeunload', event =>
+    {
+        if (dirty())
+        {
+            event.preventDefault();
+            event.returnValue = '';
+        }
+    });
+
 	select?.addEventListener('change', async () =>
 	{
 		if (!(select instanceof HTMLSelectElement) || temporaryPlaylist)
@@ -2196,7 +2308,7 @@ async function initialisePlaylistPage()
 		}
 
 		store.selectedId = select.value;
-		if (!(await writePlaylistStore(store)))
+		if (!(await saveStore()))
 		{
 			return;
 		}
@@ -2226,11 +2338,11 @@ async function initialisePlaylistPage()
 		}
 
 		const playlist = createPlaylist(store, name);
-		if (!(await writePlaylistStore(store)))
+		if (!(await saveStore()))
 		{
 			return;
 		}
-		recordPlaylistInteraction(
+		recordEdit(
 			root.dataset.audioarchiveInteractionUrl || '',
 			root.dataset.audioarchiveInteractionToken || '',
 			'audioarchive.playlist.created',
@@ -2262,7 +2374,7 @@ async function initialisePlaylistPage()
 			name
 		);
 		playlist.modified = Date.now();
-		if (!(await writePlaylistStore(store)))
+		if (!(await saveStore()))
 		{
 			return;
 		}
@@ -2284,11 +2396,11 @@ async function initialisePlaylistPage()
 			createPlaylist(store, fallbackName);
 		}
 		store.selectedId = store.playlists[0].id;
-		if (!(await writePlaylistStore(store)))
+		if (!(await saveStore()))
 		{
 			return;
 		}
-		recordPlaylistInteraction(
+		recordEdit(
 			root.dataset.audioarchiveInteractionUrl || '',
 			root.dataset.audioarchiveInteractionToken || '',
 			'audioarchive.playlist.deleted',
@@ -2381,7 +2493,7 @@ async function initialisePlaylistPage()
 				startedUuid = currentUuid;
 				const playlist = getCurrentPlaylist();
 				const item = resolvedItems.get(currentUuid);
-				recordPlaylistInteraction(
+				recordEdit(
 					root.dataset.audioarchiveInteractionUrl || '',
 					root.dataset.audioarchiveInteractionToken || '',
 					'audioarchive.playlist.play',
@@ -2430,11 +2542,11 @@ async function initialisePlaylistPage()
 
 		store.playlists.push(saved);
 		store.selectedId = saved.id;
-		if (!(await writePlaylistStore(store)))
+		if (!(await saveStore()))
 		{
 			return;
 		}
-		recordPlaylistInteraction(
+		recordEdit(
 			root.dataset.audioarchiveInteractionUrl || '',
 			root.dataset.audioarchiveInteractionToken || '',
 			'audioarchive.playlist.saved_shared',
@@ -2447,7 +2559,7 @@ async function initialisePlaylistPage()
 			sharedPanel.hidden = true;
 		}
 		leaveSharedUrl();
-		setStatus(root.dataset.audioarchiveLabelSavedShared || 'Shared playlist saved.');
+		updateDraft();
 		void refreshMetadata(true);
 	});
 
@@ -2489,6 +2601,7 @@ async function initialisePlaylistPage()
 		try
 		{
 			const data = JSON.parse(await file.text());
+            if (saving) return;
 			const imported = normalisePlaylist(
 				{
 					id: createLocalId(),
@@ -2508,11 +2621,11 @@ async function initialisePlaylistPage()
 			imported.name = makeUniquePlaylistName(store, imported.name);
 			store.playlists.push(imported);
 			store.selectedId = imported.id;
-			if (!(await writePlaylistStore(store)))
+			if (!(await saveStore()))
 		{
 			return;
 		}
-			setStatus(root.dataset.audioarchiveLabelImported || 'Playlist imported.');
+			updateDraft();
 			currentIndex = -1;
 			currentUuid = '';
 			await refreshMetadata(false);
@@ -2540,6 +2653,11 @@ async function initialisePlaylistPage()
 
 	const getShareUrl = async () =>
 	{
+        if (dirty())
+        {
+            setStatus(root.dataset.editPending);
+            return '';
+        }
 		const playlist = getCurrentPlaylist();
 		const payload = {
 			version: PLAYLIST_STORAGE_VERSION,
@@ -2581,7 +2699,7 @@ async function initialisePlaylistPage()
 		if (url && await playlistCopyText(url))
 		{
 			setStatus(root.dataset.audioarchiveLabelCopied || 'Link copied.');
-			recordPlaylistInteraction(
+			recordEdit(
 				root.dataset.audioarchiveInteractionUrl || '',
 				root.dataset.audioarchiveInteractionToken || '',
 				'audioarchive.playlist.shared',
@@ -2597,7 +2715,7 @@ async function initialisePlaylistPage()
 		const url = await getShareUrl();
 		if (url && await playlistNativeShare(playlist?.name || document.title, url))
 		{
-			recordPlaylistInteraction(
+			recordEdit(
 				root.dataset.audioarchiveInteractionUrl || '',
 				root.dataset.audioarchiveInteractionToken || '',
 				'audioarchive.playlist.shared',
@@ -2609,18 +2727,21 @@ async function initialisePlaylistPage()
 
 	window.addEventListener('storage', (event) =>
 	{
-		if (event.key !== PLAYLIST_STORAGE_KEY || temporaryPlaylist)
+		if (event.key !== PLAYLIST_STORAGE_KEY || temporaryPlaylist || dirty() || saving)
 		{
 			return;
 		}
 
-		store = readPlaylistStore(fallbackName, Collections.backend === 'browser');
+		store = readPlaylistStore(fallbackName, false);
+        acknowledged = structuredClone(store);
 		void refreshMetadata(true);
 	});
 
 	Collections.mount(root, 'playlist', () => temporaryPlaylist ? '' : store.selectedId, () =>
 	{
+        if (dirty() || saving) return;
 		store = readPlaylistStore(fallbackName, false);
+        acknowledged = structuredClone(store);
 		updateManager();
 		void refreshMetadata(true);
 	});

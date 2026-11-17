@@ -12,6 +12,8 @@ $showTags = (int) $this->params->get('archive_show_tag_filter', 1) === 1;
 $showDuration = (int) $this->params->get('archive_show_duration_filter', 1) === 1;
 $showRecorded = (int) $this->params->get('archive_show_recorded_filter', 1) === 1;
 $showUploaded = (int) $this->params->get('archive_show_uploaded_filter', 1) === 1;
+$showTags = $showTags && !empty($this->tagOptions);
+$showPrimary = $showOwner || $showSearch || $showCategory || $showDuration || $showRecorded || $showUploaded;
 $selectedTags = array_map('intval', (array) $this->state->get('filter.tags', []));
 $tagMode = (string) $this->state->get('filter.tag_mode', 'and');
 $forceOpen = $this->hasActiveFilters() || $this->filterErrors !== [];
@@ -55,13 +57,10 @@ $tagListId = 'audioarchive-filter-tag-list';
 		<div id="<?php echo $filterContentId; ?>" data-audioarchive-filter-content>
 			<form class="com-audioarchive-filters" method="get" action="<?php echo $this->getArchiveUrl(); ?>">
 				<input type="hidden" name="task" value="archive.applyFilters">
-<?php if ($showOwner) : ?>
-<div class="mb-3"><label for="archive-owner"><?php echo Text::_('COM_AUDIOARCHIVE_OWNER'); ?></label><select class="form-select" name="owner" id="archive-owner"><option value="0"><?php echo Text::_('JALL'); ?></option>
-<?php foreach ($this->ownerOptions as $owner) : ?><option value="<?php echo (int) $owner->id; ?>" <?php echo (int) $this->state->get('filter.owner') === (int) $owner->id ? 'selected' : ''; ?>><?php echo $this->escape($owner->title ?: Text::sprintf('COM_AUDIOARCHIVE_OWNER_UNKNOWN', $owner->id)); ?></option><?php endforeach; ?>
-</select></div>
-<?php endif; ?>
 
 				<div class="com-audioarchive-filter-grid">
+<?php if ($showPrimary) : ?>
+<div class="com-audioarchive-filter-primary">
 					<?php if ($showSearch) : ?>
 						<div class="com-audioarchive-filter com-audioarchive-filter-search">
 							<label for="audioarchive-filter-q"><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_SEARCH'); ?></label>
@@ -79,6 +78,11 @@ $tagListId = 'audioarchive-filter-tag-list';
 						</div>
 					<?php endif; ?>
 
+<?php if ($showOwner) : ?>
+<div class="com-audioarchive-filter"><label for="archive-owner"><?php echo Text::_('COM_AUDIOARCHIVE_OWNER'); ?></label><select class="form-select" name="owner" id="archive-owner"><option value="0"><?php echo Text::_('JALL'); ?></option>
+<?php foreach ($this->ownerOptions as $owner) : ?><option value="<?php echo (int) $owner->id; ?>" <?php echo (int) $this->state->get('filter.owner') === (int) $owner->id ? 'selected' : ''; ?>><?php echo $this->escape($owner->title ?: Text::sprintf('COM_AUDIOARCHIVE_OWNER_UNKNOWN', $owner->id)); ?></option><?php endforeach; ?>
+</select></div>
+<?php endif; ?>
 					<?php if ($showCategory) : ?>
 						<div class="com-audioarchive-filter">
 							<label for="audioarchive-filter-category"><?php echo Text::_('JCATEGORY'); ?></label>
@@ -93,6 +97,103 @@ $tagListId = 'audioarchive-filter-tag-list';
 						</div>
 					<?php endif; ?>
 
+<?php if ($showRecorded || $showUploaded) : ?>
+<div class="com-audioarchive-filter-dates">
+					<?php if ($showRecorded) : ?>
+						<fieldset class="com-audioarchive-filter com-audioarchive-filter-range">
+							<legend><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_RECORDING_DATE'); ?></legend>
+							<div class="com-audioarchive-range-fields">
+								<div>
+									<label for="audioarchive-filter-recorded-from"><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_FROM'); ?></label>
+									<input id="audioarchive-filter-recorded-from" class="form-control" type="date" name="recorded_from" value="<?php echo $this->escape((string) $this->state->get('filter.recorded_from')); ?>">
+								</div>
+								<div>
+									<label for="audioarchive-filter-recorded-to"><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_TO'); ?></label>
+									<input id="audioarchive-filter-recorded-to" class="form-control" type="date" name="recorded_to" value="<?php echo $this->escape((string) $this->state->get('filter.recorded_to')); ?>">
+								</div>
+							</div>
+						</fieldset>
+					<?php endif; ?>
+
+					<?php if ($showUploaded) : ?>
+						<fieldset class="com-audioarchive-filter com-audioarchive-filter-range">
+							<legend><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_UPLOAD_DATE'); ?></legend>
+							<div class="com-audioarchive-range-fields">
+								<div>
+									<label for="audioarchive-filter-uploaded-from"><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_FROM'); ?></label>
+									<input id="audioarchive-filter-uploaded-from" class="form-control" type="date" name="uploaded_from" value="<?php echo $this->escape((string) $this->state->get('filter.uploaded_from')); ?>">
+								</div>
+								<div>
+									<label for="audioarchive-filter-uploaded-to"><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_TO'); ?></label>
+									<input id="audioarchive-filter-uploaded-to" class="form-control" type="date" name="uploaded_to" value="<?php echo $this->escape((string) $this->state->get('filter.uploaded_to')); ?>">
+								</div>
+							</div>
+						</fieldset>
+					<?php endif; ?>
+</div>
+<?php endif; ?>
+					<?php if ($showDuration) : ?>
+						<?php
+						$sliderMaximum = max(0, (int) $this->maximumDurationSeconds);
+						$sliderMinimumValue = max(0, min($sliderMaximum, (int) floor((int) $this->state->get('filter.duration_min_ms', 0) / 1000)));
+						$durationMaximumMs = $this->state->get('filter.duration_max_ms');
+						$sliderMaximumValue = $durationMaximumMs !== null
+							? max($sliderMinimumValue, min($sliderMaximum, (int) floor((int) $durationMaximumMs / 1000)))
+							: $sliderMaximum;
+						$durationMinimumValue = trim((string) $this->state->get('filter.duration_min', ''));
+						$durationMaximumValue = trim((string) $this->state->get('filter.duration_max', ''));
+						?>
+						<fieldset class="com-audioarchive-filter com-audioarchive-filter-range com-audioarchive-filter-duration">
+							<legend><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_DURATION'); ?></legend>
+							<?php if ($sliderMaximum > 0) : ?>
+								<div
+									class="com-audioarchive-duration-slider"
+									data-audioarchive-duration-slider
+									data-maximum="<?php echo $sliderMaximum; ?>"
+									hidden
+								>
+									<div class="com-audioarchive-duration-track" data-audioarchive-duration-track>
+										<input
+											type="range"
+											min="0"
+											max="<?php echo $sliderMaximum; ?>"
+											step="1"
+											value="<?php echo $sliderMinimumValue; ?>"
+											aria-label="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_FILTER_DURATION_SLIDER_MIN')); ?>"
+											data-audioarchive-duration-min-range
+										>
+										<input
+											type="range"
+											min="0"
+											max="<?php echo $sliderMaximum; ?>"
+											step="1"
+											value="<?php echo $sliderMaximumValue; ?>"
+											aria-label="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_FILTER_DURATION_SLIDER_MAX')); ?>"
+											data-audioarchive-duration-max-range
+										>
+									</div>
+									<div class="com-audioarchive-duration-slider-labels" aria-hidden="true">
+										<span>0:00</span>
+										<span data-audioarchive-duration-maximum-label></span>
+									</div>
+								</div>
+							<?php endif; ?>
+							<div class="com-audioarchive-range-fields">
+								<div>
+									<label for="audioarchive-filter-duration-min"><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_FROM'); ?></label>
+									<input id="audioarchive-filter-duration-min" class="form-control" type="text" inputmode="numeric" name="duration_min" placeholder="00:30" value="<?php echo $this->escape($durationMinimumValue); ?>" data-audioarchive-duration-min-field>
+								</div>
+								<div>
+									<label for="audioarchive-filter-duration-max"><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_TO'); ?></label>
+									<input id="audioarchive-filter-duration-max" class="form-control" type="text" inputmode="numeric" name="duration_max" placeholder="05:00" value="<?php echo $this->escape($durationMaximumValue); ?>" data-audioarchive-duration-max-field>
+								</div>
+							</div>
+						</fieldset>
+					<?php endif; ?>
+
+
+</div>
+<?php endif; ?>
 					<?php if ($showTags && $this->tagOptions) : ?>
 						<fieldset class="com-audioarchive-filter com-audioarchive-filter-tags">
 							<legend><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_TAGS'); ?></legend>
@@ -155,96 +256,6 @@ $tagListId = 'audioarchive-filter-tag-list';
 						</fieldset>
 					<?php endif; ?>
 
-					<?php if ($showDuration) : ?>
-						<?php
-						$sliderMaximum = max(0, (int) $this->maximumDurationSeconds);
-						$sliderMinimumValue = max(0, min($sliderMaximum, (int) floor((int) $this->state->get('filter.duration_min_ms', 0) / 1000)));
-						$durationMaximumMs = $this->state->get('filter.duration_max_ms');
-						$sliderMaximumValue = $durationMaximumMs !== null
-							? max($sliderMinimumValue, min($sliderMaximum, (int) floor((int) $durationMaximumMs / 1000)))
-							: $sliderMaximum;
-						$durationMinimumValue = trim((string) $this->state->get('filter.duration_min', ''));
-						$durationMaximumValue = trim((string) $this->state->get('filter.duration_max', ''));
-						?>
-						<fieldset class="com-audioarchive-filter com-audioarchive-filter-range com-audioarchive-filter-duration">
-							<legend><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_DURATION'); ?></legend>
-							<?php if ($sliderMaximum > 0) : ?>
-								<div
-									class="com-audioarchive-duration-slider"
-									data-audioarchive-duration-slider
-									data-maximum="<?php echo $sliderMaximum; ?>"
-									hidden
-								>
-									<div class="com-audioarchive-duration-track" data-audioarchive-duration-track>
-										<input
-											type="range"
-											min="0"
-											max="<?php echo $sliderMaximum; ?>"
-											step="1"
-											value="<?php echo $sliderMinimumValue; ?>"
-											aria-label="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_FILTER_DURATION_SLIDER_MIN')); ?>"
-											data-audioarchive-duration-min-range
-										>
-										<input
-											type="range"
-											min="0"
-											max="<?php echo $sliderMaximum; ?>"
-											step="1"
-											value="<?php echo $sliderMaximumValue; ?>"
-											aria-label="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_FILTER_DURATION_SLIDER_MAX')); ?>"
-											data-audioarchive-duration-max-range
-										>
-									</div>
-									<div class="com-audioarchive-duration-slider-labels" aria-hidden="true">
-										<span>0:00</span>
-										<span data-audioarchive-duration-maximum-label></span>
-									</div>
-								</div>
-							<?php endif; ?>
-							<div class="com-audioarchive-range-fields">
-								<div>
-									<label for="audioarchive-filter-duration-min"><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_FROM'); ?></label>
-									<input id="audioarchive-filter-duration-min" class="form-control" type="text" inputmode="numeric" name="duration_min" placeholder="00:30" value="<?php echo $this->escape($durationMinimumValue); ?>" data-audioarchive-duration-min-field>
-								</div>
-								<div>
-									<label for="audioarchive-filter-duration-max"><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_TO'); ?></label>
-									<input id="audioarchive-filter-duration-max" class="form-control" type="text" inputmode="numeric" name="duration_max" placeholder="05:00" value="<?php echo $this->escape($durationMaximumValue); ?>" data-audioarchive-duration-max-field>
-								</div>
-							</div>
-						</fieldset>
-					<?php endif; ?>
-
-					<?php if ($showRecorded) : ?>
-						<fieldset class="com-audioarchive-filter com-audioarchive-filter-range">
-							<legend><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_RECORDING_DATE'); ?></legend>
-							<div class="com-audioarchive-range-fields">
-								<div>
-									<label for="audioarchive-filter-recorded-from"><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_FROM'); ?></label>
-									<input id="audioarchive-filter-recorded-from" class="form-control" type="date" name="recorded_from" value="<?php echo $this->escape((string) $this->state->get('filter.recorded_from')); ?>">
-								</div>
-								<div>
-									<label for="audioarchive-filter-recorded-to"><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_TO'); ?></label>
-									<input id="audioarchive-filter-recorded-to" class="form-control" type="date" name="recorded_to" value="<?php echo $this->escape((string) $this->state->get('filter.recorded_to')); ?>">
-								</div>
-							</div>
-						</fieldset>
-					<?php endif; ?>
-
-					<?php if ($showUploaded) : ?>
-						<fieldset class="com-audioarchive-filter com-audioarchive-filter-range">
-							<legend><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_UPLOAD_DATE'); ?></legend>
-							<div class="com-audioarchive-range-fields">
-								<div>
-									<label for="audioarchive-filter-uploaded-from"><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_FROM'); ?></label>
-									<input id="audioarchive-filter-uploaded-from" class="form-control" type="date" name="uploaded_from" value="<?php echo $this->escape((string) $this->state->get('filter.uploaded_from')); ?>">
-								</div>
-								<div>
-									<label for="audioarchive-filter-uploaded-to"><?php echo Text::_('COM_AUDIOARCHIVE_FILTER_TO'); ?></label>
-									<input id="audioarchive-filter-uploaded-to" class="form-control" type="date" name="uploaded_to" value="<?php echo $this->escape((string) $this->state->get('filter.uploaded_to')); ?>">
-								</div>
-							</div>
-						</fieldset>
-					<?php endif; ?>
 				</div>
 
 				<input type="hidden" name="sort" value="<?php echo $this->escape((string) $this->state->get('list.ordering')); ?>">

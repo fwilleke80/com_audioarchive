@@ -45,8 +45,9 @@ function element()
 		},
 	};
 }
-const fields = Object.fromEntries(['presentation', 'code', 'preview', 'feedback', 'close', 'copy', 'title', 'links'].map(key => [`[data-embed-${key}]`, element()]));
+const fields = Object.fromEntries(['presentation', 'code', 'preview', 'feedback', 'close', 'copy', 'title', 'links', 'link-title'].map(key => [`[data-embed-${key}]`, element()]));
 fields['[data-embed-presentation]'].value = 'default';
+fields['[data-embed-link-title]'].checked = true;
 fields['[data-embed-title]'].checked = true;
 fields['[data-embed-links]'].checked = true;
 const dialog = element();
@@ -87,10 +88,14 @@ for (const mode of ['minimal', 'compact', 'default', 'featured'])
 	assert.equal(new URL(code.src).searchParams.has('preview'), false);
 	assert.equal(new URL(fields['[data-embed-preview]'].src).searchParams.get('preview'), '1');
 }
+fields['[data-embed-link-title]'].checked = false;
+fields['[data-embed-link-title]'].events.change();
+assert.equal(new URL(JSON.parse(fields['[data-embed-code]'].value).src).searchParams.get('link_title'), '0');
 fields['[data-embed-title]'].checked = false;
 fields['[data-embed-links]'].checked = false;
 fields['[data-embed-links]'].events.change();
 let codeUrl = new URL(JSON.parse(fields['[data-embed-code]'].value).src);
+assert.equal(fields['[data-embed-link-title]'].disabled, true);
 assert.equal(codeUrl.searchParams.get('title'), '0');
 assert.equal(codeUrl.searchParams.get('links'), '0');
 assert.equal(new URL(fields['[data-embed-preview]'].src).searchParams.get('links'), '0');
@@ -98,6 +103,8 @@ fields['[data-embed-title]'].checked = true;
 fields['[data-embed-title]'].events.change();
 codeUrl = new URL(JSON.parse(fields['[data-embed-code]'].value).src);
 assert.equal(codeUrl.searchParams.has('title'), false);
+assert.equal(fields['[data-embed-link-title]'].disabled, false);
+assert.equal(codeUrl.searchParams.get('link_title'), '0');
 assert.equal(codeUrl.searchParams.get('links'), '0');
 await fields['[data-embed-copy]'].events.click();
 assert.equal(calls.length, 1);

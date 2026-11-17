@@ -1,0 +1,36 @@
+<?php
+/** @brief Verify that playlist metadata, contents and covers share one rollback boundary. */
+require __DIR__ . '/covers.php';
+$start = $checks;
+$service = new Punga\Component\Audioarchive\Site\Service\CollectionService($coverDb, $options, $owner);
+$state = $service->state();
+$revision = $state['revision'];
+$id = 'pending-playlist-12345678';
+$list = ['id' => $id, 'name' => 'Original', 'items' => [['uuid' => 'cover-clip']]];
+$image = Punga\Component\Audioarchive\Administrator\Service\CoverService::inspect($png) + ['image_data' => base64_encode($png)];
+$result = $service->playlists([$list], $revision, [$id => $image]);
+check($result['revision'] === $revision + 1, 'one revision covers metadata and artwork');
+check($coverService->manage('playlist', $id, 'status')['cover']['width'] === 1, 'new playlist can save its cover at creation');
+$revision++;
+$list['name'] = 'Changed';
+$list['items'] = [];
+rejectContribution(fn() => $service->playlists([$list], $revision - 1, [$id => null]), 'stale revision rejects cover removal and metadata');
+check($coverService->manage('playlist', $id, 'status')['cover']['width'] === 1, 'conflict preserves cover');
+check($service->state()['playlists'][0]['name'] === 'Original', 'conflict preserves title');
+rejectContribution(fn() => $service->playlists([$list], $revision, ['not-owned' => null]), 'unsubmitted cover target rejects entire save');
+check(count($service->state()['playlists'][0]['items']) === 1, 'late failure rolls membership back');
+check($service->state()['playlists'][0]['name'] === 'Original', 'late failure rolls title back');
+$options->data['quota_storage_enabled'] = 1;
+$options->data['quota_storage_mode'] = 'custom';
+$options->data['quota_storage_default_mb'] = 0;
+$larger = $image;
+$larger['file_size']++;
+rejectContribution(fn() => $service->playlists([$list], $revision, [$id => $larger]), 'quota failure rejects replacement');
+check($coverService->manage('playlist', $id, 'status')['cover']['file_size'] === strlen($png), 'quota failure preserves stored image');
+check($service->state()['revision'] === $revision, 'failure leaves revision unchanged');
+$options->data['quota_storage_enabled'] = 0;
+$result = $service->playlists([$list], $revision, [$id => null]);
+check($result['state']['playlists'][0]['name'] === 'Changed' && $result['state']['playlists'][0]['items'] === [], 'save commits title and contents');
+check($coverService->manage('playlist', $id, 'status')['cover'] === null, 'save commits cover removal');
+check($coverDb->lockBalance === 0, 'all owner locks released');
+echo ($checks - $start) . " playlist transaction assertions passed.\n";

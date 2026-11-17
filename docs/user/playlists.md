@@ -2,7 +2,15 @@
 
 Create a menu item of type **Punga Audio Archive → Playlists**.
 
-Playlists are stored entirely in the current browser. A visitor can maintain multiple lists without a Joomla account.
+Signed-in users store playlists in their account. Guests store playlists in the current browser and can maintain multiple lists without a Joomla account. Clearing browser data removes guest playlists unless exported.
+
+## Editing and saving (0.15.6)
+
+On the Playlists page, changes to names, clip order and membership, new/deleted playlists, imported JSON and account cover images remain pending until **Save**. You can switch between playlists without losing pending edits. Save applies all pending changes on this page; **Cancel** discards them and loads the current saved state. Account data and cover changes are committed together. Failed saves retain the draft for retry; conflicts from another tab require Cancel/reloading before editing again.
+
+Cover selections show a local preview, with **Remove cover** and **Undo cover change**. Nothing is uploaded just by selecting an image. Artwork is stored privately; public rendering is still deferred.
+
+Playback and JSON export can use your pending list. Save changes before sharing a playlist link. Leaving the page with unsaved changes triggers the browser's navigation warning. Explicit **Add to playlist** actions on archive/detail pages and **Save as playlist** on the Sound Board still perform their named action immediately; they are not part of this editor's draft.
 
 ## Features
 

@@ -372,6 +372,11 @@ namespace
 	check(EmbedService::appearance()['link'] === '#abcdef', 'Explicit embed link override');
 	$appearance = EmbedService::appearance(['title' => 0, 'links' => 0]);
 	check(!$appearance['show_title'] && !$appearance['show_original'] && !$appearance['show_download'], 'Per-frame hiding');
+	check(EmbedService::appearance()['link_title'], 'Title links default enabled');
+	check(!EmbedService::appearance(['link_title' => 0])['link_title'], 'Per-embed plain title');
+	$options['embed_link_title'] = 0;
+	check(!EmbedService::appearance(['link_title' => 1])['link_title'], 'Global title link restriction');
+	$options['embed_link_title'] = 1;
 	$options['embed_show_title'] = 0;
 	$options['embed_show_original'] = 0;
 	$options['embed_show_download'] = 0;

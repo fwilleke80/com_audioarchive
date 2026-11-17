@@ -21,7 +21,7 @@ Open **Share → Embed**, choose a presentation, inspect the live preview and cl
 | Default | Standard player including mute |
 | Featured | Expanded player with available waveform, spectrogram and frequency profile; optional pitch/speed controls follow component settings |
 
-The title, when shown, links to the original clip page. A download link appears only when its display is enabled and anonymous downloads are allowed. Playback starts on click; there is no autoplay. The player uses the existing component player colours and behaviour. Playlist presentation is not offered for a single-clip embed.
+The title, when shown, links to the original clip page by default. Disable **Link title** to show it as plain text. A download link appears only when its display is enabled and anonymous downloads are allowed. Playback starts on click; there is no autoplay. The player uses the existing component player colours and behaviour. Playlist presentation is not offered for a single-clip embed.
 
 Generated markup uses 100% width, lazy loading, an accessible title and a presentation-specific height. Adjust the height for unusually long titles, large configured analysis heights or narrow containers. A frame remains scrollable if its content is taller than the chosen height.
 
@@ -30,6 +30,7 @@ Generated markup uses 100% width, lazy loading, an accessible title and a presen
 Under **Component Options → External embeds**:
 
 - **Show clip title** controls the heading above the player.
+- **Link title** (0.15.5) controls whether that heading links to the original clip page. It defaults to Yes and is independent of the footer link.
 - **Show original-page link** controls the link back to the clip below the player.
 - **Show download link** controls the download link below the player. This never grants download permission.
 - **Embed background/text/title/link colour** optionally override the frame's appearance.
@@ -39,6 +40,8 @@ Leave colours empty to inherit Audio Archive settings: background and text use t
 The standalone iframe does not load the Joomla template's stylesheet or inherit the WordPress page's stylesheet. If your template uses different colours from Audio Archive, enter those colours in the embed options to match it.
 
 The Share → Embed dialog also has **Show clip title** and **Show links below player** checkboxes when those elements are globally allowed. Unchecking them adds `title=0` or `links=0` to that embed URL and updates the preview. Checking them uses global settings. A URL cannot turn a globally hidden element back on. If both footer links are hidden, no empty footer is rendered. Global changes take effect when frames reload.
+
+When title linking is globally allowed, the dialog also offers **Link title**. Unchecking it adds `link_title=0` and updates the preview. Hiding the title disables this checkbox until the title is shown again. A URL cannot enable title linking when globally disabled. Unlinked titles retain the configured title colour.
 
 ## Short Joomla routes (0.15.1)
 
