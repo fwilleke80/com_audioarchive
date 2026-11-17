@@ -83,3 +83,15 @@ a:visited
     margin-top: .3rem;
     font-size: .9em;
 }
+
+/** @brief Keep Featured transport, position and mute together inside narrow frames. */
+.audioarchive-embed .audioarchive-custom-player--featured .audioarchive-custom-player-controls
+{
+	grid-template-columns: auto minmax(0, 1fr) auto;
+}
+.audioarchive-embed .audioarchive-custom-player--featured .audioarchive-custom-player-mute-controls
+{
+	grid-column: 3;
+	grid-row: 1;
+	justify-self: end;
+}

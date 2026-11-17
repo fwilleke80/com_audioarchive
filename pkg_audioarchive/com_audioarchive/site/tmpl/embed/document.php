@@ -10,7 +10,7 @@
 <meta name="robots" content="noindex">
 <title><?php echo $escape((string) $clip->title); ?></title>
 <link rel="stylesheet" href="<?php echo $escape($assetRoot . 'css/player.css?v=0.15.2'); ?>">
-<link rel="stylesheet" href="<?php echo $escape($assetRoot . 'css/embed.css?v=0.15.2'); ?>">
+<link rel="stylesheet" href="<?php echo $escape($assetRoot . 'css/embed.css?v=0.15.3'); ?>">
 <script type="module" src="<?php echo $escape($assetRoot . 'js/player.js?v=0.15.2'); ?>"></script>
 <script type="module" src="<?php echo $escape($assetRoot . 'js/embed.js?v=0.15.2'); ?>"></script>
 </head>

@@ -80,3 +80,5 @@ Only the standalone player response permits framing; ordinary Joomla pages retai
 ## Live verification
 
 After installing, test all four presentations on a page from another origin, with third-party cookies disabled as well as enabled. Check play/pause, seeking, available analyses, permitted downloads, successful-copy events and the absence of duplicate ordinary play events. Then disable embedding or make the clip private and confirm fresh player/media requests fail.
+
+Featured embeds keep the transport, position slider and mute button on one row, including at narrow iframe widths (0.15.3).

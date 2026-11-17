@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.15.3
+
+- Keep the Featured external embed mute button beside the position slider at narrow iframe widths, overriding the shared player’s stacked mobile layout.
+
 ## 0.15.2
 
 - Add an optional ticketed download mode alongside ordinary links (the default), covering clip detail, clip modules and external embeds.
