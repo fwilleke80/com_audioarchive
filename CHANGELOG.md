@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.15.8
+
+- Move backend clip cover controls below the description inside the Clip tab, retaining Save/Apply semantics.
+- Add all seven descriptive metadata fields to backend batch editing, with independent Unchanged, Set value and Clear field actions and the existing permission checks and transaction rollback.
+- Merge populated creative metadata into the frontend Details card; remove the separate wide credits panel. Preserve line breaks and wrap long values.
+
 ## 0.15.7
 
 - Add optional Licence, Creator, Contributors, Recording location, Genre/style, Year of creation and Lyrics to backend and frontend clip creation/editing, with bounded plain-text validation.

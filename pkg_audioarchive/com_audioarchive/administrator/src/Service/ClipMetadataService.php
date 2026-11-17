@@ -8,6 +8,27 @@ use Joomla\CMS\Language\Text;
 /** @brief Validate optional descriptive metadata independently of ownership and technical audio data. */
 final class ClipMetadataService
 {
+    /** @brief Build only explicitly requested batch changes; untouched fields never get cleared. */
+    public static function batchChanges(array $batch): array
+    {
+        $changes = [];
+        foreach (['licence', 'creator', 'contributors', 'recording_location', 'genre_style', 'creation_year', 'lyrics'] as $field)
+        {
+            $mode = $batch['metadata_mode'][$field] ?? 'keep';
+            if (!in_array($mode, ['keep', 'set', 'clear'], true))
+            {
+                throw new \InvalidArgumentException(Text::_('COM_AUDIOARCHIVE_METADATA_INVALID'));
+            }
+            if ($mode === 'keep')
+            {
+                continue;
+            }
+            $value = $mode === 'clear' ? '' : ($batch['metadata'][$field] ?? '');
+            $changes[$field] = self::normalise([$field => $value])[$field];
+        }
+        return $changes;
+    }
+
     /** @brief Return bounded plain-text fields and a nullable creation year for forms and restore. */
     public static function normalise(array $data): array
     {

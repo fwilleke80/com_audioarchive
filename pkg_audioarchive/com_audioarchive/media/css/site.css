@@ -3223,3 +3223,14 @@
 {
     flex: 1 1 100%;
 }
+
+/** @brief Keep multiline credits and long words inside the Details card. */
+.com-audioarchive-credit-value
+{
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+.com-audioarchive-metadata dd
+{
+    min-width: 0;
+}

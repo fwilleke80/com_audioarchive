@@ -37,6 +37,7 @@ foreach (['administrator/forms/clip.xml', 'site/forms/edit.xml', 'site/forms/upl
 $view = new class
 {
     public object $item;
+    public object $params;
     public function escape(string $value): string
     {
         return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
@@ -44,17 +45,26 @@ $view = new class
     public function render(): string
     {
         ob_start();
-        include __DIR__ . '/../../../pkg_audioarchive/com_audioarchive/site/tmpl/clip/default_credits.php';
+        include __DIR__ . '/../../../pkg_audioarchive/com_audioarchive/site/tmpl/clip/default_metadata.php';
         return ob_get_clean();
     }
 };
-$view->item = (object) [];
+$view->params = new class { public function get(...$args) { return 0; } };
+$view->item = (object) ['duration_ms' => 0, 'file_size' => 0];
 check(trim($view->render()) === '', 'no empty public metadata panel');
-$view->item = (object) ($normal + ['description' => '']);
+$view->item = (object) ($normal + ['description' => '', 'duration_ms' => 0, 'file_size' => 0]);
 $view->item->creator = '<script>alert(1)</script>';
 $html = $view->render();
 check(!str_contains($html, '<script>') && str_contains($html, '&lt;script&gt;'), 'public metadata is escaped');
 check(str_contains($html, "First line\nSecond line"), 'lyrics line breaks preserved');
 $portable = json_decode(json_encode($normal, JSON_UNESCAPED_UNICODE), true);
 check(ClipMetadataService::normalise($portable) === $normal, 'portable metadata survives JSON round trip');
+check(ClipMetadataService::batchChanges([]) === [], 'empty batch changes no metadata');
+check(ClipMetadataService::batchChanges(['metadata' => ['creator' => 'Ignored']]) === [], 'values without explicit action ignored');
+$batch = ClipMetadataService::batchChanges(['metadata_mode' => ['creator' => 'set', 'lyrics' => 'clear', 'creation_year' => 'clear'], 'metadata' => ['creator' => 'New artist', 'licence' => 'Ignored']]);
+check($batch === ['creator' => 'New artist', 'creation_year' => null, 'lyrics' => ''], 'batch set and clear affect only selected fields');
+rejectContribution(fn() => ClipMetadataService::batchChanges(['metadata_mode' => ['creator' => 'invalid']]), 'unknown batch action rejected');
+rejectContribution(fn() => ClipMetadataService::batchChanges(['metadata_mode' => ['creation_year' => 'set'], 'metadata' => ['creation_year' => '2026.5']]), 'invalid batch year rejected');
+check(ClipMetadataService::batchChanges(['metadata_mode' => ['creation_year' => 'keep'], 'metadata' => ['creation_year' => 'invalid']]) === [], 'unchanged field ignores invalid unused value');
+check(str_contains($html, 'audioarchive-details-heading') && !str_contains($html, 'audioarchive-credits-heading'), 'credits use existing Details card');
 echo ($checks - $start) . " metadata assertions passed.\n";

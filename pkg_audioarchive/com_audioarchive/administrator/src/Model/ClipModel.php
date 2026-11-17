@@ -690,7 +690,17 @@ class ClipModel extends AdminModel
 		$replaceTitles = $titleSearch !== '';
 		$updateAliases = $replaceTitles && (int) ($batch['update_alias'] ?? 0) === 1;
 
-		if (!$ids || ($categoryId <= 0 && !$applyTags && !$replaceTitles && !$changeOwner))
+        try
+        {
+            $metadata = \Punga\Component\Audioarchive\Administrator\Service\ClipMetadataService::batchChanges($batch);
+        }
+        catch (\InvalidArgumentException $error)
+        {
+            $this->setError($error->getMessage());
+            return false;
+        }
+
+		if (!$ids || ($categoryId <= 0 && !$applyTags && !$replaceTitles && !$changeOwner && !$metadata))
 		{
 			$this->setError(Text::_('COM_AUDIOARCHIVE_BATCH_NOTHING_TO_APPLY'));
 			return false;
@@ -763,7 +773,7 @@ class ClipModel extends AdminModel
 					}
 				}
 
-				if ($categoryId <= 0 && !$applyTags && !$titleChanged && !$changeOwner)
+				if ($categoryId <= 0 && !$applyTags && !$titleChanged && !$changeOwner && !$metadata)
 				{
 					continue;
 				}
@@ -786,6 +796,10 @@ class ClipModel extends AdminModel
 					$table->catid = $categoryId;
 				}
 
+                foreach ($metadata as $field => $value)
+                {
+                    $table->$field = $value;
+                }
 				$table->modified = Factory::getDate()->toSql();
 				$table->modified_by = (int) $this->getCurrentUser()->id;
 				$table->version = max(1, (int) $table->version + 1);

@@ -61,6 +61,15 @@ if ((int) $this->params->get('detail_show_download_count', 0) === 1)
 {
 	$rows[] = [Text::_('COM_AUDIOARCHIVE_FIELD_DOWNLOAD_COUNT'), number_format((int) $this->item->download_count)];
 }
+/** @brief Include populated creative credits in the existing Details card. */
+foreach (['licence', 'creator', 'contributors', 'recording_location', 'genre_style', 'creation_year', 'lyrics'] as $field)
+{
+    $value = trim((string) ($this->item->$field ?? ''));
+    if ($value !== '')
+    {
+        $rows[] = [Text::_('COM_AUDIOARCHIVE_METADATA_' . strtoupper($field)), '<span class="com-audioarchive-credit-value">' . $this->escape($value) . '</span>'];
+    }
+}
 ?>
 <?php if ($rows) : ?>
 	<section class="com-audioarchive-info-card" aria-labelledby="audioarchive-details-heading">

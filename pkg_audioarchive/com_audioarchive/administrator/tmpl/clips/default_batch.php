@@ -118,6 +118,31 @@ use Joomla\CMS\Language\Text;
             <small class="text-body-secondary"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_SEARCH_REPLACE_HINT'); ?></small>
         </div>
 
+        <fieldset class="border-top mt-4 pt-4">
+            <legend class="h5"><?php echo Text::_('COM_AUDIOARCHIVE_METADATA'); ?></legend>
+            <p><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_METADATA_HELP'); ?></p>
+            <?php foreach (['licence' => 255, 'creator' => 255, 'contributors' => 8000, 'recording_location' => 255, 'genre_style' => 255, 'creation_year' => 4, 'lyrics' => 60000] as $field => $limit) : ?>
+            <div class="row g-2 mb-3">
+                <div class="col-md-5">
+                    <label for="batch-meta-mode-<?php echo $field; ?>"><?php echo Text::_('COM_AUDIOARCHIVE_METADATA_' . strtoupper($field)); ?></label>
+                    <select class="form-select" id="batch-meta-mode-<?php echo $field; ?>" name="batch[metadata_mode][<?php echo $field; ?>]">
+                        <option value="keep"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_METADATA_KEEP'); ?></option>
+                        <option value="set"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_METADATA_SET'); ?></option>
+                        <option value="clear"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_METADATA_CLEAR'); ?></option>
+                    </select>
+                </div>
+                <div class="col-md-7">
+                    <label for="batch-meta-<?php echo $field; ?>"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_METADATA_VALUE'); ?></label>
+                    <?php if ($limit > 255) : ?>
+                    <textarea class="form-control" rows="3" maxlength="<?php echo $limit; ?>" id="batch-meta-<?php echo $field; ?>" name="batch[metadata][<?php echo $field; ?>]"></textarea>
+                    <?php else : ?>
+                    <input class="form-control" type="text" <?php echo $field === 'creation_year' ? 'inputmode="numeric"' : ''; ?> maxlength="<?php echo $limit; ?>" id="batch-meta-<?php echo $field; ?>" name="batch[metadata][<?php echo $field; ?>]">
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </fieldset>
+
         <div class="d-flex justify-content-end gap-2 mt-4">
             <button type="button" class="btn btn-secondary" data-joomla-dialog-close data-audioarchive-batch-cancel><?php echo Text::_('JCANCEL'); ?></button>
             <button type="button" class="btn btn-primary" onclick="Joomla.submitbutton('clips.batch')"><?php echo Text::_('JGLOBAL_BATCH_PROCESS'); ?></button>
