@@ -79,6 +79,7 @@ final class RecordingArchiveService
 			}
 			$db->setQuery('DELETE FROM ' . $db->quoteName('#__audioarchive_recordings') . ' WHERE user_id=' . $owner)->execute();
 			$db->insertObject('#__audioarchive_recordings', (object) ['user_id' => $owner, 'payload' => $payload]);
+            $db->setQuery('DELETE FROM ' . $db->quoteName('#__audioarchive_recording_shares') . ' WHERE user_id=' . $owner)->execute();
 			$revision = $db->setQuery('SELECT revision FROM ' . $db->quoteName('#__audioarchive_collection_state') . ' WHERE user_id=' . $owner)->loadObject();
 			$state = (object) ['user_id' => $owner, 'revision' => (int) ($revision->revision ?? 0) + 1];
 			if ($revision)

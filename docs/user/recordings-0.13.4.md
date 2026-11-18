@@ -41,3 +41,5 @@ Clip-detail links and normalization gains share a retryable metadata lookup. Pla
 Pad Trigger parts can be overdubbed over chromatic parts, and vice versa. Select the desired live mode and board before Record overdub. Pad events retain their clip mapping; chromatic notes retain their absolute MIDI pitch. Each layer uses its own recorded polyphony, so a monophonic part does not cut off another layer. Playback now honours saved polyphony even if the current page disables polyphonic live playing. Existing recordings do not need conversion.
 
 See [Recorder editing](recorder-editing.md) for the 0.16.0 piano-roll editor and seeking controls.
+
+See [Sharing recordings](recording-sharing.md) for short account-backed guest playback links introduced in 0.17.0.

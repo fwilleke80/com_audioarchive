@@ -1,9 +1,9 @@
-import {RecordingEditor, recordingSeekState} from './recording-editor.js?v=0.16.0';
+import {RecordingEditor, recordingSeekState, cloneRecording} from './recording-editor.js?v=0.16.1';
 import {BoardPreloader} from './board-preload.js?v=0.13.7.1';
-import {openSoundboardChooser} from './board-chooser.js?v=0.15.6';
+import {openSoundboardChooser} from './board-chooser.js?v=0.17.1';
 import {acquirePlaybackSession, releasePlaybackSession} from './audio-session.js?v=0.13.2.7';
 import {playbackFor, prepareNormalization, releaseNormalization, validGain} from './normalization.js?v=0.13.2.7';
-import {Collections} from './collections.js?v=0.15.6';
+import {Collections} from './collections.js?v=0.17.1';
 const BOARD_STORAGE_KEY = 'com_audioarchive.soundboard.v1';
 const SAMPLER_POLYPHONY_STORAGE_KEY = 'com_audioarchive.soundboard.sampler_polyphony.v1';
 const SOUNDBOARD_RECORDINGS_STORAGE_KEY = 'com_audioarchive.soundboard.recordings.v1';
@@ -1229,6 +1229,7 @@ async function initialiseSoundboard()
 		return;
 	}
 
+	const sharedRecordingMode = root.dataset.audioarchiveSharedRecording === '1';
 	const padCount = Math.max(4, Number.parseInt(root.dataset.audioarchivePadCount || '12', 10));
 	const polyphonic = root.dataset.audioarchivePolyphonic !== '0';
 	const samplerEnabled = root.dataset.audioarchiveSamplerEnabled !== '0';
@@ -1280,11 +1281,11 @@ async function initialiseSoundboard()
 	if (recorderDisclosure)
 	{
 		const key = `com_audioarchive.recorder.open.${Collections.userId}`;
-		recorderDisclosure.open = readSessionStorage(key, true) !== false;
-		recorderDisclosure.addEventListener('toggle', () => writeSessionStorage(key, recorderDisclosure.open));
+		recorderDisclosure.open = sharedRecordingMode || readSessionStorage(key, true) !== false;
+		if (!sharedRecordingMode) recorderDisclosure.addEventListener('toggle', () => writeSessionStorage(key, recorderDisclosure.open));
 	}
 	const storedBoard = readBoard();
-	let board = storedBoard.slice(0, padCount);
+	let board = sharedRecordingMode ? [] : storedBoard.slice(0, padCount);
 
 	// A smaller menu must not truncate the account's saved board on page load.
 	let temporarySharedBoard = false;
@@ -1311,7 +1312,7 @@ async function initialiseSoundboard()
 	let samplerSelectionGeneration = 0;
 	let samplerMode = false;
 	const samplerAudioSessionOwner = Object.create(null);
-	let recordings = recordingsEnabled ? readSoundboardRecordings(padCount) : [];
+	let recordings = sharedRecordingMode ? [normaliseSoundboardRecording(Collections.sharedRecording?.recording, 36)].filter(Boolean) : (recordingsEnabled ? readSoundboardRecordings(padCount) : []);
 	let selectedRecordingId = recordings[0]?.id || '';
 	let recordingSession = null;
 	let recordingTimerFrame = 0;
@@ -1362,17 +1363,17 @@ async function initialiseSoundboard()
 
 		if (recordingRecordButton)
 		{
-			recordingRecordButton.disabled = Boolean(recordingPlayback);
+			recordingRecordButton.disabled = Boolean(recordingPlayback || recordingEdit?.draft);
 		}
 
 		if (recordingPlayButton)
 		{
-			recordingPlayButton.disabled = freshRecording || overdubActive;
+			recordingPlayButton.disabled = freshRecording || overdubActive || Boolean(recordingEdit?.busy);
 		}
 
 		if (recordingOverdubButton)
 		{
-			recordingOverdubButton.disabled = freshRecording || normalPlayback;
+			recordingOverdubButton.disabled = freshRecording || normalPlayback || Boolean(recordingEdit?.draft);
 		}
 	};
 	const activeComputerRecordingNotes = new Map();
@@ -1380,7 +1381,7 @@ async function initialiseSoundboard()
 	const fragmentParameters = new URLSearchParams(window.location.hash.replace(/^#/, ''));
 	const fragment = fragmentParameters.get('board');
 
-	if (fragment || Collections.shared?.kind === 'soundboard')
+	if (!sharedRecordingMode && (fragment || Collections.shared?.kind === 'soundboard'))
 	{
 		const imported = Collections.shared?.kind === 'soundboard' ? Collections.shared.items : decodeBoard(fragment);
 
@@ -3383,12 +3384,31 @@ async function initialiseSoundboard()
 		{
 			recordingExportButton.disabled = busy;
 		}
+        const shareButton = recordingsRoot.querySelector('[data-recording-share]');
+        const revokeButton = recordingsRoot.querySelector('[data-recording-revoke]');
+        if (shareButton)
+        {
+            shareButton.hidden = sharedRecordingMode || Collections.backend !== 'server' || !Collections.sharing;
+            shareButton.disabled = busy;
+        }
+        if (revokeButton)
+        {
+            revokeButton.hidden = sharedRecordingMode || Collections.backend !== 'server' || !Collections.recordingShares.includes(selected?.id);
+            revokeButton.disabled = busy;
+        }
+        if (sharedRecordingMode)
+        {
+            recordingsRoot.querySelectorAll('button').forEach((button) =>
+            {
+                if (button !== recordingPlayButton && button !== recordingZoomInButton && button !== recordingZoomOutButton) button.hidden = true;
+            });
+        }
         recordingEdit?.sync();
         if (recordingEdit?.draft)
         {
             recordingsRoot.querySelectorAll('button').forEach((button) =>
             {
-                if (!button.disabled && !button.closest('[data-recording-edit-controls]') && button !== recordingZoomInButton && button !== recordingZoomOutButton)
+                if (!button.disabled && !button.closest('[data-recording-edit-controls]') && button !== recordingZoomInButton && button !== recordingZoomOutButton && button !== recordingPlayButton)
                 {
                     button.dataset.recordingEditLocked = '';
                     button.disabled = true;
@@ -3621,10 +3641,16 @@ async function initialiseSoundboard()
 
 	const startSoundboardRecordingPlayback = async (recording, overdub = false) =>
 	{
-		if (!recording || recordingSession)
+		if (!recording || recordingSession || recordingEdit?.busy || (overdub && recordingEdit?.draft))
 		{
 			return;
 		}
+        if (recordingEdit?.draft)
+        {
+            // Preview a snapshot, leaving the draft and stored recording untouched.
+            recording = cloneRecording(recordingEdit.draft);
+            recordingEdit.cancelAudition();
+        }
 
 		if (recordingPlayback)
 		{
@@ -3704,6 +3730,17 @@ async function initialiseSoundboard()
 			return;
 		}
 
+        if (recordingEdit?.draft)
+        {
+            for (const event of recording.events)
+            {
+                if (event.type !== 'note' && event.type !== 'pad') continue;
+                const entry = (layerBoards[event.layer || 0] || resolvedBoard)[event.pad];
+                const buffer = entry && (boardPreloader?.get(entry.id) || decodedSamplerBuffers.get(entry.id));
+                const rate = event.type === 'note' ? 2 ** ((event.note - SAMPLER_ROOT_MIDI_NOTE) / 12) : 1;
+                if (buffer) recording.durationMs = Math.min(SOUNDBOARD_RECORDING_MAX_DURATION_MS, Math.max(recording.durationMs, Math.ceil(event.t + buffer.duration * 1000 / rate)));
+            }
+        }
 		recordingPlayback.phase = 'playing';
 		recordingPlayback.startedAt = performance.now();
 		recordingPlayback.eventIndex = 0;
@@ -3772,7 +3809,7 @@ async function initialiseSoundboard()
     const seekRecording = (position) =>
     {
         if (recordingSession || recordingPlayback?.overdub) return;
-        const recording = getSelectedRecording();
+        const recording = recordingPlayback?.recording || getSelectedRecording();
         if (!recording) return;
         const state = recordingSeekState(recording, position);
         recordingSeekPosition = state.time;
@@ -3788,7 +3825,7 @@ async function initialiseSoundboard()
         if (recordingClock) recordingClock.textContent = formatSoundboardRecordingTime(state.time);
     };
 
-    if (recordingsRoot && recordingRoll)
+    if (recordingsRoot && recordingRoll && !sharedRecordingMode)
     {
         recordingEdit = new RecordingEditor(recordingsRoot, recordingRoll,
         {
@@ -3801,6 +3838,7 @@ async function initialiseSoundboard()
                 if (recordingPlayback?.phase === 'loading') return;
                 seekRecording(position);
             },
+            stopPreview: () => stopSoundboardRecordingPlayback(false),
             stopAudition: () =>
             {
                 auditionGeneration++;
@@ -3854,6 +3892,60 @@ async function initialiseSoundboard()
             },
         });
     }
+
+    if (sharedRecordingMode)
+    {
+        recordingRoll?.addEventListener('click', (event) =>
+        {
+            if (recordingPlayback?.phase === 'loading') return;
+            const x = event.clientX - recordingRoll.getBoundingClientRect().left - 64;
+            if (x >= 0) seekRecording(x * 10 / recordingZoom);
+        });
+        const summary = recorderDisclosure?.querySelector('summary');
+        if (summary && recordings[0]) summary.textContent = recordings[0].name;
+        const notice = document.createElement('p');
+        notice.className = 'alert alert-info';
+        notice.textContent = recordings.length ? (Collections.sharedRecording?.unavailable ? root.dataset.recordingSharePartial : '') : root.dataset.recordingShareUnavailable;
+        notice.hidden = !notice.textContent;
+        recordingsRoot?.prepend(notice);
+    }
+    let sharingRecording = false;
+    const setRecordingShare = async (revoke) =>
+    {
+        if (sharedRecordingMode || sharingRecording || recordingSession || recordingPlayback || recordingEdit?.draft || Collections.backend !== 'server') return;
+        const selected = getSelectedRecording();
+        if (!selected) return;
+        sharingRecording = true;
+        const buttons = recordingsRoot.querySelectorAll('button');
+        const previousDisabled = Array.from(buttons, (button) => button.disabled);
+        buttons.forEach((button) => { button.disabled = true; });
+        try
+        {
+            const url = await Collections.recordingShareUrl(selected.id, revoke);
+            const panel = recordingsRoot.querySelector('[data-recording-share-result]');
+            const input = recordingsRoot.querySelector('[data-recording-share-link]');
+            input.value = url;
+            panel.hidden = revoke;
+            if (!revoke)
+            {
+                input.focus();
+                input.select();
+                try { await navigator.clipboard.writeText(url); } catch { /* Selected text remains available to copy. */ }
+            }
+        }
+        catch (error)
+        {
+            if (recordingStatus) recordingStatus.textContent = error.message;
+        }
+        finally
+        {
+            sharingRecording = false;
+            buttons.forEach((button, index) => { button.disabled = previousDisabled[index]; });
+            renderSoundboardRecordings();
+        }
+    };
+    recordingsRoot?.querySelector('[data-recording-share]')?.addEventListener('click', () => setRecordingShare(false));
+    recordingsRoot?.querySelector('[data-recording-revoke]')?.addEventListener('click', () => setRecordingShare(true));
 
 	recordingRecordButton?.addEventListener('click', async () =>
 	{
@@ -4133,6 +4225,8 @@ async function initialiseSoundboard()
 			}
 
 			selectedRecordingId = String(selectButton.dataset.recordingId || '');
+            const shareResult = recordingsRoot.querySelector('[data-recording-share-result]');
+            if (shareResult) shareResult.hidden = true;
             recordingSeekPosition = 0;
 			recordingZoom = 1;
 			renderSoundboardRecordings();
@@ -4657,7 +4751,7 @@ async function initialiseSoundboard()
 		setSamplerMode(false);
 	}
 
-	Collections.mount(root, 'soundboard', () => temporarySharedBoard ? '' : Collections.boardId, () =>
+	if (!sharedRecordingMode) Collections.mount(root, 'soundboard', () => temporarySharedBoard ? '' : Collections.boardId, () =>
 	{
 		stopLiveVoices();
 		root.querySelector('[data-recording-board-actions]')?.remove();

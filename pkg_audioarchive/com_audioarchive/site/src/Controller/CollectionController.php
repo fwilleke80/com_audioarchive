@@ -20,6 +20,11 @@ class CollectionController extends BaseController
 	{
 		$this->run('state');
 	}
+    /** @brief Cheap no-store identity check for long-lived pages. */
+    public function session(): void
+    {
+        $this->run('session');
+    }
 	/** @brief Save the bounded playlist collection set atomically. */
 	public function playlists(): void
 	{
@@ -71,6 +76,22 @@ class CollectionController extends BaseController
 		$this->run('shared');
 	}
 
+    /** @brief Create an owner-controlled recording share. */
+    public function shareRecording(): void
+    {
+        $this->run('shareRecording', true);
+    }
+    /** @brief Revoke a recording share. */
+    public function revokeRecording(): void
+    {
+        $this->run('revokeRecording', true);
+    }
+    /** @brief Guest-readable recording projection. */
+    public function sharedRecording(): void
+    {
+        $this->run('sharedRecording');
+    }
+
 	/** @brief Validate transport and dispatch only explicitly defined operations. */
 	private function run(string $action, bool $mutation = false): void
 	{
@@ -87,7 +108,7 @@ class CollectionController extends BaseController
 			}
 			if ($mutation && (!Session::checkToken('post') || (int) $app->getIdentity()->id <= 0))
 			{
-				throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+				throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_COLLECTION_SESSION_CHANGED'), 403);
 			}
 			$params = ComponentHelper::getParams('com_audioarchive');
 			$service = new CollectionService(Factory::getContainer()->get(DatabaseInterface::class), $params, $app->getIdentity());
@@ -101,6 +122,10 @@ class CollectionController extends BaseController
 			{
 				throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_COLLECTION_INVALID'), 400);
 			}
+            if ($mutation && (int) ($data['userId'] ?? -1) !== (int) $app->getIdentity()->id)
+            {
+                throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_COLLECTION_SESSION_CHANGED'), 409);
+            }
             $covers = [];
             if ($action === 'playlists')
             {
@@ -124,6 +149,7 @@ class CollectionController extends BaseController
 			$id = is_string($data['id'] ?? null) ? $data['id'] : '';
 			$result = match ($action)
 			{
+				'session' => ['backend' => $service->backend(), 'userId' => (int) $app->getIdentity()->id, 'token' => Session::getFormToken()],
 				'state' => $service->state() + ['token' => Session::getFormToken(), 'sharing' => (bool) $params->get('collections_sharing', 1), 'labels' => $this->labels()],
 				'playlists' => $service->playlists(is_array($data['playlists'] ?? null) ? $data['playlists'] : [], $revision, $covers),
 				'importPlaylist', 'importBoard' => $service->importCollection($action === 'importPlaylist' ? 'playlist' : 'soundboard', is_array($data['collection'] ?? null) ? $data['collection'] : [], $revision),
@@ -132,6 +158,8 @@ class CollectionController extends BaseController
 				'deleteBoard' => $service->deleteBoard($id, $revision),
 				'defaultBoard' => $service->defaultBoard($id, $revision),
 				'share', 'revoke' => $service->share($id, $action === 'revoke', $revision),
+				'shareRecording', 'revokeRecording' => $service->shareRecording($id, $action === 'revokeRecording', $revision),
+                'sharedRecording' => $service->sharedRecording($app->getInput()->getString('share', '')),
 				'shared' => $service->shared($app->getInput()->getString('share', '')),
 			};
 			$payload = ['success' => true, 'data' => $result];
@@ -140,6 +168,7 @@ class CollectionController extends BaseController
 		{
 			$code = in_array($error->getCode(), [400, 403, 404, 405, 409, 413], true) ? $error->getCode() : 500;
 			$payload = ['success' => false, 'message' => $code === 500 ? Text::_('COM_AUDIOARCHIVE_COLLECTION_ERROR') : $error->getMessage()];
+			$payload['sessionChanged'] = in_array($code, [403, 409], true) && $error->getMessage() === Text::_('COM_AUDIOARCHIVE_COLLECTION_SESSION_CHANGED');
 		}
 		http_response_code($code);
 		while (ob_get_level() > 0)
@@ -157,7 +186,7 @@ class CollectionController extends BaseController
 	private function labels(): array
 	{
 		$result = [];
-		foreach (['FULL', 'ALREADY_ADDED', 'BROWSER_PLAYLISTS', 'BROWSER_BOARD', 'IMPORT_RETAINED', 'SERVER', 'BROWSER', 'DISABLED', 'SAVING', 'ERROR', 'CONFLICT', 'NEW', 'RENAME', 'DELETE', 'DEFAULT', 'NAME', 'CONFIRM', 'IMPORT', 'LATER', 'IMPORT_DONE', 'REVOKE', 'REVOKED', 'SHARED', 'UNAVAILABLE', 'DEFAULT_NAME', 'IMPORT_FOUND', 'SHARE_HELP', 'RESTORE'] as $key)
+		foreach (['SESSION_CHANGED', 'FULL', 'ALREADY_ADDED', 'BROWSER_PLAYLISTS', 'BROWSER_BOARD', 'IMPORT_RETAINED', 'SERVER', 'BROWSER', 'DISABLED', 'SAVING', 'ERROR', 'CONFLICT', 'NEW', 'RENAME', 'DELETE', 'DEFAULT', 'NAME', 'CONFIRM', 'IMPORT', 'LATER', 'IMPORT_DONE', 'REVOKE', 'REVOKED', 'SHARED', 'UNAVAILABLE', 'DEFAULT_NAME', 'IMPORT_FOUND', 'SHARE_HELP', 'RESTORE'] as $key)
 		{
 			$result[strtolower($key)] = Text::_('COM_AUDIOARCHIVE_COLLECTION_' . $key);
 		}

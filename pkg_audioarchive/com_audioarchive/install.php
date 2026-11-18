@@ -25,6 +25,7 @@ return new class () implements InstallerScriptInterface
 	/** @var string[] */
 	private const REQUIRED_TABLES = [
         'audioarchive_covers',
+        'audioarchive_recording_shares',
         'audioarchive_download_tickets',
 		'audioarchive_clips',
         'audioarchive_group_quotas',

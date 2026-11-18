@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.17.1
+
+- Fix a misplaced shared-recording mode flag that stopped Sound Board initialization before displaying account boards and recordings. Refresh script versions so browsers load the corrected module.
+- Add the stored-recording count to My Audio Archive on both the frontend user profile and backend user editor. Count recordings in the account payload, rather than storage rows.
+- Check the current login before collection saves and when returning to an open tab. If login or account changes, stop writes and preserve unsaved work for export before reloading; never silently fall back to browser storage. Keep revision conflict and CSRF protections.
+- Add fresh-browser Sound Board initialization and login-change regression tests, including guest recording shares and failed-save draft preservation.
+
+## 0.17.0
+
+- Add short, revocable links for account-stored recordings through Actions → Share recording. Links follow the latest saved version; browser recordings and unsaved drafts cannot be published.
+- Add guest-readable playback with title, piano roll, seeking and zoom. Hide editing, overdubbing and personal collection controls on the shared page.
+- Resolve every clip through guest publication/category/access rules, even for signed-in visitors. Strip private/deleted clip identities, metadata and events; preserve pad positions, mixed-mode layers, pitches and polyphony for accessible clips. Show an unavailable-clips notice when needed.
+- Reuse the Personal Collections sharing option and authenticated CSRF/revision protections. Invalidate links on revoke, recording deletion, account deletion and archive restoration. Share secrets are not included in portable archive exports.
+
+## 0.16.1
+
+- Enable Play/Stop in recorder Edit mode to preview an isolated snapshot of the unsaved draft, including mixed layers and pitch-dependent sample tails. Preview never saves the recording.
+- Allow seeking via the time ruler while editing. Stop preview before event audition, dragging, edits, undo, Save or Cancel; retain the draft after playback ends.
+- Keep recording/overdub and conflicting collection actions disabled during editing, and disable preview while saving.
+
 ## 0.16.0
 
 - Add piano-roll click-to-seek, including seeking during ordinary recording playback; restore saved per-layer polyphony at the new position.

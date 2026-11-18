@@ -4,7 +4,9 @@ Select a recording in the Sound Board recorder. Outside Edit mode, click the tim
 
 ## Edit mode
 
-Choose Edit mode to open a draft. Playback, recording, import and other recording mutations are disabled while editing; zoom remains available.
+Choose Edit mode to open a draft. Since 0.16.1, Play/Stop previews the current unsaved draft from the playhead position. Click the time ruler to seek while editing, including during preview. Preview does not save changes. Recording, overdub, import and other recording mutations remain disabled; zoom remains available.
+
+Event audition, dragging, edits, Undo, Save and Cancel stop the preview. Press Play again to hear the revised draft. Finishing playback keeps Edit mode and all pending changes. Sample tails are included in the preview where decoded audio is available, including pitch-dependent playback lengths.
 
 - Click an event to audition its own recorded clip, pitch and velocity. Pad triggers use the original pitch. Audition uses the stored layer mapping, not the visible live board.
 - Drag horizontally to change time. Drag a chromatic note vertically to change its MIDI pitch, or a pad trigger onto another available pad row in its own layer. Moves retain layer, velocity and note-marker length.

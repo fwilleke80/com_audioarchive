@@ -56,7 +56,7 @@ const root={querySelector:()=>container};const roll=new Control();
 globalThis.window={addEventListener(){}};
 globalThis.Option=class {constructor(text,value){this.text=text;this.value=value;}};
 let stored=original, saveSuccess=false, auditioned=[], seeks=[], rendered=0;
-const callbacks={blocked:()=>false,selected:()=>stored,render:()=>{rendered++;editor.sync();},zoom:()=>2,stopAudition(){},audition:(recording,event)=>auditioned.push(event),seek:t=>seeks.push(t),save:async draft=>{if(saveSuccess)stored=draft;return saveSuccess;}};
+const callbacks={blocked:()=>false,selected:()=>stored,render:()=>{rendered++;editor.sync();},zoom:()=>2,stopPreview(){},stopAudition(){},audition:(recording,event)=>auditioned.push(event),seek:t=>seeks.push(t),save:async draft=>{if(saveSuccess)stored=draft;return saveSuccess;}};
 const editor=new RecordingEditor(root,roll,callbacks);
 controls.toggle.handlers.click();
 assert.notEqual(editor.draft,original);

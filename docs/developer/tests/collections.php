@@ -69,6 +69,7 @@ INSERT INTO test_audioarchive_clips VALUES (1,'public-clip','Public',7,'normal',
 CREATE TABLE test_audioarchive_covers (entity_type TEXT, entity_id INTEGER, file_size INTEGER);
 CREATE TABLE test_audioarchive_collections (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT UNIQUE, user_id INTEGER, kind TEXT, title TEXT, pad_count INTEGER, share_token TEXT, created TEXT, modified TEXT);
 CREATE TABLE test_audioarchive_collection_items (collection_id INTEGER REFERENCES test_audioarchive_collections(id) ON DELETE CASCADE, position INTEGER, clip_id INTEGER REFERENCES test_audioarchive_clips(id) ON DELETE CASCADE, PRIMARY KEY(collection_id,position));
+CREATE TABLE test_audioarchive_recording_shares (user_id INTEGER, recording_id TEXT, token TEXT UNIQUE, PRIMARY KEY(user_id,recording_id));
 CREATE TABLE test_audioarchive_recordings (user_id INTEGER PRIMARY KEY, payload TEXT);
 CREATE TABLE test_audioarchive_collection_state (user_id INTEGER PRIMARY KEY, revision INTEGER);
 CREATE TABLE test_audioarchive_user_profiles (user_id INTEGER PRIMARY KEY, collection_storage_preference TEXT, default_soundboard_id INTEGER DEFAULT 0, created TEXT, modified TEXT);");

@@ -74,3 +74,17 @@ Chromatic `note` events use MIDI-note rows and their stored key-down/key-up dura
 ## Configuration
 
 `enable_soundboard_recordings` is available globally under **Sound Boards → General Sound Board options** and as an inheritable Sound Board menu-item parameter. The resolved menu-item value controls whether recording UI is rendered at all.
+
+## Recording shares (0.17.0)
+
+`#__audioarchive_recording_shares` stores `(user_id, recording_id)` and a unique 48-character cryptographic token. `collection.shareRecording` and `collection.revokeRecording` are authenticated POST operations using the same owner lock, CSRF token and collection revision as collection mutations. `collection.sharedRecording` is a no-store GET projection and requires an enabled global sharing option. It joins the owner's current recording payload and existing Joomla account; it never stores a second performance snapshot.
+
+`RecordingShareService::sanitise` exports only a bounded whitelist. A fresh guest `ClipAccessService` validates all unique clip references (UUID takes priority over legacy IDs). Unavailable slots become null and their sound events are omitted. Stable event ordering, layer polyphony and MIDI pitch are retained. Sharing secrets are intentionally absent from portable backups. Deletion prunes references under the same owner transaction; restoration revokes shares.
+
+Regression checks: `recording-sharing.php`, `recording-share-client.mjs`, `recordings.php`, `user-profile.php`, `collections.mjs`, plus existing recording playback/editor/preview tests. Browser and audible Safari/iPhone checks require a running Joomla installation.
+
+## Initialization and login regression checks (0.17.1)
+
+Run `node docs/developer/tests/collection-session.mjs` for login/logout/account-switch checks and draft preservation. The server validates the submitted user ID against the authenticated identity as well as CSRF and collection revision. The lightweight `collection.session` GET endpoint verifies identity without downloading recording payloads or adopting newer collection revisions.
+
+The Sound Board startup test executes the production adapter and initialization against an empty DOM storage fixture, checking saved pad titles, all board choices, account recordings and guest shares. Install its test-only dependency with `npm install --prefix /tmp/audioarchive-tests jsdom`, then run `NODE_PATH=/tmp/audioarchive-tests/node_modules node docs/developer/tests/soundboard-startup.mjs`. Version 0.17.0 fails this test with `ReferenceError: sharedRecordingMode is not defined`; 0.17.1 declares the flag inside the Sound Board initializer. No Joomla server or audio device is exercised by this DOM test.

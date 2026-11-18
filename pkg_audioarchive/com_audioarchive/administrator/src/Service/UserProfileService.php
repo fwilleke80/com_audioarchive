@@ -171,6 +171,9 @@ final class UserProfileService
 		{
 			$result[$kind . '_count'] = (int) $this->db->setQuery('SELECT COUNT(*) FROM ' . $this->db->quoteName('#__audioarchive_collections') . ' WHERE user_id=' . $id . ' AND kind=' . $this->db->quote($kind))->loadResult();
 		}
+		$payload = $this->db->setQuery('SELECT payload FROM ' . $this->db->quoteName('#__audioarchive_recordings') . ' WHERE user_id=' . $id)->loadResult();
+		$recordings = json_decode((string) $payload, true);
+		$result['recording_count'] = is_array($recordings) && array_is_list($recordings) ? count($recordings) : 0;
 		$result['quota_source'] = Text::_('PLG_USER_AUDIOARCHIVE_STORAGE') . ': ' . Text::_('PLG_USER_AUDIOARCHIVE_SOURCE_' . strtoupper($limits['storage_source'])) . '; ' . Text::_('PLG_USER_AUDIOARCHIVE_CLIPS') . ': ' . Text::_('PLG_USER_AUDIOARCHIVE_SOURCE_' . strtoupper($limits['clips_source']));
 		$result['quota_status'] = Text::_('PLG_USER_AUDIOARCHIVE_' . (($limits['storage'] >= 0 && $usage['storage'] > $limits['storage']) || ($limits['clips'] >= 0 && $usage['clips'] > $limits['clips']) ? 'OVER_QUOTA' : 'WITHIN_QUOTA'));
 		return $result;
@@ -182,5 +185,6 @@ final class UserProfileService
 		if ($id <= 0) return;
 		// The plugin calls this only after Joomla's successful user-deletion event.
 		$this->db->setQuery('UPDATE ' . $this->db->quoteName('#__audioarchive_collections') . ' SET share_token=NULL WHERE user_id=' . $id)->execute();
+        $this->db->setQuery('DELETE FROM ' . $this->db->quoteName('#__audioarchive_recording_shares') . ' WHERE user_id=' . $id)->execute();
 	}
 }

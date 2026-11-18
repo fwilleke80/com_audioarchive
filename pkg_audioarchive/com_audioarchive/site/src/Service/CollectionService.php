@@ -112,6 +112,7 @@ final class CollectionService
 		}
 		$payload = $this->db->setQuery('SELECT payload FROM ' . $this->db->quoteName('#__audioarchive_recordings') . ' WHERE user_id=' . (int) $this->user->id)->loadResult();
 		$result['recordings'] = $payload ? (json_decode($payload, true) ?: []) : [];
+        $result['recordingShares'] = $this->db->setQuery('SELECT recording_id FROM ' . $this->db->quoteName('#__audioarchive_recording_shares') . ' WHERE user_id=' . (int) $this->user->id)->loadColumn() ?: [];
 		$result['defaultBoard'] = $result['defaultBoard'] ?: ($result['boards'][0]['id'] ?? '');
 		$result['revision'] = (int) $this->db->setQuery('SELECT revision FROM ' . $this->db->quoteName('#__audioarchive_collection_state') . ' WHERE user_id=' . (int) $this->user->id)->loadResult();
 		return $result;
@@ -181,11 +182,13 @@ final class CollectionService
 		{
 			throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_COLLECTION_LIMIT'), 413);
 		}
-		return $this->mutate($revision, function () use ($payload): array
+		return $this->mutate($revision, function () use ($payload, $seen): array
 		{
 			$row = (object) ['user_id' => (int) $this->user->id, 'payload' => $payload];
 			$this->db->setQuery('DELETE FROM ' . $this->db->quoteName('#__audioarchive_recordings') . ' WHERE user_id=' . $row->user_id)->execute();
 			$this->db->insertObject('#__audioarchive_recordings', $row);
+            $keep = $seen ? ' AND recording_id NOT IN (' . implode(',', array_map(fn(string $id): string => $this->db->quote($id), array_keys($seen))) . ')' : '';
+            $this->db->setQuery('DELETE FROM ' . $this->db->quoteName('#__audioarchive_recording_shares') . ' WHERE user_id=' . $row->user_id . $keep)->execute();
 			return [];
 		});
 	}
@@ -428,4 +431,64 @@ final class CollectionService
 		}
 		return $this->serialise($row, true);
 	}
+    /** @brief Share only a persisted recording belonging to this authenticated account. */
+    public function shareRecording(string $id, bool $revoke, int $revision): array
+    {
+        return $this->mutate($revision, function () use ($id, $revoke): array
+        {
+            if (!$revoke && !$this->params->get('collections_sharing', 1)) throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+            $payload = $this->db->setQuery('SELECT payload FROM ' . $this->db->quoteName('#__audioarchive_recordings') . ' WHERE user_id=' . (int) $this->user->id)->loadResult();
+            $found = false;
+            foreach ($payload ? (json_decode($payload, true) ?: []) : [] as $recording)
+            {
+                if (($recording['id'] ?? '') === $id) $found = true;
+            }
+            if (!$found) throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_COLLECTION_NOT_FOUND'), 404);
+            $where = ' WHERE user_id=' . (int) $this->user->id . ' AND recording_id=' . $this->db->quote($id);
+            $table = $this->db->quoteName('#__audioarchive_recording_shares');
+            $token = (string) $this->db->setQuery('SELECT token FROM ' . $table . $where)->loadResult();
+            if ($revoke)
+            {
+                $this->db->setQuery('DELETE FROM ' . $table . $where)->execute();
+                return ['token' => ''];
+            }
+            if ($token === '')
+            {
+                $token = bin2hex(random_bytes(24));
+                $this->db->insertObject('#__audioarchive_recording_shares', (object) ['user_id' => (int) $this->user->id, 'recording_id' => $id, 'token' => $token]);
+            }
+            return ['token' => $token];
+        });
+    }
+
+    /** @brief Resolve the latest saved performance through guest ACL even for signed-in visitors. */
+    public function sharedRecording(string $token): array
+    {
+        if (!$this->params->get('collections_sharing', 1) || !preg_match('/^[a-f0-9]{48}$/D', $token)) throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_COLLECTION_NOT_FOUND'), 404);
+        $row = $this->db->setQuery('SELECT s.recording_id, r.payload FROM ' . $this->db->quoteName('#__audioarchive_recording_shares') . ' s JOIN ' . $this->db->quoteName('#__audioarchive_recordings') . ' r ON r.user_id=s.user_id JOIN ' . $this->db->quoteName('#__users') . ' u ON u.id=s.user_id WHERE s.token=' . $this->db->quote($token))->loadObject();
+        if ($row)
+        {
+            foreach (json_decode($row->payload, true) ?: [] as $recording)
+            {
+                if (($recording['id'] ?? '') !== $row->recording_id) continue;
+                $policy = new ClipAccessService($this->db, new User());
+                $cache = [];
+                return RecordingShareService::sanitise($recording, function (array $ref) use ($policy, &$cache): ?object
+                {
+                    $uuid = is_string($ref['uuid'] ?? null) ? $ref['uuid'] : '';
+                    $id = (int) ($ref['id'] ?? 0);
+                    $key = $uuid !== '' ? 'uuid:' . $uuid : 'id:' . $id;
+                    if (!array_key_exists($key, $cache))
+                    {
+                        $where = $uuid !== '' ? 'uuid=' . $this->db->quote($uuid) : 'id=' . $id;
+                        $clip = $this->db->setQuery('SELECT * FROM ' . $this->db->quoteName('#__audioarchive_clips') . ' WHERE ' . $where)->loadObject();
+                        $cache[$key] = $clip && $policy->canView($clip) ? $clip : null;
+                    }
+                    return $cache[$key];
+                });
+            }
+        }
+        throw new \RuntimeException(Text::_('COM_AUDIOARCHIVE_COLLECTION_NOT_FOUND'), 404);
+    }
+
 }

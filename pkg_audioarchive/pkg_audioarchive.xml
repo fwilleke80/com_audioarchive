@@ -2,7 +2,7 @@
 <extension type="package" method="upgrade">
     <name>Punga Audio Archive Package</name>
     <packagename>audioarchive</packagename>
-    <version>0.16.0</version>
+    <version>0.17.1</version>
     <creationDate>2026-11-15</creationDate>
     <author>Frank Willeke</author>
     <authorEmail>joomla-plugins@frankwilleke.de</authorEmail>

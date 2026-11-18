@@ -3261,3 +3261,15 @@
 {
     pointer-events: none;
 }
+
+/** @brief Shared performances expose playback only, without the visitor's personal collection UI. */
+[data-audioarchive-shared-recording="1"] > :not(.com-audioarchive-recorder-disclosure),
+[data-audioarchive-shared-recording="1"] .com-audioarchive-soundboard-recordings-header,
+[data-audioarchive-shared-recording="1"] .com-audioarchive-soundboard-recording-library,
+[data-audioarchive-shared-recording="1"] .com-audioarchive-recording-actions,
+[data-audioarchive-shared-recording="1"] [data-audioarchive-recording-overdub],
+[data-audioarchive-shared-recording="1"] [data-audioarchive-recording-undo],
+[data-audioarchive-shared-recording="1"] [data-recording-edit-controls]
+{
+    display: none !important;
+}

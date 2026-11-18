@@ -9,8 +9,11 @@ let labels = {};
 let readyPromise;
 let pending = 0;
 let unsavedRecordings = false;
+let sessionChanged = false;
+let unsavedSessionWork = false;
 let tail = Promise.resolve();
 let shared = null;
+let sharedRecording = null;
 let statusNode;
 let activeBoard = '';
 let selectedPlaylist = '';
@@ -110,7 +113,13 @@ async function request(action, payload = null, shareToken = '', files = [])
 	}
 	if (!response.ok || json.success !== true)
 	{
-		throw new Error(json.message || labels.error || 'Collection request failed.');
+		const error = new Error(json.message || labels.error || 'Collection request failed.');
+		if (json.sessionChanged === true)
+		{
+			sessionChanged = true;
+			error.sessionCheck = true;
+		}
+		throw error;
 	}
 	return json.data;
 }
@@ -130,6 +139,30 @@ function accept(data)
 	}
 }
 
+/** @brief Revalidate the destination without replacing a working collection or advancing its revision. */
+async function verifySession()
+{
+    try
+    {
+        if (sessionChanged) throw new Error(labels.session_changed || 'Your login has changed. Export any unsaved work, then reload this page before saving.');
+        const current = await request('session');
+        if (!['server', 'browser'].includes(current.backend) || !Number.isInteger(current.userId)) throw new Error(labels.error || 'Unable to verify your login. Please retry.');
+        if (current.backend !== state.backend || current.userId !== state.userId)
+        {
+            sessionChanged = true;
+            throw new Error(labels.session_changed || 'Your login has changed. Export any unsaved work, then reload this page before saving.');
+        }
+        if (current.token) token = current.token;
+        return current;
+    }
+    catch (error)
+    {
+        error.sessionCheck = true;
+        notice(error.message, true);
+        throw error;
+    }
+}
+
 /** @brief Queue mutations with the latest acknowledged revision; another tab causes a conflict, never an overwrite. */
 function mutate(action, payload, files = [])
 {
@@ -139,7 +172,8 @@ function mutate(action, payload, files = [])
 		notice(labels.saving || 'Saving…');
 		try
 		{
-			const result = await request(action, {...payload, revision: state.revision}, '', files);
+			await verifySession();
+			const result = await request(action, {...payload, revision: state.revision, userId: state.userId}, '', files);
 			accept(result.state);
 			notice('');
 			return result;
@@ -173,6 +207,11 @@ async function initialise()
 			: (data.defaultBoard || data.boards?.[0]?.id || '');
 		selectedPlaylist = read(`com_audioarchive.activePlaylist.${data.userId}`, '', true);
 		accept(data);
+        const recordingToken = new URL(window.location.href).searchParams.get('aa_recording');
+        if (recordingToken !== null)
+        {
+            sharedRecording = await request('sharedRecording', null, recordingToken);
+        }
 		const shareToken = new URL(window.location.href).searchParams.get('aa_share');
 		if (shareToken)
 		{
@@ -186,6 +225,7 @@ async function initialise()
 	catch (error)
 	{
 		notice(error.message, true);
+        if (new URL(window.location.href).searchParams.has('aa_recording')) sharedRecording = {error: true};
 		// Fail closed, including a revoked share link: never open the owner's board in its place.
 		if (new URL(window.location.href).searchParams.has('aa_share'))
 		{
@@ -194,12 +234,19 @@ async function initialise()
 	}
 	window.addEventListener('beforeunload', (event) =>
 	{
-		if (pending || unsavedRecordings)
+		if (pending || unsavedRecordings || unsavedSessionWork)
 		{
 			event.preventDefault();
 			event.returnValue = '';
 		}
 	});
+    const checkSession = () =>
+    {
+        if (state.backend !== 'disabled' && document.visibilityState !== 'hidden') void verifySession().catch(() => {});
+    };
+    window.addEventListener('focus', checkSession);
+    window.addEventListener('pageshow', checkSession);
+    document.addEventListener('visibilitychange', checkSession);
 	// Prevent overlapping user mutations while allowing an in-flight operation to finish.
 	document.addEventListener('click', (event) =>
 	{
@@ -213,6 +260,24 @@ async function initialise()
 
 /** @brief Public adapter shared by playlist, Sound Board and archive add-to controls. */
 export const Collections = {
+    get sharedRecording()
+    {
+        return sharedRecording;
+    },
+    get recordingShares()
+    {
+        return [...(state.recordingShares || [])];
+    },
+    /** @brief Share saved account data only; never serialize a browser draft into the URL. */
+    async recordingShareUrl(id, revoke = false)
+    {
+        if (state.backend !== 'server') throw new Error(labels.unavailable || 'Unavailable');
+        const result = await mutate(revoke ? 'revokeRecording' : 'shareRecording', {id});
+        if (revoke) return '';
+        const url = endpoint('sharedRecording');
+        url.search = new URLSearchParams({option: 'com_audioarchive', view: 'soundboard', aa_recording: result.token}).toString();
+        return url.toString();
+    },
 	ready()
 	{
 		return readyPromise ||= initialise();
@@ -297,11 +362,16 @@ export const Collections = {
     /** @brief Reload acknowledged account data before discarding an editor draft. */
     async refresh()
     {
-        if (state.backend !== 'server') return true;
         try
         {
             await tail;
+            await verifySession();
             const data = await request('state');
+            if (data.userId !== state.userId || data.backend !== state.backend)
+            {
+                sessionChanged = true;
+                throw new Error(labels.session_changed || 'Your login has changed. Export unsaved work, then reload this page.');
+            }
             token = data.token;
             accept(data);
             return true;
@@ -324,7 +394,9 @@ export const Collections = {
 			}
 			if (state.backend !== 'server')
 			{
+                await verifySession();
 				localStorage.setItem(key, JSON.stringify(value));
+                unsavedSessionWork = false;
 				return true;
 			}
 			if (key === RECORDINGS_KEY)
@@ -360,16 +432,18 @@ export const Collections = {
 				Object.assign(value, acknowledged);
 			}
 			refreshControls();
+            unsavedSessionWork = false;
 			return true;
 		}
 		catch (error)
 		{
 			if (key === RECORDINGS_KEY) unsavedRecordings = true;
-			if (!options.preserveDraft && Array.isArray(value) && key !== RECORDINGS_KEY)
+            if (error.sessionCheck) unsavedSessionWork = true;
+			if (!error.sessionCheck && !options.preserveDraft && Array.isArray(value) && key !== RECORDINGS_KEY)
 			{
 				value.splice(0, value.length, ...previous);
 			}
-			else if (!options.preserveDraft && key !== RECORDINGS_KEY)
+			else if (!error.sessionCheck && !options.preserveDraft && key !== RECORDINGS_KEY)
 			{
 				Object.keys(value).forEach((key) => delete value[key]);
 				Object.assign(value, previous);

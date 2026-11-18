@@ -1,7 +1,7 @@
 import {mountPlaylistCovers} from './playlist-covers.js?v=0.15.6';
-import {openSoundboardChooser, renderSoundboardChoices} from './board-chooser.js?v=0.15.6';
+import {openSoundboardChooser, renderSoundboardChoices} from './board-chooser.js?v=0.17.1';
 import {playbackFor, playNormalized, updateNormalization} from './normalization.js?v=0.13.2.7';
-import {Collections} from './collections.js?v=0.15.6';
+import {Collections} from './collections.js?v=0.17.1';
 const PLAYLIST_STORAGE_KEY = 'com_audioarchive.playlists.v1';
 const PLAYLIST_STORAGE_VERSION = 1;
 const PLAYLIST_RESOLUTION_BATCH_SIZE = 500;

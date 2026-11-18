@@ -106,7 +106,7 @@ final class Audioarchive extends CMSPlugin implements SubscriberInterface
 			$information = $xml->fields->addChild('fieldset');
 			$information->addAttribute('name', 'audioarchive_information');
 			$information->addAttribute('label', 'PLG_USER_AUDIOARCHIVE_INFORMATION');
-			foreach (['owned_clips', 'private_clips', 'storage_usage', 'clip_usage', 'playlist_count', 'soundboard_count', 'quota_status'] as $name)
+			foreach (['owned_clips', 'private_clips', 'storage_usage', 'clip_usage', 'playlist_count', 'soundboard_count', 'recording_count', 'quota_status'] as $name)
 			{
 				$this->field($information, $name, 'text', 'PLG_USER_AUDIOARCHIVE_' . strtoupper($name), [], ['readonly' => 'true', 'filter' => 'unset']);
 			}

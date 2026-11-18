@@ -83,6 +83,8 @@ export class RecordingEditor
         this.undo.addEventListener('click', () =>
         {
             if (this.busy || !this.history.length) return;
+            this.callbacks.stopPreview();
+            this.cancelAudition();
             this.draft = this.history.pop();
             callbacks.stopAudition();
             callbacks.render();
@@ -90,8 +92,10 @@ export class RecordingEditor
         this.controls.querySelector('[data-edit-save]').addEventListener('click', async () =>
         {
             if (this.busy || !this.draft) return;
+            this.callbacks.stopPreview();
+            this.cancelAudition();
             this.busy = true;
-            this.sync();
+            callbacks.render();
             try
             {
                 if (await callbacks.save(this.draft))
@@ -107,7 +111,7 @@ export class RecordingEditor
                 this.message.textContent = this.labels.error;
             }
             this.busy = false;
-            this.sync();
+            callbacks.render();
         });
         this.layerSelect.addEventListener('change', () =>
         {
@@ -139,6 +143,7 @@ export class RecordingEditor
             else if (event.key === 'Enter' || event.key === ' ')
             {
                 event.preventDefault();
+                callbacks.stopPreview();
                 callbacks.audition(this.draft, this.draft.events[index]);
             }
             else if (['ArrowLeft', 'ArrowRight'].includes(event.key))
@@ -157,12 +162,19 @@ export class RecordingEditor
         });
     }
 
+    /** @brief Cancel delayed or already playing event audition before previewing a song. */
+    cancelAudition()
+    {
+        clearTimeout(this.clickTimer);
+        this.callbacks.stopAudition();
+    }
+
     /** @brief Discard the draft and pending audition safely. */
     close()
     {
         if (this.busy) return;
-        clearTimeout(this.clickTimer);
-        this.callbacks.stopAudition();
+        this.callbacks.stopPreview();
+        this.cancelAudition();
         this.draft = null;
         this.history = [];
         this.message.textContent = '';
@@ -211,6 +223,8 @@ export class RecordingEditor
         try
         {
             const next = editRecording(this.draft, action, index, value);
+            this.callbacks.stopPreview();
+            this.cancelAudition();
             this.history.push(this.draft);
             if (this.history.length > 100) this.history.shift();
             this.draft = next;
@@ -236,7 +250,7 @@ export class RecordingEditor
         if (this.busy) return;
         const point = this.point(event);
         if (point.x < 64) return;
-        if (!this.draft)
+        if (!this.draft || point.row < 0)
         {
             this.callbacks.seek(point.t);
             return;
@@ -246,7 +260,11 @@ export class RecordingEditor
         clearTimeout(this.clickTimer);
         this.clickTimer = setTimeout(() =>
         {
-            if (this.draft && !this.busy) this.callbacks.audition(this.draft, this.draft.events[Number(node.dataset.eventIndex)]);
+            if (this.draft && !this.busy)
+            {
+                this.callbacks.stopPreview();
+                this.callbacks.audition(this.draft, this.draft.events[Number(node.dataset.eventIndex)]);
+            }
         }, 280);
     }
 
@@ -272,8 +290,11 @@ export class RecordingEditor
     pointerDown(event)
     {
         if (!this.draft || this.busy || event.button !== 0) return;
-        const node = event.target.closest('[data-event-index]');
+        let node = event.target.closest('[data-event-index]');
         if (!node) return;
+        const index = node.dataset.eventIndex;
+        this.callbacks.stopPreview();
+        node = this.roll.querySelector?.(`[data-event-index="${index}"]`) || node;
         clearTimeout(this.clickTimer);
         this.drag = {node, index: Number(node.dataset.eventIndex), x: event.clientX, y: event.clientY, point: this.point(event), moved: false};
         node.setPointerCapture(event.pointerId);

@@ -98,6 +98,11 @@ class HtmlView extends BaseHtmlView
 		$this->samplerEnabled = (int) $this->params->get('enable_soundboard_sampler', 1) === 1;
 		$this->playlistsEnabled = (int) $this->params->get('enable_playlists', 1) === 1;
 		$this->recordingsEnabled = (int) $this->params->get('enable_soundboard_recordings', 1) === 1;
+        if (isset($_GET['aa_recording']))
+        {
+            $this->recordingsEnabled = true;
+            $this->samplerEnabled = true;
+        }
 		$itemId = (int) ($item?->id ?? $application->getInput()->getInt('Itemid', 0));
 		$this->pageHeading = (string) $this->params->get(
 			'page_heading',

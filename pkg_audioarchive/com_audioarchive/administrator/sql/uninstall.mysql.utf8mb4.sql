@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS `#__audioarchive_recording_shares`;
 DELETE FROM `#__contentitem_tag_map`
 WHERE `type_alias` = 'com_audioarchive.clip';
 
