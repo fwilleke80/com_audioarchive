@@ -65,7 +65,7 @@ if ((int) $this->params->get('detail_show_download_count', 0) === 1)
 foreach (['licence', 'creator', 'contributors', 'recording_location', 'genre_style', 'creation_year', 'lyrics'] as $field)
 {
     $value = trim((string) ($this->item->$field ?? ''));
-    if ($value !== '')
+    if ($value !== '' && (int) $this->params->get('detail_show_' . $field, 1) === 1)
     {
         $rows[] = [Text::_('COM_AUDIOARCHIVE_METADATA_' . strtoupper($field)), '<span class="com-audioarchive-credit-value">' . $this->escape($value) . '</span>'];
     }

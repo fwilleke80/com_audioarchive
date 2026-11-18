@@ -72,3 +72,9 @@ This discourages simple link-following crawlers; it is not comprehensive bot pro
 ### Compact archive filter layout (0.15.4)
 
 Search and the other enabled controls now wrap in the wider left column. Tags occupy an independent right column; narrower containers stack the columns. Hidden fields leave no reserved slots, and hiding Tags lets the remaining controls use the full width. The existing global and archive menu-item visibility settings continue to apply.
+
+## Details card visibility (0.15.10)
+
+In Component Options → Clip Detail → Details card, choose which rows appear, including upload date and each creative metadata field. Public Archive menu items provide matching overrides under Clip Detail; Use Global inherits component settings. Empty metadata values remain omitted, and hiding all rows removes the card. These controls affect presentation, not data access permissions.
+
+Personal Collections is now a subgroup in Users & Quotas; existing sharing settings are preserved.

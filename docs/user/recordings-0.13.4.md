@@ -35,3 +35,9 @@ Automated PHP/SQLite and JavaScript fixtures verify ownership, conflicts, bounds
 ### 0.13.4.2 sound-board loading fix
 
 Clip-detail links and normalization gains share a retryable metadata lookup. Playback waits for this lookup rather than assuming a gain of 1. Failed lookups remain retryable. Test switching between boards immediately after opening the page, then triggering pads and chromatic notes; test once with a temporarily interrupted connection. Automated fixtures cover request sharing, retries and cross-board recovery; device audio testing remains necessary.
+
+## Mixed-mode overdubs and playback (0.15.10)
+
+Pad Trigger parts can be overdubbed over chromatic parts, and vice versa. Select the desired live mode and board before Record overdub. Pad events retain their clip mapping; chromatic notes retain their absolute MIDI pitch. Each layer uses its own recorded polyphony, so a monophonic part does not cut off another layer. Playback now honours saved polyphony even if the current page disables polyphonic live playing. Existing recordings do not need conversion.
+
+See [Recorder editing](recorder-editing.md) for the 0.16.0 piano-roll editor and seeking controls.

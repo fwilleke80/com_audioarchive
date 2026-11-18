@@ -21,3 +21,11 @@ Only external embeds are in scope for 0.15.0. The remaining milestones require t
 Cover upload/storage is introduced in 0.15.4 for clips and account playlists. Since 0.15.5, clip covers are submitted with Save/Apply, including on new clips. Public rendering (clip pages, player artwork, playlist artwork and embeds) is a separate design step. Covers are attached to their entity rather than encoded into descriptive metadata or tags. Each entity has at most one cover, and replacing a clip cover does not change a playlist cover.
 
 The richer metadata milestone is implemented in 0.15.7: licence, creator and contributors, recording location, genre/style, creation year and lyrics. Optional public profiles are next in the agreed roadmap. Image-specific attribution, alt text and focal-point settings can be added alongside the cover association when rendering is designed, without changing clip ownership or creative credits. Never infer permission to reuse an image from the audio licence.
+
+## Recorder editing — implemented in 0.16.0
+
+The recorder update adds click-to-seek, explicit Edit mode, correctly pitched audition, dragging, double-click creation/deletion and undo. Draft edits use Save changes / Cancel. Per-layer clip mappings, pad/chromatic event types and polyphony are preserved.
+
+Show clip owner now uses the standard Joomla switch in Component Options → Clip Detail → Details card. Its saved value and default are preserved; menu-item overrides retain Use Global / Show / Hide.
+
+Optional public profiles remain the next main roadmap milestone. Cover-image rendering remains a separate pending design step.

@@ -41,7 +41,6 @@
 			<field name="archive_filters_initial_state" type="list" label="COM_AUDIOARCHIVE_CONFIG_FILTERS_INITIAL_STATE_LABEL" description="COM_AUDIOARCHIVE_CONFIG_FILTERS_INITIAL_STATE_DESC" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="expanded">COM_AUDIOARCHIVE_FILTERS_STATE_EXPANDED</option><option value="collapsed">COM_AUDIOARCHIVE_FILTERS_STATE_COLLAPSED</option></field>
 		<field name="archive_column_owner" type="list" label="COM_AUDIOARCHIVE_ARCHIVE_OWNER_COLUMN" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="0">JNO</option><option value="1">JYES</option></field>
 <field name="archive_show_owner_filter" type="list" label="COM_AUDIOARCHIVE_ARCHIVE_OWNER_FILTER" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="0">JNO</option><option value="1">JYES</option></field>
-<field name="detail_show_owner" type="list" label="COM_AUDIOARCHIVE_DETAIL_OWNER" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="0">JNO</option><option value="1">JYES</option></field>
 <field name="player_pause_behavior" type="list" label="COM_AUDIOARCHIVE_PAUSE_BEHAVIOR_LABEL" description="COM_AUDIOARCHIVE_PAUSE_BEHAVIOR_DESC" default="">
  <option value="">JGLOBAL_USE_GLOBAL</option>
  <option value="pause">COM_AUDIOARCHIVE_PAUSE_BEHAVIOR_PAUSE</option>
@@ -57,9 +56,9 @@
 			<field name="archive_show_uploaded_filter" type="list" label="COM_AUDIOARCHIVE_CONFIG_SHOW_UPLOADED_FILTER_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
 		</fieldset>
 		<fieldset name="detail" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_LABEL">
+			<field name="detail_information_heading" type="spacer" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_INFORMATION_LABEL" />
+			<field name="detail_show_owner" type="list" label="COM_AUDIOARCHIVE_DETAIL_OWNER" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="0">JNO</option><option value="1">JYES</option></field>
 			<field name="detail_show_duration" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_DURATION_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
-			<field name="detail_show_category" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_CATEGORY_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
-			<field name="detail_show_tags" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_TAGS_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
 			<field name="detail_show_recorded" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_RECORDED_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
 			<field name="detail_show_uploaded" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_UPLOADED_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
 			<field name="detail_show_original_filename" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_FILENAME_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
@@ -68,6 +67,16 @@
 			<field name="detail_show_file_size" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_FILE_SIZE_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
 			<field name="detail_show_play_count" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_PLAY_COUNT_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
 			<field name="detail_show_download_count" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_COUNT_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
+			<field name="detail_show_licence" type="list" label="COM_AUDIOARCHIVE_METADATA_LICENCE" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
+			<field name="detail_show_creator" type="list" label="COM_AUDIOARCHIVE_METADATA_CREATOR" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
+			<field name="detail_show_contributors" type="list" label="COM_AUDIOARCHIVE_METADATA_CONTRIBUTORS" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
+			<field name="detail_show_recording_location" type="list" label="COM_AUDIOARCHIVE_METADATA_RECORDING_LOCATION" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
+			<field name="detail_show_genre_style" type="list" label="COM_AUDIOARCHIVE_METADATA_GENRE_STYLE" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
+			<field name="detail_show_creation_year" type="list" label="COM_AUDIOARCHIVE_METADATA_CREATION_YEAR" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
+			<field name="detail_show_lyrics" type="list" label="COM_AUDIOARCHIVE_METADATA_LYRICS" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
+			<field name="detail_display_heading" type="spacer" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_DISPLAY_LABEL" />
+			<field name="detail_show_category" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_CATEGORY_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
+			<field name="detail_show_tags" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_TAGS_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
 			<field name="detail_show_download" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_LABEL" description="COM_AUDIOARCHIVE_CONFIG_DETAIL_DOWNLOAD_DESC" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
 			<field name="detail_show_navigation" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_NAVIGATION_LABEL" description="COM_AUDIOARCHIVE_CONFIG_DETAIL_NAVIGATION_DESC" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
 			<field name="detail_show_rating" type="list" label="COM_AUDIOARCHIVE_CONFIG_DETAIL_RATING_LABEL" default=""><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>

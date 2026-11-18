@@ -3234,3 +3234,30 @@
 {
     min-width: 0;
 }
+
+/** @brief Recorder editing controls and pointer targets. */
+.com-audioarchive-recording-edit-controls
+{
+    margin-block: .75rem;
+}
+.com-audioarchive-soundboard-recording-roll.is-editing
+{
+    touch-action: none;
+    user-select: none;
+}
+.com-audioarchive-soundboard-recording-roll.is-editing .com-audioarchive-soundboard-recording-event
+{
+    cursor: grab;
+    pointer-events: auto;
+}
+.com-audioarchive-soundboard-recording-event:focus-visible
+{
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+.com-audioarchive-soundboard-recording-grid-line,
+.com-audioarchive-soundboard-recording-playhead,
+.com-audioarchive-soundboard-recording-time-label
+{
+    pointer-events: none;
+}

@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.16.0
+
+- Add piano-roll click-to-seek, including seeking during ordinary recording playback; restore saved per-layer polyphony at the new position.
+- Add explicit recording Edit mode with pitched audition, horizontal/vertical event dragging, double-click creation/deletion, keyboard event actions and up to 100 undo steps. Select the stored layer and source pad for new chromatic notes.
+- Keep edits in a draft until Save changes; Cancel preserves the original, failed saves retain edits, and navigation warns about unsaved changes. Preserve mixed-mode layers and extend recording duration for known one-shot sample tails.
+- Replace Show clip owner’s component-options dropdown with the standard Joomla switch, preserving its saved value and default. Menu overrides retain Use Global.
+
+## 0.15.10
+
+- Group Details card visibility options under Clip Detail, including independent switches for all seven creative metadata fields and matching Public Archive menu overrides. Existing visibility defaults are retained.
+- Move Personal Collections into Users & Quotas as a subgroup, preserving saved settings.
+- Replay saved recording polyphony independently of the current live board polyphony permission; retain each layer’s recorded monophony and clip mappings.
+
 ## 0.15.9
 
 - Group backend batch editing into six native collapsible sections: Category and ownership, Tags, Search & replace, Licence and credits, Recording and style, and Lyrics.

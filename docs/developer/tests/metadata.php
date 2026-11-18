@@ -49,7 +49,15 @@ $view = new class
         return ob_get_clean();
     }
 };
-$view->params = new class { public function get(...$args) { return 0; } };
+$view->params = new class
+{
+    public array $hidden = [];
+    public function get(string $name, mixed $default = null): mixed
+    {
+        $metadata = ['licence', 'creator', 'contributors', 'recording_location', 'genre_style', 'creation_year', 'lyrics'];
+        return in_array(substr($name, 12), $metadata, true) && !in_array($name, $this->hidden, true) ? $default : 0;
+    }
+};
 $view->item = (object) ['duration_ms' => 0, 'file_size' => 0];
 check(trim($view->render()) === '', 'no empty public metadata panel');
 $view->item = (object) ($normal + ['description' => '', 'duration_ms' => 0, 'file_size' => 0]);
@@ -57,6 +65,14 @@ $view->item->creator = '<script>alert(1)</script>';
 $html = $view->render();
 check(!str_contains($html, '<script>') && str_contains($html, '&lt;script&gt;'), 'public metadata is escaped');
 check(str_contains($html, "First line\nSecond line"), 'lyrics line breaks preserved');
+foreach (array_keys($sample) as $name)
+{
+    $view->params->hidden = ['detail_show_' . $name];
+    $filtered = $view->render();
+    check(!str_contains($filtered, 'COM_AUDIOARCHIVE_METADATA_' . strtoupper($name)), 'hidden metadata row omitted: ' . $name);
+}
+$view->params->hidden = array_map(fn(string $name): string => 'detail_show_' . $name, array_keys($sample));
+check(trim($view->render()) === '', 'all hidden rows suppress Details card');
 $portable = json_decode(json_encode($normal, JSON_UNESCAPED_UNICODE), true);
 check(ClipMetadataService::normalise($portable) === $normal, 'portable metadata survives JSON round trip');
 check(ClipMetadataService::batchChanges([]) === [], 'empty batch changes no metadata');

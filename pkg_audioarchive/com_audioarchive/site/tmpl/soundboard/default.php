@@ -425,6 +425,20 @@ data-audioarchive-recordings-enabled="<?php echo $this->recordingsEnabled ? '1' 
 					<button type="button" class="btn btn-sm btn-outline-secondary" data-audioarchive-recording-zoom-in aria-label="<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_ZOOM_IN'); ?>" title="<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_ZOOM_IN'); ?>">+</button>
 				</div>
 			</div>
+            <div class="com-audioarchive-recording-edit-controls" data-recording-edit-controls data-labels="<?php echo $this->escape(json_encode(['layer' => Text::_('COM_AUDIOARCHIVE_RECORDING_EDIT_LAYER'), 'error' => Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_STORAGE_ERROR'), 'invalid' => Text::_('COM_AUDIOARCHIVE_RECORDING_EDIT_INVALID')])); ?>">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-edit-toggle><?php echo Text::_('COM_AUDIOARCHIVE_RECORDING_EDIT_MODE'); ?></button>
+                <div data-edit-panel hidden>
+                    <p><?php echo Text::_('COM_AUDIOARCHIVE_RECORDING_EDIT_HELP'); ?></p>
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <label><?php echo Text::_('COM_AUDIOARCHIVE_RECORDING_EDIT_LAYER'); ?> <select class="form-select" data-edit-layer></select></label>
+                        <label><?php echo Text::_('COM_AUDIOARCHIVE_RECORDING_EDIT_SOURCE'); ?> <select class="form-select" data-edit-pad></select></label>
+                        <button type="button" class="btn btn-sm btn-primary" data-edit-save><?php echo Text::_('COM_AUDIOARCHIVE_RECORDING_EDIT_SAVE'); ?></button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-edit-cancel><?php echo Text::_('JCANCEL'); ?></button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-edit-undo><?php echo Text::_('COM_AUDIOARCHIVE_RECORDING_EDIT_UNDO'); ?></button>
+                    </div>
+                </div>
+                <p role="status" data-edit-message></p>
+            </div>
 			<div class="com-audioarchive-soundboard-recording-roll-viewport" data-audioarchive-recording-roll-viewport>
 				<div class="com-audioarchive-soundboard-recording-roll" data-audioarchive-recording-roll></div>
 			</div>

@@ -1,3 +1,4 @@
+import {RecordingEditor, recordingSeekState} from './recording-editor.js?v=0.16.0';
 import {BoardPreloader} from './board-preload.js?v=0.13.7.1';
 import {openSoundboardChooser} from './board-chooser.js?v=0.15.6';
 import {acquirePlaybackSession, releasePlaybackSession} from './audio-session.js?v=0.13.2.7';
@@ -1319,6 +1320,9 @@ async function initialiseSoundboard()
 	let recordingZoom = 1;
 	let recordingUndo = null;
 	let recordingLiveRenderAt = 0;
+	let recordingEdit = null;
+	let recordingSeekPosition = 0;
+	let auditionGeneration = 0;
 	const recordingActiveNotes = new Map();
 
 	const setRecordingTransportState = (button, active, startIcon, stopIcon) =>
@@ -3068,7 +3072,7 @@ async function initialiseSoundboard()
 
 	const getSelectedRecording = () =>
 	{
-		return recordings.find((recording) => recording.id === selectedRecordingId) || null;
+		return recordingEdit?.draft || recordings.find((recording) => recording.id === selectedRecordingId) || null;
 	};
 
 	const updateRecordingPlayhead = (elapsedMs) =>
@@ -3119,8 +3123,14 @@ async function initialiseSoundboard()
 
 		const noteEvents = recording.events.filter((event) => event.type === 'note');
 		const padEvents = recording.events.filter((event) => event.type === 'pad');
-		const usedNotes = Array.from(new Set(noteEvents.map((event) => event.note))).sort((a, b) => a - b);
+		let usedNotes = Array.from(new Set(noteEvents.map((event) => event.note))).sort((a, b) => a - b);
 		const noteRows = [];
+        if (recordingEdit?.draft)
+        {
+            const low = Math.max(0, Math.min(...usedNotes, 60) - 12);
+            const high = Math.min(127, Math.max(...usedNotes, 60) + 12);
+            usedNotes = [low, high];
+        }
 
 		if (usedNotes.length > 0)
 		{
@@ -3130,11 +3140,14 @@ async function initialiseSoundboard()
 			}
 		}
 
-		const padRows = Array.from(new Set(padEvents.map((event) => event.pad))).sort((a, b) => a - b);
+		const editPads = recordingEdit?.draft ? (recording.layerBoards?.[recordingEdit.layer] || recording.board).flatMap((entry, index) => entry ? [index] : []) : [];
+		const padRows = Array.from(new Set([...padEvents.map((event) => event.pad), ...editPads])).sort((a, b) => a - b);
 		const rows = [
 			...noteRows.map((note) => ({key: `note:${note}`, label: getMidiNoteName(note), type: 'note', value: note})),
 			...padRows.map((pad) => ({key: `pad:${pad}`, label: `Pad ${pad + 1}`, type: 'pad', value: pad})),
 		];
+
+		if (recordingEdit) recordingEdit.rows = rows;
 
 		if (rows.length === 0)
 		{
@@ -3232,8 +3245,11 @@ async function initialiseSoundboard()
 			note.style.width = `${Math.max(5, (event.duration / 1000) * pixelsPerSecond)}px`;
 			note.style.height = `${rowHeight - 4}px`;
 
-			const padTitle = recording.board[event.pad]?.title || `Pad ${event.pad + 1}`;
-			note.title = `${getMidiNoteName(event.note)} · Pad ${event.pad + 1}: ${padTitle} · ${formatSoundboardRecordingTime(event.t)} · velocity ${event.velocity}`;
+			note.dataset.eventIndex = String(recording.events.indexOf(event));
+            note.tabIndex = recordingEdit?.draft ? 0 : -1;
+            note.setAttribute('role', 'button');
+			const padTitle = (recording.layerBoards?.[event.layer || 0] || recording.board)[event.pad]?.title || `Pad ${event.pad + 1}`;
+			note.title = `${recordingEdit?.labels?.layer || 'Layer'} ${(event.layer || 0) + 1} · ${getMidiNoteName(event.note)} · Pad ${event.pad + 1}: ${padTitle} · ${formatSoundboardRecordingTime(event.t)} · velocity ${event.velocity}`;
 			recordingRoll.appendChild(note);
 		});
 
@@ -3253,7 +3269,10 @@ async function initialiseSoundboard()
 			trigger.style.top = `${rulerHeight + index * rowHeight + 2}px`;
 			trigger.style.width = '7px';
 			trigger.style.height = `${rowHeight - 4}px`;
-			trigger.title = `Pad ${event.pad + 1} · ${formatSoundboardRecordingTime(event.t)}`;
+			trigger.dataset.eventIndex = String(recording.events.indexOf(event));
+            trigger.tabIndex = recordingEdit?.draft ? 0 : -1;
+            trigger.setAttribute('role', 'button');
+			trigger.title = `${recordingEdit?.labels?.layer || 'Layer'} ${(event.layer || 0) + 1} · Pad ${event.pad + 1}: ${(recording.layerBoards?.[event.layer || 0] || recording.board)[event.pad]?.title || ''} · ${formatSoundboardRecordingTime(event.t)}`;
 			recordingRoll.appendChild(trigger);
 		});
 
@@ -3264,6 +3283,7 @@ async function initialiseSoundboard()
 		playhead.style.top = `${rulerHeight}px`;
 		playhead.style.height = `${rows.length * rowHeight}px`;
 		recordingRoll.appendChild(playhead);
+        updateRecordingPlayhead(recordingSeekPosition);
 	};
 
 	const renderSoundboardRecordings = () =>
@@ -3273,10 +3293,18 @@ async function initialiseSoundboard()
 			return;
 		}
 
+        if (!recordingEdit?.draft)
+        {
+            recordingsRoot.querySelectorAll('[data-recording-edit-locked]').forEach((button) =>
+            {
+                button.disabled = false;
+                delete button.dataset.recordingEditLocked;
+            });
+        }
 		const selected = getSelectedRecording();
 		const livePreview = getLiveRecordingPreview();
 		const displayedRecording = livePreview || selected;
-		const busy = Boolean(recordingSession || recordingPlayback);
+		const busy = Boolean(recordingSession || recordingPlayback || recordingEdit?.draft);
 		recordingList.replaceChildren();
 
 		if (recordings.length === 0)
@@ -3355,6 +3383,20 @@ async function initialiseSoundboard()
 		{
 			recordingExportButton.disabled = busy;
 		}
+        recordingEdit?.sync();
+        if (recordingEdit?.draft)
+        {
+            recordingsRoot.querySelectorAll('button').forEach((button) =>
+            {
+                if (!button.disabled && !button.closest('[data-recording-edit-controls]') && button !== recordingZoomInButton && button !== recordingZoomOutButton)
+                {
+                    button.dataset.recordingEditLocked = '';
+                    button.disabled = true;
+                }
+            });
+        }
+        else if (!recordingSession && !recordingPlayback && recordingImportButton) recordingImportButton.disabled = false;
+
 	};
 
 	const exportSoundboardRecording = (recording) =>
@@ -3491,7 +3533,8 @@ async function initialiseSoundboard()
 		setRecordingMutationDisabled(false);
 
 		syncRecordingTransport();
-		updateRecordingPlayhead(0);
+		if (finished) recordingSeekPosition = 0;
+		updateRecordingPlayhead(recordingSeekPosition);
 		renderSoundboardRecordings();
 
 		if (finished && recordingStatus)
@@ -3518,7 +3561,7 @@ async function initialiseSoundboard()
 		}
 		else if (event.type === 'polyphony')
 		{
-			const enabled = polyphonic && event.enabled;
+			const enabled = event.enabled;
 			recordingPlayback.polyphonyByLayer.set(layer, enabled);
 
 			if (!enabled)
@@ -3556,7 +3599,8 @@ async function initialiseSoundboard()
 			recordingPlayback.eventIndex++;
 		}
 
-		updateRecordingPlayhead(Math.min(elapsed, recordingPlayback.recording.durationMs));
+		recordingSeekPosition = Math.min(elapsed, recordingPlayback.recording.durationMs);
+		updateRecordingPlayhead(recordingSeekPosition);
 
 		if (elapsed >= recordingPlayback.recording.durationMs)
 		{
@@ -3602,13 +3646,14 @@ async function initialiseSoundboard()
 			selectedPad: selectedSamplerIndex,
 		};
 
-		const initialPlaybackPolyphony = new Map([[0, polyphonic && recording.initialState.polyphony]]);
+		/** @brief Replay saved per-layer polyphony independently of live board permissions. */
+		const initialPlaybackPolyphony = new Map([[0, recording.initialState.polyphony]]);
 		recording.events
 			.filter((event) => event.type === 'polyphony' && event.t === 0)
 			.forEach((event) =>
 			{
 				const layer = Math.max(0, Number.parseInt(String(event.layer ?? '0'), 10) || 0);
-				initialPlaybackPolyphony.set(layer, polyphonic && event.enabled);
+				initialPlaybackPolyphony.set(layer, event.enabled);
 			});
 
 		recordingPlayback = {
@@ -3662,6 +3707,7 @@ async function initialiseSoundboard()
 		recordingPlayback.phase = 'playing';
 		recordingPlayback.startedAt = performance.now();
 		recordingPlayback.eventIndex = 0;
+        seekRecording(overdub ? 0 : recordingSeekPosition);
 
 		if (overdub)
 		{
@@ -3717,9 +3763,97 @@ async function initialiseSoundboard()
 			);
 		}
 
-		updateRecordingPlayhead(0);
+		updateRecordingPlayhead(recordingSeekPosition);
 		recordingPlaybackFrame = window.requestAnimationFrame(runRecordingPlaybackFrame);
 	};
+
+
+    /** @brief Seek without replaying earlier triggers; restore per-layer performance state. */
+    const seekRecording = (position) =>
+    {
+        if (recordingSession || recordingPlayback?.overdub) return;
+        const recording = getSelectedRecording();
+        if (!recording) return;
+        const state = recordingSeekState(recording, position);
+        recordingSeekPosition = state.time;
+        if (recordingPlayback)
+        {
+            stopRecordingVoices();
+            recordingPlayback.token = createSoundboardRecordingId();
+            recordingPlayback.polyphonyByLayer = state.polyphony;
+            recordingPlayback.eventIndex = state.index;
+            recordingPlayback.startedAt = performance.now() - state.time;
+        }
+        updateRecordingPlayhead(state.time);
+        if (recordingClock) recordingClock.textContent = formatSoundboardRecordingTime(state.time);
+    };
+
+    if (recordingsRoot && recordingRoll)
+    {
+        recordingEdit = new RecordingEditor(recordingsRoot, recordingRoll,
+        {
+            selected: () => getSelectedRecording(),
+            blocked: () => Boolean(recordingSession || recordingPlayback),
+            zoom: () => recordingZoom,
+            render: () => renderSoundboardRecordings(),
+            seek: (position) =>
+            {
+                if (recordingPlayback?.phase === 'loading') return;
+                seekRecording(position);
+            },
+            stopAudition: () =>
+            {
+                auditionGeneration++;
+                stopLiveVoices();
+            },
+            audition: async (recording, event) =>
+            {
+                if (!event) return;
+                const generation = ++auditionGeneration;
+                stopLiveVoices();
+                setSamplerAudioSessionActive(true);
+                unlockSamplerAudio();
+                try
+                {
+                    const entries = recording.layerBoards?.[event.layer || 0] || recording.board;
+                    const [context, resolved] = await Promise.all([getAudioContext(), resolveRecordingBoard({...recording, board: entries})]);
+                    const entry = resolved[event.pad];
+                    if (!entry) throw new Error('Unavailable clip');
+                    const [buffer] = await Promise.all([loadSamplerBuffer(entry), ensureClipMetadata([entry.id])]);
+                    if (generation !== auditionGeneration || !recordingEdit.draft) return;
+                    startSamplerVoice(context, buffer, entry, event.pad, event.type === 'note' ? event.note : SAMPLER_ROOT_MIDI_NOTE, event.velocity || 127, 'editor', false, event.layer || 0);
+                }
+                catch (error)
+                {
+                    if (generation === auditionGeneration) recordingStatus.textContent = root.dataset.audioarchiveLabelSamplerError || '';
+                }
+            },
+            save: async (draft) =>
+            {
+                // Extend the end to include one-shot sample tails, including pitch-dependent lengths.
+                const events = draft.events.filter((event) => event.type === 'note' || event.type === 'pad');
+                const entryFor = (event) => (draft.layerBoards?.[event.layer || 0] || draft.board)[event.pad];
+                const ids = [...new Set(events.map((event) => entryFor(event)?.id).filter(Boolean))];
+                for (let offset = 0; offset < ids.length; offset += 36)
+                {
+                    await ensureClipMetadata(ids.slice(offset, offset + 36));
+                }
+                let durationMs = draft.durationMs;
+                for (const event of events)
+                {
+                    const duration = Number(preloadMetadata.get(entryFor(event)?.id)?.duration_ms) || 0;
+                    const rate = event.type === 'note' ? 2 ** ((event.note - SAMPLER_ROOT_MIDI_NOTE) / 12) : 1;
+                    durationMs = Math.min(SOUNDBOARD_RECORDING_MAX_DURATION_MS, Math.max(durationMs, Math.ceil(event.t + duration / rate)));
+                }
+                const saved = {...draft, durationMs};
+                const candidate = recordings.map((recording) => recording.id === draft.id ? saved : recording);
+                if (!await writeSoundboardRecordings(candidate)) return false;
+                recordings = candidate;
+                recordingUndo = null;
+                return true;
+            },
+        });
+    }
 
 	recordingRecordButton?.addEventListener('click', async () =>
 	{
@@ -3999,6 +4133,7 @@ async function initialiseSoundboard()
 			}
 
 			selectedRecordingId = String(selectButton.dataset.recordingId || '');
+            recordingSeekPosition = 0;
 			recordingZoom = 1;
 			renderSoundboardRecordings();
 		}
