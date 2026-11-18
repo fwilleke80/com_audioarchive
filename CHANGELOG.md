@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.15.9
+
+- Group backend batch editing into six native collapsible sections: Category and ownership, Tags, Search & replace, Licence and credits, Recording and style, and Lyrics.
+- Start sections collapsed for a compact overview, retain all inputs when closing sections, and bound the tag list height. Existing batch processing and permissions are unchanged.
+
 ## 0.15.8
 
 - Move backend clip cover controls below the description inside the Clip tab, retaining Save/Apply semantics.

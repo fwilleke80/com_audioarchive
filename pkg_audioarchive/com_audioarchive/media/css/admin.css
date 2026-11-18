@@ -140,3 +140,31 @@
     max-width: 24rem;
     overflow-wrap: anywhere;
 }
+
+/** @brief Compact, keyboard-accessible batch groups inside the dynamic Joomla dialog. */
+.com-audioarchive-batch-section
+{
+    border: 1px solid var(--border-color, #dfe3e7);
+    border-radius: .25rem;
+    margin-block: .65rem;
+}
+.com-audioarchive-batch-section > summary
+{
+    padding: .8rem 1rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.com-audioarchive-batch-section > summary:focus-visible
+{
+    outline: 2px solid currentColor;
+    outline-offset: -3px;
+}
+.com-audioarchive-batch-section-body
+{
+    padding: .25rem 1rem 1rem;
+}
+.com-audioarchive-batch-section .com-audioarchive-batch-tag-options
+{
+    max-height: 12rem;
+    overflow-y: auto;
+}

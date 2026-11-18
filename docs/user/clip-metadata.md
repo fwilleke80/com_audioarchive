@@ -23,3 +23,5 @@ Archive exports carry these values with each clip. Restore validates them; older
 Select clips in the backend Clips list and open Batch. Under Credits and metadata, choose **Unchanged**, **Set value**, or **Clear field** separately for each field. Set applies the entered value to every selected clip; Clear removes the value (including setting creation year to blank). Unchanged ignores the input and preserves each clip's existing value. The normal metadata validation, per-clip edit permissions and batch transaction apply.
 
 In the backend clip editor, the cover controls sit below the description on the Clip tab. They still save only with Save/Apply.
+
+Since 0.15.9, Batch uses six collapsible sections. Open just the groups needed; closing a section retains its entries, and Process applies changes from all groups. Licence, Creator and Contributors are under Licence and credits; Recording location, Genre/style and Year of creation are under Recording and style; Lyrics has its own section.

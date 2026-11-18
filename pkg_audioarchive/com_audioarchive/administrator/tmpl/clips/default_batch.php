@@ -7,6 +7,10 @@ use Joomla\CMS\Language\Text;
 <template id="joomla-dialog-audioarchive-batch">
     <div class="p-4 com-audioarchive-batch-dialog">
         <p><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_DESC'); ?></p>
+        <p class="text-body-secondary"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_SECTIONS_HELP'); ?></p>
+        <details class="com-audioarchive-batch-section">
+            <summary><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_ORGANISATION'); ?></summary>
+            <div class="com-audioarchive-batch-section-body">
         <?php if ($this->getCurrentUser()->authorise('audioarchive.change.owner', 'com_audioarchive')) : ?>
 <label for="batch-owner"><?php echo Text::_('COM_AUDIOARCHIVE_OWNER'); ?></label>
 <select id="batch-owner" name="batch[owner]" class="form-select mb-3">
@@ -22,7 +26,7 @@ use Joomla\CMS\Language\Text;
 <div class="form-check my-3"><input class="form-check-input" type="checkbox" name="quota_override_confirm" id="quota-override-confirm" value="1"><label class="form-check-label" for="quota-override-confirm"><?php echo \Joomla\CMS\Language\Text::_('COM_AUDIOARCHIVE_QUOTA_OVERRIDE_CONFIRM'); ?></label></div>
 <?php endif; ?>
 <div class="row g-3">
-            <div class="col-12 col-md-6">
+            <div class="col-12">
                 <label class="form-label" for="audioarchive-batch-category"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_CATEGORY_LABEL'); ?></label>
                 <select class="form-select" id="audioarchive-batch-category" name="batch[category_id]">
                     <option value="0"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_CATEGORY_NO_CHANGE'); ?></option>
@@ -31,7 +35,14 @@ use Joomla\CMS\Language\Text;
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="col-12 col-md-6">
+</div>
+            </div>
+        </details>
+
+        <details class="com-audioarchive-batch-section">
+            <summary><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_TAGS_LABEL'); ?></summary>
+            <div class="com-audioarchive-batch-section-body">
+            <div class="col-12">
                 <div class="form-check mb-2">
                     <input class="form-check-input" id="audioarchive-batch-apply-tags" type="checkbox" name="batch[apply_tags]" value="1">
                     <label class="form-check-label" for="audioarchive-batch-apply-tags"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_APPLY_TAGS_LABEL'); ?></label>
@@ -71,10 +82,13 @@ use Joomla\CMS\Language\Text;
                 <?php endif; ?>
                 <small><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_TAGS_HINT'); ?></small>
             </div>
-        </div>
 
-        <div class="border-top mt-4 pt-4">
-            <h3 class="h5 mb-2"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_SEARCH_REPLACE_TITLE'); ?></h3>
+            </div>
+        </details>
+
+        <details class="com-audioarchive-batch-section">
+            <summary><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_SEARCH_REPLACE_TITLE'); ?></summary>
+            <div class="com-audioarchive-batch-section-body">
             <p class="text-body-secondary mb-3"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_SEARCH_REPLACE_DESC'); ?></p>
             <div class="row g-3 align-items-end">
                 <div class="col-12 col-md-5">
@@ -116,12 +130,15 @@ use Joomla\CMS\Language\Text;
                 </div>
             </div>
             <small class="text-body-secondary"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_SEARCH_REPLACE_HINT'); ?></small>
-        </div>
 
-        <fieldset class="border-top mt-4 pt-4">
-            <legend class="h5"><?php echo Text::_('COM_AUDIOARCHIVE_METADATA'); ?></legend>
+            </div>
+        </details>
+
+        <details class="com-audioarchive-batch-section">
+            <summary><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_CREDITS'); ?></summary>
+            <div class="com-audioarchive-batch-section-body">
             <p><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_METADATA_HELP'); ?></p>
-            <?php foreach (['licence' => 255, 'creator' => 255, 'contributors' => 8000, 'recording_location' => 255, 'genre_style' => 255, 'creation_year' => 4, 'lyrics' => 60000] as $field => $limit) : ?>
+            <?php foreach (['licence' => 255, 'creator' => 255, 'contributors' => 8000] as $field => $limit) : ?>
             <div class="row g-2 mb-3">
                 <div class="col-md-5">
                     <label for="batch-meta-mode-<?php echo $field; ?>"><?php echo Text::_('COM_AUDIOARCHIVE_METADATA_' . strtoupper($field)); ?></label>
@@ -141,9 +158,64 @@ use Joomla\CMS\Language\Text;
                 </div>
             </div>
             <?php endforeach; ?>
-        </fieldset>
+            </div>
+        </details>
 
-        <div class="d-flex justify-content-end gap-2 mt-4">
+        <details class="com-audioarchive-batch-section">
+            <summary><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_RECORDING'); ?></summary>
+            <div class="com-audioarchive-batch-section-body">
+            <p><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_METADATA_HELP'); ?></p>
+            <?php foreach (['recording_location' => 255, 'genre_style' => 255, 'creation_year' => 4] as $field => $limit) : ?>
+            <div class="row g-2 mb-3">
+                <div class="col-md-5">
+                    <label for="batch-meta-mode-<?php echo $field; ?>"><?php echo Text::_('COM_AUDIOARCHIVE_METADATA_' . strtoupper($field)); ?></label>
+                    <select class="form-select" id="batch-meta-mode-<?php echo $field; ?>" name="batch[metadata_mode][<?php echo $field; ?>]">
+                        <option value="keep"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_METADATA_KEEP'); ?></option>
+                        <option value="set"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_METADATA_SET'); ?></option>
+                        <option value="clear"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_METADATA_CLEAR'); ?></option>
+                    </select>
+                </div>
+                <div class="col-md-7">
+                    <label for="batch-meta-<?php echo $field; ?>"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_METADATA_VALUE'); ?></label>
+                    <?php if ($limit > 255) : ?>
+                    <textarea class="form-control" rows="3" maxlength="<?php echo $limit; ?>" id="batch-meta-<?php echo $field; ?>" name="batch[metadata][<?php echo $field; ?>]"></textarea>
+                    <?php else : ?>
+                    <input class="form-control" type="text" <?php echo $field === 'creation_year' ? 'inputmode="numeric"' : ''; ?> maxlength="<?php echo $limit; ?>" id="batch-meta-<?php echo $field; ?>" name="batch[metadata][<?php echo $field; ?>]">
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php endforeach; ?>
+            </div>
+        </details>
+
+        <details class="com-audioarchive-batch-section">
+            <summary><?php echo Text::_('COM_AUDIOARCHIVE_METADATA_LYRICS'); ?></summary>
+            <div class="com-audioarchive-batch-section-body">
+            <p><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_METADATA_HELP'); ?></p>
+            <?php foreach (['lyrics' => 60000] as $field => $limit) : ?>
+            <div class="row g-2 mb-3">
+                <div class="col-md-5">
+                    <label for="batch-meta-mode-<?php echo $field; ?>"><?php echo Text::_('COM_AUDIOARCHIVE_METADATA_' . strtoupper($field)); ?></label>
+                    <select class="form-select" id="batch-meta-mode-<?php echo $field; ?>" name="batch[metadata_mode][<?php echo $field; ?>]">
+                        <option value="keep"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_METADATA_KEEP'); ?></option>
+                        <option value="set"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_METADATA_SET'); ?></option>
+                        <option value="clear"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_METADATA_CLEAR'); ?></option>
+                    </select>
+                </div>
+                <div class="col-md-7">
+                    <label for="batch-meta-<?php echo $field; ?>"><?php echo Text::_('COM_AUDIOARCHIVE_BATCH_METADATA_VALUE'); ?></label>
+                    <?php if ($limit > 255) : ?>
+                    <textarea class="form-control" rows="3" maxlength="<?php echo $limit; ?>" id="batch-meta-<?php echo $field; ?>" name="batch[metadata][<?php echo $field; ?>]"></textarea>
+                    <?php else : ?>
+                    <input class="form-control" type="text" <?php echo $field === 'creation_year' ? 'inputmode="numeric"' : ''; ?> maxlength="<?php echo $limit; ?>" id="batch-meta-<?php echo $field; ?>" name="batch[metadata][<?php echo $field; ?>]">
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php endforeach; ?>
+            </div>
+        </details>
+
+        <div class="d-flex justify-content-end gap-2 mt-3 com-audioarchive-batch-footer">
             <button type="button" class="btn btn-secondary" data-joomla-dialog-close data-audioarchive-batch-cancel><?php echo Text::_('JCANCEL'); ?></button>
             <button type="button" class="btn btn-primary" onclick="Joomla.submitbutton('clips.batch')"><?php echo Text::_('JGLOBAL_BATCH_PROCESS'); ?></button>
         </div>
