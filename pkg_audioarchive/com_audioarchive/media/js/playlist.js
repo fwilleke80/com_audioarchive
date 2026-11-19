@@ -1,7 +1,7 @@
-import {mountPlaylistCovers} from './playlist-covers.js?v=0.15.6';
-import {openSoundboardChooser, renderSoundboardChoices} from './board-chooser.js?v=0.17.1';
+import {mountPlaylistCovers} from './playlist-covers.js?v=0.18.0';
+import {openSoundboardChooser, renderSoundboardChoices} from './board-chooser.js?v=0.18.0';
 import {playbackFor, playNormalized, updateNormalization} from './normalization.js?v=0.13.2.7';
-import {Collections} from './collections.js?v=0.17.1';
+import {Collections} from './collections.js?v=0.18.0';
 const PLAYLIST_STORAGE_KEY = 'com_audioarchive.playlists.v1';
 const PLAYLIST_STORAGE_VERSION = 1;
 const PLAYLIST_RESOLUTION_BATCH_SIZE = 500;
@@ -1568,26 +1568,24 @@ async function initialisePlaylistPage()
         () => Collections.backend === 'server' && !temporaryPlaylist ? store.selectedId : '',
         id => acknowledged.playlists.some(list => list.id === id),
         () => updateDraft());
-    const dirty = () => signature(store) !== signature(acknowledged) || [...covers.pending.keys()].some(id => store.playlists.some(list => list.id === id));
+    const dirty = () => [...covers.pending.keys()].some(id => store.playlists.some(list => list.id === id));
     /** @brief Expose the pending state without persisting it. */
     const updateDraft = () =>
     {
-        saveButton.disabled = saving || !dirty();
-        cancelButton.disabled = saving || !dirty();
-        if (dirty()) setStatus(root.dataset.editPending);
+        const pending = covers.pending.has(store.selectedId);
+        saveButton.disabled = cancelButton.disabled = saving || !pending;
+        const group = root.querySelector('[data-playlist-cover-save]');
+        if (group) group.hidden = !pending;
     };
-    /** @brief Defer edit analytics until Save succeeds; playback remains immediate. */
-    const recordEdit = (...args) =>
+    /** @brief Ordinary playlist edits are recorded only after their immediate save succeeds. */
+    const recordEdit = (...args) => recordPlaylistInteraction(...args);
+    const coverToggle = root.querySelector('[data-playlist-cover-toggle]');
+    const coverEditor = root.querySelector('[data-playlist-cover-editor]');
+    coverToggle?.addEventListener('click', () =>
     {
-        if (['audioarchive.playlist.created', 'audioarchive.playlist.deleted', 'audioarchive.playlist.clip_removed', 'audioarchive.playlist.saved_shared'].includes(args[2]))
-        {
-            pendingEvents.push(args);
-        }
-        else
-        {
-            recordPlaylistInteraction(...args);
-        }
-    };
+        coverEditor.hidden = !coverEditor.hidden;
+        coverToggle.setAttribute('aria-expanded', String(!coverEditor.hidden));
+    });
 
 	const leaveSharedUrl = () =>
 	{
@@ -1597,11 +1595,36 @@ async function initialisePlaylistPage()
 		window.history.replaceState(window.history.state, '', url.toString());
 	};
 
-	const saveStore = async () =>
-	{
-		updateDraft();
-        return true;
-	};
+    /** @brief Immediately persist playlist edits, keeping pending cover files separate. */
+    const saveStore = async () =>
+    {
+        if (saving) return false;
+        if (signature(store) === signature(acknowledged) && store.selectedId === acknowledged.selectedId) return true;
+        saving = true;
+        updateDraft();
+        try
+        {
+            if (await Collections.write(PLAYLIST_STORAGE_KEY, store))
+            {
+                acknowledged = structuredClone(store);
+                for (const id of covers.pending.keys())
+                {
+                    if (!store.playlists.some(list => list.id === id)) covers.pending.delete(id);
+                }
+                return true;
+            }
+            store = structuredClone(acknowledged);
+            currentIndex = getCurrentPlaylist()?.items.findIndex(item => item.uuid === currentUuid) ?? -1;
+            updateManager();
+            renderRows();
+            return false;
+        }
+        finally
+        {
+            saving = false;
+            updateDraft();
+        }
+    };
 
 	const setStatus = (message) =>
 	{
@@ -1641,6 +1664,8 @@ async function initialisePlaylistPage()
 
 		void covers.refresh();
         updateDraft();
+        if (coverToggle) coverToggle.hidden = temporaryPlaylist !== null || Collections.backend !== 'server';
+        if (coverEditor && coverToggle?.hidden) coverEditor.hidden = true;
 		root.querySelectorAll('[data-audioarchive-playlist-rename], [data-audioarchive-playlist-delete]').forEach((button) =>
 		{
 			button.disabled = temporaryPlaylist !== null;
@@ -1951,7 +1976,7 @@ async function initialisePlaylistPage()
 			down.textContent = '↓';
 			const number = document.createElement('span');
 			number.textContent = String(index + 1);
-			orderControls.append(up, down, number);
+			orderControls.append(number);
 			orderCell.appendChild(orderControls);
 
 			const playCell = document.createElement('td');
@@ -2007,11 +2032,22 @@ async function initialisePlaylistPage()
 
 			const actionsCell = document.createElement('td');
 			actionsCell.className = 'com-audioarchive-actions-cell';
-			const actions = document.createElement('div');
-			actions.className = 'com-audioarchive-inline-actions';
+			const menu = document.createElement('details');
+            menu.className = 'com-audioarchive-more';
+            const summary = document.createElement('summary');
+            summary.className = 'btn btn-sm btn-outline-secondary';
+            summary.textContent = '…';
+            summary.setAttribute('aria-label', `${root.dataset.audioarchiveLabelActions || 'Actions'}: ${item?.title || entry.title}`);
+            const actions = document.createElement('div');
+            actions.className = 'com-audioarchive-more-menu';
+            up.textContent = up.title;
+            down.textContent = down.title;
+            actions.append(up, down);
+            menu.append(summary, actions);
 			if (item)
 			{
-				actions.appendChild(createPlaylistRowShareMenu(root, item));
+				const share = createPlaylistRowShareMenu(root, item);
+                actions.append(...share.querySelector('.com-audioarchive-share-popover').children);
 
 				if (root.dataset.audioarchiveSoundboardEnabled === '1')
 				{
@@ -2034,9 +2070,9 @@ async function initialisePlaylistPage()
 			remove.disabled = temporaryPlaylist !== null;
 			remove.title = root.dataset.audioarchiveLabelRemove || 'Remove';
 			remove.setAttribute('aria-label', `${remove.title}: ${item?.title || entry.title}`);
-			remove.innerHTML = '<span class="icon-trash" aria-hidden="true"></span>';
+			remove.textContent = remove.title;
 			actions.appendChild(remove);
-			actionsCell.appendChild(actions);
+			actionsCell.appendChild(menu);
 			row.append(orderCell, playCell, titleCell, durationCell, tagsCell, actionsCell);
 			tbody.appendChild(row);
 		});
@@ -2131,13 +2167,7 @@ async function initialisePlaylistPage()
 				}
 			}
 
-			if (!temporaryPlaylist)
-			{
-				if (!(await saveStore()))
-		{
-			return;
-		}
-			}
+			// Metadata refreshes update display fields only; ordinary edits persist separately.
 		}
 		catch (error)
 		{
@@ -2226,7 +2256,7 @@ async function initialisePlaylistPage()
 
     saveButton.addEventListener('click', async () =>
     {
-        if (saving || !dirty()) return;
+        if (saving || !covers.pending.has(store.selectedId)) return;
         if (signature(readPlaylistStore(fallbackName, false)) !== signature(acknowledged))
         {
             setStatus(root.dataset.editConflict);
@@ -2238,12 +2268,11 @@ async function initialisePlaylistPage()
         controls.forEach(([element]) => { element.disabled = true; });
         try
         {
-            const changes = [...covers.pending].filter(([id]) => store.playlists.some(list => list.id === id)).map(([id, file]) => ({id, file}));
+            const changes = [...covers.pending].filter(([id]) => id === store.selectedId).map(([id, file]) => ({id, file}));
             if (await Collections.write(PLAYLIST_STORAGE_KEY, store, {preserveDraft: true, covers: changes}))
             {
                 acknowledged = structuredClone(store);
-                covers.clear();
-                for (const args of pendingEvents.splice(0)) recordPlaylistInteraction(...args);
+                covers.clear(store.selectedId);
                 setStatus(root.dataset.editSaved);
             }
         }
@@ -2255,30 +2284,11 @@ async function initialisePlaylistPage()
             renderRows();
         }
     });
-    cancelButton.addEventListener('click', async () =>
+    cancelButton.addEventListener('click', () =>
     {
         if (saving) return;
-        saving = true;
+        covers.clear(store.selectedId);
         updateDraft();
-        const refreshed = await Collections.refresh();
-        saving = false;
-        if (!refreshed)
-        {
-            updateDraft();
-            return;
-        }
-        ++metadataRequest;
-        const selectedId = store.selectedId;
-        store = readPlaylistStore(fallbackName, false);
-        acknowledged = structuredClone(store);
-        if (findPlaylist(store, selectedId)) store.selectedId = selectedId;
-        pendingEvents.length = 0;
-        covers.clear();
-        currentIndex = -1;
-        currentUuid = '';
-        setPlayerMetadata(null, -1, 0);
-        setStatus(root.dataset.editCancelled);
-        void refreshMetadata(false);
     });
     for (const name of ['click', 'change'])
     {
@@ -2653,11 +2663,6 @@ async function initialisePlaylistPage()
 
 	const getShareUrl = async () =>
 	{
-        if (dirty())
-        {
-            setStatus(root.dataset.editPending);
-            return '';
-        }
 		const playlist = getCurrentPlaylist();
 		const payload = {
 			version: PLAYLIST_STORAGE_VERSION,
@@ -2744,7 +2749,7 @@ async function initialisePlaylistPage()
         acknowledged = structuredClone(store);
 		updateManager();
 		void refreshMetadata(true);
-	});
+	}, () => !saving && !dirty());
 	updateManager();
 	void refreshMetadata(false);
 }

@@ -476,9 +476,12 @@ export const Collections = {
 			return;
 		}
 		const panel = document.createElement('div');
-		panel.className = 'border rounded p-3 mb-3 d-flex flex-wrap gap-2 align-items-center';
-		root.prepend(panel);
-		root.querySelectorAll('.com-audioarchive-soundboard-note, .com-audioarchive-playlists-note').forEach((node) =>
+		panel.className = 'com-audioarchive-account-controls';
+		const slot = root.querySelector('[data-collection-controls]');
+		if (slot) slot.append(panel);
+		else if (root.querySelector('.com-audioarchive-page-header')) root.querySelector('.com-audioarchive-page-header').after(panel);
+        else root.prepend(panel);
+		root.querySelectorAll('.com-audioarchive-soundboard-note, .com-audioarchive-playlists-note, .com-audioarchive-playlist-storage-note').forEach((node) =>
 		{
 			node.hidden = state.backend === 'server';
 			node.textContent = state.backend === 'disabled' ? labels.disabled : labels[kind === 'playlist' ? 'browser_playlists' : 'browser_board'];
@@ -510,7 +513,10 @@ export const Collections = {
 					refreshControls();
 				}
 			});
-			panel.append(control);
+			const target = kind === 'soundboard' && ['rename', 'delete', 'default'].includes(key)
+				? root.querySelector('[data-board-management-menu]') : null;
+			(target || panel).append(control);
+			if (key === 'delete') control.classList.add('text-danger');
 			return control;
 		};
 		if (state.backend !== 'server')
@@ -601,6 +607,7 @@ export const Collections = {
 				await mutate('revoke', {id});
 				notice(labels.revoked);
 			});
+			root.querySelector('[data-collection-share-actions]')?.append(revoke);
 		}
 		/** @brief Only the selected owned collection can expose its active share link. */
 		const refresh = () =>
@@ -623,7 +630,8 @@ export const Collections = {
 			const message = document.createElement('span');
 			message.textContent = labels.import_found;
 			const importPanel = document.createElement('div');
-			importPanel.className = 'w-100 d-flex flex-wrap align-items-center gap-2 mt-2';
+			importPanel.className = 'alert alert-info com-audioarchive-migration-notice';
+			importPanel.setAttribute('role', 'status');
 			importPanel.append(message);
 			const importButton = button('import', async () =>
 			{
@@ -682,7 +690,7 @@ export const Collections = {
 				}
 			});
 			importPanel.append(importButton);
-			panel.append(importPanel);
+			root.prepend(importPanel);
 		}
 		refresh();
 	},

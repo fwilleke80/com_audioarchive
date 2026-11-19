@@ -96,10 +96,18 @@ export function mountPlaylistCovers(control, selected, exists, changed)
     });
     window.addEventListener('pagehide', release);
     window.addEventListener('pageshow', render);
-    return {pending, refresh, clear()
+    return {pending, refresh, clear(id = null)
     {
-        pending.clear();
-        stored.clear();
+        if (id === null)
+        {
+            pending.clear();
+            stored.clear();
+        }
+        else
+        {
+            pending.delete(id);
+            stored.delete(id);
+        }
         file.value = '';
         void refresh();
     }};

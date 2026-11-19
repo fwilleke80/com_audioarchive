@@ -1,9 +1,10 @@
-import {RecordingEditor, recordingSeekState, cloneRecording} from './recording-editor.js?v=0.16.1';
+import {initialiseCollectionMenus} from './collection-ui.js?v=0.18.0';
+import {RecordingEditor, recordingSeekState, cloneRecording} from './recording-editor.js?v=0.18.0';
 import {BoardPreloader} from './board-preload.js?v=0.13.7.1';
-import {openSoundboardChooser} from './board-chooser.js?v=0.17.1';
+import {openSoundboardChooser} from './board-chooser.js?v=0.18.0';
 import {acquirePlaybackSession, releasePlaybackSession} from './audio-session.js?v=0.13.2.7';
 import {playbackFor, prepareNormalization, releaseNormalization, validGain} from './normalization.js?v=0.13.2.7';
-import {Collections} from './collections.js?v=0.17.1';
+import {Collections} from './collections.js?v=0.18.0';
 const BOARD_STORAGE_KEY = 'com_audioarchive.soundboard.v1';
 const SAMPLER_POLYPHONY_STORAGE_KEY = 'com_audioarchive.soundboard.sampler_polyphony.v1';
 const SOUNDBOARD_RECORDINGS_STORAGE_KEY = 'com_audioarchive.soundboard.recordings.v1';
@@ -1368,12 +1369,12 @@ async function initialiseSoundboard()
 
 		if (recordingPlayButton)
 		{
-			recordingPlayButton.disabled = freshRecording || overdubActive || Boolean(recordingEdit?.busy);
+			recordingPlayButton.disabled = freshRecording || overdubActive || Boolean(recordingEdit?.busy) || !getSelectedRecording();
 		}
 
 		if (recordingOverdubButton)
 		{
-			recordingOverdubButton.disabled = freshRecording || normalPlayback || Boolean(recordingEdit?.draft);
+			recordingOverdubButton.disabled = freshRecording || normalPlayback || Boolean(recordingEdit?.draft) || !getSelectedRecording();
 		}
 	};
 	const activeComputerRecordingNotes = new Map();
@@ -3302,7 +3303,15 @@ async function initialiseSoundboard()
                 delete button.dataset.recordingEditLocked;
             });
         }
+        if (sharedRecordingMode)
+        {
+            recordingsRoot.querySelectorAll('button').forEach((button) =>
+            {
+                if (button !== recordingPlayButton && button !== recordingZoomInButton && button !== recordingZoomOutButton) button.hidden = true;
+            });
+        }
 		const selected = getSelectedRecording();
+        if (recordingClock && !recordingSession && !recordingPlayback) recordingClock.textContent = `${formatSoundboardRecordingTime(recordingSeekPosition)} / ${formatSoundboardRecordingTime(selected?.durationMs || 0)}`;
 		const livePreview = getLiveRecordingPreview();
 		const displayedRecording = livePreview || selected;
 		const busy = Boolean(recordingSession || recordingPlayback || recordingEdit?.draft);
@@ -3310,43 +3319,80 @@ async function initialiseSoundboard()
 
 		if (recordings.length === 0)
 		{
-			const empty = document.createElement('p');
-			empty.className = 'com-audioarchive-soundboard-recording-empty';
-			empty.textContent = root.dataset.audioarchiveLabelRecordingEmpty || 'No recordings yet.';
+			const empty = document.createElement('tr');
+            const cell = document.createElement('td');
+            cell.colSpan = 4;
+            empty.append(cell);
+			empty.className = 'com-audioarchive-recording-empty-row';
+			cell.textContent = root.dataset.audioarchiveLabelRecordingEmpty || 'No recordings yet.';
 			recordingList.appendChild(empty);
 		}
 		else
 		{
 			recordings.forEach((recording) =>
 			{
-				const row = document.createElement('div');
-				row.className = 'com-audioarchive-soundboard-recording-row';
+				const row = document.createElement('tr');
+				row.className = 'com-audioarchive-recording-table-row';
 				row.classList.toggle('is-selected', recording.id === selectedRecordingId);
 
 				const select = document.createElement('button');
 				select.type = 'button';
-				select.className = 'com-audioarchive-soundboard-recording-select';
+				select.className = 'com-audioarchive-recording-select btn btn-link';
+                select.setAttribute('aria-pressed', String(recording.id === selectedRecordingId));
 				select.dataset.recordingId = recording.id;
 				select.disabled = busy;
 
 				const name = document.createElement('strong');
 				name.textContent = recording.name;
-				const detail = document.createElement('span');
-				detail.textContent = `${formatSoundboardRecordingTime(recording.durationMs)} · ${formatSoundboardLabel(root.dataset.audioarchiveLabelRecordingEvents || '%d events', recording.events.length)}`;
-				select.append(name, detail);
-
-				row.append(select);
+                select.append(name);
+                const titleCell = document.createElement('th');
+                titleCell.scope = 'row';
+                titleCell.append(select);
+                const duration = document.createElement('td');
+                duration.textContent = formatSoundboardRecordingTime(recording.durationMs);
+                const count = document.createElement('td');
+                count.textContent = String(recording.events.length);
+                const actionCell = document.createElement('td');
+                const menu = document.createElement('details');
+                menu.className = 'com-audioarchive-more';
+                const summary = document.createElement('summary');
+                summary.className = 'btn btn-sm btn-outline-secondary';
+                summary.textContent = '…';
+                summary.setAttribute('aria-label', `${root.dataset.audioarchiveLabelRecordingActions || 'Actions'}: ${recording.name}`);
+                const actions = document.createElement('div');
+                actions.className = 'com-audioarchive-more-menu';
+                for (const action of ['rename', 'export', 'delete'])
+                {
+                    const source = recordingsRoot.querySelector(`[data-audioarchive-recording-${action}]`);
+                    const control = document.createElement('button');
+                    control.type = 'button';
+                    control.className = 'btn btn-sm btn-outline-secondary';
+                    control.textContent = source?.textContent || action;
+                    control.disabled = busy;
+                    control.dataset.recordingRowAction = action;
+                    control.dataset.recordingId = recording.id;
+                    actions.append(control);
+                }
+                menu.append(summary, actions);
+                actionCell.append(menu);
+                row.append(titleCell, duration, count, actionCell);
 				recordingList.appendChild(row);
 			});
 		}
 
 		if (recordingEditor)
 		{
-			recordingEditor.hidden = !displayedRecording;
+			recordingEditor.hidden = false;
 		}
 
 		if (!displayedRecording)
 		{
+            if (recordingTitle) recordingTitle.textContent = root.dataset.audioarchiveLabelRecordingEmpty || 'No recordings yet.';
+            if (recordingMeta) recordingMeta.textContent = '';
+            if (recordingClock) recordingClock.textContent = '00:00.000';
+            syncRecordingTransport();
+            recordingEdit?.sync();
+            if (recordingUndoButton) recordingUndoButton.hidden = true;
 			renderRecordingRoll(null);
 			return;
 		}
@@ -3368,6 +3414,7 @@ async function initialiseSoundboard()
 		if (recordingUndoButton)
 		{
 			recordingUndoButton.disabled = busy || !selected || recordingUndo?.recordingId !== selected.id;
+            recordingUndoButton.hidden = !selected || recordingUndo?.recordingId !== selected.id;
 		}
 
 		root.querySelectorAll('[data-audioarchive-recording-load-board], [data-audioarchive-recording-delete]').forEach((button) =>
@@ -3395,13 +3442,6 @@ async function initialiseSoundboard()
         {
             revokeButton.hidden = sharedRecordingMode || Collections.backend !== 'server' || !Collections.recordingShares.includes(selected?.id);
             revokeButton.disabled = busy;
-        }
-        if (sharedRecordingMode)
-        {
-            recordingsRoot.querySelectorAll('button').forEach((button) =>
-            {
-                if (button !== recordingPlayButton && button !== recordingZoomInButton && button !== recordingZoomOutButton) button.hidden = true;
-            });
         }
         recordingEdit?.sync();
         if (recordingEdit?.draft)
@@ -3621,6 +3661,7 @@ async function initialiseSoundboard()
 
 		recordingSeekPosition = Math.min(elapsed, recordingPlayback.recording.durationMs);
 		updateRecordingPlayhead(recordingSeekPosition);
+        if (recordingClock && !recordingPlayback.overdub) recordingClock.textContent = `${formatSoundboardRecordingTime(recordingSeekPosition)} / ${formatSoundboardRecordingTime(recordingPlayback.recording.durationMs)}`;
 
 		if (elapsed >= recordingPlayback.recording.durationMs)
 		{
@@ -4171,6 +4212,16 @@ async function initialiseSoundboard()
 
 	recordingsRoot?.addEventListener('click', async (event) =>
 	{
+        const rowAction = event.target.closest('[data-recording-row-action]');
+        if (rowAction)
+        {
+            if (recordingSession || recordingPlayback || recordingEdit?.draft || sharedRecordingMode) return;
+            selectedRecordingId = rowAction.dataset.recordingId;
+            recordingSeekPosition = 0;
+            renderSoundboardRecordings();
+            recordingsRoot.querySelector(`[data-audioarchive-recording-${rowAction.dataset.recordingRowAction}]`)?.click();
+            return;
+        }
 		const deleteButton = event.target.closest('[data-audioarchive-recording-delete]');
 
 		if (deleteButton)
@@ -4219,6 +4270,7 @@ async function initialiseSoundboard()
 
 		if (selectButton)
 		{
+            if (recordingSession || recordingEdit?.draft) return;
 			if (recordingPlayback)
 			{
 				stopSoundboardRecordingPlayback(false);
@@ -4918,6 +4970,7 @@ async function initialiseRatings()
 }
 
 initialiseReturnNavigation();
+initialiseCollectionMenus();
 initialiseShareButtons();
 Collections.ready().then(async () =>
 {

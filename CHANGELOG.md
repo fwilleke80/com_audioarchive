@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.18.0
+
+- Give Sound Board and Playlists shared toolbar, notification and overflow-menu styles and behaviour. Keep page headings first, except for browser-migration notifications at the top. Group board management above the pads and revocation beside sharing.
+- Move all playlist tools above the player/table. Put secondary management and row actions behind compact “…” menus with keyboard dismissal and viewport positioning.
+- Save playlist creation, renaming, deletion, import and clip membership/order changes immediately; roll back failed ordinary edits. Expand cover editing on demand, with wider upload controls and Save cover/Cancel only for the selected playlist’s pending artwork. Cancelling a cover change does not undo saved playlist edits.
+- Place the Recorder heading and contents in one card, highlight the selected recording workspace, and combine playback, new recording, overdub, edit mode and time display in a transport bar. Show Undo overdub only when available.
+- Display recordings in an archive-style table, group edit selectors/actions, move editing help below the piano roll, and place zoom controls at its upper right with reserved space to keep notes accessible.
+- Preserve account/guest storage, shared-recording restrictions and recording/edit playback. Add production-template initialization and menu tests alongside immediate-save and cover-draft regressions.
+
 ## 0.17.1
 
 - Fix a misplaced shared-recording mode flag that stopped Sound Board initialization before displaying account boards and recordings. Refresh script versions so browsers load the corrected module.

@@ -52,7 +52,7 @@ class Control
 const controls=Object.fromEntries(['toggle','panel','layer','pad','undo','message','cancel','save'].map(key=>[key,new Control()]));
 const container=new Control();container.dataset.labels=JSON.stringify({layer:'Layer',error:'Save failed',invalid:'Invalid'});
 container.querySelector=(selector)=>controls[selector.match(/data-edit-(.*)\]/)[1]];
-const root={querySelector:()=>container};const roll=new Control();
+const root={querySelector:selector=>selector==='[data-edit-toggle]'?controls.toggle:selector==='[data-edit-help]'?null:container};const roll=new Control();
 globalThis.window={addEventListener(){}};
 globalThis.Option=class {constructor(text,value){this.text=text;this.value=value;}};
 let stored=original, saveSuccess=false, auditioned=[], seeks=[], rendered=0;

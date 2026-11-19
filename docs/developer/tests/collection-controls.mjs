@@ -7,7 +7,8 @@ class Element
     children = [];
     events = {};
     hidden = false;
-    classList = {toggle() {}};
+    classList = {toggle() {}, add() {}};
+    querySelector() { return null; }
     setAttribute() {}
     append(...nodes)
     {

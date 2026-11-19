@@ -4,13 +4,15 @@ Create a menu item of type **Punga Audio Archive → Playlists**.
 
 Signed-in users store playlists in their account. Guests store playlists in the current browser and can maintain multiple lists without a Joomla account. Clearing browser data removes guest playlists unless exported.
 
-## Editing and saving (0.15.6)
+## Editing and saving (0.18.0)
 
-On the Playlists page, changes to names, clip order and membership, new/deleted playlists, imported JSON and account cover images remain pending until **Save**. You can switch between playlists without losing pending edits. Save applies all pending changes on this page; **Cancel** discards them and loads the current saved state. Account data and cover changes are committed together. Failed saves retain the draft for retry; conflicts from another tab require Cancel/reloading before editing again.
+Creating, renaming, deleting and importing playlists, and adding/removing/reordering clips, save immediately. Failed ordinary edits are rolled back and an error is shown. There are no playlist-wide Save/Cancel controls.
 
-Cover selections show a local preview, with **Remove cover** and **Undo cover change**. Nothing is uploaded just by selecting an image. Artwork is stored privately; public rendering is still deferred.
+The toolbar above the player holds the selector, Create, Edit cover image, Share and a **…** menu for secondary actions. Each clip row has its own **…** menu for moving, sharing, adding to a Sound Board and removing clips. Playback and clip links remain directly accessible. There are no collection tools below the playlist table.
 
-Playback and JSON export can use your pending list. Save changes before sharing a playlist link. Leaving the page with unsaved changes triggers the browser's navigation warning. Explicit **Add to playlist** actions on archive/detail pages and **Save as playlist** on the Sound Board still perform their named action immediately; they are not part of this editor's draft.
+For an account playlist, **Edit cover image** expands the cover controls. Selecting a file or requesting removal remains pending until **Save cover**; **Cancel** discards only that playlist’s cover draft. These buttons appear only when that cover has pending changes. Switching playlists preserves each cover draft independently. Failed saves retain it for retry, and leaving with pending cover changes triggers the browser’s navigation warning. Selecting a file alone never uploads it. Cover placement in public players remains deferred.
+
+Browser collections can be imported explicitly through the notification at the top. Completed imports remove only the acknowledged browser copies.
 
 ## Features
 
@@ -22,7 +24,7 @@ Playback and JSON export can use your pending list. Save changes before sharing 
 - Previous and Next controls
 - Automatic advancement
 - JSON import and export
-- Share through URL fragments
+- Share account playlists through short links, and browser playlists through URL fragments
 - Save a received temporary playlist locally
 - Load the current playlist into the Sound Board
 

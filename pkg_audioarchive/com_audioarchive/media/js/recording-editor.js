@@ -63,7 +63,8 @@ export class RecordingEditor
         this.layer = 0;
         this.controls = root.querySelector('[data-recording-edit-controls]');
         this.labels = JSON.parse(this.controls.dataset.labels);
-        this.toggle = this.controls.querySelector('[data-edit-toggle]');
+        this.toggle = root.querySelector('[data-edit-toggle]');
+        this.help = root.querySelector('[data-edit-help]');
         this.panel = this.controls.querySelector('[data-edit-panel]');
         this.layerSelect = this.controls.querySelector('[data-edit-layer]');
         this.padSelect = this.controls.querySelector('[data-edit-pad]');
@@ -204,6 +205,7 @@ export class RecordingEditor
         this.toggle.hidden = Boolean(this.draft);
         this.toggle.disabled = this.callbacks.blocked() || !this.callbacks.selected();
         this.panel.hidden = !this.draft;
+        if (this.help) this.help.hidden = !this.draft;
         this.roll.classList.toggle('is-editing', Boolean(this.draft));
         this.panel.querySelectorAll('button, select').forEach((control) => { control.disabled = this.busy; });
         this.undo.disabled = this.busy || !this.history.length;
