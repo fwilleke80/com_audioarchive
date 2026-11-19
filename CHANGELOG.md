@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.18.3
+
+- Fix recorded pad playback ignoring decoded recording samples unless they also belonged to the active Sound Board cache. Base and overdub layers now reuse their prepared audio without loading their board into the live pads.
+- Unlock audio during the transport gesture before asynchronous preparation. Replay stored chromatic notes independently of the live keyboard option.
+- Add regression coverage for recording-only buffers, independent layer routing and disabled live keyboard playback.
+
+## 0.18.2
+
+- Add familiar fixed-size transport symbols, Return to start, accessible labels and tooltips. Keep Edit/Cancel in one position and reserve the adjacent Save slot.
+- Fit selected recordings to the piano-roll viewport, automatically zoom out during capture, and add Fit alongside manual zoom. Manual zoom suspends capture fitting; Fit resumes it.
+- Edit polyphony per layer with mixed-state indication for recorded mode changes, preview, Save/Cancel and Undo. Setting the switch replaces that layer’s polyphony changes with one consistent mode.
+- Highlight clicked notes immediately and let Source pad reassign the selected event while preserving its layer, pitch and timing.
+- Extend production-template regression coverage for source reassignment, polyphony persistence, fitting and the stable edit controls.
+
 ## 0.18.1
 
 - Restore playlist reorder buttons at the left of each row. Offer a target Sound Board chooser when loading a playlist, with confirmation before replacing populated boards.

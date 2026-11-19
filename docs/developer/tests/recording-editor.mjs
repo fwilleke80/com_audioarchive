@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 const moduleSource = fs.readFileSync(new URL('../../../pkg_audioarchive/com_audioarchive/media/js/recording-editor.js', import.meta.url), 'utf8');
-const {editRecording, recordingSeekState, RecordingEditor} = await import('data:text/javascript;base64,' + Buffer.from(moduleSource).toString('base64'));
+const {setRecordingLayerPolyphony, editRecording, recordingSeekState, RecordingEditor} = await import('data:text/javascript;base64,' + Buffer.from(moduleSource).toString('base64'));
 const original = {id:'one', durationMs:2000, initialState:{polyphony:true}, board:[{id:1,title:'Base'}], layerBoards:{1:[{id:2,title:'Overdub'},{id:3,title:'Other'}]}, events:[{type:'polyphony',t:0,layer:1,enabled:false},{type:'note',t:100,pad:0,note:60,velocity:91,duration:200,layer:0},{type:'pad',t:500,pad:0,layer:1},{type:'polyphony',t:700,layer:1,enabled:true}]};
 const fingerprint = JSON.stringify(original);
 let result = editRecording(original, 'move', 1, {t:600,note:67});
@@ -48,11 +48,13 @@ class Control
     getBoundingClientRect() { return {left:0,top:0}; }
     closest() { return this; }
     setPointerCapture() {}
+    setAttribute() {}
+    focus() {}
 }
-const controls=Object.fromEntries(['toggle','panel','layer','pad','undo','message','cancel','save'].map(key=>[key,new Control()]));
+const controls=Object.fromEntries(['toggle','panel','layer','pad','undo','message','cancel','save','polyphony'].map(key=>[key,new Control()]));
 const container=new Control();container.dataset.labels=JSON.stringify({layer:'Layer',error:'Save failed',invalid:'Invalid'});
 container.querySelector=(selector)=>controls[selector.match(/data-edit-(.*)\]/)[1]];
-const root={querySelector:selector=>selector==='[data-edit-toggle]'?controls.toggle:selector==='[data-edit-help]'?null:container};const roll=new Control();
+const root={querySelector:selector=>selector==='[data-recording-edit-controls]'?container:selector==='[data-edit-help]'?null:controls[selector.match(/data-edit-(.*)\]/)[1]]};const roll=new Control();
 globalThis.window={addEventListener(){}};
 globalThis.Option=class {constructor(text,value){this.text=text;this.value=value;}};
 let stored=original, saveSuccess=false, auditioned=[], seeks=[], rendered=0;
@@ -90,7 +92,7 @@ await controls.save.handlers.click();
 assert.ok(editor.draft,'failed save retains draft');
 assert.equal(controls.message.textContent,'Save failed');
 assert.equal(stored,original);
-controls.cancel.handlers.click();
+controls.toggle.handlers.click();
 assert.equal(editor.draft,null);
 assert.equal(stored,original);
 controls.toggle.handlers.click();
@@ -106,7 +108,7 @@ assert.deepEqual(seeks,[1000]);
 const social=fs.readFileSync(new URL('../../../pkg_audioarchive/com_audioarchive/media/js/social.js',import.meta.url),'utf8');
 const elements=[];
 const rollFixture={replaceChildren(){elements.length=0;},appendChild(node){elements.push(node);},style:{}};
-const context={recordingRoll:rollFixture,recordingEdit:{draft:stored,layer:1},recordingZoom:2,recordingSeekPosition:500,document:{createElement:()=>({style:{setProperty(){}},dataset:{},setAttribute(){}})},getMidiNoteName:n=>String(n),getRecordingPadColor:()=>'',formatSoundboardRecordingTime:String,updateRecordingPlayhead(){},root:{dataset:{}}};
+const context={recordingRollViewport:null,recordingFitId:stored.id,recordingAutoFit:false,recordingSession:null,recordingRoll:rollFixture,recordingEdit:{draft:stored,layer:1},recordingZoom:2,recordingSeekPosition:500,document:{createElement:()=>({style:{setProperty(){}},dataset:{},setAttribute(){}})},getMidiNoteName:n=>String(n),getRecordingPadColor:()=>'',formatSoundboardRecordingTime:String,updateRecordingPlayhead(){},root:{dataset:{}}};
 vm.createContext(context);
 let a=social.indexOf('\tconst renderRecordingRoll =');let b=social.indexOf('\n\tconst renderSoundboardRecordings',a);
 vm.runInContext(social.slice(a,b)+'\nglobalThis.renderRoll=renderRecordingRoll;',context);
@@ -115,3 +117,10 @@ assert.equal(elements.filter(e=>e.dataset?.eventIndex!==undefined).length,2);
 assert.ok(context.recordingEdit.rows.some(row=>row.type==='pad'&&row.value===1));
 assert.ok(context.recordingEdit.rows.some(row=>row.type==='note'&&row.value===48));
 console.log('Recording edits, boundaries, mixed-layer mappings, seek state, save failure/cancel/undo, drag, double-click and production roll rendering passed.');
+
+const poly = setRecordingLayerPolyphony(original, 1, false);
+assert.equal(poly.events.filter(event => event.type === 'polyphony' && event.layer === 1).length, 1);
+assert.equal(poly.events[0].enabled, false);
+assert.equal(poly.initialState.polyphony, true);
+assert.equal(JSON.stringify(original), fingerprint);
+console.log('Whole-layer polyphony replaces automation without altering other layers or original.');

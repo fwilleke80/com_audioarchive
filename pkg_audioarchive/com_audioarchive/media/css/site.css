@@ -3619,3 +3619,59 @@
 {
     display: none !important;
 }
+
+/** @brief Keep transport keys and editing slots stationary as their states change. */
+.com-audioarchive-soundboard-recording-editor-actions .com-audioarchive-transport-key
+{
+    flex: 0 0 2.75rem;
+    width: 2.75rem;
+    font-size: 1.2rem;
+    padding: 0;
+}
+.com-audioarchive-transport-key[data-audioarchive-recording-record]
+{
+    background: var(--audioarchive-surface);
+    color: #c62828;
+    border-color: currentColor;
+}
+.com-audioarchive-transport-key[data-audioarchive-recording-record].is-active
+{
+    background: #c62828;
+    color: #fff;
+}
+.com-audioarchive-soundboard-recording-editor-actions [data-edit-toggle]
+{
+    width: 14rem;
+    flex: 0 0 14rem;
+}
+.com-audioarchive-soundboard-recording-editor-actions [data-edit-save][hidden]
+{
+    display: inline-flex !important;
+    visibility: hidden;
+}
+.com-audioarchive-soundboard-recording-clock
+{
+    min-width: 22ch;
+    font-variant-numeric: tabular-nums;
+}
+.com-audioarchive-edit-polyphony
+{
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    min-height: 2.75rem;
+}
+.com-audioarchive-soundboard-recording-roll-toolbar .btn
+{
+    height: 2.25rem;
+    min-height: 2.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.com-audioarchive-soundboard-recording-roll.is-editing [data-event-index].is-selected
+{
+    outline: 3px solid var(--audioarchive-accent, #0d6efd);
+    outline-offset: 2px;
+    z-index: 4;
+}

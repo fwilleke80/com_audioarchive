@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 const source = fs.readFileSync(new URL('../../../pkg_audioarchive/com_audioarchive/media/js/social.js', import.meta.url),'utf8');
 const voices = [];
 const live = [{id:11,uuid:'live'}];
-const context = {boardPreloader:null,board:live, recordingPlayback:{board:[{id:22}],layerBoards:{1:[{id:33}]},polyphonyByLayer:new Map()}, streamTemplate:'/clip/987654321',
+const context = {decodedSamplerBuffers:new Map(),boardPreloader:null,board:live, recordingPlayback:{board:[{id:22}],layerBoards:{1:[{id:33}]},polyphonyByLayer:new Map()}, streamTemplate:'/clip/987654321',
  soundboardPolyphonic:true, activeVoices:new Set(), voicesByPad:new Map(), pads:[{classList:{add(){},remove(){}}}],
  ensureClipMetadata:()=>Promise.resolve(), normalizationGains:new Map(), prepareNormalization:()=>Promise.resolve(), playbackFor:(audio)=>audio,
  updatePadPlayingState(){}, recordPerformanceEvent(){}, countPlay(){}, stopRecordingVoices(){}, stopLiveVoices(){}, stopAllVoices(){}, cleanupVoice(){},
@@ -92,3 +92,31 @@ assert.deepEqual(pitched[1], [0,48,127,'recording',0], 'base chromatic notes ret
 assert.equal(voices.at(-1), '/clip/33', 'pad overdub over chromatic base uses its own clip');
 assert.equal(context.board, live, 'mixed playback leaves live board intact');
 console.log('Saved polyphony survives disabled live permission; mixed-mode layers retain pitches and mappings.');
+
+/** @brief Recording pad events use decoded samples even with an unrelated or empty live board. */
+context.boardPreloader = null;
+context.decodedSamplerBuffers.set(22, {duration: 1});
+context.decodedSamplerBuffers.set(33, {duration: 1});
+context.normalizationGains.set(22, 1);
+context.normalizationGains.set(33, 1);
+context.recordingPlayback = {board:[{id:22}],layerBoards:{1:[{id:33}]},polyphonyByLayer:new Map()};
+const before = buffered.length;
+const streamsBefore = voices.length;
+vm.runInContext("playRecordingPad(0,'recording',false,0); playRecordingPad(0,'recording',false,1);", context);
+assert.deepEqual(buffered.slice(before).map(args => args[2].id), [22, 33]);
+assert.equal(context.board, live);
+assert.equal(voices.length, streamsBefore, 'recorded pads do not start fresh media streams');
+console.log('Recording-only decoded base and overdub samples play without loading the visible board.');
+/** @brief Stored chromatic notes play even when the live chromatic keyboard is disabled. */
+a=source.indexOf('\tconst playSamplerNoteFromPad =');
+b=source.indexOf('\n\tconst shiftSamplerOctave',a);
+context.samplerEnabled=false;
+context.padCount=4;
+vm.runInContext(source.slice(a,b)+'\nglobalThis.playStoredNote=playSamplerNoteFromPad;',context);
+const noteCount=buffered.length;
+vm.runInContext("playStoredNote(0,72,91,'recording',1);",context);
+assert.equal(buffered.length,noteCount+1);
+assert.equal(buffered.at(-1)[2].id,33);
+assert.equal(buffered.at(-1)[4],72);
+assert.equal(buffered.at(-1)[5],91);
+console.log('Stored chromatic notes retain pitch and velocity with live keyboard disabled.');

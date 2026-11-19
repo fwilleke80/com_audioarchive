@@ -453,39 +453,36 @@ data-audioarchive-recordings-enabled="<?php echo $this->recordingsEnabled ? '1' 
 </span>
 				</div>
 				<div class="com-audioarchive-soundboard-recording-editor-actions" role="group" aria-label="<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_TOOLS'); ?>">
+<button type="button" class="btn btn-outline-secondary com-audioarchive-transport-key" data-audioarchive-recording-start title="<?php echo Text::_('COM_AUDIOARCHIVE_RECORDING_START'); ?>" aria-label="<?php echo Text::_('COM_AUDIOARCHIVE_RECORDING_START'); ?>"><span aria-hidden="true">⏮</span></button>
 <button
-					type="button"
-					class="btn btn-danger"
-					data-audioarchive-recording-record
-					data-start-label="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORD')); ?>"
-					data-stop-label="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORD_STOP')); ?>"
-				>
-					<span aria-hidden="true" data-audioarchive-transport-icon>●</span>
-					<span data-audioarchive-transport-label>
-<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORD'); ?>
-</span>
-				</button>
-<output class="com-audioarchive-soundboard-recording-clock" data-audioarchive-recording-clock>00:00.000</output>
-					<button
 						type="button"
-						class="btn btn-sm btn-primary"
+						class="com-audioarchive-transport-key btn btn-sm btn-primary"
 						data-audioarchive-recording-play
 						data-start-label="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_PLAY')); ?>"
 						data-stop-label="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_STOP')); ?>"
 					>
 						<span aria-hidden="true" data-audioarchive-transport-icon>▶</span>
-						<span data-audioarchive-transport-label>
+						<span class="visually-hidden" data-audioarchive-transport-label>
 <?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_PLAY'); ?>
 </span>
 					</button>
-					
-					<button type="button" class="btn btn-sm btn-outline-secondary" data-audioarchive-recording-undo disabled>
-<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_UNDO'); ?>
-</button>
-					<button type="button" class="btn btn-sm btn-outline-secondary" data-edit-toggle>
+<button
+					type="button"
+					class="com-audioarchive-transport-key btn btn-danger"
+					data-audioarchive-recording-record
+					data-start-label="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORD')); ?>"
+					data-stop-label="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORD_STOP')); ?>"
+				>
+					<span aria-hidden="true" data-audioarchive-transport-icon>●</span>
+					<span class="visually-hidden" data-audioarchive-transport-label>
+<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORD'); ?>
+</span>
+				</button>
+<output class="com-audioarchive-soundboard-recording-clock" data-audioarchive-recording-clock>00:00.000</output>
+<button type="button" class="btn btn-sm btn-outline-secondary" data-edit-toggle data-edit-label="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_RECORDING_EDIT_MODE')); ?>" data-cancel-label="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_RECORDING_CANCEL_EDIT')); ?>">
 <?php echo Text::_('COM_AUDIOARCHIVE_RECORDING_EDIT_MODE'); ?>
 </button>
-<details class="com-audioarchive-recording-actions">
+<button type="button" class="btn btn-sm btn-primary" data-edit-save hidden><?php echo Text::_('COM_AUDIOARCHIVE_RECORDING_EDIT_SAVE'); ?></button><details class="com-audioarchive-recording-actions">
 						<summary class="btn btn-sm btn-outline-secondary">
 <?php echo Text::_('COM_AUDIOARCHIVE_RECORDING_ACTIONS'); ?>
 </summary>
@@ -509,7 +506,9 @@ data-audioarchive-recordings-enabled="<?php echo $this->recordingsEnabled ? '1' 
 <?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_DELETE'); ?>
 </button>
 						</div>
-					</details>
+					</details><button type="button" class="btn btn-sm btn-outline-secondary" data-audioarchive-recording-undo disabled>
+<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_UNDO'); ?>
+</button>
 				</div>
 			</div>
             <div data-recording-share-result hidden class="my-2">
@@ -534,12 +533,7 @@ data-audioarchive-recordings-enabled="<?php echo $this->recordingsEnabled ? '1' 
 <?php echo Text::_('COM_AUDIOARCHIVE_RECORDING_EDIT_SOURCE'); ?> <select class="form-select" data-edit-pad>
 </select>
 </label>
-                        <button type="button" class="btn btn-sm btn-primary" data-edit-save>
-<?php echo Text::_('COM_AUDIOARCHIVE_RECORDING_EDIT_SAVE'); ?>
-</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" data-edit-cancel>
-<?php echo Text::_('JCANCEL'); ?>
-</button>
+                        <label class="com-audioarchive-edit-polyphony"><input type="checkbox" role="switch" data-edit-polyphony> <?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_SAMPLER_POLYPHONY'); ?></label>
                         <button type="button" class="btn btn-sm btn-outline-secondary" data-edit-undo>
 <?php echo Text::_('COM_AUDIOARCHIVE_RECORDING_EDIT_UNDO'); ?>
 </button>
@@ -554,6 +548,7 @@ data-audioarchive-recordings-enabled="<?php echo $this->recordingsEnabled ? '1' 
 <?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_ROLL'); ?>
 </span>
 				<div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-audioarchive-recording-fit><?php echo Text::_('COM_AUDIOARCHIVE_RECORDING_FIT'); ?></button>
 					<button type="button" class="btn btn-sm btn-outline-secondary" data-audioarchive-recording-zoom-out aria-label="<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_ZOOM_OUT'); ?>" title="<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_ZOOM_OUT'); ?>">−</button>
 					<button type="button" class="btn btn-sm btn-outline-secondary" data-audioarchive-recording-zoom-in aria-label="<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_ZOOM_IN'); ?>" title="<?php echo Text::_('COM_AUDIOARCHIVE_SOUNDBOARD_RECORDING_ZOOM_IN'); ?>">+</button>
 				</div>

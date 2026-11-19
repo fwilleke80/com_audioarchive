@@ -47,7 +47,7 @@ const song={id:'song',format:'punga-audioarchive-soundboard-recording',version:1
  assert.equal(doc.querySelector('[data-edit-help]').hidden,false);
  assert.equal(doc.querySelector('[data-audioarchive-recording-play]').disabled,false);
  assert.equal(doc.querySelector('[data-audioarchive-recording-record]').disabled,true);
- doc.querySelector('[data-edit-cancel]').click();
+ doc.querySelector('[data-edit-toggle]').click();
  assert.equal(doc.querySelector('[data-edit-panel]').hidden,true);
  }
  console.log('Real Sound Board template initialized:',empty?'empty library':'saved recording and edit toolbar');
