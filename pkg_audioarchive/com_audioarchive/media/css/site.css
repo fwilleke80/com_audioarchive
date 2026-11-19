@@ -3525,3 +3525,97 @@
 {
     display: none;
 }
+
+/** @brief Match Archive menu items: borderless choices with a consistent hover/focus state. */
+.com-audioarchive-more-menu button,
+.com-audioarchive-recording-actions-menu button
+{
+    border: 0;
+    border-radius: .3rem;
+    box-shadow: none;
+    background: transparent;
+    color: inherit;
+    padding: .55rem .75rem;
+    font: inherit;
+    line-height: 1.4;
+    text-align: start;
+}
+.com-audioarchive-more-menu button:hover:not(:disabled),
+.com-audioarchive-more-menu button:focus-visible,
+.com-audioarchive-recording-actions-menu button:hover:not(:disabled),
+.com-audioarchive-recording-actions-menu button:focus-visible
+{
+    background: color-mix(in srgb, var(--audioarchive-accent) 12%, var(--audioarchive-surface));
+    color: inherit;
+}
+.com-audioarchive-more-menu button:focus-visible,
+.com-audioarchive-recording-actions-menu button:focus-visible
+{
+    outline: 2px solid var(--audioarchive-accent);
+    outline-offset: -2px;
+}
+/** @brief Shared adjacent controls use the same box metrics, including disclosure toggles. */
+.com-audioarchive-collection-toolbar,
+.com-audioarchive-soundboard-toolbar,
+.com-audioarchive-soundboard-recording-editor-actions,
+.com-audioarchive-recorder-library-tools,
+.com-audioarchive-cover-save,
+.com-audioarchive-edit-toolbar,
+.com-audioarchive-soundboard-mode-controls,
+.com-audioarchive-soundboard-keyboard-toolbar,
+.com-audioarchive-soundboard-shared-actions,
+.com-audioarchive-soundboard-sampler-actions
+{
+    --audioarchive-control-height: 2.75rem;
+}
+.com-audioarchive-collection-toolbar .btn,
+.com-audioarchive-soundboard-toolbar .btn,
+.com-audioarchive-soundboard-recording-editor-actions .btn,
+.com-audioarchive-recorder-library-tools .btn,
+.com-audioarchive-cover-save .btn,
+.com-audioarchive-edit-toolbar .btn,
+.com-audioarchive-soundboard-keyboard-toolbar .btn,
+.com-audioarchive-soundboard-shared-actions .btn,
+.com-audioarchive-soundboard-sampler-actions .btn,
+.com-audioarchive-soundboard-mode-controls .com-audioarchive-soundboard-mode-button
+{
+    box-sizing: border-box;
+    min-height: var(--audioarchive-control-height);
+    height: var(--audioarchive-control-height);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding-block: .5rem;
+    line-height: 1.25;
+    margin-block: 0;
+}
+.com-audioarchive-more-menu .btn,
+.com-audioarchive-recording-actions-menu .btn
+{
+    height: auto;
+    min-height: 2.5rem;
+    justify-content: flex-start;
+}
+.com-audioarchive-recorder-library-tools
+{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+}
+.com-audioarchive-playlist-order-controls .btn
+{
+    box-sizing: border-box;
+    height: 2rem;
+    min-height: 2rem;
+    width: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+[data-audioarchive-shared-recording="1"] [data-audioarchive-recording-new],
+[data-audioarchive-shared-recording="1"] [data-recording-overdub-hint]
+{
+    display: none !important;
+}

@@ -314,6 +314,14 @@ export const Collections = {
 		await mutate('board', {board: {id: id || crypto.randomUUID(), name: board?.name || labels.default_name || 'My sound board', items}});
 	},
 
+    /** @brief Replace only the explicitly chosen board, retaining the current board selection. */
+    async replaceBoard(id, items)
+    {
+        const board = state.boards.find(item => item.id === id);
+        if (id && !board) throw new Error(labels.unavailable || 'Board unavailable');
+        await mutate('board', {board: {id: id || crypto.randomUUID(), name: board?.name || labels.default_name || 'My sound board', items: clone(items)}});
+    },
+
 	get boardId()
 	{
 		return activeBoard;

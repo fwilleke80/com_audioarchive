@@ -32,7 +32,7 @@ Playlist entries store stable clip UUIDs rather than playback URLs. The page res
 
 ## Sound Board conversion
 
-When the Sound Board is enabled, **Load into Sound Board** copies available playlist clips into pads in playlist order. It skips removed or inaccessible clips and stops at the configured Sound Board pad count. If the current board contains clips, replacement requires confirmation.
+When the Sound Board is enabled, **Load into Sound Board** copies available playlist clips into pads in playlist order. It skips removed or inaccessible clips and stops at the configured Sound Board pad count. Account users choose the destination board from a menu. If the chosen board contains clips, replacement requires confirmation. The current board selection is preserved. Browser collections use the current browser board.
 
 Loading a playlist stores the current resolved numeric clip IDs required by Sound Board playback. The reverse action, **Save as playlist**, is available on the Sound Board when Playlists are enabled.
 

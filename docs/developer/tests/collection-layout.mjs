@@ -33,13 +33,15 @@ const song={id:'song',format:'punga-audioarchive-soundboard-recording',version:1
  assert.equal(doc.querySelector('[data-audioarchive-recording-list]').tagName,'TBODY');
  assert.ok(doc.querySelector('[data-audioarchive-recording-editor]').contains(doc.querySelector('[data-audioarchive-recording-record]')));
  assert.equal(doc.querySelector('[data-audioarchive-recording-editor]').hidden,false);
- assert.equal(doc.querySelector('[data-audioarchive-recording-play]').disabled,empty);
+ assert.equal(doc.querySelector('[data-audioarchive-recording-play]').disabled,true);
+ assert.equal(doc.querySelector('[data-audioarchive-recording-record]').disabled,true);
  if(scenario==='unavailable')
  {
      assert.equal(doc.querySelector('[data-audioarchive-recording-record]').hidden,true);
      assert.equal(doc.querySelector('[data-edit-toggle]').hidden,true);
  }
  if(!empty) {
+ doc.querySelector('[data-recording-id]').click();
  doc.querySelector('[data-edit-toggle]').click();
  assert.equal(doc.querySelector('[data-edit-panel]').hidden,false);
  assert.equal(doc.querySelector('[data-edit-help]').hidden,false);
@@ -66,7 +68,7 @@ const song={id:'song',format:'punga-audioarchive-soundboard-recording',version:1
  const doc=dom.window.document;
  assert.equal(doc.querySelectorAll('[data-audioarchive-playlist-items] tr').length,2);
  assert.equal(doc.querySelectorAll('[data-audioarchive-playlist-items] details.com-audioarchive-more').length,2);
- assert.ok(doc.querySelector('[data-audioarchive-playlist-items] [data-action="up"]').closest('.com-audioarchive-more-menu'));
+ assert.ok(doc.querySelector('[data-audioarchive-playlist-items] [data-action="up"]').closest('.com-audioarchive-playlist-order-controls'));
  assert.equal(doc.querySelector('[data-playlist-cover-editor]').hidden,true);
  doc.querySelector('[data-playlist-cover-toggle]').click();
  assert.equal(doc.querySelector('[data-playlist-cover-editor]').hidden,false);

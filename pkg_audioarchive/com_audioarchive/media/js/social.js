@@ -1,10 +1,10 @@
-import {initialiseCollectionMenus} from './collection-ui.js?v=0.18.0';
-import {RecordingEditor, recordingSeekState, cloneRecording} from './recording-editor.js?v=0.18.0';
+import {initialiseCollectionMenus} from './collection-ui.js?v=0.18.1';
+import {RecordingEditor, recordingSeekState, cloneRecording} from './recording-editor.js?v=0.18.1';
 import {BoardPreloader} from './board-preload.js?v=0.13.7.1';
-import {openSoundboardChooser} from './board-chooser.js?v=0.18.0';
+import {openSoundboardChooser} from './board-chooser.js?v=0.18.1';
 import {acquirePlaybackSession, releasePlaybackSession} from './audio-session.js?v=0.13.2.7';
 import {playbackFor, prepareNormalization, releaseNormalization, validGain} from './normalization.js?v=0.13.2.7';
-import {Collections} from './collections.js?v=0.18.0';
+import {Collections} from './collections.js?v=0.18.1';
 const BOARD_STORAGE_KEY = 'com_audioarchive.soundboard.v1';
 const SAMPLER_POLYPHONY_STORAGE_KEY = 'com_audioarchive.soundboard.sampler_polyphony.v1';
 const SOUNDBOARD_RECORDINGS_STORAGE_KEY = 'com_audioarchive.soundboard.recordings.v1';
@@ -1260,6 +1260,7 @@ async function initialiseSoundboard()
 	const octaveLabel = root.querySelector('[data-audioarchive-soundboard-octave-label]');
 	const pianoKeys = Array.from(root.querySelectorAll('[data-audioarchive-soundboard-piano-key]'));
 	const recordingsRoot = root.querySelector('[data-audioarchive-soundboard-recordings]');
+	const recordingNewButton = recordingsRoot?.querySelector('[data-audioarchive-recording-new]');
 	const recordingRecordButton = recordingsRoot?.querySelector('[data-audioarchive-recording-record]');
 	const recordingClock = recordingsRoot?.querySelector('[data-audioarchive-recording-clock]');
 	const recordingEditor = recordingsRoot?.querySelector('[data-audioarchive-recording-editor]');
@@ -1314,7 +1315,8 @@ async function initialiseSoundboard()
 	let samplerMode = false;
 	const samplerAudioSessionOwner = Object.create(null);
 	let recordings = sharedRecordingMode ? [normaliseSoundboardRecording(Collections.sharedRecording?.recording, 36)].filter(Boolean) : (recordingsEnabled ? readSoundboardRecordings(padCount) : []);
-	let selectedRecordingId = recordings[0]?.id || '';
+	let selectedRecordingId = sharedRecordingMode ? (recordings[0]?.id || '') : '';
+    let recordingSaving = false;
 	let recordingSession = null;
 	let recordingTimerFrame = 0;
 	let recordingPlayback = null;
@@ -1357,19 +1359,22 @@ async function initialiseSoundboard()
 		const freshRecording = Boolean(recordingSession && !recordingSession.overdub);
 		const overdubActive = Boolean(recordingPlayback?.overdub);
 		const normalPlayback = Boolean(recordingPlayback && !recordingPlayback.overdub);
+        if (recordingNewButton) recordingNewButton.disabled = recordingSaving || Boolean(recordingSession || recordingPlayback || recordingEdit?.draft);
+        const hint = recordingsRoot?.querySelector('[data-recording-overdub-hint]');
+        if (hint) hint.hidden = sharedRecordingMode || !getSelectedRecording()?.events.some(event => event.type === 'pad' || event.type === 'note');
 
-		setRecordingTransportState(recordingRecordButton, freshRecording, '●', '■');
+		setRecordingTransportState(recordingRecordButton, freshRecording || overdubActive, '●', '■');
 		setRecordingTransportState(recordingPlayButton, normalPlayback, '▶', '■');
 		setRecordingTransportState(recordingOverdubButton, overdubActive, '●', '■');
 
 		if (recordingRecordButton)
 		{
-			recordingRecordButton.disabled = Boolean(recordingPlayback || recordingEdit?.draft);
+			recordingRecordButton.disabled = recordingSaving || normalPlayback || Boolean(recordingEdit?.draft) || !getSelectedRecording();
 		}
 
 		if (recordingPlayButton)
 		{
-			recordingPlayButton.disabled = freshRecording || overdubActive || Boolean(recordingEdit?.busy) || !getSelectedRecording();
+			recordingPlayButton.disabled = recordingSaving || freshRecording || overdubActive || Boolean(recordingEdit?.busy) || !getSelectedRecording()?.events.some(event => event.type === 'pad' || event.type === 'note');
 		}
 
 		if (recordingOverdubButton)
@@ -1503,6 +1508,7 @@ async function initialiseSoundboard()
 
 			return {
 				...target,
+				layerBoards: {...(target.layerBoards || {}), [recordingSession.layer]: recordingSession.board},
 				durationMs: Math.max(target.durationMs, elapsed),
 				events: [...target.events.map((event) => ({...event})), ...liveEvents]
 					.sort((a, b) => a.t - b.t),
@@ -1691,7 +1697,7 @@ async function initialiseSoundboard()
 
 	const startSoundboardRecording = () =>
 	{
-		if (!recordingsEnabled || recordingSession)
+		if (!recordingsEnabled || recordingSession || recordingSaving || sharedRecordingMode || !getSelectedRecording())
 		{
 			return;
 		}
@@ -1705,7 +1711,8 @@ async function initialiseSoundboard()
 		recordingActiveNotes.clear();
 		activeComputerRecordingNotes.clear();
 		recordingSession = {
-			id: createSoundboardRecordingId(),
+			id: getSelectedRecording().id,
+            name: getSelectedRecording().name,
 			startedAt: performance.now(),
 			created: new Date().toISOString(),
 			board: normaliseBoard(board, padCount),
@@ -1757,6 +1764,7 @@ async function initialiseSoundboard()
 		finishRecordingNotes(durationMs);
 
 		const session = recordingSession;
+        recordingSaving = true;
 		recordingSession = null;
 		if (session.overdub) stopSoundboardRecordingPlayback(false);
 
@@ -1830,7 +1838,7 @@ async function initialiseSoundboard()
 					id: session.id,
 					format: SOUNDBOARD_RECORDING_FORMAT,
 					version: SOUNDBOARD_RECORDING_VERSION,
-					name: defaultName,
+					name: session.name || defaultName,
 					created: session.created,
 					durationMs,
 					board: session.board,
@@ -1863,6 +1871,7 @@ async function initialiseSoundboard()
 			}
 		}
 
+        recordingSaving = false;
 		syncRecordingTransport();
 		setRecordingMutationDisabled(false);
 		recordingsRoot?.classList.remove('is-recording');
@@ -3387,7 +3396,7 @@ async function initialiseSoundboard()
 
 		if (!displayedRecording)
 		{
-            if (recordingTitle) recordingTitle.textContent = root.dataset.audioarchiveLabelRecordingEmpty || 'No recordings yet.';
+            if (recordingTitle) recordingTitle.textContent = root.dataset.recordingChoose || 'Select a recording or create a new one.';
             if (recordingMeta) recordingMeta.textContent = '';
             if (recordingClock) recordingClock.textContent = '00:00.000';
             syncRecordingTransport();
@@ -3663,7 +3672,7 @@ async function initialiseSoundboard()
 		updateRecordingPlayhead(recordingSeekPosition);
         if (recordingClock && !recordingPlayback.overdub) recordingClock.textContent = `${formatSoundboardRecordingTime(recordingSeekPosition)} / ${formatSoundboardRecordingTime(recordingPlayback.recording.durationMs)}`;
 
-		if (elapsed >= recordingPlayback.recording.durationMs)
+		if (elapsed >= recordingPlayback.recording.durationMs && !recordingPlayback.overdub)
 		{
 			if (recordingPlayback.overdub && recordingSession?.overdub)
 			{
@@ -3785,7 +3794,7 @@ async function initialiseSoundboard()
 		recordingPlayback.phase = 'playing';
 		recordingPlayback.startedAt = performance.now();
 		recordingPlayback.eventIndex = 0;
-        seekRecording(overdub ? 0 : recordingSeekPosition);
+        seekRecording(recordingSeekPosition, true);
 
 		if (overdub)
 		{
@@ -3808,9 +3817,9 @@ async function initialiseSoundboard()
 				startedAt: recordingPlayback.startedAt,
 				events:
 				[
-					{t: 0, type: 'polyphony', enabled: soundboardPolyphonic, layer: overdubLayer},
+					{t: recordingSeekPosition, type: 'polyphony', enabled: soundboardPolyphonic, layer: overdubLayer},
 					...(samplerMode && selectedSamplerIndex >= 0
-						? [{t: 0, type: 'select', pad: selectedSamplerIndex, layer: overdubLayer}]
+						? [{t: recordingSeekPosition, type: 'select', pad: selectedSamplerIndex, layer: overdubLayer}]
 						: []),
 				],
 			};
@@ -3847,9 +3856,9 @@ async function initialiseSoundboard()
 
 
     /** @brief Seek without replaying earlier triggers; restore per-layer performance state. */
-    const seekRecording = (position) =>
+    const seekRecording = (position, initial = false) =>
     {
-        if (recordingSession || recordingPlayback?.overdub) return;
+        if (!initial && (recordingSession || recordingPlayback?.overdub)) return;
         const recording = recordingPlayback?.recording || getSelectedRecording();
         if (!recording) return;
         const state = recordingSeekState(recording, position);
@@ -3988,17 +3997,54 @@ async function initialiseSoundboard()
     recordingsRoot?.querySelector('[data-recording-share]')?.addEventListener('click', () => setRecordingShare(false));
     recordingsRoot?.querySelector('[data-recording-revoke]')?.addEventListener('click', () => setRecordingShare(true));
 
-	recordingRecordButton?.addEventListener('click', async () =>
-	{
-		if (recordingSession && !recordingSession.overdub)
-		{
-			stopSoundboardRecording();
-		}
-		else
-		{
-			startSoundboardRecording();
-		}
-	});
+    /** @brief Create and select a named empty recording without starting audio capture. */
+    recordingNewButton?.addEventListener('click', async () =>
+    {
+        if (sharedRecordingMode || recordingSaving || recordingSession || recordingPlayback || recordingEdit?.draft) return;
+        if (recordings.length >= 100)
+        {
+            window.alert(root.dataset.recordingLimit);
+            return;
+        }
+        const name = window.prompt(root.dataset.audioarchiveLabelRecordingNamePrompt, formatSoundboardLabel(root.dataset.audioarchiveLabelRecordingDefaultName || 'Recording %d', recordings.length + 1));
+        if (!name?.trim()) return;
+        const recording = normaliseSoundboardRecording(
+        {
+            id: createSoundboardRecordingId(), format: SOUNDBOARD_RECORDING_FORMAT, version: SOUNDBOARD_RECORDING_VERSION,
+            name: name.trim(), created: new Date().toISOString(), durationMs: 0, board: [],
+            initialState: {mode: 'pad', polyphony: soundboardPolyphonic}, events: [],
+        }, padCount);
+        recordingSaving = true;
+        syncRecordingTransport();
+        const candidate = [recording, ...recordings];
+        try
+        {
+            if (await writeSoundboardRecordings(candidate))
+            {
+                recordings = candidate;
+                selectedRecordingId = recording.id;
+                recordingSeekPosition = 0;
+                recordingUndo = null;
+            }
+        }
+        finally
+        {
+            recordingSaving = false;
+            renderSoundboardRecordings();
+            syncRecordingTransport();
+        }
+    });
+    recordingRecordButton?.addEventListener('click', async () =>
+    {
+        if (sharedRecordingMode || recordingSaving || recordingEdit?.draft) return;
+        if (recordingSession) await stopSoundboardRecording();
+        else if (recordingPlayback?.overdub) stopSoundboardRecordingPlayback(false);
+        else if (getSelectedRecording()?.events.some(event => event.type === 'pad' || event.type === 'note'))
+        {
+            await startSoundboardRecordingPlayback(getSelectedRecording(), true);
+        }
+        else startSoundboardRecording();
+    });
 	recordingPlayButton?.addEventListener('click', async () =>
 	{
 		if (recordingPlayback && !recordingPlayback.overdub)
@@ -4008,24 +4054,6 @@ async function initialiseSoundboard()
 		else
 		{
 			void startSoundboardRecordingPlayback(getSelectedRecording());
-		}
-	});
-	recordingOverdubButton?.addEventListener('click', async () =>
-	{
-		if (recordingPlayback?.overdub)
-		{
-			if (recordingSession?.overdub)
-			{
-				stopSoundboardRecording();
-			}
-			else
-			{
-				stopSoundboardRecordingPlayback(false);
-			}
-		}
-		else
-		{
-			void startSoundboardRecordingPlayback(getSelectedRecording(), true);
 		}
 	});
 	recordingUndoButton?.addEventListener('click', undoSoundboardOverdub);
@@ -4147,7 +4175,7 @@ async function initialiseSoundboard()
 						const remaining = raw.filter((item, index) => !acknowledged.has(index));
 						if (writeStorage(SOUNDBOARD_RECORDINGS_STORAGE_KEY, remaining) && !remaining.length) importButton.remove();
 					}
-					selectedRecordingId ||= recordings[0]?.id || '';
+
 					renderSoundboardRecordings();
 				}
 				importButton.disabled = false;
@@ -4255,7 +4283,8 @@ async function initialiseSoundboard()
 				recordingUndo = null;
 			}
 
-			selectedRecordingId = recordings[0]?.id || '';
+			selectedRecordingId = '';
+            recordingSeekPosition = 0;
 
 			if (!await writeSoundboardRecordings(recordings) && recordingStatus)
 			{

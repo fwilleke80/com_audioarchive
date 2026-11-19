@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.18.1
+
+- Restore playlist reorder buttons at the left of each row. Offer a target Sound Board chooser when loading a playlist, with confirmation before replacing populated boards.
+- Match adjacent toolbar button heights, including disclosure toggles, and make collection/recorder menu items consistently borderless.
+- Start with no recording selected. New recording creates an empty named recording beside Import JSON; Record captures into the selected recording, overdubbing existing notes from the playhead. Overdubs can extend beyond the original duration and remain undoable.
+- Add regression coverage for recording creation, capture, playhead overdubbing, replacement destinations and cancelled or failed saves.
+
 ## 0.18.0
 
 - Give Sound Board and Playlists shared toolbar, notification and overflow-menu styles and behaviour. Keep page headings first, except for browser-migration notifications at the top. Group board management above the pads and revocation beside sharing.

@@ -41,3 +41,19 @@ context.openSoundboardChooser(trigger,{id:2},1);
 for(const listener of [...listeners]) listener.fn({target:element()});
 assert.ok(menu.removed,'subsequent outside click closes chooser');
 console.log('Chooser opening click, full/free destinations, selection and outside dismissal passed.');
+let replacement = null;
+let accept = false;
+context.openSoundboardChooser(trigger, null, 1, async board =>
+{
+ replacement = board.id;
+ return accept;
+});
+assert.equal(menu.children[0].disabled, false, 'full boards can be replaced');
+await menu.children[0].handlers.click();
+assert.equal(replacement, 'full');
+assert.ok(!menu.removed, 'cancelled replacement keeps chooser available');
+accept = true;
+await menu.children[0].handlers.click();
+assert.ok(menu.removed);
+assert.equal(writes.length, 1, 'replacement never calls single-clip addition');
+console.log('Playlist replacement chooser and cancellation passed.');

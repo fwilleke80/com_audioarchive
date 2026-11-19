@@ -88,3 +88,14 @@ assert.equal(await Collections.write('com_audioarchive.playlists.v1', drafts, {p
 assert.equal(posted.length, count + 1, 'cover-only removal is not suppressed by unchanged membership');
 assert.deepEqual(posted.at(-1).covers, [{id: 'playlist', action: 'remove'}]);
 console.log('Playlist multipart save, cover-only removal and failed-draft preservation passed.');
+fail = false;
+const activeBoard = Collections.boardId;
+const activeItems = JSON.stringify(Collections.read('com_audioarchive.soundboard.v1', []));
+await Collections.replaceBoard('previous', [{id: 1}]);
+assert.equal(Collections.boardId, activeBoard);
+assert.equal(JSON.stringify(Collections.read('com_audioarchive.soundboard.v1', [])), activeItems);
+assert.equal(posted.at(-1).board.id, 'previous');
+await assert.rejects(() => Collections.replaceBoard('missing', []));
+fail = true;
+await assert.rejects(() => Collections.replaceBoard('previous', []));
+console.log('Target replacement preserves active board and rejects missing/conflicting destinations.');

@@ -14,6 +14,7 @@ $playlistStyle = StyleHelper::buildPlaylistListVariables($this->params);
 	class="com-audioarchive com-audioarchive-playlists"
 	<?php if ($playlistStyle !== '') : ?>style="<?php echo $this->escape($playlistStyle); ?>"<?php endif; ?>
 	data-audioarchive-playlists
+    data-board-replace-confirm="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_BOARD_REPLACE_CONFIRM')); ?>"
     data-audioarchive-label-actions="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_COLUMN_ACTIONS')); ?>"
     data-edit-conflict="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_EDIT_CONFLICT')); ?>"
     data-edit-pending="<?php echo $this->escape(Text::_('COM_AUDIOARCHIVE_PLAYLIST_EDIT_PENDING')); ?>"

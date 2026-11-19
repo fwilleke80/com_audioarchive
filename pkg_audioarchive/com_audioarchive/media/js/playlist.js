@@ -1,7 +1,7 @@
-import {mountPlaylistCovers} from './playlist-covers.js?v=0.18.0';
-import {openSoundboardChooser, renderSoundboardChoices} from './board-chooser.js?v=0.18.0';
+import {mountPlaylistCovers} from './playlist-covers.js?v=0.18.1';
+import {openSoundboardChooser, renderSoundboardChoices} from './board-chooser.js?v=0.18.1';
 import {playbackFor, playNormalized, updateNormalization} from './normalization.js?v=0.13.2.7';
-import {Collections} from './collections.js?v=0.18.0';
+import {Collections} from './collections.js?v=0.18.1';
 const PLAYLIST_STORAGE_KEY = 'com_audioarchive.playlists.v1';
 const PLAYLIST_STORAGE_VERSION = 1;
 const PLAYLIST_RESOLUTION_BATCH_SIZE = 500;
@@ -1976,7 +1976,7 @@ async function initialisePlaylistPage()
 			down.textContent = '↓';
 			const number = document.createElement('span');
 			number.textContent = String(index + 1);
-			orderControls.append(number);
+			orderControls.append(up, down, number);
 			orderCell.appendChild(orderControls);
 
 			const playCell = document.createElement('td');
@@ -2040,9 +2040,6 @@ async function initialisePlaylistPage()
             summary.setAttribute('aria-label', `${root.dataset.audioarchiveLabelActions || 'Actions'}: ${item?.title || entry.title}`);
             const actions = document.createElement('div');
             actions.className = 'com-audioarchive-more-menu';
-            up.textContent = up.title;
-            down.textContent = down.title;
-            actions.append(up, down);
             menu.append(summary, actions);
 			if (item)
 			{
@@ -2194,65 +2191,77 @@ async function initialisePlaylistPage()
 		}
 	};
 
-	root.querySelector('[data-audioarchive-playlist-load-soundboard]')?.addEventListener('click', async () =>
+	root.querySelector('[data-audioarchive-playlist-load-soundboard]')?.addEventListener('click', (event) =>
 	{
-		const playlist = getCurrentPlaylist();
-		const conversionStatus = root.querySelector('[data-audioarchive-playlist-conversion-status]');
-		const setConversionStatus = (message) =>
-		{
-			if (conversionStatus)
-			{
-				conversionStatus.textContent = message;
-			}
-		};
+        const load = async (target = null) =>
+        {
+    		const playlist = getCurrentPlaylist();
+    		const conversionStatus = root.querySelector('[data-audioarchive-playlist-conversion-status]');
+    		const setConversionStatus = (message) =>
+    		{
+    			if (conversionStatus)
+    			{
+    				conversionStatus.textContent = message;
+    			}
+    		};
 
-		if (!playlist || playlist.items.length === 0)
-		{
-			setConversionStatus(root.dataset.audioarchiveLabelLoadSoundboardEmpty || 'This playlist has no available clips.');
-			return;
-		}
+    		if (!playlist || playlist.items.length === 0)
+    		{
+    			setConversionStatus(root.dataset.audioarchiveLabelLoadSoundboardEmpty || 'This playlist has no available clips.');
+    			return false;
+    		}
 
-		await refreshMetadata(true);
-		const padCount = Math.max(4, Math.min(36, Number.parseInt(root.dataset.audioarchiveSoundboardPadCount || '12', 10)));
-		const board = buildSoundboardFromPlaylist(playlist, resolvedItems, padCount);
+    		await refreshMetadata(true);
+    		const padCount = Math.max(4, Math.min(36, Number.parseInt(root.dataset.audioarchiveSoundboardPadCount || '12', 10)));
+    		const board = buildSoundboardFromPlaylist(playlist, resolvedItems, padCount);
 
-		if (board.length === 0)
-		{
-			setConversionStatus(root.dataset.audioarchiveLabelLoadSoundboardEmpty || 'This playlist has no available clips.');
-			return;
-		}
+    		if (board.length === 0)
+    		{
+    			setConversionStatus(root.dataset.audioarchiveLabelLoadSoundboardEmpty || 'This playlist has no available clips.');
+    			return false;
+    		}
 
-		const existingBoard = readOccupiedSoundboardClips(padCount);
+    		const existingBoard = target ? target.items.filter(Boolean) : readOccupiedSoundboardClips(padCount);
 
-		if (
-			existingBoard.length > 0
-			&& !window.confirm(formatPlaylistSoundboardLabel(
-				root.dataset.audioarchiveLabelLoadSoundboardConfirm || 'Replace your current Sound Board with the playlist “%s”?',
-				playlist.name
-			))
-		)
-		{
-			return;
-		}
+    		if (
+    			existingBoard.length > 0
+    			&& !window.confirm(target
+                    ? (root.dataset.boardReplaceConfirm || 'Replace the clips in “%s” with this playlist?').replace('%s', target.name)
+                    : formatPlaylistSoundboardLabel(root.dataset.audioarchiveLabelLoadSoundboardConfirm, playlist.name))
+    		)
+    		{
+    			return false;
+    		}
 
-		if (!await Collections.write(SOUNDBOARD_STORAGE_KEY, board))
-		{
-			setConversionStatus(root.dataset.audioarchiveLabelLoadSoundboardError || 'The Sound Board could not be saved.');
-			return;
-		}
+    		if (target)
+    		{
+    			await Collections.replaceBoard(target.id, board);
+    		}
+            else if (!await Collections.write(SOUNDBOARD_STORAGE_KEY, board))
+    		{
+    			setConversionStatus(root.dataset.audioarchiveLabelLoadSoundboardError || 'The Sound Board could not be saved.');
+    			return false;
+    		}
 
-		recordEdit(
-			root.dataset.audioarchiveInteractionUrl || '',
-			root.dataset.audioarchiveInteractionToken || '',
-			'audioarchive.soundboard.loaded_from_playlist',
-			{contextId: playlist.id, contextTitle: playlist.name}
-		);
-		setConversionStatus(formatPlaylistSoundboardLabel(
-			root.dataset.audioarchiveLabelLoadSoundboardSuccess || 'Loaded %d clips into the Sound Board.',
-			'',
-			board.length
-		));
-	});
+    		recordEdit(
+    			root.dataset.audioarchiveInteractionUrl || '',
+    			root.dataset.audioarchiveInteractionToken || '',
+    			'audioarchive.soundboard.loaded_from_playlist',
+    			{contextId: playlist.id, contextTitle: playlist.name}
+    		);
+    		setConversionStatus(formatPlaylistSoundboardLabel(
+    			root.dataset.audioarchiveLabelLoadSoundboardSuccess || 'Loaded %d clips into the Sound Board.',
+    			'',
+    			board.length
+    		));
+            return true;
+        };
+        if (Collections.backend === 'server')
+        {
+            openSoundboardChooser(event.currentTarget, null, 36, load);
+        }
+        else void load().catch(error => window.alert(error.message));
+    });
 
     saveButton.addEventListener('click', async () =>
     {

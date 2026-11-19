@@ -203,7 +203,7 @@ export class RecordingEditor
     sync()
     {
         this.toggle.hidden = Boolean(this.draft);
-        this.toggle.disabled = this.callbacks.blocked() || !this.callbacks.selected();
+        this.toggle.disabled = this.callbacks.blocked() || !this.callbacks.selected()?.events.some(event => event.type === 'pad' || event.type === 'note');
         this.panel.hidden = !this.draft;
         if (this.help) this.help.hidden = !this.draft;
         this.roll.classList.toggle('is-editing', Boolean(this.draft));

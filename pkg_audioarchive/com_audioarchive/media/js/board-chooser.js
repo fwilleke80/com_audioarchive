@@ -1,7 +1,7 @@
-import {Collections} from './collections.js?v=0.18.0';
+import {Collections} from './collections.js?v=0.18.1';
 
 /** @brief Present explicit account destinations using native keyboard-accessible buttons. */
-export function openSoundboardChooser(button, clip, capacity)
+export function openSoundboardChooser(button, clip, capacity, replace = null)
 {
 	document.querySelector('[data-audioarchive-board-chooser]')?.dispatchEvent(new Event('dismiss'));
 	const menu = document.createElement('div');
@@ -45,7 +45,7 @@ export function openSoundboardChooser(button, clip, capacity)
 	renderSoundboardChoices(menu, clip, capacity, () =>
 	{
 		close(); button.focus();
-	});
+	}, 'dropdown-item', replace);
 	document.body.append(menu);
 	const rect = button.getBoundingClientRect();
 	menu.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - menu.offsetWidth - 8)) + 'px';
@@ -64,7 +64,7 @@ export function openSoundboardChooser(button, clip, capacity)
  * @param {Function} onComplete Called after a successful addition.
  * @param {string} className Shared menu option styling.
  */
-export function renderSoundboardChoices(menu, clip, capacity, onComplete, className = 'dropdown-item')
+export function renderSoundboardChoices(menu, clip, capacity, onComplete, className = 'dropdown-item', replace = null)
 {
 	menu.replaceChildren();
 	const labels = Collections.boardChoiceLabels;
@@ -72,8 +72,8 @@ export function renderSoundboardChoices(menu, clip, capacity, onComplete, classN
 	if (!boards.length) boards.push({id:'', name:labels.empty, items:[], isDefault:true});
 	boards.forEach((board) =>
 	{
-		const added = board.items.some((item) => item && (clip.uuid ? item.uuid === clip.uuid : item.id === clip.id));
-		const full = board.items.length >= capacity && board.items.every(Boolean);
+		const added = !replace && board.items.some((item) => item && (clip.uuid ? item.uuid === clip.uuid : item.id === clip.id));
+		const full = !replace && board.items.length >= capacity && board.items.every(Boolean);
 		const choice = document.createElement('button');
 		choice.type = 'button';
 		choice.className = className;
@@ -85,13 +85,21 @@ export function renderSoundboardChoices(menu, clip, capacity, onComplete, classN
 			menu.querySelectorAll('button').forEach((item) => { item.disabled = true; });
 			try
 			{
-				await Collections.addToBoard(board.id, clip, capacity);
+				if (replace)
+                {
+                    if (await replace(board) === false)
+                    {
+                        renderSoundboardChoices(menu, clip, capacity, onComplete, className, replace);
+                        return;
+                    }
+                }
+                else await Collections.addToBoard(board.id, clip, capacity);
 				onComplete();
 			}
 			catch (error)
 			{
 				window.alert(error.message);
-				renderSoundboardChoices(menu, clip, capacity, onComplete, className);
+				renderSoundboardChoices(menu, clip, capacity, onComplete, className, replace);
 			}
 		});
 		menu.append(choice);
