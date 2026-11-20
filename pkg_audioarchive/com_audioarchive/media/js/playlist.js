@@ -1,7 +1,7 @@
-import {mountPlaylistCovers} from './playlist-covers.js?v=0.18.3';
-import {openSoundboardChooser, renderSoundboardChoices} from './board-chooser.js?v=0.18.3';
+import {mountPlaylistCovers} from './playlist-covers.js?v=0.18.4';
+import {openSoundboardChooser, renderSoundboardChoices} from './board-chooser.js?v=0.18.4';
 import {playbackFor, playNormalized, updateNormalization} from './normalization.js?v=0.13.2.7';
-import {Collections} from './collections.js?v=0.18.3';
+import {Collections} from './collections.js?v=0.18.4';
 const PLAYLIST_STORAGE_KEY = 'com_audioarchive.playlists.v1';
 const PLAYLIST_STORAGE_VERSION = 1;
 const PLAYLIST_RESOLUTION_BATCH_SIZE = 500;
@@ -2035,7 +2035,7 @@ async function initialisePlaylistPage()
 			const menu = document.createElement('details');
             menu.className = 'com-audioarchive-more';
             const summary = document.createElement('summary');
-            summary.className = 'btn btn-sm btn-outline-secondary';
+            summary.className = 'btn btn-sm btn-outline-secondary com-audioarchive-row-menu-toggle';
             summary.textContent = '…';
             summary.setAttribute('aria-label', `${root.dataset.audioarchiveLabelActions || 'Actions'}: ${item?.title || entry.title}`);
             const actions = document.createElement('div');

@@ -5,6 +5,7 @@ const source = await readFile(new URL('../../../pkg_audioarchive/com_audioarchiv
 class Element
 {
     children = [];
+    dataset = {};
     events = {};
     hidden = false;
     classList = {toggle() {}, add() {}};

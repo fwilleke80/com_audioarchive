@@ -1,4 +1,4 @@
-import {Collections} from './collections.js?v=0.18.3';
+import {Collections} from './collections.js?v=0.18.4';
 
 /** @brief Present explicit account destinations using native keyboard-accessible buttons. */
 export function openSoundboardChooser(button, clip, capacity, replace = null)
@@ -6,7 +6,7 @@ export function openSoundboardChooser(button, clip, capacity, replace = null)
 	document.querySelector('[data-audioarchive-board-chooser]')?.dispatchEvent(new Event('dismiss'));
 	const menu = document.createElement('div');
 	menu.dataset.audioarchiveBoardChooser = '';
-	menu.className = 'dropdown-menu show p-2 shadow';
+	menu.className = 'dropdown-menu show p-2 shadow com-audioarchive-menu';
 	menu.style.position = 'fixed';
 	menu.style.zIndex = '1080';
 	menu.style.maxHeight = '60vh';

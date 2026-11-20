@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.18.4
+
+- Unify collection menu icons, icon/label spacing and menu-item typography. Keep destructive actions red and popup items borderless, including compact playlist row actions.
+- Use identical row overflow toggles in playlists and recordings, and inherit configured archive table colours in the recordings library.
+- Lock and close collection disclosure menus during recorder editing, block mouse/keyboard activation, suppress recording-row hover feedback and visibly dim disabled controls. Restore menu access on leaving edit mode.
+- Add production-template checks for edit-mode disclosure locking, restoration, menu icons and destructive action semantics.
+
 ## 0.18.3
 
 - Fix recorded pad playback ignoring decoded recording samples unless they also belonged to the active Sound Board cache. Base and overdub layers now reuse their prepared audio without loading their board into the live pads.

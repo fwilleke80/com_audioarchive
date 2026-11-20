@@ -500,6 +500,7 @@ export const Collections = {
 			control.type = 'button';
 			control.className = 'btn btn-sm btn-outline-secondary';
 			control.textContent = labels[key] || key;
+            control.dataset.collectionAction = key;
 			control.addEventListener('click', async () =>
 			{
 				if (!canChange())

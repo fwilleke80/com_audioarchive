@@ -1,4 +1,4 @@
-# Sound Board and Recorder layout (0.18.3)
+# Sound Board and Recorder layout (0.18.4)
 
 The Sound Board heading and introduction precede its toolbar. The toolbar groups board selection, New board and Clear board; its **…** menu holds Rename, Delete, Set as default, Save as playlist and JSON Import/Export. Share board and Revoke share link stay together below the pads. Browser migration notices appear above the heading, as on Playlists.
 
@@ -23,3 +23,5 @@ Click an event to select it immediately and audition it. **Source pad** changes 
 Selecting a recording fits the complete timeline into view. During capture, automatic fitting zooms out as needed. Manual +/− suspends this behaviour; **Fit** resumes it and fits the current recording or edit draft. The viewport also refits on resize while automatic fitting is active.
 
 Recording playback prepares and uses its own stored base and overdub sounds independently of the visible Sound Board. **Load recording’s sound board** is optional and brings the sounds into the live pads for playing; playback does not require it or change your selected board.
+
+Collection menus share icons, label spacing and typography; Delete/Remove actions are red. Recording rows reuse the archive table colours and the playlist row menu toggle. While editing a recording, collection menus close and cannot open by mouse or keyboard. Disabled controls are dimmed, and recording rows retain selection without hover highlighting.

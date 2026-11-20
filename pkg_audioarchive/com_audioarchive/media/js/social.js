@@ -1,10 +1,10 @@
-import {initialiseCollectionMenus} from './collection-ui.js?v=0.18.3';
-import {RecordingEditor, recordingSeekState, cloneRecording} from './recording-editor.js?v=0.18.3';
+import {initialiseCollectionMenus} from './collection-ui.js?v=0.18.4';
+import {RecordingEditor, recordingSeekState, cloneRecording} from './recording-editor.js?v=0.18.4';
 import {BoardPreloader} from './board-preload.js?v=0.13.7.1';
-import {openSoundboardChooser} from './board-chooser.js?v=0.18.3';
+import {openSoundboardChooser} from './board-chooser.js?v=0.18.4';
 import {acquirePlaybackSession, releasePlaybackSession} from './audio-session.js?v=0.13.2.7';
 import {playbackFor, prepareNormalization, releaseNormalization, validGain} from './normalization.js?v=0.13.2.7';
-import {Collections} from './collections.js?v=0.18.3';
+import {Collections} from './collections.js?v=0.18.4';
 const BOARD_STORAGE_KEY = 'com_audioarchive.soundboard.v1';
 const SAMPLER_POLYPHONY_STORAGE_KEY = 'com_audioarchive.soundboard.sampler_polyphony.v1';
 const SOUNDBOARD_RECORDINGS_STORAGE_KEY = 'com_audioarchive.soundboard.recordings.v1';
@@ -3387,10 +3387,13 @@ async function initialiseSoundboard()
                 const count = document.createElement('td');
                 count.textContent = String(recording.events.length);
                 const actionCell = document.createElement('td');
+                actionCell.className = 'com-audioarchive-actions-cell';
                 const menu = document.createElement('details');
                 menu.className = 'com-audioarchive-more';
                 const summary = document.createElement('summary');
-                summary.className = 'btn btn-sm btn-outline-secondary';
+                summary.className = 'btn btn-sm btn-outline-secondary com-audioarchive-row-menu-toggle';
+                summary.setAttribute('aria-disabled', String(busy));
+                summary.tabIndex = busy ? -1 : 0;
                 summary.textContent = '…';
                 summary.setAttribute('aria-label', `${root.dataset.audioarchiveLabelRecordingActions || 'Actions'}: ${recording.name}`);
                 const actions = document.createElement('div');
@@ -3478,6 +3481,15 @@ async function initialiseSoundboard()
             revokeButton.disabled = busy;
         }
         recordingEdit?.sync();
+        const editing = Boolean(recordingEdit?.draft);
+        root.classList.toggle('is-recording-editing', editing);
+        root.querySelectorAll('details.com-audioarchive-more > summary, details.com-audioarchive-recording-actions > summary').forEach(summary =>
+        {
+            const locked = editing || (recordingList.contains(summary) && busy);
+            summary.setAttribute('aria-disabled', String(locked));
+            summary.tabIndex = locked ? -1 : 0;
+            if (locked) summary.parentElement.open = false;
+        });
         if (recordingEdit?.draft)
         {
             recordingsRoot.querySelectorAll('button').forEach((button) =>

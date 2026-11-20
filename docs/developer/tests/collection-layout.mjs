@@ -29,6 +29,7 @@ const song={id:'song',format:'punga-audioarchive-soundboard-recording',version:1
  const social=fs.readFileSync(base+'social.js','utf8').replace(/^import .*;\n/gm,'').split('\ninitialiseReturnNavigation();')[0];
  vm.runInContext(editor+'\n'+adapter+'\n'+social,c);
  await vm.runInContext('Collections.ready().then(()=>initialiseSoundboard())',c);
+ vm.runInContext(fs.readFileSync(base+'collection-ui.js','utf8').replaceAll('export function','function')+';initialiseCollectionMenus();',c);
  assert.equal(doc.querySelectorAll('[data-edit-toggle]').length,1);
  assert.equal(doc.querySelector('[data-audioarchive-recording-list]').tagName,'TBODY');
  assert.ok(doc.querySelector('[data-audioarchive-recording-editor]').contains(doc.querySelector('[data-audioarchive-recording-record]')));
@@ -44,11 +45,30 @@ const song={id:'song',format:'punga-audioarchive-soundboard-recording',version:1
  doc.querySelector('[data-recording-id]').click();
  doc.querySelector('[data-edit-toggle]').click();
  assert.equal(doc.querySelector('[data-edit-panel]').hidden,false);
+ const toggles = [...doc.querySelectorAll('details.com-audioarchive-more > summary, details.com-audioarchive-recording-actions > summary')];
+ for (const summary of toggles)
+ {
+     assert.equal(summary.getAttribute('aria-disabled'), 'true');
+     summary.click();
+     assert.equal(summary.parentElement.open, false, 'locked disclosure ignores click');
+     const key = new dom.window.KeyboardEvent('keydown', {key:'Enter', bubbles:true, cancelable:true});
+     summary.dispatchEvent(key);
+     assert.equal(key.defaultPrevented, true, 'locked disclosure ignores keyboard activation');
+ }
+ assert.ok(doc.querySelector('[data-audioarchive-soundboard]').classList.contains('is-recording-editing'));
+ vm.runInContext('decorateCollectionMenus()', c);
+ for (const item of doc.querySelectorAll('.com-audioarchive-more-menu button, .com-audioarchive-recording-actions-menu button'))
+ {
+     assert.ok(item.querySelector('[aria-hidden="true"]'), 'menu item has an icon');
+ }
+ assert.ok(doc.querySelector('[data-audioarchive-recording-delete]').classList.contains('text-danger'));
+
  assert.equal(doc.querySelector('[data-edit-help]').hidden,false);
  assert.equal(doc.querySelector('[data-audioarchive-recording-play]').disabled,false);
  assert.equal(doc.querySelector('[data-audioarchive-recording-record]').disabled,true);
  doc.querySelector('[data-edit-toggle]').click();
  assert.equal(doc.querySelector('[data-edit-panel]').hidden,true);
+ assert.equal(doc.querySelector('details.com-audioarchive-more > summary').getAttribute('aria-disabled'), 'false');
  }
  console.log('Real Sound Board template initialized:',empty?'empty library':'saved recording and edit toolbar');
  dom.window.close();
@@ -73,7 +93,7 @@ const song={id:'song',format:'punga-audioarchive-soundboard-recording',version:1
  doc.querySelector('[data-playlist-cover-toggle]').click();
  assert.equal(doc.querySelector('[data-playlist-cover-editor]').hidden,false);
  assert.equal(doc.querySelector('[data-playlist-cover-save]').hidden,true,'opening cover editor does not create pending changes');
- const ui=fs.readFileSync(base+'collection-ui.js','utf8').replace('export function','function');
+ const ui=fs.readFileSync(base+'collection-ui.js','utf8').replaceAll('export function','function');
  vm.runInContext(ui+';initialiseCollectionMenus();',c);
  const menu=doc.querySelector('.com-audioarchive-more');
  menu.open=true;

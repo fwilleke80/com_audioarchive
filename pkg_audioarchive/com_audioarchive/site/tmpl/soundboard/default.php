@@ -28,6 +28,7 @@ $samplerBlackKeys = [
 ];
 $introText = trim((string) $this->params->get('soundboard_header_text', ''));
 $soundboardStyle = StyleHelper::buildSoundboardVariables($this->params);
+$recordingsStyle = StyleHelper::buildArchiveListVariables($this->params);
 ?>
 <div
 	class="com-audioarchive com-audioarchive-soundboard"
@@ -573,7 +574,7 @@ data-audioarchive-recordings-enabled="<?php echo $this->recordingsEnabled ? '1' 
 					<input class="visually-hidden" type="file" accept="application/json,.json" data-audioarchive-recording-file>
 				</div>
 			</div>
-			<div class="com-audioarchive-table-wrapper">
+			<div class="com-audioarchive-table-wrapper" style="<?php echo $this->escape($recordingsStyle); ?>">
 <table class="com-audioarchive-table com-audioarchive-recordings-table">
 <thead>
 <tr>

@@ -2,7 +2,7 @@
 
 A native Joomla! 6 extension for managing, publishing and playing audio collections—from a personal sound archive to a site with multiple contributors.
 
-> **Current version:** 0.18.3  
+> **Current version:** 0.18.4  
 > **Package:** `pkg_audioarchive`  
 > **Licence:** GNU General Public License version 2 or later
 

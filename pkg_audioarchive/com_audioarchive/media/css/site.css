@@ -3675,3 +3675,92 @@
     outline-offset: 2px;
     z-index: 4;
 }
+
+/** @brief Shared icon spacing applies equally to static and generated controls. */
+.com-audioarchive :is(button, a.btn, summary.btn):has(> [aria-hidden="true"]),
+.com-audioarchive-menu :is(button, a)
+{
+    gap: .45rem;
+}
+.com-audioarchive :is(button, a.btn, summary.btn) > [aria-hidden="true"]:not(:only-child)
+{
+    margin-inline-end: 0;
+}
+/** @brief Popup choices must not inherit the table's compact row-button metrics. */
+.com-audioarchive :is(.com-audioarchive-more-menu, .com-audioarchive-recording-actions-menu) :is(button, a),
+.com-audioarchive-menu :is(button, a)
+{
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    font-size: 1rem;
+    line-height: 1.4;
+    padding: .55rem .75rem;
+    min-height: 2.5rem;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+    text-align: start;
+}
+.com-audioarchive :is(.com-audioarchive-more-menu, .com-audioarchive-recording-actions-menu) [aria-hidden="true"]
+{
+    flex: 0 0 1.1em;
+    text-align: center;
+    margin-inline-end: 0;
+    font-size: 1em;
+}
+.com-audioarchive :is(.com-audioarchive-more-menu, .com-audioarchive-recording-actions-menu, .com-audioarchive-share-popover) :is(.text-danger, .btn-outline-danger),
+.com-audioarchive-menu .text-danger
+{
+    color: var(--bs-danger, #c62828) !important;
+}
+/** @brief Use the playlist row toggle dimensions in every collection table. */
+.com-audioarchive-table .com-audioarchive-row-menu-toggle
+{
+    box-sizing: border-box;
+    min-height: 2.5rem;
+    height: 2.5rem;
+    min-width: 2.75rem;
+    padding: .16rem .42rem;
+    font-size: .76rem;
+    line-height: 1.2;
+}
+.com-audioarchive :is(button:disabled, input:disabled, select:disabled, [aria-disabled="true"])
+{
+    opacity: .45;
+    filter: grayscale(1);
+    cursor: not-allowed;
+    box-shadow: none;
+}
+.com-audioarchive.is-recording-editing .com-audioarchive-recordings-table tbody tr:hover
+{
+    background: transparent;
+}
+.com-audioarchive.is-recording-editing .com-audioarchive-recordings-table tbody tr:nth-child(even):hover
+{
+    background: var(--audioarchive-list-alternate-row-background, transparent);
+}
+.com-audioarchive-recordings-table .com-audioarchive-recording-select
+{
+    font: inherit;
+    color: inherit;
+    text-decoration: none;
+    padding: 0;
+}
+.com-audioarchive-recordings-table .com-audioarchive-recording-select:disabled
+{
+    opacity: .6;
+    text-decoration: none;
+}
+
+.com-audioarchive :is(.btn, .com-audioarchive-share-option, .com-audioarchive-add-to-option):has(> [aria-hidden="true"])
+{
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+}
+.com-audioarchive :is(.com-audioarchive-more-menu, .com-audioarchive-recording-actions-menu) :is(button, a):is(:hover, :focus-visible):not(:disabled),
+.com-audioarchive-menu :is(button, a):is(:hover, :focus-visible):not(:disabled)
+{
+    background: color-mix(in srgb, var(--audioarchive-accent, #0d6efd) 12%, var(--audioarchive-surface, Canvas));
+}
